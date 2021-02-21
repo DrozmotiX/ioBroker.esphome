@@ -1,0 +1,99 @@
+{
+	"common": {
+		"name": "esphome",
+		"version": "0.0.1",
+		"news": {
+			"0.0.1": {
+				"en": "initial release",
+				"de": "Erstveröffentlichung",
+				"ru": "Начальная версия",
+				"pt": "lançamento inicial",
+				"nl": "Eerste uitgave",
+				"fr": "Première version",
+				"it": "Versione iniziale",
+				"es": "Versión inicial",
+				"pl": "Pierwsze wydanie",
+				"zh-cn": "首次出版"
+			}
+		},
+		"title": "Control ESPHome managed devices",
+		"titleLang": {
+			"en": "Control ESPHome managed devices",
+			"de": "Steuern Sie von ESPHome verwaltete Geräte",
+			"ru": "Управление устройствами ESPHome",
+			"pt": "Controlar dispositivos gerenciados ESPHome",
+			"nl": "Beheer door ESPHome beheerde apparaten",
+			"fr": "Contrôle des appareils gérés ESPHome",
+			"it": "Controlla i dispositivi gestiti da ESPHome",
+			"es": "Controle los dispositivos administrados por ESPHome",
+			"pl": "Kontroluj urządzenia zarządzane przez ESPHome",
+			"zh-cn": "控制ESPHome受管设备"
+		},
+		"desc": {
+			"en": "Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome",
+			"de": "Steuern Sie Ihren ESP8266 / ESP32 mit einfachen, aber leistungsstarken Konfigurationsdateien, die von ESPHome erstellt und verwaltet werden",
+			"ru": "Управляйте своим ESP8266 / ESP32 с помощью простых, но мощных файлов конфигурации, созданных и управляемых ESPHome",
+			"pt": "Controle seu ESP8266 / ESP32 com arquivos de configuração simples, mas poderosos, criados e gerenciados por ESPHome",
+			"nl": "Beheer uw ESP8266 / ESP32 met eenvoudige maar krachtige configuratiebestanden die zijn gemaakt en beheerd door ESPHome",
+			"fr": "Contrôlez votre ESP8266 / ESP32 avec des fichiers de configuration simples mais puissants créés et gérés par ESPHome",
+			"it": "Controlla il tuo ESP8266 / ESP32 con file di configurazione semplici ma potenti creati e gestiti da ESPHome",
+			"es": "Controle su ESP8266 / ESP32 con archivos de configuración simples pero potentes creados y administrados por ESPHome",
+			"pl": "Steruj ESP8266 / ESP32 za pomocą prostych, ale potężnych plików konfiguracyjnych utworzonych i zarządzanych przez ESPHome",
+			"zh-cn": "使用由ESPHome创建和管理的简单但功能强大的配置文件控制ESP8266 / ESP32"
+		},
+		"authors": [
+			"DutchmanNL <rdrozda86@gmail.com>"
+		],
+		"keywords": [
+			"ESPHome",
+			"ESP",
+			"ESP32"
+		],
+		"license": "MIT",
+		"platform": "Javascript/Node.js",
+		"main": "main.js",
+		"icon": "esphome.png",
+		"enabled": true,
+		"messagebox": true,
+		"subscribe": "messagebox",
+		"extIcon": "https://raw.githubusercontent.com/iobroker-community-adapters/ioBroker.esphome/master/admin/esphome.png",
+		"readme": "https://github.com/iobroker-community-adapters/ioBroker.esphome/blob/master/README.md",
+		"loglevel": "info",
+		"mode": "daemon",
+		"type": "hardware",
+		"compact": true,
+		"connectionType": "local",
+		"dataSource": "push",
+		"materialize": true,
+		"dependencies": [
+			{
+				"js-controller": ">=3.2.0"
+			}
+		]
+	},
+	"native": {},
+	"objects": [],
+	"instanceObjects": [
+		{
+			"_id": "info",
+			"type": "channel",
+			"common": {
+				"name": "Information"
+			},
+			"native": {}
+		},
+		{
+			"_id": "info.connection",
+			"type": "state",
+			"common": {
+				"role": "indicator.connected",
+				"name": "Device or service connected",
+				"type": "boolean",
+				"read": true,
+				"write": false,
+				"def": false
+			},
+			"native": {}
+		}
+	]
+}
