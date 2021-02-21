@@ -1,0 +1,39 @@
+{
+	"cli": true,
+	"adapterName": "esphome",
+	"title": "Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome",
+	"description": "Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome",
+	"keywords": [
+		"ESPHome",
+		"ESP",
+		"ESP32"
+	],
+	"expert": "yes",
+	"features": [
+		"adapter"
+	],
+	"adminFeatures": [],
+	"type": "hardware",
+	"startMode": "daemon",
+	"connectionType": "local",
+	"dataSource": "push",
+	"connectionIndicator": "yes",
+	"language": "JavaScript",
+	"adminReact": "no",
+	"tools": [
+		"ESLint",
+		"type checking"
+	],
+	"indentation": "Tab",
+	"quotes": "single",
+	"es6class": "yes",
+	"authorName": "DutchmanNL",
+	"authorGithub": "iobroker-community-adapters",
+	"authorEmail": "rdrozda86@gmail.com",
+	"gitRemoteProtocol": "HTTPS",
+	"gitCommit": "no",
+	"license": "MIT License",
+	"ci": "gh-actions",
+	"dependabot": "yes",
+	"creatorVersion": "1.31.0"
+}
