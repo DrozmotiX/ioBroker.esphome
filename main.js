@@ -61,13 +61,14 @@ class Esphome extends utils.Adapter {
 
 	// MDNS discovery handler for ESPHome devices
 	deviceDiscovery(){
+		try {
 		mdnsBrowser = Mdns.createBrowser();
 		mdnsBrowser.on('update', (data) => {
-			this.log.debug('Discovery answer: ' + JSON.stringify(data));
+				this.log.debug('[AutoDiscovery] Discovery answer: ' + JSON.stringify(data));
 			if (!data.addresses || !data.addresses[0] || !data.type) return;
 			for (let i = 0; i < data.type.length; i++) {
 				if (data.type[i].name === 'esphomelib') {
-					this.log.info(`[AutoDiscovery] ESPHome device found at IP ${data.addresses}`);
+						this.log.debug(`[AutoDiscovery] ESPHome device found at IP ${data.addresses}`);
 					// Verify if device is already known
 					if (this.deviceInfo[data.addresses] == null){
 						this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${data.addresses}`);
@@ -84,11 +85,14 @@ class Esphome extends utils.Adapter {
 		mdnsBrowser.on('ready', function () {
 			mdnsBrowser.discover();
 		});
+		} catch (e) {
+			this.sendSentry(`[deviceDiscovery] ${e}`);
+	}
 	}
 
 	// Try to contact to contact and read data of already known devices
 	async tryKnownDevices() {
-
+		try {
 		const knownDevices = await this.getDevicesAsync();
 		if (!knownDevices) {
 			this.log.warn(`No device configured, please add device in adapter configuration`);
@@ -103,9 +107,13 @@ class Esphome extends utils.Adapter {
 				deviceName: knownDevices[i].native.deviceName,
 				deviceInfoName: knownDevices[i].native.name,
 				passWord: knownDevices[i].native.passWord,
-			};
-			this.connectDevices(knownDevices[i].native.ip, knownDevices[i].native.passWord);
+				};
+				this.connectDevices(knownDevices[i].native.ip, knownDevices[i].native.passWord);
+			}
+		} catch (e) {
+			this.sendSentry(`[tryKnownDevices] ${e}`);
 		}
+
 	}
 
 	// Connection monitor/reconnect if connection to device is lost
@@ -128,7 +136,7 @@ class Esphome extends utils.Adapter {
 				this.connectionMonitor();
 			}, reconnectInterval);
 		} catch (e) {
-			console.error(e);
+			this.sendSentry(`[connectionMonitor] ${e}`);
 		}
 
 	}
@@ -457,8 +465,8 @@ class Esphome extends utils.Adapter {
 					}
 				}
 			}
-		} catch (error) {
-			this.log.error(`Error in function TraverseJson: ${error}`);
+		} catch (e) {
+			this.sendSentry(`[TraverseJson] ${e}`);
 		}
 	}
 
@@ -518,7 +526,7 @@ class Esphome extends utils.Adapter {
 				});
 
 			} else {
-				// console.log(`Nothing changed do not update object`);
+				console.log(`Nothing changed do not update object`);
 			}
 
 			// Store current object definition to memory
@@ -567,8 +575,8 @@ class Esphome extends utils.Adapter {
 			// Subscribe on state changes if writable
 			common.write && this.subscribeStates(objName);
 
-		} catch (error) {
-			this.log.error('Create state error = ' + error);
+		} catch (e) {
+			this.sendSentry(`[stateSetCreate] ${e}`);
 		}
 	}
 
@@ -587,8 +595,7 @@ class Esphome extends utils.Adapter {
 					}
 				}
 			} else {
-				this.log.warn(`Sentry disabled, error catched : ${msg}`);
-				console.error(`Sentry disabled, error catched : ${msg}`);
+				this.log.error(`Sentry disabled, error caught : ${msg}`);
 			}
 		} catch (error) {
 			this.log.error(`Error in function sendSentry: ${error}`);
@@ -649,9 +656,8 @@ class Esphome extends utils.Adapter {
 			}
 			if (!result) return value;
 			return result;
-		} catch (error) {
-			this.log.error(`Error in function modify for method ${method} and value ${value}.`);
-			this.sendSentry(error);
+		} catch (e) {
+			this.sendSentry(`[modify] ${e}`);
 			return value;
 		}
 	}
@@ -690,10 +696,11 @@ class Esphome extends utils.Adapter {
 	 * @param {ioBroker.Message} obj
 	 */
 	async onMessage(obj) {
-		this.log.info('Data from configuration received : ' + JSON.stringify(obj));
-		switch (obj.command) {
-			case 'removeDevice':
-				await this.deleteDeviceAsync(`${obj.message}`)
+		this.log.debug('Data from configuration received : ' + JSON.stringify(obj));
+		try {
+			switch (obj.command) {
+				case 'removeDevice':
+					await this.deleteDeviceAsync(`${obj.message}`)
 					.catch(async error => {
 						if (error !== 'Not exists') {
 							this.log.error(`deleteDeviceAsync has a problem: ${error.message}, stack: ${error.stack}`);
@@ -732,17 +739,17 @@ class Esphome extends utils.Adapter {
 				} else {
 					this.log.info(`Valid IP address received`);
 					this.messageResponse[obj.message['device-ip']] = obj;
-					await this.connectDevices(obj.message['device-ip'],obj.message['device-pass']);
-				}
-				break;
-
+						await this.connectDevices(obj.message['device-ip'],obj.message['device-pass']);
+					}
+					break;
+			}
+		} catch (e) {
+			this.sendSentry(`[onMessage] ${e}`);
 		}
-
 	}
 
-	// responds to the adapter that sent the original message
 	/**
-	 * Send message back to admin instance
+	 * responds to the adapter that sent the original message
 	 * @param {string} response
 	 * @param {object} obj
 	 */
