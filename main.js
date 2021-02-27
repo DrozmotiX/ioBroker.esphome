@@ -336,10 +336,12 @@ class Esphome extends utils.Adapter {
 
 								default:
 
+									if (!warnMessages[this.deviceInfo[host][entity.id].type]){
 									this.log.warn(`DeviceType ${this.deviceInfo[host][entity.id].type} not yet supported`);
 									this.log.warn(`Please submit git issue with all information from next line`);
 									this.log.warn(`DeviceType ${this.deviceInfo[host][entity.id].type} | State-Keys ${JSON.stringify(state)} | [entityStateConfig] ${JSON.stringify(this.deviceInfo[host][entity.id])}`);
 										warnMessages[this.deviceInfo[host][entity.id].type] = deviceDetails;
+							}
 							}
 
 						} catch (e) {

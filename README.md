@@ -81,6 +81,7 @@ switch:
 * (DutchmanNL) Autodiscovery implemented
 * (DutchmanNL) Type Climat added
 * (DutchmanNL) Solved reconnection issues
+* (DutchmanNL) Optimized error messages for unknown types
 * (DutchmanNL & @xXBJXx) Adapter configuration page optimized
 
 ### 0.0.1
