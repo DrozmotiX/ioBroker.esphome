@@ -268,7 +268,7 @@
                 }
                 else {
                     var value = $this.val();
-                    if (id === 'apiPass	') {
+                    if (id === 'apiPass') {
                         value = decrypt(secret, value);
                     }
                     obj[id] = value;
@@ -312,12 +312,6 @@
                     <span class="translate">reconnect interval</span>
                 </div>
                 <!-- end reconnect interval -->
-                <!-- scan interval -->
-                <div class="col s2 input_field input-field">
-                    <label for="scanInterval"></label><input type="number" class="value center" id="scanInterval" max="3600" min="60" value="60"/>
-                    <span  class="translate">scan interval</span>
-                </div>
-                <!-- end scan interval -->
                 <!-- default Password -->
                 <div class="col s2 input_field input-field">
                     <label for="apiPass"></label><input type="password" class="value" id="apiPass" value=""/>

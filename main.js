@@ -13,7 +13,7 @@ const stateAttr = require(__dirname + '/lib/stateAttr.js'); // Load attribute li
 const disableSentry = true; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
 const client = {};
-let reconnectTimer, discoveryTimer, mdnsBrowser, reconnectInterval, scanInterval, apiPass, autodiscovery;
+let reconnectTimer, discoveryTimer, mdnsBrowser, reconnectInterval, apiPass, autodiscovery;
 
 // Load your modules here, e.g.:
 // const fs = require("fs");
@@ -49,7 +49,6 @@ class Esphome extends utils.Adapter {
 			apiPass =  this.config.apiPass;
 			autodiscovery =  this.config.autodiscovery;
 			reconnectInterval = this.config.reconnectInterval * 1000;
-			scanInterval = this.config.scanInterval * 1000;
 			await this.tryKnownDevices(); // Try to establish connection to already known devices
 			this.connectionMonitor(); // Start connection monitor
 			if (autodiscovery){

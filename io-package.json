@@ -73,7 +73,6 @@
 	},
   "native": {
 	"reconnectInterval": 30,
-	"scanInterval": 60,
 	"apiPass": "",
 	"autodiscovery": true
 	},
