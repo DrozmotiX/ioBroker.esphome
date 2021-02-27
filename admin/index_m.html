@@ -23,7 +23,7 @@
         
         // Create secrect for encrypted password storage
         let secret;
-       
+     
         function decrypt(key, value) {
             var result = '';
             for (var i = 0; i < value.length; ++i) {
@@ -146,6 +146,9 @@
             $('.value').each(function () {
                 let $key = $(this);
                 let id = $key.attr('id');
+                if (id === 'mdns_pass') {
+                    settings[id] = decrypt(secret, settings[id]);
+                }
                 if ($key.attr('type') === 'checkbox') {
                     // do not call onChange direct, because onChange could expect some arguments
                     $key.prop('checked', settings[id])
@@ -266,8 +269,8 @@
                 }
                 else {
                     var value = $this.val();
-                    if (id === 'Password') {
-                        value = encrypt(secret, value);
+                    if (id === 'mdns_pass') {
+                        value = decrypt(secret, value);
                     }
                     obj[id] = value;
                 }
