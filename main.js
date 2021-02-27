@@ -13,7 +13,7 @@ const stateAttr = require(__dirname + '/lib/stateAttr.js'); // Load attribute li
 const disableSentry = true; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
 const client = {};
-let reconnectTimer, discoveryTimer, mdnsBrowser;
+let reconnectTimer, discoveryTimer, mdnsBrowser, reconnectInterval, scanInterval, apiPass, autodiscovery;
 
 // Load your modules here, e.g.:
 // const fs = require("fs");
@@ -46,9 +46,15 @@ class Esphome extends utils.Adapter {
 	async onReady() {
 		await this.setStateAsync('info.connection', {val: true, ack: true});
 		try {
+			apiPass =  this.config.apiPass;
+			autodiscovery =  this.config.autodiscovery;
+			reconnectInterval = this.config.reconnectInterval * 1000;
+			scanInterval = this.config.scanInterval * 1000;
 			await this.tryKnownDevices(); // Try to establish connection to already known devices
 			this.connectionMonitor(); // Start connection monitor
-			this.deviceDiscovery(); // Start MDNS autodiscovery
+			if (autodiscovery){
+				this.deviceDiscovery(); // Start MDNS autodiscovery
+			}
 		} catch (e) {
 			this.log.error(`Connection issue ${e}`);
 		}
@@ -77,7 +83,7 @@ class Esphome extends utils.Adapter {
 							ip: data.addresses,
 							passWord: 'MyPassword'
 						};
-						this.connectDevices(`${data.addresses}`,`MyPassword`);
+						this.connectDevices(`${data.addresses}`,`${apiPass}`);
 					}
 				}
 			}
@@ -86,9 +92,9 @@ class Esphome extends utils.Adapter {
 		function mdnsRun() {
 			console.log(`Execute [AutoDiscovery]`);
 			mdnsBrowser.discover();
-			discoveryTimer = setTimeout(async function () {
+			discoveryTimer = setTimeout( function () {
 				mdnsRun();
-			}, 30000); //ToDo: Make configurable in admin
+			}, scanInterval);
 		}
 		// start timer
 		mdnsRun();
@@ -134,8 +140,8 @@ class Esphome extends utils.Adapter {
 					}
 				}
 				this.connectionMonitor();
-			}, 10000); //ToDo: Make configurable in admin
-		}catch (e) {
+			}, reconnectInterval);
+		} catch (e) {
 			console.error(e);
 		}
 
