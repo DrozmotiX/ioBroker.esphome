@@ -49,11 +49,16 @@ class Esphome extends utils.Adapter {
 			apiPass =  this.config.apiPass;
 			autodiscovery =  this.config.autodiscovery;
 			reconnectInterval = this.config.reconnectInterval * 1000;
+
 			await this.tryKnownDevices(); // Try to establish connection to already known devices
+
 			this.connectionMonitor(); // Start connection monitor
+
+			// Start MDNS discovery when enabled
 			if (autodiscovery){
 				this.deviceDiscovery(); // Start MDNS autodiscovery
 			}
+
 		} catch (e) {
 			this.log.error(`Connection issue ${e}`);
 		}
@@ -93,14 +98,11 @@ class Esphome extends utils.Adapter {
 	// Try to contact to contact and read data of already known devices
 	async tryKnownDevices() {
 		try {
-		const knownDevices = await this.getDevicesAsync();
-		if (!knownDevices) {
-			this.log.warn(`No device configured, please add device in adapter configuration`);
-			return;
-		} // exit function if no known device are detected
+			const knownDevices = await this.getDevicesAsync();
+			if (!knownDevices) return;
 
-		// Get basic data of known devices and start reading data
-		for (const i in knownDevices) {
+			// Get basic data of known devices and start reading data
+			for (const i in knownDevices) {
 			this.deviceInfo[knownDevices[i].native.ip] = {
 				ip: knownDevices[i].native.ip,
 				mac: knownDevices[i].native.mac,
@@ -237,8 +239,6 @@ class Esphome extends utils.Adapter {
 						},
 					});
 
-
-
 					// Read JSON and handle states
 					await this.TraverseJson(deviceInfo, `${deviceName}.info`);
 
@@ -313,7 +313,6 @@ class Esphome extends utils.Adapter {
 					// Listen to state changes an write values to states (create state if not yet exists)
 					entity.on(`state`, async (state) => {
 						try {
-							// this.log.error(`${this.entities[state.key].type} value of ${this.entities[state.key].config.name} change to ${state.state}`);
 							this.log.debug(`[entityStateConfig] ${JSON.stringify(this.deviceInfo[host][entity.id])}`);
 							this.log.debug(`[entityStateData] ${JSON.stringify(state)}`);
 
@@ -534,44 +533,11 @@ class Esphome extends utils.Adapter {
 
 			// // Set value to state
 			if (value != null) {
-				// 	//this.log.info('Common.mofiy: ' + JSON.stringify(common.modify));
-				// 	if (common.modify != '' && typeof common.modify == 'string') {
-				// 		this.log.info(`Value "${value}" for name "${objName}" before function modify with method "${common.modify}"`);
-				// 		value = modify(common.modify, value);
-				// 		this.log.info(`Value "${value}" for name "${objName}" after function modify with method "${common.modify}"`);
-				// 	} else if (typeof common.modify == 'object') {
-				// 		for (let i of common.modify) {
-				// 			this.log.info(`Value "${value}" for name "${objName}" before function modify with method "${i}"`);
-				// 			value = modify(i, value);
-				// 			this.log.info(`Value "${value}" for name "${objName}" after function modify with method "${i}"`);
-				// 		}
-				// 	}
-
 				await this.setStateAsync(objName, {
 					val: value,
 					ack: true
 				});
 			}
-
-			// // Timer to set online state to FALSE when not updated
-			// if (name === 'online') {
-			// 	// Clear running timer
-			// 	if (stateExpire[objName]) {
-			// 		clearTimeout(stateExpire[objName]);
-			// 		stateExpire[objName] = null;
-			// 	}
-			//
-			// 	// timer
-			// 	stateExpire[objName] = setTimeout(async () => {
-			// 		await this.setStateAsync(objName, {
-			// 			val: false,
-			// 			ack: true,
-			// 		});
-			// 		this.log.info('Online state expired for ' + objName);
-			// 	}, this.executioninterval * 1000 + 5000);
-			// 	this.log.debug('Expire time set for state : ' + name + ' with time in seconds : ' + (this.executioninterval + 5));
-			// }
-
 			// Subscribe on state changes if writable
 			common.write && this.subscribeStates(objName);
 
