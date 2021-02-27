@@ -71,7 +71,15 @@
 			}
 		]
 	},
-	"native": {},
+  	"encryptedNative": [
+		"mdns_pass"
+  	],
+  "native": {
+	"reconnect_interval": "30",
+	"scan_interval": "60",
+	"mdns_pass": "",
+	"mdns_enabled": true
+	},
 	"objects": [],
 	"instanceObjects": [
 		{
