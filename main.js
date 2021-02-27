@@ -63,12 +63,6 @@ class Esphome extends utils.Adapter {
 	// MDNS discovery handler for ESPHome devices
 	deviceDiscovery(){
 		mdnsBrowser = Mdns.createBrowser();
-
-		// Run discovery first time
-		mdnsBrowser.on('ready', function () {
-			mdnsRun();
-		});
-
 		mdnsBrowser.on('update', (data) => {
 			this.log.debug('Discovery answer: ' + JSON.stringify(data));
 			if (!data.addresses || !data.addresses[0] || !data.type) return;
@@ -81,23 +75,16 @@ class Esphome extends utils.Adapter {
 						// Store new Device information to device array in memory
 						this.deviceInfo[data.addresses] = {
 							ip: data.addresses,
-							passWord: 'MyPassword'
+							passWord: apiPass
 						};
 						this.connectDevices(`${data.addresses}`,`${apiPass}`);
 					}
 				}
 			}
 		});
-
-		function mdnsRun() {
-			console.log(`Execute [AutoDiscovery]`);
+		mdnsBrowser.on('ready', function () {
 			mdnsBrowser.discover();
-			discoveryTimer = setTimeout( function () {
-				mdnsRun();
-			}, scanInterval);
-		}
-		// start timer
-		mdnsRun();
+		});
 	}
 
 	// Try to contact to contact and read data of already known devices
