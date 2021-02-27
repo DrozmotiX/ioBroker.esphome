@@ -72,6 +72,16 @@ switch:
 
 ## Changelog
 
+<!--
+    Placeholder for the next version (at the beginning of the line):
+    ### __WORK IN PROGRESS__
+-->
+
+### __WORK IN PROGRESS__
+* (DutchmanNL) Autodiscovery implemented
+* (DutchmanNL) Solved reconnection issues
+* (DutchmanNL & @xXBJXx) Adapter configuration page optimised
+
 ### 0.0.1
 * (DutchmanNL) initial release
 

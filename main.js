@@ -67,32 +67,32 @@ class Esphome extends utils.Adapter {
 	// MDNS discovery handler for ESPHome devices
 	deviceDiscovery(){
 		try {
-		mdnsBrowser = Mdns.createBrowser();
-		mdnsBrowser.on('update', (data) => {
+			mdnsBrowser = Mdns.createBrowser();
+			mdnsBrowser.on('update', (data) => {
 				this.log.debug('[AutoDiscovery] Discovery answer: ' + JSON.stringify(data));
-			if (!data.addresses || !data.addresses[0] || !data.type) return;
-			for (let i = 0; i < data.type.length; i++) {
-				if (data.type[i].name === 'esphomelib') {
+				if (!data.addresses || !data.addresses[0] || !data.type) return;
+				for (let i = 0; i < data.type.length; i++) {
+					if (data.type[i].name === 'esphomelib') {
 						this.log.debug(`[AutoDiscovery] ESPHome device found at IP ${data.addresses}`);
-					// Verify if device is already known
-					if (this.deviceInfo[data.addresses] == null){
-						this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${data.addresses}`);
-						// Store new Device information to device array in memory
-						this.deviceInfo[data.addresses] = {
-							ip: data.addresses,
-							passWord: apiPass
-						};
-						this.connectDevices(`${data.addresses}`,`${apiPass}`);
+						// Verify if device is already known
+						if (this.deviceInfo[data.addresses] == null){
+							this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${data.addresses}`);
+							// Store new Device information to device array in memory
+							this.deviceInfo[data.addresses] = {
+								ip: data.addresses,
+								passWord: apiPass
+							};
+							this.connectDevices(`${data.addresses}`,`${apiPass}`);
+						}
 					}
 				}
-			}
-		});
-		mdnsBrowser.on('ready', function () {
-			mdnsBrowser.discover();
-		});
+			});
+			mdnsBrowser.on('ready', function () {
+				mdnsBrowser.discover();
+			});
 		} catch (e) {
 			this.sendSentry(`[deviceDiscovery] ${e}`);
-	}
+		}
 	}
 
 	// Try to contact to contact and read data of already known devices
@@ -103,12 +103,12 @@ class Esphome extends utils.Adapter {
 
 			// Get basic data of known devices and start reading data
 			for (const i in knownDevices) {
-			this.deviceInfo[knownDevices[i].native.ip] = {
-				ip: knownDevices[i].native.ip,
-				mac: knownDevices[i].native.mac,
-				deviceName: knownDevices[i].native.deviceName,
-				deviceInfoName: knownDevices[i].native.name,
-				passWord: knownDevices[i].native.passWord,
+				this.deviceInfo[knownDevices[i].native.ip] = {
+					ip: knownDevices[i].native.ip,
+					mac: knownDevices[i].native.mac,
+					deviceName: knownDevices[i].native.deviceName,
+					deviceInfoName: knownDevices[i].native.name,
+					passWord: knownDevices[i].native.passWord,
 				};
 				this.connectDevices(knownDevices[i].native.ip, knownDevices[i].native.passWord);
 			}
@@ -304,7 +304,6 @@ class Esphome extends utils.Adapter {
 
 					// Handle Entity JSON structure and write related config channel data
 					await this.TraverseJson(entity.config, `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`);
-					const stateName = this.deviceInfo[host][entity.id].config.objectId !== undefined ? this.deviceInfo[host][entity.id].config.objectId || 'state' : 'state';
 
 					// Request current state values
 					await client[host].connection.subscribeStatesService();
@@ -316,29 +315,27 @@ class Esphome extends utils.Adapter {
 							this.log.debug(`[entityStateConfig] ${JSON.stringify(this.deviceInfo[host][entity.id])}`);
 							this.log.debug(`[entityStateData] ${JSON.stringify(state)}`);
 
-							// Round value to digits as known by configuration
-							let stateVal = state.state;
-
-							if (this.deviceInfo[host][entity.id].config.accuracyDecimals != null) {
-								const rounding = `round(${this.deviceInfo[host][entity.id].config.accuracyDecimals })`;
-								this.log.debug(`Value "${stateVal}" for name "${entity}" before function modify with method "round(${this.deviceInfo[host][entity.id].config.accuracyDecimals})"`);
-								stateVal = this.modify(rounding, stateVal);
-								this.log.debug(`Value "${stateVal}" for name "${entity}" after function modify with method "${rounding}"`);
-							}
-
 							// Ensure proper initialisation of the state
-							if (this.deviceInfo[host][entity.id].stateName == null) {
-								let writable = false;
-								if (this.deviceInfo[host][entity.id].type === `Switch`){
-									writable = true;
-								}
-								this.deviceInfo[host][entity.id].stateName = `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`;
-								await this.stateSetCreate( `${this.deviceInfo[host][entity.id].stateName}`, `value of ${entity.type}`, stateVal, this.deviceInfo[host][entity.id].unit, writable);
-								// await this.setStateAsync(`${this.deviceInfo[host][entity.id].stateName}`, {val: stateVal, ack: true});
-							}
+							switch (this.deviceInfo[host][entity.id].type) {
+								case 'BinarySensor':
+									await this.handleRegularState(`${host}`, entity, state, false );
+									break;
 
-							// State is already known, only update values
-							await this.setStateAsync(`${this.deviceInfo[host][entity.id].stateName}`, {val: stateVal, ack: true});
+								case 'Sensor':
+									await this.handleRegularState(`${host}`, entity, state, false );
+									break;
+
+								case 'Switch':
+									await this.handleRegularState(`${host}`, entity, state, true );
+									break;
+
+								default:
+
+									this.log.warn(`DeviceType ${this.deviceInfo[host][entity.id].type} not yet supported`);
+									this.log.warn(`Please submit git issue with all information from next line`);
+									this.log.warn(`DeviceType ${this.deviceInfo[host][entity.id].type} | State-Keys ${JSON.stringify(state)}`);
+
+							}
 
 						} catch (e) {
 							this.log.error(`State handle error ${e}`);
@@ -399,6 +396,33 @@ class Esphome extends utils.Adapter {
 			this.log.error(`ESP device error for ${host}`);
 		}
 
+	}
+
+	/**
+	 * Handle regular state values
+	 * @param {string} host IP-Address of client
+	 * @param {object} entity Entity-Object of value
+	 * @param {object} state State-Object
+	 * @param {boolean} writable Indicate if state should be writable
+	 */
+	async handleRegularState(host, entity, state, writable){
+		const stateName = this.deviceInfo[host][entity.id].config.objectId !== undefined ? this.deviceInfo[host][entity.id].config.objectId || 'state' : 'state';
+		// Round value to digits as known by configuration
+		let stateVal = state.state;
+
+		if (this.deviceInfo[host][entity.id].config.accuracyDecimals != null) {
+			const rounding = `round(${this.deviceInfo[host][entity.id].config.accuracyDecimals })`;
+			this.log.debug(`Value "${stateVal}" for name "${entity}" before function modify with method "round(${this.deviceInfo[host][entity.id].config.accuracyDecimals})"`);
+			stateVal = this.modify(rounding, stateVal);
+			this.log.debug(`Value "${stateVal}" for name "${entity}" after function modify with method "${rounding}"`);
+		}
+		if (this.deviceInfo[host][entity.id].stateName == null) {
+			this.deviceInfo[host][entity.id].stateName = `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`;
+			await this.stateSetCreate( `${this.deviceInfo[host][entity.id].stateName}`, `value of ${entity.type}`, stateVal, this.deviceInfo[host][entity.id].unit, writable);
+		}
+
+		// State is already known, only update values
+		await this.setStateAsync(`${this.deviceInfo[host][entity.id].stateName}`, {val: stateVal, ack: true});
 	}
 
 	/**
@@ -667,44 +691,44 @@ class Esphome extends utils.Adapter {
 			switch (obj.command) {
 				case 'removeDevice':
 					await this.deleteDeviceAsync(`${obj.message}`)
-					.catch(async error => {
-						if (error !== 'Not exists') {
-							this.log.error(`deleteDeviceAsync has a problem: ${error.message}, stack: ${error.stack}`);
-						}
-						else {
-							// do nothing
-						}
-					});
+						.catch(async error => {
+							if (error !== 'Not exists') {
+								this.log.error(`deleteDeviceAsync has a problem: ${error.message}, stack: ${error.stack}`);
+							}
+							else {
+								// do nothing
+							}
+						});
 
-				break;
+					break;
 
-			case 'addDevice':
+				case 'addDevice':
 
-				// eslint-disable-next-line no-case-declarations,no-inner-declarations
-				function validateIPaddress(ipaddress)
-				{
-					if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress))
+					// eslint-disable-next-line no-case-declarations,no-inner-declarations
+					function validateIPaddress(ipaddress)
 					{
-						return (true);
+						if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress))
+						{
+							return (true);
+						}
+						return (false);
 					}
-					return (false);
-				}
 
-				// eslint-disable-next-line no-case-declarations
-				const ipValid = validateIPaddress(obj.message['device-ip']);
-				if (!ipValid) {
-					this.log.warn(`You entered an incorrect IP-Address, cannot add device !`);
+					// eslint-disable-next-line no-case-declarations
+					const ipValid = validateIPaddress(obj.message['device-ip']);
+					if (!ipValid) {
+						this.log.warn(`You entered an incorrect IP-Address, cannot add device !`);
 
-					const massageObj = {
-						'type': 'error',
-						'message': 'connection failed'
-					};
-					// @ts-ignore
-					this.respond(massageObj, obj);
+						const massageObj = {
+							'type': 'error',
+							'message': 'connection failed'
+						};
+						// @ts-ignore
+						this.respond(massageObj, obj);
 
-				} else {
-					this.log.info(`Valid IP address received`);
-					this.messageResponse[obj.message['device-ip']] = obj;
+					} else {
+						this.log.info(`Valid IP address received`);
+						this.messageResponse[obj.message['device-ip']] = obj;
 						await this.connectDevices(obj.message['device-ip'],obj.message['device-pass']);
 					}
 					break;
@@ -736,7 +760,9 @@ class Esphome extends utils.Adapter {
 				// this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
 				const device = id.split('.');
 				const deviceIP = this.deviceStateRelation[device[2]].ip;
-				await client[deviceIP].connection.switchCommandService({key: device[4], state: state.val});
+				if (this.deviceInfo[deviceIP][device[4]].type === `Switch`) {
+					await client[deviceIP].connection.switchCommandService({key: device[4], state: state.val});
+				}
 			} else {
 				// The state was deleted
 			}

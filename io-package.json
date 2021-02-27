@@ -1,7 +1,7 @@
 {
 	"common": {
 		"name": "esphome",
-		"version": "0.0.1",
+		"version": "0.0.2-Alpha.0",
 		"news": {
 			"0.0.1": {
 				"en": "initial release",
