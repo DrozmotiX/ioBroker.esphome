@@ -214,17 +214,24 @@ class Esphome extends utils.Adapter {
 						},
 					});
 
-					// Check if device connection is caused by adding  device from admin, if yes send OK message
-					if (this.messageResponse[host]) {
-						this.respond(`success`, this.messageResponse[host]);
-						this.messageResponse[host] = null;
-					}
+
 
 					// Read JSON and handle states
 					await this.TraverseJson(deviceInfo, `${deviceName}.info`);
 
 					// Create connection indicator at device info channel
 					await this.stateSetCreate(`${deviceName}.info._online`, `Online state`, true);
+
+					// Check if device connection is caused by adding  device from admin, if yes send OK message
+					if (this.messageResponse[host]) {
+						const massageObj = {
+							'type': 'info',
+							'message': 'success'
+						};
+						// @ts-ignore
+						this.respond(massageObj, this.messageResponse[host]);
+						this.messageResponse[host] = null;
+					}
 
 				} catch (e) {
 					this.log.error(`deviceInfo ${host} ${e}`);
@@ -341,7 +348,13 @@ class Esphome extends utils.Adapter {
 				this.log.error(`ESPHome client ${error} `);
 				// Check if device connection is caused by adding  device from admin, if yes send OK message
 				if (this.messageResponse[host]) {
-					this.respond(`failed`, this.messageResponse[host]);
+
+					const massageObj = {
+						'type': 'error',
+						'message': 'connection failed'
+					};
+					// @ts-ignore
+					this.respond(massageObj, this.messageResponse[host]);
 					this.messageResponse[host] = null;
 				}
 			});
@@ -492,18 +505,18 @@ class Esphome extends utils.Adapter {
 
 			// // Set value to state
 			if (value != null) {
-			// 	//this.log.info('Common.mofiy: ' + JSON.stringify(common.modify));
-			// 	if (common.modify != '' && typeof common.modify == 'string') {
-			// 		this.log.info(`Value "${value}" for name "${objName}" before function modify with method "${common.modify}"`);
-			// 		value = modify(common.modify, value);
-			// 		this.log.info(`Value "${value}" for name "${objName}" after function modify with method "${common.modify}"`);
-			// 	} else if (typeof common.modify == 'object') {
-			// 		for (let i of common.modify) {
-			// 			this.log.info(`Value "${value}" for name "${objName}" before function modify with method "${i}"`);
-			// 			value = modify(i, value);
-			// 			this.log.info(`Value "${value}" for name "${objName}" after function modify with method "${i}"`);
-			// 		}
-			// 	}
+				// 	//this.log.info('Common.mofiy: ' + JSON.stringify(common.modify));
+				// 	if (common.modify != '' && typeof common.modify == 'string') {
+				// 		this.log.info(`Value "${value}" for name "${objName}" before function modify with method "${common.modify}"`);
+				// 		value = modify(common.modify, value);
+				// 		this.log.info(`Value "${value}" for name "${objName}" after function modify with method "${common.modify}"`);
+				// 	} else if (typeof common.modify == 'object') {
+				// 		for (let i of common.modify) {
+				// 			this.log.info(`Value "${value}" for name "${objName}" before function modify with method "${i}"`);
+				// 			value = modify(i, value);
+				// 			this.log.info(`Value "${value}" for name "${objName}" after function modify with method "${i}"`);
+				// 		}
+				// 	}
 
 				await this.setStateAsync(objName, {
 					val: value,
@@ -657,25 +670,53 @@ class Esphome extends utils.Adapter {
 	 */
 	async onMessage(obj) {
 		this.log.info('Data from configuration received : ' + JSON.stringify(obj));
+		switch (obj.command) {
+			case 'removeDevice':
+				await this.deleteDeviceAsync(`${obj.message}`)
+					.catch(async error => {
+						if (error !== 'Not exists') {
+							this.log.error(`deleteDeviceAsync has a problem: ${error.message}, stack: ${error.stack}`);
+						}
+						else {
+							// do nothing
+						}
+					});
 
-		function validateIPaddress(ipaddress)
-		{
-			if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress))
-			{
-				return (true);
-			}
-			return (false);
+				break;
+
+			case 'addDevice':
+
+				// eslint-disable-next-line no-case-declarations,no-inner-declarations
+				function validateIPaddress(ipaddress)
+				{
+					if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress))
+					{
+						return (true);
+					}
+					return (false);
+				}
+
+				// eslint-disable-next-line no-case-declarations
+				const ipValid = validateIPaddress(obj.message['device-ip']);
+				if (!ipValid) {
+					this.log.warn(`You entered an incorrect IP-Address, cannot add device !`);
+
+					const massageObj = {
+						'type': 'error',
+						'message': 'connection failed'
+					};
+					// @ts-ignore
+					this.respond(massageObj, obj);
+
+				} else {
+					this.log.info(`Valid IP address received`);
+					this.messageResponse[obj.message['device-ip']] = obj;
+					await this.connectDevices(obj.message['device-ip'],obj.message['device-pass']);
+				}
+				break;
+
 		}
 
-		const ipValid = validateIPaddress(obj.message['device-ip']);
-		if (!ipValid) {
-			this.log.warn(`You entered an incorrect IP-Address, cannot add device !`);
-			this.respond('failed', obj);
-		} else {
-			this.log.info(`Valid IP address received`);
-			this.messageResponse[obj.message['device-ip']] = obj;
-			await this.connectDevices(obj.message['device-ip'],obj.message['device-pass']);
-		}
 	}
 
 	// responds to the adapter that sent the original message
