@@ -80,6 +80,7 @@ switch:
 ### __WORK IN PROGRESS__
 * (DutchmanNL) Autodiscovery implemented
 * (DutchmanNL) Type Climat added
+* (DutchmanNL) Type TextSensor added
 * (DutchmanNL) Solved reconnection issues
 * (DutchmanNL) Optimized error messages for unknown types
 * (DutchmanNL & @xXBJXx) Adapter configuration page optimized
