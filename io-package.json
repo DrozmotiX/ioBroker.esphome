@@ -72,10 +72,10 @@
 		]
 	},
   "native": {
-	"reconnect_interval": 30,
-	"scan_interval": 60,
-	"mdns_pass": "",
-	"mdns_enabled": true
+	"reconnectInterval": 30,
+	"scanInterval": 60,
+	"apiPass": "",
+	"autodiscovery": true
 	},
 	"objects": [],
 	"instanceObjects": [

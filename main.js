@@ -8,12 +8,12 @@
 // you need to create an adapter
 const utils = require('@iobroker/adapter-core');
 const { Client } = require('esphome-native-api');
-const Mdns = require('mdns-discovery');
+const Mdns = require('mdns-js');
 const stateAttr = require(__dirname + '/lib/stateAttr.js'); // Load attribute library
 const disableSentry = true; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
 const client = {};
-let reconnectTimer, discoveryTimer, mdns;
+let reconnectTimer, discoveryTimer, mdnsBrowser, reconnectInterval, scanInterval, apiPass, autodiscovery;
 
 // Load your modules here, e.g.:
 // const fs = require("fs");
@@ -46,9 +46,15 @@ class Esphome extends utils.Adapter {
 	async onReady() {
 		await this.setStateAsync('info.connection', {val: true, ack: true});
 		try {
+			apiPass =  this.config.apiPass;
+			autodiscovery =  this.config.autodiscovery;
+			reconnectInterval = this.config.reconnectInterval * 1000;
+			scanInterval = this.config.scanInterval * 1000;
 			await this.tryKnownDevices(); // Try to establish connection to already known devices
 			this.connectionMonitor(); // Start connection monitor
-			this.deviceDiscovery(); // Start MDNS autodiscovery
+			if (autodiscovery){
+				this.deviceDiscovery(); // Start MDNS autodiscovery
+			}
 		} catch (e) {
 			this.log.error(`Connection issue ${e}`);
 		}
@@ -56,29 +62,29 @@ class Esphome extends utils.Adapter {
 
 	// MDNS discovery handler for ESPHome devices
 	deviceDiscovery(){
-		mdns = new Mdns({
-			timeout: 10,
-			name: [
-				'_esphomelib._tcp.local',
-			],
-			find: '*',
-		});
-		mdns.on('packet', (packets, entry) => {
-			this.log.debug(`ESPHome device found at IP ${entry.address}`);
-			// Verify if device is already known, if not add to scan array and try to connect
-			if (this.deviceInfo[entry.address] == null){
-				this.log.debug(`[AutoDiscovery] New ESPHome device found at IP ${entry.address}`);
-				// this.connectDevices(`${entry.address}`,`MyPassword`);
+		mdnsBrowser = Mdns.createBrowser();
+		mdnsBrowser.on('update', (data) => {
+			this.log.debug('Discovery answer: ' + JSON.stringify(data));
+			if (!data.addresses || !data.addresses[0] || !data.type) return;
+			for (let i = 0; i < data.type.length; i++) {
+				if (data.type[i].name === 'esphomelib') {
+					this.log.info(`[AutoDiscovery] ESPHome device found at IP ${data.addresses}`);
+					// Verify if device is already known
+					if (this.deviceInfo[data.addresses] == null){
+						this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${data.addresses}`);
+						// Store new Device information to device array in memory
+						this.deviceInfo[data.addresses] = {
+							ip: data.addresses,
+							passWord: apiPass
+						};
+						this.connectDevices(`${data.addresses}`,`${apiPass}`);
+					}
+				}
 			}
 		});
-		function mdnsRun(){
-			mdns.run();
-			discoveryTimer = setTimeout(async function () {
-				mdnsRun();
-			}, 60000); //ToDo: Make configurable in admin
-		}
-		// start timer
-		mdnsRun();
+		mdnsBrowser.on('ready', function () {
+			mdnsBrowser.discover();
+		});
 	}
 
 	// Try to contact to contact and read data of already known devices
@@ -105,17 +111,27 @@ class Esphome extends utils.Adapter {
 
 	// Connection monitor/reconnect if connection to device is lost
 	connectionMonitor(){
-		reconnectTimer = setTimeout(() => {
-			// Get basic data of known devices and start reading data
-			for (const i in this.deviceInfo) {
-				const connected = client[this.deviceInfo[i].ip].connected;
-				this.log.debug(`${this.deviceInfo[i].ip} connection : ${connected}`);
-				if (!connected){
-					this.connectDevices(this.deviceInfo[i].ip, this.deviceInfo[i].passWord);
+		try {
+			reconnectTimer = setTimeout(() => {
+				// Get basic data of known devices and start reading data
+				for (const i in this.deviceInfo) {
+					// Check if a connection instance exists, otherwise try to connect
+					if (client[this.deviceInfo[i].ip]) {
+						const connected = client[this.deviceInfo[i].ip].connected;
+						this.log.debug(`${this.deviceInfo[i].ip} connection : ${connected}`);
+						if (!connected){
+							this.connectDevices(this.deviceInfo[i].ip, this.deviceInfo[i].passWord);
+						}
+					} else {
+						this.connectDevices(this.deviceInfo[i].ip, this.deviceInfo[i].passWord);
+					}
 				}
-			}
-			this.connectionMonitor();
-		}, 10000); //ToDo: Make configurable in admin
+				this.connectionMonitor();
+			}, reconnectInterval);
+		} catch (e) {
+			console.error(e);
+		}
+
 	}
 
 	// Handle Socket connections
@@ -291,7 +307,8 @@ class Esphome extends utils.Adapter {
 					entity.on(`state`, async (state) => {
 						try {
 							// this.log.error(`${this.entities[state.key].type} value of ${this.entities[state.key].config.name} change to ${state.state}`);
-							this.log.debug(`[entityStateData] ${JSON.stringify(this.deviceInfo[host][entity.id])}`);
+							this.log.debug(`[entityStateConfig] ${JSON.stringify(this.deviceInfo[host][entity.id])}`);
+							this.log.debug(`[entityStateData] ${JSON.stringify(state)}`);
 
 							// Round value to digits as known by configuration
 							let stateVal = state.state;
@@ -311,7 +328,7 @@ class Esphome extends utils.Adapter {
 								}
 								this.deviceInfo[host][entity.id].stateName = `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`;
 								await this.stateSetCreate( `${this.deviceInfo[host][entity.id].stateName}`, `value of ${entity.type}`, stateVal, this.deviceInfo[host][entity.id].unit, writable);
-								await this.setStateAsync(`${this.deviceInfo[host][entity.id].stateName}`, {val: stateVal, ack: true});
+								// await this.setStateAsync(`${this.deviceInfo[host][entity.id].stateName}`, {val: stateVal, ack: true});
 							}
 
 							// State is already known, only update values
@@ -345,7 +362,7 @@ class Esphome extends utils.Adapter {
 
 			// Connection data handler
 			client[host].on('error', (error) => {
-				this.log.error(`ESPHome client ${error} `);
+				this.log.error(`ESPHome client ${host} ${error} `);
 				// Check if device connection is caused by adding  device from admin, if yes send OK message
 				if (this.messageResponse[host]) {
 
@@ -356,6 +373,11 @@ class Esphome extends utils.Adapter {
 					// @ts-ignore
 					this.respond(massageObj, this.messageResponse[host]);
 					this.messageResponse[host] = null;
+				}
+				try {
+					client[host].disconnect();
+				}  catch (e) {
+					console.error(e);
 				}
 			});
 
@@ -649,7 +671,7 @@ class Esphome extends utils.Adapter {
 					this.log.debug(`[onUnload] ${JSON.stringify(e)}`);
 				}
 			}
-			mdns.close();
+			mdnsBrowser.stop();
 			if (reconnectTimer){
 				reconnectTimer = clearTimeout();
 			}

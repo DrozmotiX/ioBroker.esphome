@@ -20,7 +20,7 @@
   "dependencies": {
     "@iobroker/adapter-core": "^2.4.0",
     "esphome-native-api": "^1.0.7",
-    "mdns-discovery": "^0.2.6"
+    "mdns-js": "^1.0.3"
   },
   "devDependencies": {
     "@iobroker/testing": "^2.4.2",

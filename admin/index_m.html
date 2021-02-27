@@ -12,7 +12,7 @@
 	<script type="text/javascript" src="../../js/translate.js"></script>
 	<script type="text/javascript" src="../../lib/js/materialize.js"></script>
 	<script type="text/javascript" src="../../js/adapter-settings.js"></script>
-    
+
     <!-- Load our own files -->
 	<link rel="stylesheet" type="text/css" href="style.css"/>
 	<script type="text/javascript" src="words.js"></script>
@@ -20,10 +20,9 @@
 	<script type="text/javascript">
 
 		let _onChange;
-        
+
         // Create secrect for encrypted password storage
         let secret;
-     
         function decrypt(key, value) {
             var result = '';
             for (var i = 0; i < value.length; ++i) {
@@ -31,7 +30,7 @@
             }
             return result;
         }
-        
+
         // Build table based on devices known in instance
         function loadTable(obj) {
             let index = 0;
@@ -52,17 +51,17 @@
                 }
             }
             $('#devices').append(text);
-            
+
             $('.delete-table-row').on('click', (event) => {
                 console.log('delete');
                 $(event.currentTarget).parentsUntil('tr').parent().remove();
             });
-            
-            
+
+
             getConnectedState();
             $('input, .delete-device').each(function () {
                 let $key = $(this);
-                
+
                 $key.on('click', function () {
                     _onChange();
                 }).keyup(function () {
@@ -75,12 +74,12 @@
                 });
             });
         }
-        
+
         function editIPAddress(index) {
             // let deviceObj
             socket.emit('getObjectView', 'system', 'device', {startkey: 'esphome.' + instance + '.', endkey: 'esphome.' + instance + '.\u9999', include_docs: true}, function (err, _devices) {
                 console.log('Return of  all devices : ' + JSON.stringify(_devices));
-                
+
                 let text = '';
                 text += `
                     <div class="input-field col s3">
@@ -94,23 +93,23 @@
                 $(`#edit_device_container`).html(text);
             });
         }
-        
+
         function delete_device(device_id) {
             console.log('test' + device_id);
-            
+
             sendTo(null, 'removeDevice', device_id, (data) => {
             });
         }
-        
+
         // Get value of connection state
         function getConnectedState() {
-            
+
             socket.emit('getObjectView', 'system', 'device', {startkey: 'esphome.' + instance + '.', endkey: 'esphome.' + instance + '.\u9999', include_docs: true}, function (err, _devices) {
                 let namespace = 'esphome.' + instance + '.';
                 let len = namespace.length;
                 console.log('Return of  all devices : ' + JSON.stringify(_devices));
                 if (_devices && _devices.rows && _devices.rows.length) {
-                    
+
                     for (const i in _devices.rows) {
                         getState(_devices.rows[i].id + '.info._online', (err, state) => {
                             console.log(JSON.stringify('Connection value for device : ' + _devices.rows[i].id + ' value ' + state.val));
@@ -121,13 +120,13 @@
                             else {
                                 connectState = 'led-red';
                             }
-                            
+
                             console.log(connectState);
                             let tableRow = $('td').filter((index, e) => {
                                 console.log(e);
                                 return $(e).text() === _devices.rows[i].value.native.deviceName;
                             }).closest('tr');
-                            
+
                             console.log($(tableRow).attr('id'));
                             $('#' + $(tableRow).attr('id') + '> td > .led-all').removeClass('led-gray');
                             $('#' + $(tableRow).attr('id') + '> td > .led-all').addClass(connectState);
@@ -136,10 +135,10 @@
                 }
             });
         }
-        
+
         // This will be called by the admin adapter when the settings page loads
         function loadHelper(settings, onChange) {
-            
+
             _onChange = onChange;
             // example: select elements with id=key and class=value and insert value
             if (!settings) return;
@@ -161,13 +160,13 @@
                             .on('keyup', () => onChange());
                 }
             });
-            
+
             onChange(false);
-            
+
             // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
             M.updateTextFields();
         }
-        
+
         function load(settings, onChange) {
             // example: select elements with id=key and class=value and insert value
             if (!settings) return;
@@ -175,11 +174,11 @@
                 secret = (obj.native ? obj.native.secret : '') || 'Zgfr56gFe87jJOM';
                 loadHelper(settings, onChange);
             });
-            
+
             // initialize modal
             $('.modal').modal();
             emitDevices();
-            
+
             $('#btn-edit-device').on('click', () => {
                 console.log('Add device button executed');
                 messageObj = {
@@ -197,7 +196,7 @@
                     }
                 });
             });
-            
+
             $('#btn-add-device').on('click', () => {
                 console.log('Add device button executed');
                 messageObj = {
@@ -215,28 +214,28 @@
                     }
                 });
             });
-            
+
             onChange(false);
             // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
             if (M) M.updateTextFields();
         }
-        
+
         function errorFunction(data) {
-            
+
             let text = '';
-            
+
             text += `
                 <h5 class="center ${data.type}">${data.type}</h5>
                 <div class="row col s12 center">
                     <p class="break-word" >${data.message}</p>
                 </div>
                 <div class="row"></div>`;
-            
+
             $(`#error_container`).html(text);
-            
+
             $('#modal-error-message').modal('open');
         }
-        
+
         // This will be called by the admin adapter when the user presses the save button
         function save(callback) {
             let obj = {};
@@ -245,9 +244,9 @@
                 i = i + 1;
                 let ip = $('#' + i + '-ip').val();
                 console.log('IP : ' + JSON.stringify(ip));
-                
+
                 // let encrypted = encrypt(secret, password);
-                
+
                 if (!obj.devices) {
                     obj.devices = {1: {ip: ip}};
                     obj.devices = {[ip]: {ip: ip}};
@@ -256,11 +255,11 @@
                 else {
                     obj.devices[ip] = {ip: ip};
                 }
-                
+
                 console.log(JSON.stringify(obj));
             });
             console.log('index: ' + i);
-            
+
             $('.value').each(function () {
                 var $this = $(this);
                 var id = $this.attr('id');
@@ -275,10 +274,10 @@
                     obj[id] = value;
                 }
             });
-            
+
             callback(obj);
         }
-        
+
         // Read all devices from instance
         function emitDevices() {
             socket.emit('getObjectView', 'system', 'device', {startkey: 'esphome.' + instance + '.', endkey: 'esphome.' + instance + '.\u9999', include_docs: true}, function (err, _devices) {
@@ -309,25 +308,25 @@
 				</div>
                 <!-- reconnect interval -->
                 <div class="col s2 input_field input-field">
-                    <label for="reconnect_interval"></label><input type="number" class="value center" id="reconnect_interval" max="3600" min="20" value="30"/>
+                    <label for="reconnectInterval"></label><input type="number" class="value center" id="reconnectInterval" max="3600" min="20" value="30"/>
                     <span class="translate">reconnect interval</span>
                 </div>
                 <!-- end reconnect interval -->
                 <!-- scan interval -->
                 <div class="col s2 input_field input-field">
-                    <label for="scan_interval"></label><input type="number" class="value center" id="scan_interval" max="3600" min="60" value="60"/>
+                    <label for="scanInterval"></label><input type="number" class="value center" id="scanInterval" max="3600" min="60" value="60"/>
                     <span  class="translate">scan interval</span>
                 </div>
                 <!-- end scan interval -->
                 <!-- default Password -->
                 <div class="col s2 input_field input-field">
-                    <label for="mdns_pass"></label><input type="password" class="value" id="mdns_pass" value=""/>
+                    <label for="apiPass"></label><input type="password" class="value" id="apiPass" value=""/>
                     <span class="translate">default Password</span>
                 </div>
                 <!-- end default Password -->
                 <!-- Auto Discovery -->
                 <div class="col s4  input-field">
-                    <label for="mdns_enabled"></label><input type="checkbox" class="value" id="mdns_enabled" checked/>
+                    <label for="autodiscovery"></label><input type="checkbox" class="value" id="autodiscovery" checked/>
                     <span class="translate">Auto Discovery enabled</span>
                 </div>
                 <!-- end Auto Discovery -->
@@ -348,7 +347,7 @@
 					</table>
 				</div>
 			</div>
-            
+
             <!-- Modal for edit input -->
            <div id="modal-edit-device" class="modal">
 				<div class="modal-content">
@@ -362,7 +361,7 @@
 					<button class="btn waves-effect waves-light modal-close modal-action translate">Close</button>
 				</div>
 			</div>
-            
+
             <!-- END for Modal for edit input -->
             <!-- Modal for manual ip input -->
 			<div id="modal-add-device" class="modal">
