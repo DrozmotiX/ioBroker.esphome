@@ -79,8 +79,9 @@ switch:
 
 ### __WORK IN PROGRESS__
 * (DutchmanNL) Autodiscovery implemented
+* (DutchmanNL) Type Climat added
 * (DutchmanNL) Solved reconnection issues
-* (DutchmanNL & @xXBJXx) Adapter configuration page optimised
+* (DutchmanNL & @xXBJXx) Adapter configuration page optimized
 
 ### 0.0.1
 * (DutchmanNL) initial release

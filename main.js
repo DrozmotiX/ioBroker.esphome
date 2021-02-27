@@ -314,11 +314,16 @@ class Esphome extends utils.Adapter {
 						try {
 							this.log.debug(`[entityStateConfig] ${JSON.stringify(this.deviceInfo[host][entity.id])}`);
 							this.log.debug(`[entityStateData] ${JSON.stringify(state)}`);
+							const deviceDetails = `DeviceType ${this.deviceInfo[host][entity.id].type} | State-Keys ${JSON.stringify(state)} | [entityStateConfig] ${JSON.stringify(this.deviceInfo[host][entity.id])}`;
 
 							// Ensure proper initialisation of the state
 							switch (this.deviceInfo[host][entity.id].type) {
 								case 'BinarySensor':
 									await this.handleRegularState(`${host}`, entity, state, false );
+									break;
+
+								case 'Climate':
+									await this.handleClimateState(`${host}`, entity, state);
 									break;
 
 								case 'Sensor':
@@ -333,8 +338,8 @@ class Esphome extends utils.Adapter {
 
 									this.log.warn(`DeviceType ${this.deviceInfo[host][entity.id].type} not yet supported`);
 									this.log.warn(`Please submit git issue with all information from next line`);
-									this.log.warn(`DeviceType ${this.deviceInfo[host][entity.id].type} | State-Keys ${JSON.stringify(state)}`);
-
+									this.log.warn(`DeviceType ${this.deviceInfo[host][entity.id].type} | State-Keys ${JSON.stringify(state)} | [entityStateConfig] ${JSON.stringify(this.deviceInfo[host][entity.id])}`);
+										warnMessages[this.deviceInfo[host][entity.id].type] = deviceDetails;
 							}
 
 						} catch (e) {
@@ -425,8 +430,27 @@ class Esphome extends utils.Adapter {
 		await this.setStateAsync(`${this.deviceInfo[host][entity.id].stateName}`, {val: stateVal, ack: true});
 	}
 
+	async handleClimateState(host, entity, state) {
+
+		this.deviceInfo[host][entity.id].states = state;
+
+		for (const stateName in this.deviceInfo[host][entity.id].states) {
+			let unit = '';
+			let writable  = true;
+			if (stateName === `targetTemperature` || stateName === `targetTemperatureLow` || stateName === `targetTemperatureHigh`) {
+				unit = `°C`;
+			} else if (stateName === `currentTemperature`) {
+				unit = `°C`;
+				writable =  false;
+			}
+			if (stateName !== 'key') {
+				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`, `value of ${entity.type}`, state[stateName], unit, writable);
+			}
+		}
+	}
+
 	/**
-	 * Traeverses the json-object and provides all information for creating/updating states
+	 * Traverses the json-object and provides all information for creating/updating states
 	 * @param {object} jObject Json-object to be added as states
 	 * @param {string | null} parent Defines the parent object in the state tree; default=root
 	 * @param {boolean} replaceName Steers if name from child should be used as name for structure element (channel); default=false
@@ -760,11 +784,16 @@ class Esphome extends utils.Adapter {
 				// this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
 				const device = id.split('.');
 				const deviceIP = this.deviceStateRelation[device[2]].ip;
+
+				// Handle Switch State
 				if (this.deviceInfo[deviceIP][device[4]].type === `Switch`) {
 					await client[deviceIP].connection.switchCommandService({key: device[4], state: state.val});
+
+					// Handle Climate State
+				} else if (this.deviceInfo[deviceIP][device[4]].type === `Climate`) {
+					this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
+					await client[deviceIP].connection.climateCommandService(this.deviceInfo[deviceIP][device[4]].states);
 				}
-			} else {
-				// The state was deleted
 			}
 		} catch (e) {
 			this.log.error(`[onStateChange] ${e}`);
