@@ -145,7 +145,7 @@
             $('.value').each(function () {
                 let $key = $(this);
                 let id = $key.attr('id');
-                if (id === 'mdns_pass') {
+                if (id === 'apiPass') {
                     settings[id] = decrypt(secret, settings[id]);
                 }
                 if ($key.attr('type') === 'checkbox') {
@@ -268,7 +268,7 @@
                 }
                 else {
                     var value = $this.val();
-                    if (id === 'mdns_pass') {
+                    if (id === 'apiPass	') {
                         value = decrypt(secret, value);
                     }
                     obj[id] = value;
