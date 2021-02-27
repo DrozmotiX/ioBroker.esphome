@@ -71,9 +71,6 @@
 			}
 		]
 	},
-  	"encryptedNative": [
-		"mdns_pass"
-  	],
   "native": {
 	"reconnectInterval": 30,
 	"scanInterval": 60,
