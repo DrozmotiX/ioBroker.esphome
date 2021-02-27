@@ -8,6 +8,7 @@
 // you need to create an adapter
 const utils = require('@iobroker/adapter-core');
 const { Client } = require('esphome-native-api');
+const Mdns = require('mdns-discovery');
 const stateAttr = require(__dirname + '/lib/stateAttr.js'); // Load attribute library
 const disableSentry = true; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
@@ -47,9 +48,37 @@ class Esphome extends utils.Adapter {
 		try {
 			await this.tryKnownDevices(); // Try to establish connection to already known devices
 			this.connectionMonitor(); // Start connection monitor
+			this.deviceDiscovery(); // Start MDNS autodiscovery
 		} catch (e) {
 			this.log.error(`Connection issue ${e}`);
 		}
+	}
+
+	// MDNS discovery handler for ESPHome devices
+	deviceDiscovery(){
+		mdns = new Mdns({
+			timeout: 10,
+			name: [
+				'_esphomelib._tcp.local',
+			],
+			find: '*',
+		});
+		mdns.on('packet', (packets, entry) => {
+			this.log.debug(`ESPHome device found at IP ${entry.address}`);
+			// Verify if device is already known, if not add to scan array and try to connect
+			if (this.deviceInfo[entry.address] == null){
+				this.log.debug(`[AutoDiscovery] New ESPHome device found at IP ${entry.address}`);
+				// this.connectDevices(`${entry.address}`,`MyPassword`);
+			}
+		});
+		function mdnsRun(){
+			mdns.run();
+			discoveryTimer = setTimeout(async function () {
+				mdnsRun();
+			}, 60000); //ToDo: Make configurable in admin
+		}
+		// start timer
+		mdnsRun();
 	}
 
 	// Try to contact to contact and read data of already known devices
@@ -607,6 +636,7 @@ class Esphome extends utils.Adapter {
 					this.log.debug(`[onUnload] ${JSON.stringify(e)}`);
 				}
 			}
+			mdns.close();
 			if (reconnectTimer){
 				reconnectTimer = clearTimeout();
 			}
