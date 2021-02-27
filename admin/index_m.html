@@ -22,16 +22,8 @@
 		let _onChange;
         
         // Create secrect for encrypted password storage
-        var secret;
-        
-        function encrypt(key, value) {
-            var result = '';
-            for (var i = 0; i < value.length; ++i) {
-                result += String.fromCharCode(key[i % key.length].charCodeAt(0) ^ value.charCodeAt(i));
-            }
-            return result;
-        }
-        
+        let secret;
+       
         function decrypt(key, value) {
             var result = '';
             for (var i = 0; i < value.length; ++i) {
@@ -237,7 +229,7 @@
                 </div>
                 <div class="row"></div>`;
             
-            $(`#erroe_container`).html(text);
+            $(`#error_container`).html(text);
             
             $('#modal-error-message').modal('open');
         }
@@ -297,29 +289,46 @@
             });
         }
 	</script>
-
 </head>
 
 <body>
-
 	<div class="m adapter-container">
-
 		<div class="row">
 			<div class="col s12 m4 l2">
-				<img src="esphome.png" class="logo">
+				<img src="esphome.png" class="logo" alt='esphome'>
 			</div>
 		</div>
-
 		<div class="section">
 			<h6 class="translate">Please use the ADD Device button to add new ESPHome devices.</h6>
-
 			<div class="row">
-
 				<div class="input-field">
 					<a id="add-device" class="table-button-add col s2 waves-effect waves-light btn btn-large blue modal-trigger translate" data-target="modal-add-device"><i class="large left material-icons">add_circle</i>Add Device</a>
 				</div>
+                <!-- reconnect interval -->
+                <div class="col s2 input_field input-field">
+                    <label for="reconnect_interval"></label><input type="number" class="value center" id="reconnect_interval" max="3600" min="20" value="30"/>
+                    <span class="translate">reconnect interval</span>
+                </div>
+                <!-- end reconnect interval -->
+                <!-- scan interval -->
+                <div class="col s2 input_field input-field">
+                    <label for="scan_interval"></label><input type="number" class="value center" id="scan_interval" max="3600" min="60" value="60"/>
+                    <span  class="translate">scan interval</span>
+                </div>
+                <!-- end scan interval -->
+                <!-- default Password -->
+                <div class="col s2 input_field input-field">
+                    <label for="mdns_pass"></label><input type="password" class="value" id="mdns_pass" value=""/>
+                    <span class="translate">default Password</span>
+                </div>
+                <!-- end default Password -->
+                <!-- Auto Discovery -->
+                <div class="col s4  input-field">
+                    <label for="mdns_enabled"></label><input type="checkbox" class="value" id="mdns_enabled" checked/>
+                    <span class="translate">Auto Discovery enabled</span>
+                </div>
+                <!-- end Auto Discovery -->
 			</div>
-
 			<div class="col s10 m10 l10 xl10 row">
 				<div class="table-values-div">
 					<table class="table-values centered">
@@ -327,12 +336,9 @@
 						<tr>
 							<th class="translate">ID</th>
 							<th class="translate">Name</th>
-							<th class="translate">IP-Adress</th>
+							<th class="translate">IP-Address</th>
 							<th class="translate">Connected</th>
                             <th class="translate">delete</th>
-                            <!--
-                        <th class="translate">Remove</th>
-                        -->
 						</tr>
 						</thead>
 						<tbody id="devices"></tbody>
@@ -350,7 +356,7 @@
 				</div>
 				<div class="modal-footer">
 					<button id="btn-edit-device" class="btn waves-effect waves-light modal-close modal-action translate">Add</button>
-					<button class="btn waves-effect waves-light modal-close modal-action translate" href="#!">Close</button>
+					<button class="btn waves-effect waves-light modal-close modal-action translate">Close</button>
 				</div>
 			</div>
             
@@ -372,29 +378,25 @@
 				</div>
 				<div class="modal-footer">
 					<button id="btn-add-device" class="btn waves-effect waves-light modal-close modal-action translate">Add</button>
-					<button class="btn waves-effect waves-light modal-close modal-action translate" href="#!">Close</button>
+					<button class="btn waves-effect waves-light modal-close modal-action translate">Close</button>
 				</div>
 			</div>
             <!-- END for Modal for manual ip input -->
             <!-- Modal for error message -->
 			<div id="modal-error-message" class="modal">
 				<div class="content">
-                    <div id='erroe_container'>
+                    <div id='error_container'>
                     <!--content-->
 					</div>
 				</div>
 				<div class="row">
 					<div class="center">
-						<button class="btn waves-effect center waves-light modal-close modal-action translate" href="#!">Close</button>
+						<button class="btn waves-effect center waves-light modal-close modal-action translate">Close</button>
 					</div>
 				</div>
 			</div>
             <!-- END for Modal for error message -->
-
 		</div>
-
 	</div>
-
 </body>
-
 </html>
