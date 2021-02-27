@@ -448,6 +448,7 @@ class Esphome extends utils.Adapter {
 			} else if (stateName === `currentTemperature`) {
 				unit = `°C`;
 				writable =  false;
+				this.deviceInfo[host][entity.id].states.currentTemperature = this.modify('round(2)', state[stateName]);;
 			}
 			if (stateName !== 'key') {
 				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`, `value of ${entity.type}`, state[stateName], unit, writable);
