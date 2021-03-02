@@ -414,7 +414,6 @@ class Esphome extends utils.Adapter {
 	 * @param {boolean} writable Indicate if state should be writable
 	 */
 	async handleRegularState(host, entity, state, writable){
-		const stateName = this.deviceInfo[host][entity.id].config.objectId !== undefined ? this.deviceInfo[host][entity.id].config.objectId || 'state' : 'state';
 		// Round value to digits as known by configuration
 		let stateVal = state.state;
 
@@ -424,13 +423,8 @@ class Esphome extends utils.Adapter {
 			stateVal = this.modify(rounding, stateVal);
 			this.log.debug(`Value "${stateVal}" for name "${entity}" after function modify with method "${rounding}"`);
 		}
-		if (this.deviceInfo[host][entity.id].stateName == null) {
-			this.deviceInfo[host][entity.id].stateName = `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`;
-			await this.stateSetCreate( `${this.deviceInfo[host][entity.id].stateName}`, `value of ${entity.type}`, stateVal, this.deviceInfo[host][entity.id].unit, writable);
-		}
 
-		// State is already known, only update values
-		await this.setStateAsync(`${this.deviceInfo[host][entity.id].stateName}`, {val: stateVal, ack: true});
+		await this.setStateAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, {val: stateVal, ack: true});
 	}
 
 	async handleClimateState(host, entity, state) {

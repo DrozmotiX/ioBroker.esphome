@@ -80,6 +80,7 @@ switch:
 ### __WORK IN PROGRESS__
 * (Dutchman) Error messages optimized
 * (Dutchman) Device reconnect handling improved
+* (Dutchman) [Breaking!] Change state name to default "state" for type BinarySensor / Climate / Sensor / TextSensor & Switch  
 * (DutchmanNL) Autodiscovery improved, non-ESPHome devices excluded
 
 ### 0.1.0 (2021-02-27)
