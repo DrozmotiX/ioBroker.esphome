@@ -76,7 +76,7 @@ switch:
     Placeholder for the next version (at the beginning of the line):
     ### __WORK IN PROGRESS__
 -->
-### __WORK IN PROGRESS__
+### 0.1.3 (2021-03-02)
 * (DutchmanNL) Proper value ranges for type light
 
 ### 0.1.2 (2021-03-02)

@@ -1,8 +1,20 @@
 {
     "common": {
         "name": "esphome",
-        "version": "0.1.2",
+        "version": "0.1.3",
         "news": {
+            "0.1.3": {
+                "en": "Proper value ranges for type light",
+                "de": "Richtige Wertebereiche für Typ Licht",
+                "ru": "Подходящие диапазоны значений для типа света",
+                "pt": "Intervalos de valores adequados para o tipo de luz",
+                "nl": "Juiste waardebereiken voor type licht",
+                "fr": "Plages de valeurs appropriées pour le type lumière",
+                "it": "Intervalli di valori adeguati per il tipo di luce",
+                "es": "Rangos de valores adecuados para el tipo de luz",
+                "pl": "Prawidłowe zakresy wartości dla typu światła",
+                "zh-cn": "光线类型的正确值范围"
+            },
             "0.1.2": {
                 "en": "Type Fan added\nType Light added\nError messages optimized\nDevice reconnect handling improved\n[Breaking!] Change state name to default \"state\" for type BinarySensor / Climate / Sensor / TextSensor & Switch  \nAutodiscovery improved, non-ESPHome devices excluded",
                 "de": "Typ Lüfter hinzugefügt\nTyp Licht hinzugefügt\nFehlermeldungen optimiert\nDie Handhabung der Gerätewiederverbindung wurde verbessert\n[Breaking!] Ändern Sie den Statusnamen für den Typ BinarySensor / Climate / Sensor / TextSensor & Switch in den Standardstatus \"state\"\nAutodiscovery verbessert, Nicht-ESPHome-Geräte ausgeschlossen",
