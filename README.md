@@ -78,6 +78,7 @@ switch:
 -->
 
 ### __WORK IN PROGRESS__
+* (DutchmanNL) Type Fan added
 * (Dutchman) Error messages optimized
 * (Dutchman) Device reconnect handling improved
 * (Dutchman) [Breaking!] Change state name to default "state" for type BinarySensor / Climate / Sensor / TextSensor & Switch  

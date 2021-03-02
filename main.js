@@ -302,7 +302,11 @@ class Esphome extends utils.Adapter {
 									break;
 
 								case 'Climate':
-									await this.handleClimateState(`${host}`, entity, state);
+									await this.handleStateArrays(`${host}`, entity, state);
+									break;
+
+								case 'Fan':
+									await this.handleRegularState(`${host}`, entity, state, false );
 									break;
 
 								case 'Sensor':
@@ -427,19 +431,34 @@ class Esphome extends utils.Adapter {
 		await this.setStateAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, {val: stateVal, ack: true});
 	}
 
-	async handleClimateState(host, entity, state) {
+	async handleStateArrays(host, entity, state) {
 
 		this.deviceInfo[host][entity.id].states = state;
 
 		for (const stateName in this.deviceInfo[host][entity.id].states) {
 			let unit = '';
 			let writable  = true;
+			// Define if state should be writable
+			switch (stateName) {
+				case 'currentTemperature':
+					unit = `°C`;
+					writable =  false;
+					this.deviceInfo[host][entity.id].states.currentTemperature = this.modify('round(2)', state[stateName]);
+					break;
+
+				case 'oscillating': // Sensor type = Fan, write not supported
+					writable =  false;
+					break;
+
+				case 'speed': // Sensor type = Fan, write not supported
+					writable =  false;
+					break;
+
+			}
+
+			// Add unit to temperature states
 			if (stateName === `targetTemperature` || stateName === `targetTemperatureLow` || stateName === `targetTemperatureHigh`) {
 				unit = `°C`;
-			} else if (stateName === `currentTemperature`) {
-				unit = `°C`;
-				writable =  false;
-				this.deviceInfo[host][entity.id].states.currentTemperature = this.modify('round(2)', state[stateName]);
 			}
 			if (stateName !== 'key') {
 				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`, `value of ${entity.type}`, state[stateName], unit, writable);
@@ -780,7 +799,8 @@ class Esphome extends utils.Adapter {
 				const deviceIP = this.deviceStateRelation[device[2]].ip;
 
 				// Handle Switch State
-				if (this.deviceInfo[deviceIP][device[4]].type === `Switch`) {
+				if (this.deviceInfo[deviceIP][device[4]].type === `Switch`
+					|| this.deviceInfo[deviceIP][device[4]].type === `Fan`) {
 					await client[deviceIP].connection.switchCommandService({key: device[4], state: state.val});
 
 					// Handle Climate State
