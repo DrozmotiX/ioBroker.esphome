@@ -310,7 +310,7 @@ class Esphome extends utils.Adapter {
 									break;
 
 								case 'Light':
-									await this.handleRegularState(`${host}`, entity, state, false );
+									await this.handleStateArrays(`${host}`, entity, state, false );
 									break;
 
 								case 'Sensor':
