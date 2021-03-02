@@ -78,7 +78,9 @@ switch:
 -->
 
 ### __WORK IN PROGRESS__
-* (DutchmanNL) Improve autodiscovery, avoid non-ESPHome devices to be detected
+* (Dutchman) Error messages optimized
+* (Dutchman) Device reconnect handling improved
+* (DutchmanNL) Autodiscovery improved, non-ESPHome devices excluded
 
 ### 0.1.0 (2021-02-27)
 * (DutchmanNL) Autodiscovery implemented

@@ -51,14 +51,15 @@ class Esphome extends utils.Adapter {
 			autodiscovery =  this.config.autodiscovery;
 			reconnectInterval = this.config.reconnectInterval * 1000;
 
-			await this.tryKnownDevices(); // Try to establish connection to already known devices
-
-			this.connectionMonitor(); // Start connection monitor
-
 			// Start MDNS discovery when enabled
 			if (autodiscovery){
 				this.deviceDiscovery(); // Start MDNS autodiscovery
+			} else {
+				this.log.warn(`Auto Discovery disabled, new devices (or IP changes) will NOT be detected automatically!`);
 			}
+
+			await this.tryKnownDevices(); // Try to establish connection to already known devices
+
 
 		} catch (e) {
 			this.log.error(`Connection issue ${e}`);
@@ -117,37 +118,12 @@ class Esphome extends utils.Adapter {
 
 	}
 
-	// Connection monitor/reconnect if connection to device is lost
-	connectionMonitor(){
-		try {
-			reconnectTimer = setTimeout(() => {
-				// Get basic data of known devices and start reading data
-				for (const i in this.deviceInfo) {
-					// Check if a connection instance exists, otherwise try to connect
-					if (client[this.deviceInfo[i].ip]) {
-						const connected = client[this.deviceInfo[i].ip].connected;
-						this.log.debug(`${this.deviceInfo[i].ip} connection : ${connected}`);
-						if (!connected){
-							this.connectDevices(this.deviceInfo[i].ip, this.deviceInfo[i].passWord);
-						}
-					} else {
-						this.connectDevices(this.deviceInfo[i].ip, this.deviceInfo[i].passWord);
-					}
-				}
-				this.connectionMonitor();
-			}, reconnectInterval);
-		} catch (e) {
-			this.sendSentry(`[connectionMonitor] ${e}`);
-		}
-
-	}
-
 	// Handle Socket connections
 	connectDevices(host, pass){
 
 		try {
 			// const host = espDevices[device].ip;
-			this.log.info(`Initiate ${host}`);
+			this.log.info(`Try to connect to ${host}`);
 			// Prepare connection attributes
 			client[host] = new Client({
 				host: host,
@@ -158,9 +134,9 @@ class Esphome extends utils.Adapter {
 				initializeListEntities: true,
 				initializeSubscribeStates: false,
 				// initializeSubscribeLogs: false, //ToDo: Make configurable by adapter settings
-				reconnect: false,
-				reconnectInterval: 10000,
-				pingInterval: 5000,
+				reconnect: true,
+				reconnectInterval: reconnectInterval,
+				pingInterval: 15000, //ToDo: Make configurable by adapter settings
 				pingAttempts: 3
 				// port: espDevices[device].port //ToDo: Make configurable by adapter settings
 			});
@@ -169,6 +145,10 @@ class Esphome extends utils.Adapter {
 			client[host].on('connected', async () => {
 				try {
 					this.log.info(`ESPHome client ${host} connected`);
+					// Clear possible present warn messages for device fromm previous connection
+					warnMessages[host] = {
+						connectError : false
+					};
 				} catch (e) {
 					this.log.error(`connection error ${e}`);
 				}
@@ -375,28 +355,46 @@ class Esphome extends utils.Adapter {
 
 			// Connection data handler
 			client[host].on('error', (error) => {
-				this.log.error(`ESPHome client ${host} ${error} `);
-				// Check if device connection is caused by adding  device from admin, if yes send OK message
-				if (this.messageResponse[host]) {
-
-					const massageObj = {
-						'type': 'error',
-						'message': 'connection failed'
-					};
-					// @ts-ignore
-					this.respond(massageObj, this.messageResponse[host]);
-					this.messageResponse[host] = null;
-				}
 				try {
-					client[host].disconnect();
+					let optimisedError = error.message;
+					// Optimise error messages
+					if (error.message.includes('EHOSTUNREACH')){
+						optimisedError = `Client ${host} not reachable !`;
+						if (!warnMessages[host].connectError) {
+							this.log.error(optimisedError);
+							warnMessages[host].connectError = true;
+						}
+					} else if (error.message.includes('Invalid password')){
+						optimisedError = `Client ${host} incorrect password !`;
+						this.log.error(optimisedError);
+					} else {
+						this.log.error(`ESPHome client ${host} ${error}`);
+					}
+
+					// Check if device connection is caused by adding  device from admin, if yes send OK message
+					if (this.messageResponse[host]) {
+
+						const massageObj = {
+							'type': 'error',
+							'message': optimisedError
+						};
+						// @ts-ignore
+						this.respond(massageObj, this.messageResponse[host]);
+						this.messageResponse[host] = null;
+					}
+
 				}  catch (e) {
-					console.error(e);
+					this.log.error(`ESPHome error handling issue ${host} ${e}`);
 				}
 			});
 
 			// connect to socket
 			try {
 				this.log.debug(`trying to connect to ${host}`);
+				// Reserve memory for warn messages
+				warnMessages[host] = {
+					connectError : false
+				};
 				client[host].connect();
 			} catch (e) {
 				this.log.error(`Client ${host} connect error ${e}`);
@@ -447,7 +445,7 @@ class Esphome extends utils.Adapter {
 			} else if (stateName === `currentTemperature`) {
 				unit = `°C`;
 				writable =  false;
-				this.deviceInfo[host][entity.id].states.currentTemperature = this.modify('round(2)', state[stateName]);;
+				this.deviceInfo[host][entity.id].states.currentTemperature = this.modify('round(2)', state[stateName]);
 			}
 			if (stateName !== 'key') {
 				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`, `value of ${entity.type}`, state[stateName], unit, writable);
