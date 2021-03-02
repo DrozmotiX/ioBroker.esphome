@@ -432,7 +432,7 @@ class Esphome extends utils.Adapter {
 			this.log.debug(`Value "${stateVal}" for name "${entity}" after function modify with method "${rounding}"`);
 		}
 
-		await this.setStateAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, {val: stateVal, ack: true});
+		await this.stateSetCreate( `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, `value of ${entity.type}`, stateVal, this.deviceInfo[host][entity.id].unit, writable);
 	}
 
 	async handleStateArrays(host, entity, state) {
