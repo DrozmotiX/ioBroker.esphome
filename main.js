@@ -309,6 +309,10 @@ class Esphome extends utils.Adapter {
 									await this.handleRegularState(`${host}`, entity, state, false );
 									break;
 
+								case 'Light':
+									await this.handleRegularState(`${host}`, entity, state, false );
+									break;
+
 								case 'Sensor':
 									await this.handleRegularState(`${host}`, entity, state, false );
 									break;
@@ -807,6 +811,10 @@ class Esphome extends utils.Adapter {
 				} else if (this.deviceInfo[deviceIP][device[4]].type === `Climate`) {
 					this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
 					await client[deviceIP].connection.climateCommandService(this.deviceInfo[deviceIP][device[4]].states);
+
+				} else if (this.deviceInfo[deviceIP][device[4]].type === `Light`) {
+					this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
+					await client[deviceIP].connection.lightCommandService(this.deviceInfo[deviceIP][device[4]].states);
 				}
 			}
 		} catch (e) {
