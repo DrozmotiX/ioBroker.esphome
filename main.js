@@ -461,11 +461,28 @@ class Esphome extends utils.Adapter {
 			}
 
 			// Add unit to temperature states
-			if (stateName === `targetTemperature` || stateName === `targetTemperatureLow` || stateName === `targetTemperatureHigh`) {
+			if (stateName === `targetTemperature`
+				|| stateName === `targetTemperatureLow`
+				|| stateName === `targetTemperatureHigh`) {
+
 				unit = `°C`;
+
 			}
+
+			let writeValue = state[stateName];
+			// Add unit to temperature states
+			if (stateName === `brightness`
+				|| stateName === `blue`
+				|| stateName === `green`
+				|| stateName === `red`
+				|| stateName === `colorTemperature`) {
+
+				writeValue = state[stateName] * 100;
+
+			}
+
 			if (stateName !== 'key') {
-				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`, `value of ${entity.type}`, state[stateName], unit, writable);
+				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`, `value of ${entity.type}`, writeValue, unit, writable);
 			}
 		}
 	}
@@ -813,7 +830,16 @@ class Esphome extends utils.Adapter {
 					await client[deviceIP].connection.climateCommandService(this.deviceInfo[deviceIP][device[4]].states);
 
 				} else if (this.deviceInfo[deviceIP][device[4]].type === `Light`) {
-					this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
+					let writeValue = state.val;
+					// Add unit to temperature states
+					if (device[5] === `brightness`
+						|| device[5]  === `blue`
+						|| device[5]  === `green`
+						|| device[5]  === `red`
+						|| device[5]  === `colorTemperature`) {
+						writeValue = writevalue / 100;
+					}
+					this.deviceInfo[deviceIP][device[4]].states[device[5]] = writeValue	;
 					await client[deviceIP].connection.lightCommandService(this.deviceInfo[deviceIP][device[4]].states);
 				}
 			}
