@@ -8,12 +8,13 @@
 // you need to create an adapter
 const utils = require('@iobroker/adapter-core');
 const { Client } = require('esphome-native-api');
-const Mdns = require('mdns-js');
+const { Discovery } = require('esphome-native-api');
+let discovery;
 const stateAttr = require(__dirname + '/lib/stateAttr.js'); // Load attribute library
 const disableSentry = true; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
 const client = {};
-let reconnectTimer, discoveryTimer, mdnsBrowser, reconnectInterval, apiPass, autodiscovery;
+let reconnectTimer, reconnectInterval, apiPass, autodiscovery;
 
 // Load your modules here, e.g.:
 // const fs = require("fs");
@@ -67,29 +68,27 @@ class Esphome extends utils.Adapter {
 	// MDNS discovery handler for ESPHome devices
 	deviceDiscovery(){
 		try {
-			mdnsBrowser = Mdns.createBrowser();
-			mdnsBrowser.on('update', (data) => {
-				this.log.debug('[AutoDiscovery] Discovery answer: ' + JSON.stringify(data));
-				if (!data.addresses || !data.addresses[0] || !data.type) return;
-				for (let i = 0; i < data.type.length; i++) {
-					if (data.type[i].name === 'esphomelib') {
-						this.log.debug(`[AutoDiscovery] ESPHome device found at IP ${data.addresses}`);
-						// Verify if device is already known
-						if (this.deviceInfo[data.addresses] == null){
-							this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${data.addresses}`);
-							// Store new Device information to device array in memory
-							this.deviceInfo[data.addresses] = {
-								ip: data.addresses,
-								passWord: apiPass
-							};
-							this.connectDevices(`${data.addresses}`,`${apiPass}`);
-						}
+
+			this.log.info(`Auto Discovery startet, new devices (or IP changes) will be detected automatically`);
+			discovery = new Discovery();
+
+			discovery.on('info', async (message) => {
+				try {
+					this.log.debug(`Discovery message ${JSON.stringify(message)}`);
+					if (this.deviceInfo[message.address] == null){
+						this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${message.address}`);
+						// Store new Device information to device array in memory
+						this.deviceInfo[message.address] = {
+							ip: message.address,
+							passWord: apiPass
+						};
+						this.connectDevices(`${message.address}`,`${apiPass}`);
 					}
+				} catch (e) {
+					this.log.error(`[deviceDiscovery handler] ${e}`);
 				}
 			});
-			mdnsBrowser.on('ready', function () {
-				mdnsBrowser.discover();
-			});
+			discovery.run();
 		} catch (e) {
 			this.sendSentry(`[deviceDiscovery] ${e}`);
 		}
@@ -697,12 +696,8 @@ class Esphome extends utils.Adapter {
 					this.log.debug(`[onUnload] ${JSON.stringify(e)}`);
 				}
 			}
-			mdnsBrowser.stop();
 			if (reconnectTimer){
 				reconnectTimer = clearTimeout();
-			}
-			if (discoveryTimer){
-				discoveryTimer = clearTimeout();
 			}
 			callback();
 		} catch (e) {

@@ -77,6 +77,9 @@ switch:
     ### __WORK IN PROGRESS__
 -->
 
+### __WORK IN PROGRESS__
+* (DutchmanNL) Improve autodiscovery, avoid non-ESPHome devices to be detected
+
 ### 0.1.0 (2021-02-27)
 * (DutchmanNL) Autodiscovery implemented
 * (DutchmanNL) Type Climat added
