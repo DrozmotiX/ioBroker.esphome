@@ -1,8 +1,20 @@
 {
     "common": {
         "name": "esphome",
-        "version": "0.1.1",
+        "version": "0.1.2",
         "news": {
+            "0.1.2": {
+                "en": "Type Fan added\nType Light added\nError messages optimized\nDevice reconnect handling improved\n[Breaking!] Change state name to default \"state\" for type BinarySensor / Climate / Sensor / TextSensor & Switch  \nAutodiscovery improved, non-ESPHome devices excluded",
+                "de": "Typ Lüfter hinzugefügt\nTyp Licht hinzugefügt\nFehlermeldungen optimiert\nDie Handhabung der Gerätewiederverbindung wurde verbessert\n[Breaking!] Ändern Sie den Statusnamen für den Typ BinarySensor / Climate / Sensor / TextSensor & Switch in den Standardstatus \"state\"\nAutodiscovery verbessert, Nicht-ESPHome-Geräte ausgeschlossen",
+                "ru": "Тип вентилятора добавлен\nТип Light добавлен\nОптимизированы сообщения об ошибках\nУлучшена обработка переподключения устройства\n[Breaking!] Изменить имя состояния на \"состояние\" по умолчанию для типа BinarySensor / Climate / Sensor / TextSensor & Switch\nУлучшено автообнаружение, исключены устройства, не поддерживающие ESPHome",
+                "pt": "Tipo Ventilador adicionado\nLight Type adicionado\nMensagens de erro otimizadas\nManuseio de reconexão de dispositivo aprimorado\n[Quebrando!] Mude o nome do estado para o \"estado\" padrão para o tipo BinarySensor / Climate / Sensor / TextSensor & Switch\nAutodiscovery melhorada, dispositivos não ESPHome excluídos",
+                "nl": "Type Fan toegevoegd\nType Light toegevoegd\nFoutmeldingen geoptimaliseerd\nVerwerking van het opnieuw verbinden van apparaten is verbeterd\n[Breaking!] Verander de naam van de staat in de standaard \"staat\" voor type BinarySensor / Climate / Sensor / TextSensor & Switch\nAutodiscovery verbeterd, niet-ESPHome-apparaten uitgesloten",
+                "fr": "Type de ventilateur ajouté\nType Light ajouté\nMessages d'erreur optimisés\nGestion de la reconnexion des appareils améliorée\n[Breaking!] Remplacez le nom de l'état par \"état\" par défaut pour le type BinarySensor / Climate / Sensor / TextSensor & Switch\nDécouverte automatique améliorée, appareils non ESPHome exclus",
+                "it": "Tipo Fan aggiunto\nTipo Luce aggiunta\nMessaggi di errore ottimizzati\nGestione della riconnessione del dispositivo migliorata\n[Breaking!] Cambia il nome dello stato in \"state\" predefinito per il tipo BinarySensor / Climate / Sensor / TextSensor e Switch\nRilevamento automatico migliorato, dispositivi non ESPHome esclusi",
+                "es": "Tipo de ventilador agregado\nTipo de luz añadido\nMensajes de error optimizados\nManejo de reconexión del dispositivo mejorado\n[¡Rompiendo!] Cambia el nombre del estado al \"estado\" predeterminado para el tipo BinarySensor / Climate / Sensor / TextSensor & Switch\nDetección automática mejorada, dispositivos que no son ESPHome excluidos",
+                "pl": "Dodano wentylator typu\nDodano typ Light\nZoptymalizowane komunikaty o błędach\nPoprawiono obsługę ponownego łączenia urządzenia\n[Breaking!] Zmień nazwę stanu na domyślny „stan” dla typu BinarySensor / Climate / Sensor / TextSensor & Switch\nUlepszone automatyczne wykrywanie, z wyłączeniem urządzeń innych niż ESPHome",
+                "zh-cn": "风扇类型已添加\n类型轻已添加\n错误消息已优化\n设备重新连接处理得到改善\n[突破！]将BinarySensor / Climate / Sensor / TextSensor和Switch类型的状态名称更改为默认的“状态”\n改进了自动发现，排除了非ESPHome设备"
+            },
             "0.1.1": {
                 "en": "Type Fan added\nType Light added\nError messages optimized\nDevice reconnect handling improved\n[Breaking!] Change state name to default \"state\" for type BinarySensor / Climate / Sensor / TextSensor & Switch  \nAutodiscovery improved, non-ESPHome devices excluded",
                 "de": "Typ Lüfter hinzugefügt\nTyp Licht hinzugefügt\nFehlermeldungen optimiert\nDie Handhabung der Gerätewiederverbindung wurde verbessert\n[Breaking!] Ändern Sie den Statusnamen für den Typ BinarySensor / Climate / Sensor / TextSensor & Switch in den Standardstatus \"state\"\nAutodiscovery verbessert, Nicht-ESPHome-Geräte ausgeschlossen",

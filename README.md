@@ -77,7 +77,7 @@ switch:
     ### __WORK IN PROGRESS__
 -->
 
-### __WORK IN PROGRESS__
+### 0.1.2 (2021-03-02)
 * (DutchmanNL) Type Fan added
 * (DutchmanNL) Type Light added
 * (DutchmanNL) Error messages optimized
