@@ -442,6 +442,8 @@ class Esphome extends utils.Adapter {
 		for (const stateName in this.deviceInfo[host][entity.id].states) {
 			let unit = '';
 			let writable  = true;
+			let writeValue = state[stateName];
+
 			// Define if state should be writable
 			switch (stateName) {
 				case 'currentTemperature':
@@ -469,7 +471,6 @@ class Esphome extends utils.Adapter {
 
 			}
 
-			let writeValue = state[stateName];
 			// Add unit to temperature states
 			if (stateName === `brightness`
 				|| stateName === `blue`
@@ -477,7 +478,7 @@ class Esphome extends utils.Adapter {
 				|| stateName === `red`
 				|| stateName === `colorTemperature`) {
 
-				writeValue = state[stateName] * 100;
+				writeValue = (state[stateName] * 100) * 2.55;
 
 			}
 
@@ -837,9 +838,14 @@ class Esphome extends utils.Adapter {
 						|| device[5]  === `green`
 						|| device[5]  === `red`
 						|| device[5]  === `colorTemperature`) {
-						writeValue = writevalue / 100;
+
+						// Convert value to 255 range
+						writeValue = (writeValue / 100) / 2.55;
+
+						// Store value to memory
+						this.deviceInfo[deviceIP][device[4]].states[device[5]] = writeValue;
 					}
-					this.deviceInfo[deviceIP][device[4]].states[device[5]] = writeValue	;
+
 					await client[deviceIP].connection.lightCommandService(this.deviceInfo[deviceIP][device[4]].states);
 				}
 			}
