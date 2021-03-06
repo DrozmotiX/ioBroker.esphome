@@ -482,6 +482,18 @@ class Esphome extends utils.Adapter {
 
 			}
 
+			// Convert RGB to HEX an write to state
+			if (this.deviceInfo[host][entity.id].states.red != null &&
+				this.deviceInfo[host][entity.id].states.blue != null &&
+				this.deviceInfo[host][entity.id].states.green != null){
+				const hexValue = await this.rgbToHex(
+					this.deviceInfo[host][entity.id].states.red,
+					this.deviceInfo[host][entity.id].states.blue,
+					this.deviceInfo[host][entity.id].states.blue
+				);
+				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.colorHEX`, `value of colorHEX`, hexValue, '', true);
+			}
+
 			if (stateName !== 'key') {
 				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`, `value of ${entity.type}`, writeValue, unit, writable);
 			}
@@ -807,6 +819,29 @@ class Esphome extends utils.Adapter {
 			this.sendTo(obj.from, obj.command, response, obj.callback);
 	}
 
+	hexToRgb(hex) {
+		const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+		hex = hex.replace(shorthandRegex, function (m, r, g, b) {
+			return r + r + g + g + b + b;
+		});
+
+		const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+		return result ? {
+			red: parseInt(result[1], 16),
+			green: parseInt(result[2], 16),
+			blue: parseInt(result[3], 16)
+		} : null;
+	}
+
+	rgbToHex(r, g, b) {
+		function componentToHex(color) {
+			const hex = color.toString(16);
+			return hex.length == 1 ? '0' + hex : hex;
+		}
+		const hex = '#' + componentToHex(r) + componentToHex(g) + componentToHex(b);
+		return hex;
+	}
+
 	/**
 	 * Is called if a subscribed state changes
 	 * @param {string} id
@@ -844,6 +879,14 @@ class Esphome extends utils.Adapter {
 
 						// Store value to memory
 						this.deviceInfo[deviceIP][device[4]].states[device[5]] = writeValue;
+					} else if (device[5] === `colorHEX`) {
+
+						// Convert hex to rgb
+						const rgbConversion = await this.hexToRgb(writeValue);
+						if (!rgbConversion) return
+						this.deviceInfo[deviceIP][device[4]].states.red = rgbConversion.red,
+						this.deviceInfo[deviceIP][device[4]].states.blue = rgbConversion.blue,
+						this.deviceInfo[deviceIP][device[4]].states.green = rgbConversion.green,
 					}
 
 					await client[deviceIP].connection.lightCommandService(this.deviceInfo[deviceIP][device[4]].states);
