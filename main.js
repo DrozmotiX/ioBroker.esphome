@@ -884,9 +884,9 @@ class Esphome extends utils.Adapter {
 						// Convert hex to rgb
 						const rgbConversion = await this.hexToRgb(writeValue);
 						if (!rgbConversion) return
-						this.deviceInfo[deviceIP][device[4]].states.red = rgbConversion.red,
-						this.deviceInfo[deviceIP][device[4]].states.blue = rgbConversion.blue,
-						this.deviceInfo[deviceIP][device[4]].states.green = rgbConversion.green,
+						this.deviceInfo[deviceIP][device[4]].states.red = rgbConversion.red;
+						this.deviceInfo[deviceIP][device[4]].states.blue = rgbConversion.blue;
+						this.deviceInfo[deviceIP][device[4]].states.green = rgbConversion.green;
 					}
 
 					await client[deviceIP].connection.lightCommandService(this.deviceInfo[deviceIP][device[4]].states);
