@@ -108,7 +108,7 @@ class Esphome extends utils.Adapter {
 					mac: knownDevices[i].native.mac,
 					deviceName: knownDevices[i].native.deviceName,
 					deviceInfoName: knownDevices[i].native.name,
-					passWord: knownDevices[i].native.passWord,
+					passWord: this.decrypt(knownDevices[i].native.passWord),
 				};
 				this.connectDevices(knownDevices[i].native.ip, knownDevices[i].native.passWord);
 			}
@@ -127,7 +127,7 @@ class Esphome extends utils.Adapter {
 			// Prepare connection attributes
 			client[host] = new Client({
 				host: host,
-				password : this.decrypt(pass),
+				password : pass,
 				clientInfo : `${this.host}`,
 				clearSession: true,
 				initializeDeviceInfo: true,
@@ -800,7 +800,8 @@ class Esphome extends utils.Adapter {
 					} else {
 						this.log.info(`Valid IP address received`);
 						this.messageResponse[obj.message['device-ip']] = obj;
-						await this.connectDevices(obj.message['device-ip'],obj.message['device-pass']);
+						const pass = this.decrypt(obj.message['device-pass']);
+						await this.connectDevices(obj.message['device-ip'],pass);
 					}
 					break;
 			}
