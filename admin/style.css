@@ -44,6 +44,12 @@ label > i[title] {
 
 /* Add your styles here */
 
+.ip, .pass {
+	margin-left: 11% !important;
+	}
+.m .modal-content {
+	width: calc(100% - 0px) !important;
+	}
 .center-led {
 	display: block;
 	margin-left: auto;
