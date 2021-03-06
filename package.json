@@ -6,7 +6,7 @@
     "name": "DutchmanNL",
     "email": "rdrozda86@gmail.com"
   },
-  "homepage": "https://github.com/iobroker-community-adapters/ioBroker.esphome",
+  "homepage": "https://github.com/DrozmotiX/ioBroker.esphome",
   "license": "MIT",
   "keywords": [
     "ESPHome",
@@ -15,7 +15,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/iobroker-community-adapters/ioBroker.esphome"
+    "url": "https://github.com/DrozmotiX/ioBroker.esphome"
   },
   "dependencies": {
     "@iobroker/adapter-core": "^2.4.0",
@@ -55,7 +55,7 @@
     "lint": "eslint"
   },
   "bugs": {
-    "url": "https://github.com/iobroker-community-adapters/ioBroker.esphome/issues"
+    "url": "https://github.com/DrozmotiX/ioBroker.esphome/issues"
   },
   "readmeFilename": "README.md"
 }

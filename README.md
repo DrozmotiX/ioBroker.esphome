@@ -5,12 +5,12 @@
 [![Downloads](https://img.shields.io/npm/dm/iobroker.esphome.svg)](https://www.npmjs.com/package/iobroker.esphome)
 ![Number of Installations (latest)](http://iobroker.live/badges/esphome-installed.svg)
 ![Number of Installations (stable)](http://iobroker.live/badges/esphome-stable.svg)
-[![Dependency Status](https://img.shields.io/david/iobroker-community-adapters/iobroker.esphome.svg)](https://david-dm.org/iobroker-community-adapters/iobroker.esphome)
-[![Known Vulnerabilities](https://snyk.io/test/github/iobroker-community-adapters/ioBroker.esphome/badge.svg)](https://snyk.io/test/github/iobroker-community-adapters/ioBroker.esphome)
+[![Dependency Status](https://img.shields.io/david/DrozmotiX/iobroker.esphome.svg)](https://david-dm.org/DrozmotiX/iobroker.esphome)
+[![Known Vulnerabilities](https://snyk.io/test/github/DrozmotiX/ioBroker.esphome/badge.svg)](https://snyk.io/test/github/DrozmotiX/ioBroker.esphome)
 
 [![NPM](https://nodei.co/npm/iobroker.esphome.png?downloads=true)](https://nodei.co/npm/iobroker.esphome/)
 
-**Tests:** ![Test and Release](https://github.com/iobroker-community-adapters/ioBroker.esphome/workflows/Test%20and%20Release/badge.svg)
+**Tests:** ![Test and Release](https://github.com/DrozmotiX/ioBroker.esphome/workflows/Test%20and%20Release/badge.svg)
 
 ## esphome adapter for ioBroker
 
