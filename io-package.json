@@ -131,6 +131,9 @@
             }
         ]
     },
+    "encryptedNative": [
+        "apiPass"
+    ],
     "native": {
         "reconnectInterval": 30,
         "apiPass": "",
