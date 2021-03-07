@@ -86,9 +86,10 @@ switch:
     ### __WORK IN PROGRESS__
 -->
 
-### 0.1.4-2 (2021-03-07)
+### 0.1.4-3 (2021-03-07)
+* (DutchmanNL) Implemented RGBW
 * (DutchmanNL) Proper value ranges for type light (255 instead 100)
-* (DutchmanNL) Implement hex color state for type light (if RGB is available)
+* (DutchmanNL) Implemented hex color state for type light (if RGB is available)
 
 ### 0.1.2 (2021-03-02)
 * (DutchmanNL) Type Fan added

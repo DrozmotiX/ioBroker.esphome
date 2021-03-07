@@ -476,6 +476,7 @@ class Esphome extends utils.Adapter {
 				|| stateName === `blue`
 				|| stateName === `green`
 				|| stateName === `red`
+				|| stateName === `white`
 				|| stateName === `colorTemperature`) {
 
 				writeValue = Math.round((state[stateName] * 100) * 2.55);
@@ -873,6 +874,7 @@ class Esphome extends utils.Adapter {
 						|| device[5]  === `blue`
 						|| device[5]  === `green`
 						|| device[5]  === `red`
+						|| device[5]  === `white`
 						|| device[5]  === `colorTemperature`) {
 
 						// Convert value to 255 range
@@ -889,8 +891,11 @@ class Esphome extends utils.Adapter {
 						this.deviceInfo[deviceIP][device[4]].states.red = (rgbConversion.red / 100) / 2.55;
 						this.deviceInfo[deviceIP][device[4]].states.blue = (rgbConversion.blue  / 100) / 2.55;
 						this.deviceInfo[deviceIP][device[4]].states.green = (rgbConversion.green  / 100) / 2.55;
+					} else {
+						this.deviceInfo[deviceIP][device[4]].states[device[5]] = writeValue;
 					}
 
+					this.log.debug(`Send Light values ${JSON.stringify(this.deviceInfo[deviceIP][device[4]].states)}`);
 					await client[deviceIP].connection.lightCommandService(this.deviceInfo[deviceIP][device[4]].states);
 				}
 			}
