@@ -478,25 +478,25 @@ class Esphome extends utils.Adapter {
 				|| stateName === `red`
 				|| stateName === `colorTemperature`) {
 
-				writeValue = (state[stateName] * 100) * 2.55;
+				writeValue = Math.round((state[stateName] * 100) * 2.55);
 
-			}
-
-			// Convert RGB to HEX an write to state
-			if (this.deviceInfo[host][entity.id].states.red != null &&
-				this.deviceInfo[host][entity.id].states.blue != null &&
-				this.deviceInfo[host][entity.id].states.green != null){
-				const hexValue = await this.rgbToHex(
-					this.deviceInfo[host][entity.id].states.red,
-					this.deviceInfo[host][entity.id].states.blue,
-					this.deviceInfo[host][entity.id].states.blue
-				);
-				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.colorHEX`, `value of colorHEX`, hexValue, '', true);
 			}
 
 			if (stateName !== 'key') {
 				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`, `value of ${entity.type}`, writeValue, unit, writable);
 			}
+		}
+
+		// Convert RGB to HEX an write to state
+		if (this.deviceInfo[host][entity.id].states.red != null &&
+			this.deviceInfo[host][entity.id].states.blue != null &&
+			this.deviceInfo[host][entity.id].states.green != null){
+			const hexValue = await this.rgbToHex(
+				Math.round((this.deviceInfo[host][entity.id].states.red * 100) * 2.55),
+				Math.round((this.deviceInfo[host][entity.id].states.green * 100) * 2.55),
+				Math.round((this.deviceInfo[host][entity.id].states.blue * 100) * 2.55),
+			);
+			await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.colorHEX`, `value of colorHEX`, hexValue, '', true);
 		}
 	}
 
@@ -880,14 +880,15 @@ class Esphome extends utils.Adapter {
 
 						// Store value to memory
 						this.deviceInfo[deviceIP][device[4]].states[device[5]] = writeValue;
+
 					} else if (device[5] === `colorHEX`) {
 
 						// Convert hex to rgb
 						const rgbConversion = await this.hexToRgb(writeValue);
 						if (!rgbConversion) return;
-						this.deviceInfo[deviceIP][device[4]].states.red = rgbConversion.red;
-						this.deviceInfo[deviceIP][device[4]].states.blue = rgbConversion.blue;
-						this.deviceInfo[deviceIP][device[4]].states.green = rgbConversion.green;
+						this.deviceInfo[deviceIP][device[4]].states.red = (rgbConversion.red / 100) / 2.55;
+						this.deviceInfo[deviceIP][device[4]].states.blue = (rgbConversion.blue  / 100) / 2.55;
+						this.deviceInfo[deviceIP][device[4]].states.green = (rgbConversion.green  / 100) / 2.55;
 					}
 
 					await client[deviceIP].connection.lightCommandService(this.deviceInfo[deviceIP][device[4]].states);
