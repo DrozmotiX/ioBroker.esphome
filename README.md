@@ -12,20 +12,29 @@
 
 **Tests:** ![Test and Release](https://github.com/DrozmotiX/ioBroker.esphome/workflows/Test%20and%20Release/badge.svg)
 
-## esphome adapter for ioBroker
+## ESPHome adapter for ioBroker
 
 Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome.
 The adapter will connect to ESPHome managed device by its native API and ensur all data is synchronised (live-event handling, no data polling ! :)
 
 This adapter use the [esphome-native-api](https://github.com/Nafaya/esphome-native-api#readme) with all credits to @Nafaya, thank you!
 
+## [Documentation](https://DrozmotiX.github.io/languages/en/ESPHome/)
+
+All our adapter documentation can be found at [The DrozmotiX Docu Page](https://DrozmotiX.github.io)
+
 ## Prerequisites
 
-You should be familiar how to use ESPHome and add devices/sensor to a binary.
-Please ensure the API is activated as the adapter will interact by ESPHome native API, you can define a password if needed
+You should be familiar how to use ESPHome and add devices/sensor to a the YAML file.
+Please ensure API is activated as the adapter will interact by ESPHome native API, you can define a password if needed
 [See ESPHome API refference](https://esphome.io/components/api.html?highlight=api)
 
-Example config, for more examples see [ESPHome Documentation](https://esphome.io/index.html)
+```
+api:
+  password: 'MyPassword'
+```
+
+Example config, for more examples see [The DrozmotiX Docu Page](https://DrozmotiX.github.io) or [ESPHome Documentation](https://esphome.io/index.html)
 ```
 esphome:
   name: sensor_badkamer
@@ -39,7 +48,7 @@ wifi:
           
 # Enable ESPHome API
 api:
-
+    password: 'MyPassword'
 # Activate i2c bus  
 i2c:
   sda: 21
@@ -77,7 +86,7 @@ switch:
     ### __WORK IN PROGRESS__
 -->
 
-### 0.1.4-1 (2021-03-06)
+### __WORK IN PROGRESS__
 * (DutchmanNL) Proper value ranges for type light (255 instead 100)
 * (DutchmanNL) Implement hex color state for type light (if RGB is available)
 
