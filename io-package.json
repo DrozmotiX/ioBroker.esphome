@@ -1,16 +1,16 @@
 {
     "common": {
         "name": "esphome",
-        "version": "0.1.4-1",
+        "version": "0.1.4-2",
         "news": {
-            "0.1.4-1": {
+            "0.1.4-2": {
                 "en": "Proper value ranges for type light (255 instead 100)\nImplement hex color state for type light (if RGB is available)",
                 "de": "Richtige Wertebereiche für Typ Licht (255 statt 100)\nImplementieren Sie den Hex-Farbstatus für Typlicht (falls RGB verfügbar ist).",
-                "ru": "Правильные диапазоны значений для типа light (255 вместо 100)\nРеализовать шестнадцатеричное цветовое состояние для типа света (если доступен RGB)",
-                "pt": "Intervalos de valores adequados para o tipo de luz (255 em vez de 100)\nImplementar estado de cor hexadecimal para o tipo de luz (se RGB estiver disponível)",
+                "ru": "Правильные диапазоны значений для типа light (255 вместо 100)\nРеализовать шестнадцатеричное цветовое состояние для светового типа (если доступен RGB)",
+                "pt": "Intervalos de valores adequados para o tipo de luz (255 em vez de 100)\nImplemente o estado de cor hexadecimal para o tipo de luz (se RGB estiver disponível)",
                 "nl": "Juiste waardebereiken voor type licht (255 in plaats van 100)\nImplementeer hex-kleurstatus voor type licht (als RGB beschikbaar is)",
                 "fr": "Plages de valeurs appropriées pour le type light (255 au lieu de 100)\nImplémenter l'état de couleur hexadécimal pour le type de lumière (si RVB est disponible)",
-                "it": "Intervalli di valori adeguati per il tipo di luce (255 invece di 100)\nImplementa lo stato del colore esadecimale per il tipo di luce (se RGB è disponibile)",
+                "it": "Intervalli di valori corretti per il tipo di luce (255 invece di 100)\nImplementa lo stato del colore esadecimale per il tipo di luce (se RGB è disponibile)",
                 "es": "Rangos de valores adecuados para el tipo de luz (255 en lugar de 100)\nImplementar el estado de color hexadecimal para el tipo de luz (si RGB está disponible)",
                 "pl": "Prawidłowe zakresy wartości dla typu światła (255 zamiast 100)\nZaimplementuj stan koloru szesnastkowego dla typu światła (jeśli RGB jest dostępne)",
                 "zh-cn": "light类型的正确值范围（255而不是100）\n为类型的灯实现十六进制颜色状态（如果可以使用RGB）"

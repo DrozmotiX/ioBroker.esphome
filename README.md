@@ -86,7 +86,7 @@ switch:
     ### __WORK IN PROGRESS__
 -->
 
-### __WORK IN PROGRESS__
+### 0.1.4-2 (2021-03-07)
 * (DutchmanNL) Proper value ranges for type light (255 instead 100)
 * (DutchmanNL) Implement hex color state for type light (if RGB is available)
 
