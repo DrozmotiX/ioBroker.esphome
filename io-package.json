@@ -1,19 +1,19 @@
 {
     "common": {
         "name": "esphome",
-        "version": "0.1.4-3",
+        "version": "0.1.4",
         "news": {
-            "0.1.4-3": {
-                "en": "Implemented RGBW\nProper value ranges for type light (255 instead 100)\nImplemented hex color state for type light (if RGB is available)",
-                "de": "RGBW implementiert\nRichtige Wertebereiche für Typ Licht (255 statt 100)\nHex-Farbstatus für Typ Licht implementiert (falls RGB verfügbar ist)",
-                "ru": "Реализован RGBW\nПравильные диапазоны значений для типа light (255 вместо 100)\nРеализовано шестнадцатеричное цветовое состояние для типа света (если доступен RGB)",
-                "pt": "RGBW implementado\nIntervalos de valores adequados para o tipo de luz (255 em vez de 100)\nEstado de cor hexadecimal implementado para o tipo de luz (se RGB estiver disponível)",
-                "nl": "RGBW geïmplementeerd\nJuiste waardebereiken voor type licht (255 in plaats van 100)\nGeïmplementeerde hex-kleurstatus voor type licht (als RGB beschikbaar is)",
-                "fr": "RGBW implémenté\nPlages de valeurs appropriées pour le type light (255 au lieu de 100)\nÉtat de couleur hexadécimal implémenté pour la lumière de type (si RVB est disponible)",
-                "it": "RGBW implementato\nIntervalli di valori corretti per il tipo di luce (255 invece di 100)\nStato colore esadecimale implementato per il tipo di luce (se RGB è disponibile)",
-                "es": "RGBW implementado\nRangos de valores adecuados para el tipo de luz (255 en lugar de 100)\nEstado de color hexadecimal implementado para el tipo de luz (si RGB está disponible)",
-                "pl": "Zaimplementowano RGBW\nPrawidłowe zakresy wartości dla typu światła (255 zamiast 100)\nZaimplementowano stan koloru szesnastkowego dla typu światła (jeśli RGB jest dostępne)",
-                "zh-cn": "实作RGBW\nlight类型的正确值范围（255而不是100）\n为类型的灯实现了十六进制颜色状态（如果可用RGB）"
+            "0.1.4": {
+                "en": "Implemented RGBW\nEnsure correct encryption and storage of passwords\nProper value ranges for type light (255 instead 100)\nImplemented hex color state for type light (if RGB is available)",
+                "de": "RGBW implementiert\nStellen Sie die korrekte Verschlüsselung und Speicherung von Passwörtern sicher\nRichtige Wertebereiche für Typ Licht (255 statt 100)\nHex-Farbstatus für Typ Licht implementiert (falls RGB verfügbar ist)",
+                "ru": "Реализован RGBW\nОбеспечьте правильное шифрование и хранение паролей\nПравильные диапазоны значений для типа light (255 вместо 100)\nРеализовано шестнадцатеричное цветовое состояние для типа света (если доступен RGB)",
+                "pt": "RGBW implementado\nGaranta a criptografia e o armazenamento corretos de senhas\nIntervalos de valores adequados para tipo de luz (255 em vez de 100)\nEstado de cor hexadecimal implementado para o tipo de luz (se RGB estiver disponível)",
+                "nl": "Geïmplementeerde RGBW\nZorg voor correcte versleuteling en opslag van wachtwoorden\nJuiste waardebereiken voor type licht (255 in plaats van 100)\nGeïmplementeerde hex-kleurstatus voor type licht (als RGB beschikbaar is)",
+                "fr": "RGBW implémenté\nAssurer un cryptage et un stockage corrects des mots de passe\nPlages de valeurs appropriées pour le type light (255 au lieu de 100)\nÉtat de couleur hexadécimal implémenté pour la lumière de type (si RVB est disponible)",
+                "it": "RGBW implementato\nGarantire la corretta crittografia e archiviazione delle password\nIntervalli corretti per il tipo di luce (255 invece di 100)\nStato colore esadecimale implementato per il tipo di luce (se RGB è disponibile)",
+                "es": "RGBW implementado\nGarantizar el cifrado y el almacenamiento correctos de contraseñas.\nRangos de valores adecuados para el tipo de luz (255 en lugar de 100)\nEstado de color hexadecimal implementado para el tipo de luz (si RGB está disponible)",
+                "pl": "Zaimplementowano RGBW\nZapewnij prawidłowe szyfrowanie i przechowywanie haseł\nPrawidłowe zakresy wartości dla typu światła (255 zamiast 100)\nZaimplementowano stan koloru szesnastkowego dla typu światła (jeśli RGB jest dostępne)",
+                "zh-cn": "实作RGBW\n确保正确加密和存储密码\nlight类型的正确值范围（255而不是100）\n为类型的灯实现了十六进制颜色状态（如果可用RGB）"
             },
             "0.1.3": {
                 "en": "Proper value ranges for type light",
