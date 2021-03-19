@@ -86,8 +86,9 @@ switch:
     ### __WORK IN PROGRESS__
 -->
 
-### 0.1.4-3 (2021-03-07)
+### 0.1.4 (2021-03-19)
 * (DutchmanNL) Implemented RGBW
+* (DutchmanNL) Ensure correct encryption and storage of passwords
 * (DutchmanNL) Proper value ranges for type light (255 instead 100)
 * (DutchmanNL) Implemented hex color state for type light (if RGB is available)
 
