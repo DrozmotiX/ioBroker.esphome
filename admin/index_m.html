@@ -12,7 +12,7 @@
 	<script type="text/javascript" src="../../js/translate.js"></script>
 	<script type="text/javascript" src="../../lib/js/materialize.js"></script>
 	<script type="text/javascript" src="../../js/adapter-settings.js"></script>
-    
+
     <!-- Load our own files -->
 	<link rel="stylesheet" type="text/css" href="style.css"/>
 	<script type="text/javascript" src="words.js"></script>
@@ -22,6 +22,13 @@
 
         // Create secrect for encrypted password storage
         let secret;
+		function encryptManuell(key, value) {
+			var result = '';
+			for(var i = 0; i < value.length; ++i) {
+				result += String.fromCharCode(key[i % key.length].charCodeAt(0) ^ value.charCodeAt(i));
+			}
+			return result;
+		}
 
         function decryptManuell(key, value) {
             var result = '';
@@ -51,17 +58,17 @@
                 }
             }
             $('#devices').append(text);
-    
+
             $('.delete-table-row').on('click', (event) => {
                 console.log('delete');
                 $(event.currentTarget).parentsUntil('tr').parent().remove();
             });
-    
-    
+
+
             getConnectedState();
             $('input, .delete-device').each(function () {
                 let $key = $(this);
-        
+
                 $key.on('click', function () {
                     _onChange();
                 }).keyup(function () {
@@ -79,7 +86,7 @@
             // let deviceObj
             socket.emit('getObjectView', 'system', 'device', {startkey: 'esphome.' + instance + '.', endkey: 'esphome.' + instance + '.\u9999', include_docs: true}, function (err, _devices) {
                 console.log('Return of  all devices : ' + JSON.stringify(_devices));
-        
+
                 let text = '';
                 text += `
                     <div class="input-field ip col s4">
@@ -96,20 +103,20 @@
 
         function delete_device(device_id) {
             console.log('test' + device_id);
-    
+
             sendTo(null, 'removeDevice', device_id, (data) => {
             });
         }
 
         // Get value of connection state
         function getConnectedState() {
-    
+
             socket.emit('getObjectView', 'system', 'device', {startkey: 'esphome.' + instance + '.', endkey: 'esphome.' + instance + '.\u9999', include_docs: true}, function (err, _devices) {
                 let namespace = 'esphome.' + instance + '.';
                 let len = namespace.length;
                 console.log('Return of  all devices : ' + JSON.stringify(_devices));
                 if (_devices && _devices.rows && _devices.rows.length) {
-            
+
                     for (const i in _devices.rows) {
                         getState(_devices.rows[i].id + '.info._online', (err, state) => {
                             console.log(JSON.stringify('Connection value for device : ' + _devices.rows[i].id + ' value ' + state.val));
@@ -120,13 +127,13 @@
                             else {
                                 connectState = 'led-red';
                             }
-                    
+
                             console.log(connectState);
                             let tableRow = $('td').filter((index, e) => {
                                 console.log(e);
                                 return $(e).text() === _devices.rows[i].value.native.deviceName;
                             }).closest('tr');
-                    
+
                             console.log($(tableRow).attr('id'));
                             $('#' + $(tableRow).attr('id') + '> td > .led-all').removeClass('led-gray');
                             $('#' + $(tableRow).attr('id') + '> td > .led-all').addClass(connectState);
@@ -135,10 +142,10 @@
                 }
             });
         }
-        
+
         // This will be called by the admin adapter when the settings page loads
         function loadHelper(settings, onChange) {
-    
+
             _onChange = onChange;
             // example: select elements with id=key and class=value and insert value
             if (!settings) return;
@@ -160,9 +167,9 @@
                             .on('keyup', () => onChange());
                 }
             });
-    
+
             onChange(false);
-    
+
             // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
             M.updateTextFields();
         }
@@ -174,16 +181,16 @@
                 secret = (obj.native ? obj.native.secret : '') || 'Zgfr56gFe87jJOM';
                 loadHelper(settings, onChange);
             });
-    
+
             // initialize modal
             $('.modal').modal();
             emitDevices();
-    
+
             $('#btn-edit-device').on('click', () => {
                 console.log('Add device button executed');
                 messageObj = {
                     'device-ip': $('#device-ip').val(),
-                    'device-pass': decryptManuell(secret, $('#device-pass').val())
+                    'device-pass': encryptManuell(secret, $('#device-pass').val())
                 };
                 sendTo(null, 'addDevice', messageObj, (data) => {
                     console.log('Message from backend : ' + data);
@@ -196,13 +203,14 @@
                     }
                 });
             });
-    
-    
+
+
             $('#btn-add-device').on('click', () => {
                 console.log('Add device button executed');
                 messageObj = {
                     'device-ip': $('#device-ip').val(),
-                    'device-pass': decryptManuell(secret, $('#device-pass').val())
+                    // 'device-pass': decryptManuell(secret, $('#device-pass').val())
+					'device-pass': encryptManuell(secret, $('#device-pass').val())
                 };
                 sendTo(null, 'addDevice', messageObj, (data) => {
                     console.log('Message from backend : ' + data);
@@ -215,32 +223,32 @@
                     }
                 });
             });
-    
+
             onChange(false);
             // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
             if (M) M.updateTextFields();
         }
 
         function errorFunction(data) {
-    
+
             let text = '';
-    
+
             text += `
                 <h5 class="center ${data.type}">${data.type}</h5>
                 <div class="row col s12 center">
                     <p class="break-word" >${data.message}</p>
                 </div>
                 <div class="row"></div>`;
-    
+
             $(`#error_container`).html(text);
-    
+
             $('#modal-error-message').modal('open');
         }
 
         // This will be called by the admin adapter when the user presses the save button
         function save(callback) {
             let obj = {};
-    
+
             $('.value').each(function () {
                 var $this = $(this);
                 var id = $this.attr('id');
@@ -251,11 +259,11 @@
                     obj[id] = $this.val();
                 }
             });
-    
+
             callback(obj);
             console.log('test');
         }
-        
+
         // Read all devices from instance
         function emitDevices() {
             socket.emit('getObjectView', 'system', 'device', {startkey: 'esphome.' + instance + '.', endkey: 'esphome.' + instance + '.\u9999', include_docs: true}, function (err, _devices) {
@@ -319,7 +327,7 @@
 					</table>
 				</div>
 			</div>
-            
+
             <!-- Modal for edit input -->
            <div id="modal-edit-device" class="modal">
 				<div class="modal-content">
@@ -333,7 +341,7 @@
 					<button class="btn waves-effect waves-light modal-close modal-action translate">Close</button>
 				</div>
 			</div>
-            
+
             <!-- END for Modal for edit input -->
             <!-- Modal for manual ip input -->
 			<div id="modal-add-device" class="modal">
