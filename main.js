@@ -110,7 +110,7 @@ class Esphome extends utils.Adapter {
 					deviceInfoName: knownDevices[i].native.name,
 					passWord: this.decrypt(knownDevices[i].native.passWord),
 				};
-				this.connectDevices(knownDevices[i].native.ip, knownDevices[i].native.passWord);
+				this.connectDevices(knownDevices[i].native.ip, this.deviceInfo[knownDevices[i].native.ip].passWord);
 			}
 		} catch (e) {
 			this.sendSentry(`[tryKnownDevices] ${e}`);
@@ -214,7 +214,7 @@ class Esphome extends utils.Adapter {
 							name: this.deviceInfo[host].deviceInfoName,
 							mac: deviceInfo.macAddress,
 							deviceName: deviceName,
-							passWord: pass,
+							passWord: this.encrypt(pass),
 						},
 					});
 
