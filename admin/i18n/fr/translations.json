@@ -1,0 +1,10 @@
+{
+    "Automatic device detection activated": "Détection automatique des appareils activée",
+    "Connected": "Lié",
+    "Delete": "Effacer",
+    "Devices can be added manually or by autodiscovery": "Les appareils peuvent être ajoutés manuellement ou par découverte automatique",
+    "ID": "identifiant",
+    "IP-Address": "Adresse IP",
+    "Name": "Nom",
+    "reconnect interval": "intervalle de reconnexion"
+}

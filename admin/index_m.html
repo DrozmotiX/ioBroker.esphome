@@ -287,7 +287,7 @@
 			</div>
 		</div>
 		<div class="section">
-			<h6 class="translate">ESPHome devices are discovered automatically, if not you can use the ADD Device button..</h6>
+			<h6 class="translate">Devices can be added manually or by autodiscovery</h6>
 			<div class="row">
 				<div class="input-field">
 					<a id="add-device" class="table-button-add col s2 waves-effect waves-light btn btn-large blue modal-trigger translate" data-target="modal-add-device"><i class="large left material-icons">add_circle</i>Add Device</a>
@@ -301,13 +301,13 @@
                 <!-- default Password -->
                 <div class="col s2 input_field input-field">
                     <label for="apiPass"></label><input type="password" class="value" id="apiPass" value=""/>
-                    <span class="translate">default Password</span>
+                    <span class="translate">API password</span>
                 </div>
                 <!-- end default Password -->
                 <!-- Auto Discovery -->
                 <div class="col s4  input-field">
                     <label for="autodiscovery"></label><input type="checkbox" class="value" id="autodiscovery" checked/>
-                    <span class="translate">Auto Discovery enabled</span>
+                    <span class="translate">Automatic device detection activated</span>
                 </div>
                 <!-- end Auto Discovery -->
 			</div>
@@ -320,7 +320,7 @@
 							<th class="translate">Name</th>
 							<th class="translate">IP-Address</th>
 							<th class="translate">Connected</th>
-                            <th class="translate">delete</th>
+                            <th class="translate">Delete</th>
 						</tr>
 						</thead>
 						<tbody id="devices"></tbody>

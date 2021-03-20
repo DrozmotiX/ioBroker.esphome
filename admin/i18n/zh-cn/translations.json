@@ -1,0 +1,10 @@
+{
+    "Automatic device detection activated": "自动设备检测已激活",
+    "Connected": "连接的",
+    "Delete": "删除",
+    "Devices can be added manually or by autodiscovery": "可以手动添加设备或通过自动发现添加设备",
+    "ID": "ID",
+    "IP-Address": "IP地址",
+    "Name": "姓名",
+    "reconnect interval": "重新连接间隔"
+}
