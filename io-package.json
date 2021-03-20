@@ -1,8 +1,20 @@
 {
     "common": {
         "name": "esphome",
-        "version": "0.1.4",
+        "version": "0.1.5",
         "news": {
+            "0.1.5": {
+                "en": "Add Translations",
+                "de": "Übersetzungen hinzufügen",
+                "ru": "Добавить перевод",
+                "pt": "Adicionar traduções",
+                "nl": "Voeg vertalingen toe",
+                "fr": "Ajouter des traductions",
+                "it": "Aggiungi traduzioni",
+                "es": "Agregar traducciones",
+                "pl": "Dodaj tłumaczenia",
+                "zh-cn": "添加翻译"
+            },
             "0.1.4": {
                 "en": "Implemented RGBW\nEnsure correct encryption and storage of passwords\nProper value ranges for type light (255 instead 100)\nImplemented hex color state for type light (if RGB is available)",
                 "de": "RGBW implementiert\nStellen Sie die korrekte Verschlüsselung und Speicherung von Passwörtern sicher\nRichtige Wertebereiche für Typ Licht (255 statt 100)\nHex-Farbstatus für Typ Licht implementiert (falls RGB verfügbar ist)",

@@ -86,6 +86,9 @@ switch:
     ### __WORK IN PROGRESS__
 -->
 
+### 0.1.5 (2021-03-21)
+* (DutchmanNL) Add Translations
+
 ### 0.1.4 (2021-03-19)
 * (DutchmanNL) Implemented RGBW
 * (DutchmanNL) Ensure correct encryption and storage of passwords

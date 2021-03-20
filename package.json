@@ -1,6 +1,6 @@
 {
   "name": "iobroker.esphome",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome",
   "author": {
     "name": "DutchmanNL",
