@@ -431,7 +431,6 @@ class Esphome extends utils.Adapter {
 			stateVal = this.modify(rounding, stateVal);
 			this.log.debug(`Value "${stateVal}" for name "${entity}" after function modify with method "${rounding}"`);
 		}
-
 		await this.stateSetCreate( `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, `value of ${entity.type}`, stateVal, this.deviceInfo[host][entity.id].unit, writable);
 	}
 
