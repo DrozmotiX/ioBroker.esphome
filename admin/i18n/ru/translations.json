@@ -1,10 +1,17 @@
 {
+    "API password": "Пароль",
+    "Add device manually": "Добавить устройство вручную",
     "Automatic device detection activated": "Активировано автоматическое обнаружение устройства",
+    "Close": "Закрывать",
     "Connected": "Связаны",
     "Delete": "Удалить",
     "Devices can be added manually or by autodiscovery": "Устройства можно добавлять вручную или с помощью автообнаружения",
+    "Edit": "Редактировать",
+    "Edit device": "Изменить устройство",
     "ID": "Я БЫ",
+    "IP": "IP",
     "IP-Address": "Айпи адрес",
     "Name": "Имя",
+    "device-pass": "Пароль",
     "reconnect interval": "интервал повторного подключения"
 }

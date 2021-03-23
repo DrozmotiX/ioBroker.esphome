@@ -1,10 +1,17 @@
 {
+    "API password": "Contraseña",
+    "Add device manually": "Agregar dispositivo manualmente",
     "Automatic device detection activated": "Detección automática de dispositivos activada",
+    "Close": "Cerrar",
     "Connected": "Conectado",
     "Delete": "Borrar",
     "Devices can be added manually or by autodiscovery": "Los dispositivos se pueden agregar manualmente o por descubrimiento automático",
+    "Edit": "Editar",
+    "Edit device": "Editar dispositivo",
     "ID": "IDENTIFICACIÓN",
+    "IP": "IP",
     "IP-Address": "Dirección IP",
     "Name": "Nombre",
+    "device-pass": "Contraseña",
     "reconnect interval": "intervalo de reconexión"
 }

@@ -1,10 +1,17 @@
 {
+    "API password": "密码",
+    "Add device manually": "手动添加设备",
     "Automatic device detection activated": "自动设备检测已激活",
+    "Close": "关闭",
     "Connected": "连接的",
     "Delete": "删除",
     "Devices can be added manually or by autodiscovery": "可以手动添加设备或通过自动发现添加设备",
+    "Edit": "编辑",
+    "Edit device": "编辑装置",
     "ID": "ID",
+    "IP": "知识产权",
     "IP-Address": "IP地址",
     "Name": "姓名",
+    "device-pass": "密码",
     "reconnect interval": "重新连接间隔"
 }
