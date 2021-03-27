@@ -45,8 +45,7 @@ class Esphome extends utils.Adapter {
 	/**
 	 * Is called when databases are connected and adapter received configuration.
 	 */
-	async onReady() {
-		huhu();
+	async onReady() {	
 		await this.setStateAsync('info.connection', {val: true, ack: true});
 		try {
 			apiPass = this.config.apiPass;

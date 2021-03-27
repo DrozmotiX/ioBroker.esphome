@@ -15,7 +15,6 @@
 
 **This adapter uses Sentry libraries to automatically report exceptions and code errors to the developers.** For more details and for information how to disable the error reporting see [Sentry-Plugin Documentation](https://github.com/ioBroker/plugin-sentry#plugin-sentry)! Sentry reporting is used starting with js-controller 3.0.
 
-
 ## ESPHome adapter for ioBroker
 
 Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome.
@@ -102,9 +101,10 @@ If you like my work, please consider a personal donation
 -->
 
 ### __WORK IN PROGRESS__ Native Integration of ESPHome Dashboard
-(DutchmanNL) Translations updated
-(DutchmanNL) Configuration page updated
-(DutchmanNL) Native integration of ESPHome Dashboard added
+* (DutchmanNL) Translations updated
+* (DutchmanNL) Configuration page updated
+* (DutchmanNL) Added to sentry error reporting
+* (DutchmanNL) Native integration of ESPHome Dashboard added
 
 ### 0.1.5 (2021-03-21)
 * (DutchmanNL) Add Translations
