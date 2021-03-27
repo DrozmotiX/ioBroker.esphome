@@ -91,7 +91,7 @@ switch:
 ## Support me
 If you like my work, please consider a personal donation  
 (this is an personal Donate link for DutchmanNL, no relation to the ioBroker Project !)  
-[![Donate](https://raw.githubusercontent.com/DrozmotiX/ioBroker.sourceanalytix/master/admin/button.png)](http://paypal.me/DutchmanNL)
+[![Donate](https://raw.githubusercontent.com/DrozmotiX/ioBroker.sourceanalytix/main/admin/button.png)](http://paypal.me/DutchmanNL)
 
 ## Changelog
 
@@ -100,7 +100,7 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
 -->
 
-### __WORK IN PROGRESS__ Native Integration of ESPHome Dashboard
+### 0.2.0-0 (2021-03-27) Native Integration of ESPHome Dashboard
 * (DutchmanNL) Translations updated
 * (DutchmanNL) Configuration page updated
 * (DutchmanNL) Added to sentry error reporting
