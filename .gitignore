@@ -4,6 +4,7 @@
 *.code-workspace
 node_modules
 nbproject
+python_modules
 
 # npm package files
 iobroker.*.tgz

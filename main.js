@@ -9,15 +9,16 @@
 const utils = require('@iobroker/adapter-core');
 const { Client } = require('esphome-native-api');
 const { Discovery } = require('esphome-native-api');
+const kill = require('tree-kill');
 let discovery;
 const stateAttr = require(__dirname + '/lib/stateAttr.js'); // Load attribute library
 const disableSentry = true; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
 const client = {};
-let reconnectTimer, reconnectInterval, apiPass, autodiscovery;
+let reconnectTimer, reconnectInterval, apiPass, autodiscovery, dashboardProcess;
 
-// Load your modules here, e.g.:
-// const fs = require("fs");
+// const exec = require('child_process').exec;
+const { fork, spawn } = require('child_process');
 
 class Esphome extends utils.Adapter {
 
@@ -47,7 +48,7 @@ class Esphome extends utils.Adapter {
 	async onReady() {
 		await this.setStateAsync('info.connection', {val: true, ack: true});
 		try {
-			apiPass =  this.config.apiPass;
+			apiPass = this.config.apiPass;
 			autodiscovery =  this.config.autodiscovery;
 			reconnectInterval = this.config.reconnectInterval * 1000;
 
@@ -58,11 +59,66 @@ class Esphome extends utils.Adapter {
 				this.log.warn(`Auto Discovery disabled, new devices (or IP changes) will NOT be detected automatically!`);
 			}
 
-			await this.tryKnownDevices(); // Try to establish connection to already known devices
-
+			if (this.config.ESPHomeDashboardEnabled){
+				this.log.info(`Native Integration of ESPHome Dashboard enabled `);
+				await this.espHomeDashboard();
+			} else {
+				this.log.info(`Native Integration of ESPHome Dashboard disabled `);
+			}
 
 		} catch (e) {
 			this.log.error(`Connection issue ${e}`);
+		}
+	}
+
+	async espHomeDashboard() {
+
+		try {
+
+			dashboardProcess = spawn(`npm`, [`run`, `-s`, `nopy`, `/opt/iobroker/node_modules/iobroker.esphome/python_modules/bin/esphome`, `config/`, `dashboard`], {
+				cwd: '/opt/iobroker/node_modules/iobroker.esphome'
+			});
+
+			this.log.debug(`espHomeDashboard_Process ${JSON.stringify(dashboardProcess)}`);
+
+			dashboardProcess.stdout.on('data', (data) => {
+				this.log.info(`[dashboardProcess - Data] ${data}`);
+			});
+
+			dashboardProcess.stderr.on('data', (data) => {
+				// this.log.warn(`[dashboardProcess ERROR] ${data}`);
+				if (data.includes('INFO')){
+					if (data.includes('Starting')){
+						this.log.info(`[ESPHome - Console] ${data}`);
+					} else {
+						this.log.debug(`[ESPHome - Console] ${data}`);
+					}
+				} else  {
+					this.log.error(`[dashboardProcess ERROR] ${data}`);
+				}
+			});
+
+			dashboardProcess.on('message', (code, signal) => {
+				this.log.info(`[dashboardProcess MESSAGE] Exit code is: ${code} | ${signal}`);
+			});
+
+			dashboardProcess.on('exit', (code, signal) => {
+				this.log.warn(`ESPHome Dashboard deactivated`);
+			});
+
+			dashboardProcess.on('error', (data) => {
+				this.log.warn(`[dashboardProcess ERROR] ${data}`);
+				if (data.message.includes('INFO')){
+					this.log.info(`[dashboardProcess ERROR] ${data}`);
+				} else  {
+					this.log.error(`[dashboardProcess ERROR] ${data}`);
+				}
+			});
+
+			// dashboardProcess.kill();
+
+		} catch (e) {
+			this.log.error(`[espHomeDashboard] ${e}`);
 		}
 	}
 
@@ -744,6 +800,14 @@ class Esphome extends utils.Adapter {
 			if (reconnectTimer){
 				reconnectTimer = clearTimeout();
 			}
+			try {
+				if (dashboardProcess && dashboardProcess.pid){
+					kill(dashboardProcess.pid);
+				}
+			} catch (e) {
+				this.log.error(`[onUnload - dashboardProcess] ${JSON.stringify(e)}`);
+			}
+
 			callback();
 		} catch (e) {
 			this.log.error(`[onUnload] ${JSON.stringify(e)}`);
