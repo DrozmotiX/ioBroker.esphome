@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "esphome",
-        "version": "0.1.5",
+        "version": "0.1.6-0",
         "news": {
             "0.1.5": {
                 "en": "Add Translations",
@@ -137,6 +137,16 @@
         "connectionType": "local",
         "dataSource": "push",
         "materialize": true,
+        "plugins": {
+            "sentry": {
+                "dsn": "https://52227cfa250b49e99b1f28408273402c@sentry.iobroker.net/122"
+            }
+        },
+        "localLink": "http://%ESPHomeDashboardIP%:%ESPHomeDashboardPort%",
+        "adminTab": {
+            "link": "http://%ESPHomeDashboardIP%:%ESPHomeDashboardPort%",
+            "fa-icon": "settings_input_composite"
+        },
         "dependencies": [
             {
                 "js-controller": ">=3.0.0",
@@ -150,7 +160,10 @@
     "native": {
         "reconnectInterval": 30,
         "apiPass": "",
-        "autodiscovery": true
+        "autodiscovery": true,
+        "ESPHomeDashboardEnabled": true,
+        "ESPHomeDashboardPort": 6052,
+        "ESPHomeDashboardIP": "localhost"
     },
     "objects": [],
     "instanceObjects": [

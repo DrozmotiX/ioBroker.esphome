@@ -4,6 +4,8 @@ nbproject/
 *.code-workspace
 Thumbs.db
 gulpfile.js
+python_modules
+
 
 # CI test files
 test/
