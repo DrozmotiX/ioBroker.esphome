@@ -12,7 +12,7 @@ const { Discovery } = require('esphome-native-api');
 const kill = require('tree-kill');
 let discovery;
 const stateAttr = require(__dirname + '/lib/stateAttr.js'); // Load attribute library
-const disableSentry = true; // Ensure to set to true during development!
+const disableSentry = false; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
 const client = {};
 let reconnectTimer, reconnectInterval, apiPass, autodiscovery, dashboardProcess;
@@ -46,6 +46,7 @@ class Esphome extends utils.Adapter {
 	 * Is called when databases are connected and adapter received configuration.
 	 */
 	async onReady() {
+		huhu();
 		await this.setStateAsync('info.connection', {val: true, ack: true});
 		try {
 			apiPass = this.config.apiPass;
