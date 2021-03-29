@@ -1,9 +1,9 @@
 {
     "common": {
         "name": "esphome",
-        "version": "0.2.0-0",
+        "version": "0.2.0",
         "news": {
-            "0.2.0-0": {
+            "0.2.0": {
                 "en": "Translations updated\nConfiguration page updated\nAdded to sentry error reporting\nNative integration of ESPHome Dashboard added",
                 "de": "Übersetzungen aktualisiert\nKonfigurationsseite aktualisiert\nZur Sentry-Fehlerberichterstattung hinzugefügt\nNative Integration von ESPHome Dashboard hinzugefügt",
                 "ru": "Переводы обновлены\nСтраница конфигурации обновлена\nДобавлен в отчет об ошибках караула\nДобавлена встроенная интеграция ESPHome Dashboard.",

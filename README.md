@@ -24,9 +24,9 @@ Native integration of ESPHome managed device (Including Dashboard) by its native
 
 This adapter uses the [esphome-native-api](https://github.com/Nafaya/esphome-native-api#readme) with all credits to @Nafaya to interact with [ESPHome API](https://esphome.io/components/api.html?highlight=api)!
 
-## [Documentation](https://DrozmotiX.github.io/languages/en/ESPHome/)
+## [Documentation](https://DrozmotiX.github.io/languages/en/Adapter/ESPHome/)
 
-All our adapter documentation can be found at [The DrozmotiX Docu Page](https://DrozmotiX.github.io/languages/en/ESPHome)
+All our adapter documentation can be found at [The DrozmotiX Docu Page](https://DrozmotiX.github.io/languages/en/Adapter/ESPHome/)
 
 ## Prerequisites
 
@@ -43,51 +43,60 @@ api:
   password: 'MyPassword'
 ```
 
+
 ### Example config
 Example config, for more examples see [The DrozmotiX Docu Page](https://DrozmotiX.github.io) or [ESPHome Documentation](https://esphome.io/index.html)
-```
-esphome:
-  name: sensor_badkamer
-  platform: ESP32
-  board: esp-wrover-kit
 
-wifi:
-  use_address: 192.168.10.122
-  ssid: "xxxxx"
-  password: "xxxxxx"
-          
-# Enable ESPHome API
-api:
-    password: 'MyPassword'
-# Activate i2c bus  
-i2c:
-  sda: 21
-  scl: 22
-  scan: True
-  id: bus_a
-  
-# Example configuration for bh1750
-sensor:
-  - platform: bh1750
-    name: "Hal_Illuminance"
-    address: 0x23
-    measurement_time: 69
-    update_interval: 10s
+<details><summary>Show example config
+</summary>
+
+    esphome:
+      name: sensor_badkamer
+      platform: ESP32
+      board: esp-wrover-kit
     
-# Example configuration for an GPIO output    
-output:
-  - platform: gpio
-    pin: 12
-    inverted: true
-    id: gpio_12
-    
-# Example configuration linking a switch to the previous defined output
-switch:
-  - platform: output
-    name: "Generic Output"
-    output: 'gpio_12'
-    
-```
+    wifi:
+      use_address: 192.168.10.122
+      ssid: "xxxxx"
+      password: "xxxxxx"
+              
+    # Enable ESPHome API
+    api:
+        password: 'MyPassword'
+    # Activate i2c bus  
+    i2c:
+      sda: 21
+      scl: 22
+      scan: True
+      id: bus_a
+      
+    # Example configuration for bh1750
+    sensor:
+      - platform: bh1750
+        name: "Hal_Illuminance"
+        address: 0x23
+        measurement_time: 69
+        update_interval: 10s
+        
+    # Example configuration for an GPIO output    
+    output:
+      - platform: gpio
+        pin: 12
+        inverted: true
+        id: gpio_12
+        
+    # Example configuration linking a switch to the previous defined output
+    switch:
+      - platform: output
+        name: "Generic Output"
+        output: 'gpio_12'
+</details>
+
+## Tasmota / ESPEasy migration
+
+Migrating from previous Sonoff Tasmota or ESPEasy setups is very easy. You just need to have ESPHome create a binary for you and then upload that in the web interface.  
+See for more details our [Docu Page](https://DrozmotiX.github.io/languages/en/Adapter/ESPHome/06.migration.html)
+
 ## Support me
 If you like my work, please consider a personal donation  
 (this is an personal Donate link for DutchmanNL, no relation to the ioBroker Project !)  
@@ -100,7 +109,7 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
 -->
 
-### 0.2.0-0 (2021-03-27) Native Integration of ESPHome Dashboard
+### 0.2.0 (2021-03-29)
 * (DutchmanNL) Translations updated
 * (DutchmanNL) Configuration page updated
 * (DutchmanNL) Added to sentry error reporting
