@@ -1,4 +1,5 @@
-![Logo](admin/esphome.png)
+<img src="./admin/esphome.png" width="10%" height="10%" align="center">
+
 # ioBroker.esphome
 
 [![NPM version](http://img.shields.io/npm/v/iobroker.esphome.svg)](https://www.npmjs.com/package/iobroker.esphome)
