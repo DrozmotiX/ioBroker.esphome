@@ -98,8 +98,9 @@ Example config, for more examples see [The DrozmotiX Docu Page](https://Drozmoti
 Migrating from previous Sonoff Tasmota or ESPEasy setups is very easy. You just need to have ESPHome create a binary for you and then upload that in the web interface.  
 See for more details our [Docu Page](https://DrozmotiX.github.io/languages/en/Adapter/ESPHome/06.migration.html)
 
-Generated yaml files are stored at ```/opt/iobroker/node_modules/iobroker.esphome/config/>device<.yaml```
-{: .alert .alert-info}
+.. note::
+
+    Generated yaml files are stored at ```/opt/iobroker/node_modules/iobroker.esphome/config/>device<.yaml```
 
 
 ## Support me

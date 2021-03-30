@@ -346,6 +346,13 @@ class Esphome extends utils.Adapter {
 									await this.handleStateArrays(`${host}`, entity, state);
 									break;
 
+								case 'Cover':
+									await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.position`, `Position`, 0, `%`, true);
+									await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.tilt`, `Tilt`, 0, `%`, true);
+									await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.stop`, `Stop`, false, ``, true);
+									break;
+
+
 								case 'Fan':
 									await this.handleRegularState(`${host}`, entity, state, false );
 									break;
@@ -519,7 +526,7 @@ class Esphome extends utils.Adapter {
 
 			}
 
-			// Add unit to temperature states
+			// Add unit to states
 			if (stateName === `brightness`
 				|| stateName === `blue`
 				|| stateName === `green`
@@ -922,6 +929,21 @@ class Esphome extends utils.Adapter {
 				} else if (this.deviceInfo[deviceIP][device[4]].type === `Climate`) {
 					this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
 					await client[deviceIP].connection.climateCommandService(this.deviceInfo[deviceIP][device[4]].states);
+
+					// Handle Cover Position
+				} else if (this.deviceInfo[deviceIP][device[5]].type === `position`) {
+					// this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
+					await client[deviceIP].connection.climateCommandService({'key': device[4], 'position': state.val});
+
+					// Handle Cover Tilt
+				} else if (this.deviceInfo[deviceIP][device[5]].type === `tilt`) {
+					// this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
+					await client[deviceIP].connection.climateCommandService({'key': device[4], 'tilt': state.val});
+
+					// Handle Cover Stop
+				} else if (this.deviceInfo[deviceIP][device[5]].type === `stop`) {
+					// this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
+					await client[deviceIP].connection.climateCommandService({'key': device[4], 'stop': true});
 
 				} else if (this.deviceInfo[deviceIP][device[4]].type === `Light`) {
 					let writeValue = state.val;
