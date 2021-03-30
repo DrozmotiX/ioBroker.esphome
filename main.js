@@ -45,7 +45,7 @@ class Esphome extends utils.Adapter {
 	/**
 	 * Is called when databases are connected and adapter received configuration.
 	 */
-	async onReady() {	
+	async onReady() {
 		await this.setStateAsync('info.connection', {val: true, ack: true});
 		try {
 			apiPass = this.config.apiPass;
@@ -496,7 +496,7 @@ class Esphome extends utils.Adapter {
 			stateVal = this.modify(rounding, stateVal);
 			this.log.debug(`Value "${stateVal}" for name "${entity}" after function modify with method "${rounding}"`);
 		}
-		await this.stateSetCreate( `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, `value of ${entity.type}`, stateVal, this.deviceInfo[host][entity.id].unit, writable);
+		await this.stateSetCreate( `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, `State of ${entity.config.name}`, stateVal, this.deviceInfo[host][entity.id].unit, writable);
 	}
 
 	async handleStateArrays(host, entity, state) {
@@ -548,7 +548,7 @@ class Esphome extends utils.Adapter {
 			}
 
 			if (stateName !== 'key') {
-				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`, `value of ${entity.type}`, writeValue, unit, writable);
+				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`, `${stateName} of ${entity.config.name}`, writeValue, unit, writable);
 			}
 		}
 
@@ -561,7 +561,7 @@ class Esphome extends utils.Adapter {
 				Math.round((this.deviceInfo[host][entity.id].states.green * 100) * 2.55),
 				Math.round((this.deviceInfo[host][entity.id].states.blue * 100) * 2.55),
 			);
-			await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.colorHEX`, `value of colorHEX`, hexValue, '', true);
+			await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.colorHEX`, `ColorHEX of ${entity.config.name}`, hexValue, '', true);
 		}
 	}
 

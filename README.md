@@ -116,6 +116,8 @@ If you like my work, please consider a personal donation
 
 ### __WORK IN PROGRESS__
 * (DutchmanNL) Logging improved, solves [#48](https://github.com/DrozmotiX/ioBroker.esphome/issues/48)
+* (DutchmanNL) Name of states changed, solves [#49](https://github.com/DrozmotiX/ioBroker.esphome/issues/49)
+
 ### 0.2.0 (2021-03-29)
 * (DutchmanNL) Translations updated
 * (DutchmanNL) Configuration page updated
