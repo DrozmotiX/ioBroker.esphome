@@ -954,17 +954,17 @@ class Esphome extends utils.Adapter {
 					await client[deviceIP].connection.climateCommandService(this.deviceInfo[deviceIP][device[4]].states);
 
 					// Handle Cover Position
-				} else if (this.deviceInfo[deviceIP][device[5]].type === `position`) {
+				} else if (device[5] === `position`) {
 					// this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
 					await client[deviceIP].connection.climateCommandService({'key': device[4], 'position': state.val});
 
 					// Handle Cover Tilt
-				} else if (this.deviceInfo[deviceIP][device[5]].type === `tilt`) {
+				} else if (device[5] === `tilt`) {
 					// this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
 					await client[deviceIP].connection.climateCommandService({'key': device[4], 'tilt': state.val});
 
 					// Handle Cover Stop
-				} else if (this.deviceInfo[deviceIP][device[5]].type === `stop`) {
+				} else if (device[5] === `stop`) {
 					// this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
 					await client[deviceIP].connection.climateCommandService({'key': device[4], 'stop': true});
 
