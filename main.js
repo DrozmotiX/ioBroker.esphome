@@ -536,6 +536,29 @@ class Esphome extends utils.Adapter {
 
 				writeValue = Math.round((state[stateName] * 100) * 2.55);
 
+				// Create transitionLength state only ones
+				if (this.deviceInfo[host][entity.id].states.transitionLength == null) {
+
+					// Check if state already exists
+					let transitionLength;
+					try {
+
+						// Try  to get current state
+						transitionLength = await this.getStateAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`);
+
+						// Check if state contains value
+						if (transitionLength){
+							this.deviceInfo[host][entity.id].states.transitionLength = transitionLength.val;
+						} else { // Else just create it
+							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
+							this.deviceInfo[host][entity.id].states.transitionLength = 0;}
+
+					} catch (e) { // Else just create it
+						await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
+						this.deviceInfo[host][entity.id].states.transitionLength = 0;
+					}
+
+				}
 			}
 
 			if (stateName !== 'key') {
@@ -969,10 +992,12 @@ class Esphome extends utils.Adapter {
 						this.deviceInfo[deviceIP][device[4]].states.red = (rgbConversion.red / 100) / 2.55;
 						this.deviceInfo[deviceIP][device[4]].states.blue = (rgbConversion.blue  / 100) / 2.55;
 						this.deviceInfo[deviceIP][device[4]].states.green = (rgbConversion.green  / 100) / 2.55;
-					} else {
-						this.deviceInfo[deviceIP][device[4]].states[device[5]] = writeValue;
-					}
 
+					} else if (device[5]  === `transitionLength`){
+
+						this.deviceInfo[deviceIP][device[4]].states[device[5]] = writeValue;
+
+					}
 					this.log.debug(`Send Light values ${JSON.stringify(this.deviceInfo[deviceIP][device[4]].states)}`);
 					await client[deviceIP].connection.lightCommandService(this.deviceInfo[deviceIP][device[4]].states);
 				}
