@@ -107,11 +107,12 @@ class Esphome extends utils.Adapter {
 			});
 
 			dashboardProcess.on('error', (data) => {
-				this.log.warn(`[dashboardProcess ERROR] ${data}`);
 				if (data.message.includes('INFO')){
-					this.log.info(`[dashboardProcess ERROR] ${data}`);
-				} else  {
-					this.log.error(`[dashboardProcess ERROR] ${data}`);
+					this.log.info(`[dashboardProcess Info] ${data}`);
+				} else if (data.message.includes('ERROR')) {
+					this.log.error(`[dashboardProcess Warn] ${data}`);
+				} else {
+					this.log.error(`[dashboardProcess Error] ${data}`);
 				}
 			});
 
@@ -431,6 +432,14 @@ class Esphome extends utils.Adapter {
 					} else if (error.message.includes('Invalid password')){
 						optimisedError = `Client ${host} incorrect password !`;
 						this.log.error(optimisedError);
+					} else if (error.message.includes('ECONNRESET')){
+						optimisedError = `Client ${host} Connection Lost, will reconnect automatically when device is available!`;
+						this.log.warn(optimisedError);
+					} else if (error.message.includes('timeout')){
+						optimisedError = `Client ${host} Timeout, connection Lost, will reconnect automatically when device is available!`;
+						this.log.warn(optimisedError);
+					} else if (error.message.includes('write after end')){
+						// Ignore error
 					} else {
 						this.log.error(`ESPHome client ${host} ${error}`);
 					}
