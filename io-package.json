@@ -1,8 +1,20 @@
 {
     "common": {
         "name": "esphome",
-        "version": "0.2.1-0",
+        "version": "0.2.1-1",
         "news": {
+            "0.2.1-1": {
+                "en": "add cover component\nadd transitionLength for lights",
+                "de": "Abdeckungskomponente hinzufügen\nÜbergangslänge für Lichter hinzufügen",
+                "ru": "добавить компонент обложки\nдобавить transitionLength для огней",
+                "pt": "adicionar componente de capa\nadicionar comprimento de transição para luzes",
+                "nl": "voeg een omslagcomponent toe\nvoeg transitionLength toe voor lichten",
+                "fr": "ajouter un composant de couverture\najouter une longueur de transition pour les lumières",
+                "it": "aggiungi il componente di copertina\naggiungi TransitionLength per le luci",
+                "es": "agregar componente de portada\nagregar transiciónLength para luces",
+                "pl": "dodaj komponent okładki\ndodaj długość przejścia dla świateł",
+                "zh-cn": "添加封面组件\n为灯光添加transitionLength"
+            },
             "0.2.1-0": {
                 "en": "Logging improved, solves [#48](https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nName of states changed, solves [#49](https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
                 "de": "Protokollierung verbessert, löst [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nName der Staaten geändert, löst [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
