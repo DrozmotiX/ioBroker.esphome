@@ -152,29 +152,6 @@ class Esphome extends utils.Adapter {
 		}
 	}
 
-	// Try to contact to contact and read data of already known devices
-	async tryKnownDevices() {
-		try {
-			const knownDevices = await this.getDevicesAsync();
-			if (!knownDevices) return;
-
-			// Get basic data of known devices and start reading data
-			for (const i in knownDevices) {
-				this.deviceInfo[knownDevices[i].native.ip] = {
-					ip: knownDevices[i].native.ip,
-					mac: knownDevices[i].native.mac,
-					deviceName: knownDevices[i].native.deviceName,
-					deviceInfoName: knownDevices[i].native.name,
-					passWord: this.decrypt(knownDevices[i].native.passWord),
-				};
-				this.connectDevices(knownDevices[i].native.ip, this.deviceInfo[knownDevices[i].native.ip].passWord);
-			}
-		} catch (e) {
-			this.sendSentry(`[tryKnownDevices] ${e}`);
-		}
-
-	}
-
 	// Handle Socket connections
 	connectDevices(host, pass){
 
@@ -215,6 +192,8 @@ class Esphome extends utils.Adapter {
 				try {
 					if (this.deviceInfo[host].deviceName != null) {
 						this.setState(`${this.deviceInfo[host].deviceName}.info._online`, {val: false, ack: true});
+						this.log.warn(`ESPHome  client  ${this.deviceInfo[host].deviceInfo.name} disconnected`);
+					} else {
 						this.log.warn(`ESPHome  client  ${host} disconnected`);
 					}
 				} catch (e) {
@@ -223,7 +202,7 @@ class Esphome extends utils.Adapter {
 			});
 
 			client[host].on('initialized', () => {
-				this.log.info(`ESPHome  client ${this.deviceInfo[host].deviceInfoName} on ip ${host} initialized`);
+				this.log.info(`ESPHome  client ${this.deviceInfo[host].deviceInfo.name} on ip ${host} initialized`);
 			});
 
 			client[host].on('logs', (messageObj) => {
@@ -232,11 +211,11 @@ class Esphome extends utils.Adapter {
 
 			// Log message listener
 			client[host].connection.on('message', (message) => {
-				this.log.debug(`ESPHome ${host} client log ${message}`);
+				this.log.debug(`${host} client log ${message}`);
 			});
 
 			client[host].connection.on('data', (data) => {
-				this.log.debug(`ESPHome ${host} client data ${data}`);
+				this.log.debug(`${host} client data ${data}`);
 			});
 
 			// Handle device information when connected or information updated
@@ -258,7 +237,7 @@ class Esphome extends utils.Adapter {
 					// Store MAC & IP relation
 					this.deviceStateRelation[deviceName] = {'ip' : host};
 
-					this.log.debug(`DeviceInfo : ${JSON.stringify(this.deviceInfo)}`);
+					this.log.debug(`DeviceInfo ${this.deviceInfo[host].deviceInfo.name}: ${JSON.stringify(this.deviceInfo)}`);
 
 					// Create Device main structure
 					await this.extendObjectAsync(deviceName, {
@@ -309,7 +288,12 @@ class Esphome extends utils.Adapter {
 						unit: entity.config.unitOfMeasurement !== undefined ? entity.config.unitOfMeasurement || '' : ''
 					};
 
-					this.log.info(`${this.deviceInfo[host][entity.id].type} found at ${this.deviceInfo[host].deviceInfoName} on ip ${this.deviceInfo[host].ip}`);
+
+					if (this.deviceInfo[host][entity.id].config.deviceClass) {
+						this.log.info(`${this.deviceInfo[host].deviceInfo.name} announced ${this.deviceInfo[host][entity.id].config.deviceClass} "${this.deviceInfo[host][entity.id].config.name}"`);
+					} else {
+						this.log.info(`${this.deviceInfo[host].deviceInfo.name} announced ${this.deviceInfo[host][entity.id].type} "${this.deviceInfo[host][entity.id].config.name}"`);
+					}
 
 					// Create Device main structure
 					await this.extendObjectAsync(`${this.deviceInfo[host].deviceName}.${entity.type}`, {
@@ -343,7 +327,7 @@ class Esphome extends utils.Adapter {
 
 					// Request current state values
 					await client[host].connection.subscribeStatesService();
-					this.log.debug(`[DeviceInfoData] ${JSON.stringify(this.deviceInfo[host])}`);
+					this.log.debug(`[DeviceInfoData] ${this.deviceInfo[host].deviceInfo.name} ${JSON.stringify(this.deviceInfo[host])}`);
 
 					// Listen to state changes an write values to states (create state if not yet exists)
 					entity.on(`state`, async (state) => {
@@ -424,7 +408,7 @@ class Esphome extends utils.Adapter {
 					let optimisedError = error.message;
 					// Optimise error messages
 					if (error.message.includes('EHOSTUNREACH')){
-						optimisedError = `Client ${host} not reachable !`;
+						optimisedError = `Client ${this.deviceInfo[host].deviceInfo.name} not reachable !`;
 						if (!warnMessages[host].connectError) {
 							this.log.error(optimisedError);
 							warnMessages[host].connectError = true;
@@ -433,7 +417,7 @@ class Esphome extends utils.Adapter {
 						optimisedError = `Client ${host} incorrect password !`;
 						this.log.error(optimisedError);
 					} else if (error.message.includes('ECONNRESET')){
-						optimisedError = `Client ${host} Connection Lost, will reconnect automatically when device is available!`;
+						optimisedError = `Client ${this.deviceInfo[host].deviceInfo.name} Connection Lost, will reconnect automatically when device is available!`;
 						this.log.warn(optimisedError);
 					} else if (error.message.includes('timeout')){
 						optimisedError = `Client ${host} Timeout, connection Lost, will reconnect automatically when device is available!`;
@@ -689,7 +673,7 @@ class Esphome extends utils.Adapter {
 				});
 
 			} else {
-				console.log(`Nothing changed do not update object`);
+				// console.log(`Nothing changed do not update object`);
 			}
 
 			// Store current object definition to memory
