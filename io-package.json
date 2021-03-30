@@ -1,8 +1,20 @@
 {
     "common": {
         "name": "esphome",
-        "version": "0.2.0",
+        "version": "0.2.1-0",
         "news": {
+            "0.2.1-0": {
+                "en": "Logging improved, solves [#48](https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nName of states changed, solves [#49](https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+                "de": "Protokollierung verbessert, löst [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nName der Staaten geändert, löst [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+                "ru": "Ведение журнала улучшено, решает [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nНазвание состояний изменено, решает [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+                "pt": "Logging melhorado, resolve [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nNome dos estados alterados, resolve [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+                "nl": "Logboekregistratie verbeterd, lost op [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nNaam van staten gewijzigd, lost [# 49] op (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+                "fr": "Journalisation améliorée, résout [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nLe nom des états a changé, résout [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+                "it": "Registrazione migliorata, risolve [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nIl nome degli stati è cambiato, risolve [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+                "es": "Registro mejorado, resuelve [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nNombre de los estados cambiado, resuelve [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+                "pl": "Logowanie poprawione, rozwiązuje [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nZmiana nazwy stanów, rozwiązuje [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+                "zh-cn": "日志记录得到改进，解决了[＃48]（https://github.com/DrozmotiX/ioBroker.esphome/issues/48）\n状态名称更改，解决[＃49]（https://github.com/DrozmotiX/ioBroker.esphome/issues/49）"
+            },
             "0.2.0": {
                 "en": "Translations updated\nConfiguration page updated\nAdded to sentry error reporting\nNative integration of ESPHome Dashboard added",
                 "de": "Übersetzungen aktualisiert\nKonfigurationsseite aktualisiert\nZur Sentry-Fehlerberichterstattung hinzugefügt\nNative Integration von ESPHome Dashboard hinzugefügt",
