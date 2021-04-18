@@ -1,20 +1,20 @@
 {
     "API password": "Пароль",
     "Add device manually": "Добавить устройство вручную",
-    "Automatic device detection activated": "Активировано автоматическое обнаружение устройства",
-    "Close": "Закрывать",
-    "Connected": "Связаны",
+    "Automatic device detection activated": "Активировано автоматическое обнаружение устройств",
+    "Close": "Закрыть",
+    "Connected": "Подключено",
     "Delete": "Удалить",
     "Devices can be added manually or by autodiscovery": "Устройства можно добавлять вручную или с помощью автообнаружения",
     "ESPHomeDashboardEnabled": "Включить встроенный ESPHome Dashboard",
-    "ESPHome_Dashboard_Generic_info": "Здесь вы можете включить / отключить панель управления ESPHome, размещенную на ioBroker. ",
+    "ESPHome_Dashboard_Generic_info": "Здесь вы можете включить / отключить панель управления ESPHome, запущенную  ioBroker-ом.  Устанавливать дополнительно ESPhome не нужно!",
     "ESPHome_Dashboard_IP_info": "Укажите IP-адрес, на котором расположена панель управления ESPHome (ioBroker или уже существующий экземпляр?)",
     "Edit": "Редактировать",
     "Edit device": "Изменить устройство",
-    "ID": "Я БЫ",
+    "ID": "ID",
     "IP": "IP",
-    "IP-Address": "Айпи адрес",
+    "IP-Address": "IP адрес",
     "Name": "Имя",
     "device-pass": "Пароль",
-    "reconnect interval": "интервал повторного подключения"
+    "reconnect interval": "Интервал повторного соединения"
 }
