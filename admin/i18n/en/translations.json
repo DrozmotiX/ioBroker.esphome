@@ -8,7 +8,7 @@
     "Devices can be added manually or by autodiscovery": "Devices can be added manually or by autodiscovery",
     "ESPHomeDashboardEnabled": "Enable built-in ESPHome dashboard",
     "ESPHome_Dashboard_Generic_info": "Here you can enable / disable the ESPHome dashboard hosted by ioBroker. A separate installation of ESPHome is not required!",
-    "ESPHome_Dashboard_IP_info": "Please provide the IP address where the ESPHome dashboard is located (ioBroker or already existing instance?)",
+    "ESPHome_Dashboard_IP_info": "Please provide the IP address where the ESPHome dashboard is located (ioBroker or already existing instance).",
     "Edit": "Edit",
     "Edit device": "Edit device",
     "ID": "ID",
