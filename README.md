@@ -115,6 +115,9 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
 -->
 
+### __WORK IN PROGRESS__
+* (DutchmanNL) Bugfix : Reconnect to devices without autodiscovery / MDNS-Broadcast in network
+
 ### 0.2.1-1 (2021-03-30)
 * (DutchmanNL) add cover component
 * (DutchmanNL) add transitionLength for lights

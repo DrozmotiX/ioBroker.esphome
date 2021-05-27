@@ -52,6 +52,9 @@ class Esphome extends utils.Adapter {
 			autodiscovery =  this.config.autodiscovery;
 			reconnectInterval = this.config.reconnectInterval * 1000;
 
+			// Try connecting to already knwon devices
+			await this.tryKnownDevices();
+
 			// Start MDNS discovery when enabled
 			if (autodiscovery){
 				this.deviceDiscovery(); // Start MDNS autodiscovery
@@ -120,6 +123,25 @@ class Esphome extends utils.Adapter {
 
 		} catch (e) {
 			this.log.error(`[espHomeDashboard] ${e}`);
+		}
+	}
+
+	// Try to contact to contact and read data of already known devices
+	async tryKnownDevices() {
+		try {
+			const knownDevices = await this.getDevicesAsync();
+			if (!knownDevices) return;
+
+			// Get basic data of known devices and start reading data
+			for (const i in knownDevices) {
+				this.deviceInfo[knownDevices[i].native.ip] = {
+					ip: knownDevices[i].native.ip,
+					passWord: this.decrypt(knownDevices[i].native.passWord),
+				};
+				this.connectDevices(knownDevices[i].native.ip, this.deviceInfo[knownDevices[i].native.ip].passWord);
+			}
+		} catch (e) {
+			this.sendSentry(`[tryKnownDevices] ${e}`);
 		}
 	}
 
