@@ -755,7 +755,7 @@ class Esphome extends utils.Adapter {
 	sendSentry(msg) {
 		try {
 			if (!disableSentry) {
-				this.log.info(`[Error catched and send to Sentry, thank you collaborating!] error: ${msg}`);
+				this.log.info(`[Error caught and send to Sentry, thank you collaborating!] error: ${msg}`);
 				if (this.supportsFeature && this.supportsFeature('PLUGINS')) {
 					const sentryInstance = this.getPluginInstance('sentry');
 					if (sentryInstance) {
@@ -962,8 +962,6 @@ class Esphome extends utils.Adapter {
 	async onStateChange(id, state) {
 		try {
 			if (state && state.ack === false) {
-				// The state was changed
-				// this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
 				const device = id.split('.');
 				const deviceIP = this.deviceStateRelation[device[2]].ip;
 

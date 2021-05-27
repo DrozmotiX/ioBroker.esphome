@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "esphome",
-        "version": "0.2.1-1",
+        "version": "0.2.1-2",
         "news": {
             "0.2.1-1": {
                 "en": "add cover component\nadd transitionLength for lights",
