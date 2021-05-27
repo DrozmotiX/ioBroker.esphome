@@ -439,7 +439,7 @@ class Esphome extends utils.Adapter {
 					let optimisedError = error.message;
 					// Optimise error messages
 					if (error.message.includes('EHOSTUNREACH')){
-						optimisedError = `Client ${this.deviceInfo[host].deviceInfo.name} not reachable !`;
+						optimisedError = `Client ${this.deviceInfo[host].ip} not reachable !`;
 						if (!warnMessages[host].connectError) {
 							this.log.error(optimisedError);
 							warnMessages[host].connectError = true;
@@ -448,7 +448,7 @@ class Esphome extends utils.Adapter {
 						optimisedError = `Client ${host} incorrect password !`;
 						this.log.error(optimisedError);
 					} else if (error.message.includes('ECONNRESET')){
-						optimisedError = `Client ${this.deviceInfo[host].deviceInfo.name} Connection Lost, will reconnect automatically when device is available!`;
+						optimisedError = `Client ${this.deviceInfo[host].ip} Connection Lost, will reconnect automatically when device is available!`;
 						this.log.warn(optimisedError);
 					} else if (error.message.includes('timeout')){
 						optimisedError = `Client ${host} Timeout, connection Lost, will reconnect automatically when device is available!`;
