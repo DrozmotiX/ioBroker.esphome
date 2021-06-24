@@ -52,6 +52,9 @@ class Esphome extends utils.Adapter {
 			autodiscovery =  this.config.autodiscovery;
 			reconnectInterval = this.config.reconnectInterval * 1000;
 
+			// Try connecting to already knwon devices
+			await this.tryKnownDevices();
+
 			// Start MDNS discovery when enabled
 			if (autodiscovery){
 				this.deviceDiscovery(); // Start MDNS autodiscovery
@@ -75,7 +78,9 @@ class Esphome extends utils.Adapter {
 
 		try {
 
-			dashboardProcess = spawn(`npm`, [`run`, `-s`, `nopy`, `/opt/iobroker/node_modules/iobroker.esphome/python_modules/bin/esphome`, `config/`, `dashboard`], {
+			// Define directory to store configuration files
+			const dataDir = utils.getAbsoluteDefaultDataDir();
+			dashboardProcess = spawn(`npm`, [`run`, `-s`, `nopy`, `/opt/iobroker/node_modules/iobroker.esphome/python_modules/bin/esphome`, `${dataDir}esphome.${this.instance}`, `dashboard`], {
 				cwd: '/opt/iobroker/node_modules/iobroker.esphome'
 			});
 
@@ -120,6 +125,25 @@ class Esphome extends utils.Adapter {
 
 		} catch (e) {
 			this.log.error(`[espHomeDashboard] ${e}`);
+		}
+	}
+
+	// Try to contact to contact and read data of already known devices
+	async tryKnownDevices() {
+		try {
+			const knownDevices = await this.getDevicesAsync();
+			if (!knownDevices) return;
+
+			// Get basic data of known devices and start reading data
+			for (const i in knownDevices) {
+				this.deviceInfo[knownDevices[i].native.ip] = {
+					ip: knownDevices[i].native.ip,
+					passWord: this.decrypt(knownDevices[i].native.passWord),
+				};
+				this.connectDevices(knownDevices[i].native.ip, this.deviceInfo[knownDevices[i].native.ip].passWord);
+			}
+		} catch (e) {
+			this.sendSentry(`[tryKnownDevices] ${e}`);
 		}
 	}
 
@@ -415,7 +439,7 @@ class Esphome extends utils.Adapter {
 					let optimisedError = error.message;
 					// Optimise error messages
 					if (error.message.includes('EHOSTUNREACH')){
-						optimisedError = `Client ${this.deviceInfo[host].deviceInfo.name} not reachable !`;
+						optimisedError = `Client ${this.deviceInfo[host].ip} not reachable !`;
 						if (!warnMessages[host].connectError) {
 							this.log.error(optimisedError);
 							warnMessages[host].connectError = true;
@@ -424,7 +448,7 @@ class Esphome extends utils.Adapter {
 						optimisedError = `Client ${host} incorrect password !`;
 						this.log.error(optimisedError);
 					} else if (error.message.includes('ECONNRESET')){
-						optimisedError = `Client ${this.deviceInfo[host].deviceInfo.name} Connection Lost, will reconnect automatically when device is available!`;
+						optimisedError = `Client ${this.deviceInfo[host].ip} Connection Lost, will reconnect automatically when device is available!`;
 						this.log.warn(optimisedError);
 					} else if (error.message.includes('timeout')){
 						optimisedError = `Client ${host} Timeout, connection Lost, will reconnect automatically when device is available!`;
@@ -731,7 +755,7 @@ class Esphome extends utils.Adapter {
 	sendSentry(msg) {
 		try {
 			if (!disableSentry) {
-				this.log.info(`[Error catched and send to Sentry, thank you collaborating!] error: ${msg}`);
+				this.log.info(`[Error caught and send to Sentry, thank you collaborating!] error: ${msg}`);
 				if (this.supportsFeature && this.supportsFeature('PLUGINS')) {
 					const sentryInstance = this.getPluginInstance('sentry');
 					if (sentryInstance) {
@@ -938,8 +962,6 @@ class Esphome extends utils.Adapter {
 	async onStateChange(id, state) {
 		try {
 			if (state && state.ack === false) {
-				// The state was changed
-				// this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
 				const device = id.split('.');
 				const deviceIP = this.deviceStateRelation[device[2]].ip;
 
