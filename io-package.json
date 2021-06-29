@@ -1,8 +1,20 @@
 {
     "common": {
         "name": "esphome",
-        "version": "0.2.2",
+        "version": "0.2.3",
         "news": {
+            "0.2.3": {
+                "en": "Bugfix : Light component state not changed [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nUpdate compatibility to version 1.19.4 of ESPHome Dashboard",
+                "de": "Bugfix : Lichtkomponentenstatus nicht geändert [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nUpdate-Kompatibilität auf Version 1.19.4 von ESPHome Dashboard",
+                "ru": "Исправление: состояние компонента Light не изменялось [# 74] (https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nОбновите совместимость до версии 1.19.4 ESPHome Dashboard",
+                "pt": "Correção de bug: o estado do componente leve não foi alterado [# 74] (https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nAtualizar compatibilidade para a versão 1.19.4 do ESPHome Dashboard",
+                "nl": "Bugfix: Status lichtcomponent niet gewijzigd [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nCompatibiliteit bijwerken naar versie 1.19.4 van ESPHome Dashboard",
+                "fr": "Correction de bug : l'état du composant Light n'a pas changé [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nMettre à jour la compatibilité vers la version 1.19.4 d'ESPHome Dashboard",
+                "it": "Bugfix: lo stato del componente Light non è cambiato [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nAggiorna la compatibilità alla versione 1.19.4 di ESPHome Dashboard",
+                "es": "Corrección de error: el estado del componente de luz no ha cambiado [# 74] (https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nActualizar la compatibilidad a la versión 1.19.4 de ESPHome Dashboard",
+                "pl": "Poprawka błędu: stan lekkiego komponentu nie uległ zmianie [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nZaktualizuj kompatybilność do wersji 1.19.4 ESPHome Dashboard",
+                "zh-cn": "修正：轻组件状态没有改变 [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\n更新与 ESPHome Dashboard 1.19.4 版的兼容性"
+            },
             "0.2.2": {
                 "en": "[!!! Breaking !!!] Make YAML file persistent, backup your configuration before updating ! solves [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nUpdate ESPHome Dashboard to 1.18.0, requires  Python >=3.7 (and ensure <4.0!)\nBugfix : Reconnect to devices without autodiscovery / MDNS-Broadcast in network, solves [#66](https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
                 "de": "[!!! Breaking !!!] Machen Sie die YAML-Datei persistent, sichern Sie Ihre Konfiguration vor dem Update! löst [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nAktualisieren Sie das ESPHome-Dashboard auf 1.18.0, erfordert Python >=3.7 (und stellen Sie sicher <4.0!)\nBugfix : Reconnect zu Geräten ohne Autodiscovery / MDNS-Broadcast im Netzwerk, behebt [#66](https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
