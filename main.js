@@ -1019,9 +1019,36 @@ class Esphome extends utils.Adapter {
 
 						this.deviceInfo[deviceIP][device[4]].states[device[5]] = writeValue;
 
-					}
-					this.log.debug(`Send Light values ${JSON.stringify(this.deviceInfo[deviceIP][device[4]].states)}`);
-					await client[deviceIP].connection.lightCommandService(this.deviceInfo[deviceIP][device[4]].states);
+					} else if (device[5] === 'state') {
+                        			this.deviceInfo[deviceIP][device[4]].states.state = writeValue;
+                    			}
+
+					let data = {
+						key: this.deviceInfo[deviceIP][device[4]].states.key,
+                        			state: this.deviceInfo[deviceIP][device[4]].states.state,
+                        			transitionLength: this.deviceInfo[deviceIP][device[4]].states.transitionLength
+                    			}
+					if(this.deviceInfo[deviceIP][device[4]].config.supportsBrightness === true){
+					    data.brightness = this.deviceInfo[deviceIP][device[4]].states.brightness;
+                    			}
+					if(this.deviceInfo[deviceIP][device[4]].config.supportsRgb === true){
+					    data.red = this.deviceInfo[deviceIP][device[4]].states.red;
+					    data.green = this.deviceInfo[deviceIP][device[4]].states.green;
+					    data.blue = this.deviceInfo[deviceIP][device[4]].states.blue;
+                    			}
+					if(this.deviceInfo[deviceIP][device[4]].config.supportsWhiteValue === true){
+					    data.white = this.deviceInfo[deviceIP][device[4]].states.white;
+                    			}
+					if(this.deviceInfo[deviceIP][device[4]].config.supportsColorTemperature === true){
+					    data.colorTemperature = this.deviceInfo[deviceIP][device[4]].states.colorTemperature;
+                    			}
+					const effect = this.deviceInfo[deviceIP][device[4]].states.effect;
+					if(effect !== '' && effect !== null && effect !== undefined){
+					    data.effect = effect;
+                    			}
+
+					this.log.debug(`Send Light values ${JSON.stringify(data)}`);
+					await client[deviceIP].connection.lightCommandService(data);
 				}
 			}
 		} catch (e) {
