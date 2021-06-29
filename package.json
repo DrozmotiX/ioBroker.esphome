@@ -73,7 +73,7 @@
       "."
     ],
     "dependencies": {
-      "esphome": ">=1.18.0",
+      "esphome": ">=1.19.4",
       "tornado": ">=3.2"
     }
   },
