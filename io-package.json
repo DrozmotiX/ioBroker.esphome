@@ -1,8 +1,20 @@
 {
     "common": {
         "name": "esphome",
-        "version": "0.2.3",
+        "version": "0.2.4",
         "news": {
+            "0.2.4": {
+                "en": "Version of ESPHome Dashboard updated to 2021.8\nAdd option if config of ESPHome device should be shown as states (default = FALSE, safes 8 states for each sensor)",
+                "de": "Version des ESPHome Dashboards aktualisiert auf 2021.8\nOption hinzufügen, wenn die Konfiguration des ESPHome-Geräts als Zustände angezeigt werden soll (Standard = FALSE, sichert 8 Zustände für jeden Sensor)",
+                "ru": "Версия ESPHome Dashboard обновлена до 2021.8\nДобавить параметр, если конфигурация устройства ESPHome должна отображаться в виде состояний (по умолчанию = FALSE, сохраняет 8 состояний для каждого датчика)",
+                "pt": "Versão do ESPHome Dashboard atualizada para 2021.8\nAdicionar opção se a configuração do dispositivo ESPHome deve ser mostrada como estados (padrão = FALSE, cofres 8 estados para cada sensor)",
+                "nl": "Versie van ESPHome Dashboard bijgewerkt naar 2021.8\nOptie toevoegen als de configuratie van het ESPHome-apparaat moet worden weergegeven als statussen (standaard = FALSE, beveiligt 8 statussen voor elke sensor)",
+                "fr": "Version d'ESPHome Dashboard mise à jour vers 201.8\nAjouter une option si la configuration de l'appareil ESPHome doit être affichée sous forme d'états (par défaut = FALSE, coffre-fort 8 états pour chaque capteur)",
+                "it": "Versione di ESPHome Dashboard aggiornata a 2021.8\nAggiungi un'opzione se la configurazione del dispositivo ESPHome deve essere mostrata come stati (predefinito = FALSE, salva 8 stati per ciascun sensore)",
+                "es": "Versión de ESPHome Dashboard actualizada a 2021.8\nAgregue la opción si la configuración del dispositivo ESPHome debe mostrarse como estados (predeterminado = FALSO, guarda 8 estados para cada sensor)",
+                "pl": "Wersja pulpitu nawigacyjnego ESPHome zaktualizowana do 2021,8\nDodaj opcję, jeśli konfiguracja urządzenia ESPHome powinna być pokazywana jako stany (domyślnie = FALSE, sejfy 8 stanów dla każdego czujnika)",
+                "zh-cn": "ESPHome Dashboard 版本更新至 2021.8\n如果 ESPHome 设备的配置应显示为状态，则添加选项（默认值 = FALSE，每个传感器有 8 个状态）"
+            },
             "0.2.3": {
                 "en": "Bugfix : Light component state not changed [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nUpdate compatibility to version 1.19.4 of ESPHome Dashboard",
                 "de": "Bugfix : Lichtkomponentenstatus nicht geändert [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nUpdate-Kompatibilität auf Version 1.19.4 von ESPHome Dashboard",
