@@ -15,6 +15,7 @@
     "IP": "IP",
     "IP-Address": "IP Adresse",
     "Name": "Name",
+    "Show configuration as states": "Konfiguration als Zustände anzeigen",
     "device-pass": "Passwort",
     "reconnect interval": "Intervall für erneutes Verbinden"
 }

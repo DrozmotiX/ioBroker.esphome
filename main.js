@@ -15,7 +15,7 @@ const stateAttr = require(__dirname + '/lib/stateAttr.js'); // Load attribute li
 const disableSentry = false; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
 const client = {};
-let reconnectTimer, reconnectInterval, apiPass, autodiscovery, dashboardProcess;
+let reconnectTimer, reconnectInterval, apiPass, autodiscovery, dashboardProcess, createConfigStates;
 
 // const exec = require('child_process').exec;
 const { fork, spawn } = require('child_process');
@@ -51,6 +51,7 @@ class Esphome extends utils.Adapter {
 			apiPass = this.config.apiPass;
 			autodiscovery =  this.config.autodiscovery;
 			reconnectInterval = this.config.reconnectInterval * 1000;
+			createConfigStates = this.config.configStates;
 
 			// Try connecting to already knwon devices
 			await this.tryKnownDevices();
@@ -337,17 +338,29 @@ class Esphome extends utils.Adapter {
 						native: {},
 					});
 
-					// Create config channel
-					await this.extendObjectAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`, {
-						type: 'channel',
-						common: {
-							name: 'Configuration data'
-						},
-						native: {},
-					});
-
-					// Handle Entity JSON structure and write related config channel data
-					await this.TraverseJson(entity.config, `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`);
+					//Check if config channel should be created
+					if (!createConfigStates){
+						// Delete folder structure if already present
+						try {
+							const obj = await this.getObjectAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`);
+							if (obj) {
+								await this.delObjectAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`, {recursive: true});
+							}
+						} catch (error) {
+							// do nothing
+						}
+					} else {
+						// Create config channel
+						await this.extendObjectAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`, {
+							type: 'channel',
+							common: {
+								name: 'Configuration data'
+							},
+							native: {},
+						});
+						// Handle Entity JSON structure and write related config channel data
+						await this.TraverseJson(entity.config, `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`);
+					}
 
 					// Request current state values
 					await client[host].connection.subscribeStatesService();

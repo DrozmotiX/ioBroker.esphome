@@ -15,6 +15,7 @@
     "IP": "IP",
     "IP-Address": "IP адрес",
     "Name": "Имя",
+    "Show configuration as states": "Показать конфигурацию как состояния",
     "device-pass": "Пароль",
     "reconnect interval": "Интервал повторного соединения"
 }

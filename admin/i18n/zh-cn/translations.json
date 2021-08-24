@@ -15,6 +15,7 @@
     "IP": "知识产权",
     "IP-Address": "IP地址",
     "Name": "姓名",
+    "Show configuration as states": "将配置显示为状态",
     "device-pass": "密码",
     "reconnect interval": "重新连接间隔"
 }

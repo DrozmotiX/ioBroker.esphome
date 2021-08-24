@@ -222,6 +222,7 @@
         "reconnectInterval": 30,
         "apiPass": "",
         "autodiscovery": true,
+        "configStates": false,
         "ESPHomeDashboardEnabled": true,
         "ESPHomeDashboardPort": 6052,
         "ESPHomeDashboardIP": "localhost"
