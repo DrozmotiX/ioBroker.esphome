@@ -204,10 +204,8 @@ class Esphome extends utils.Adapter {
 			client[host].on('connected', async () => {
 				try {
 					this.log.info(`ESPHome client ${host} connected`);
-					// Clear possible present warn messages for device fromm previous connection
-					warnMessages[host] = {
-						connectError : false
-					};
+					// Clear possible present warn messages for device from previous connection
+					delete warnMessages[host];
 				} catch (e) {
 					this.log.error(`connection error ${e}`);
 				}
@@ -247,6 +245,7 @@ class Esphome extends utils.Adapter {
 			client[host].on('deviceInfo', async (deviceInfo) => {
 				try {
 					this.log.info(`ESPHome Device info received for ${deviceInfo.name}`);
+					this.log.debug(`DeviceData: ${JSON.stringify(deviceInfo)}`);
 
 					// Store device information into memory
 					const deviceName = this.replaceAll(deviceInfo.macAddress, `:`, ``);
@@ -303,7 +302,7 @@ class Esphome extends utils.Adapter {
 
 			// Initialise data for states
 			client[host].on('newEntity', async entity => {
-
+				this.log.debug(`EntityData: ${JSON.stringify(entity.config)	}`);
 				try {
 					// Store relevant information into memory object
 					this.deviceInfo[host][entity.id] = {
@@ -368,6 +367,7 @@ class Esphome extends utils.Adapter {
 
 					// Listen to state changes an write values to states (create state if not yet exists)
 					entity.on(`state`, async (state) => {
+						this.log.debug(`StateData: ${JSON.stringify(state)}`);
 						try {
 							this.log.debug(`[entityStateConfig] ${JSON.stringify(this.deviceInfo[host][entity.id])}`);
 							this.log.debug(`[entityStateData] ${JSON.stringify(state)}`);
@@ -403,7 +403,7 @@ class Esphome extends utils.Adapter {
 									break;
 
 								case 'TextSensor':
-									await this.handleRegularState(`${host}`, entity, state, false );
+									await this.handleRegularState(`${host}`, entity, state, true );
 									break;
 
 								case 'Switch':
@@ -489,6 +489,7 @@ class Esphome extends utils.Adapter {
 				}
 			});
 
+			//ToDo: Review
 			// connect to socket
 			try {
 				this.log.debug(`trying to connect to ${host}`);
