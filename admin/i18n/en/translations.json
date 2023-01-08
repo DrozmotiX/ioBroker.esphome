@@ -14,7 +14,7 @@
     "ID": "ID",
     "IP": "IP",
     "IP-Address": "IP-Address",
-    "Name": "Name",
+    "Name": "name",
     "Show configuration as states": "Show configuration as states",
     "device-pass": "Password",
     "reconnect interval": "Reconnect Interval"
