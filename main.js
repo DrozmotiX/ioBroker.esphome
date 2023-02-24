@@ -409,6 +409,10 @@ class Esphome extends utils.Adapter {
 								case 'Switch':
 									await this.handleRegularState(`${host}`, entity, state, true );
 									break;
+									
+								case 'Number':
+									await this.handleRegularState(`${host}`, entity, state, true );
+									break;
 
 								default:
 
@@ -737,7 +741,8 @@ class Esphome extends utils.Adapter {
 				// console.log(`An attribute has changed : ${state}`);
 				await this.extendObjectAsync(objName, {
 					type: 'state',
-					common
+					common,
+					native: {}
 				});
 
 			} else {
@@ -988,6 +993,10 @@ class Esphome extends utils.Adapter {
 				} else if (this.deviceInfo[deviceIP][device[4]].type === `Climate`) {
 					this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
 					await client[deviceIP].connection.climateCommandService(this.deviceInfo[deviceIP][device[4]].states);
+
+					// Handle Number State
+				} else if (this.deviceInfo[deviceIP][device[4]].type === `Number`) {
+					await client[deviceIP].connection.numberCommandService({key: device[4], state: state.val});
 
 					// Handle Cover Position
 				} else if (device[5] === `position`) {
