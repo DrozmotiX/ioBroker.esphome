@@ -81,8 +81,11 @@ class Esphome extends utils.Adapter {
 
 			// Define directory to store configuration files
 			const dataDir = utils.getAbsoluteDefaultDataDir();
-			dashboardProcess = spawn(`npm`, [`run`, `-s`, `nopy`, `/opt/iobroker/node_modules/iobroker.esphome/python_modules/bin/esphome`, `dashboard`, `${dataDir}esphome.${this.instance}`], {
-				cwd: '/opt/iobroker/node_modules/iobroker.esphome'
+			this.log.error(process.cwd())
+			this.log.error(dataDir)
+			this.log.error(utils.controllerDir)
+			dashboardProcess = spawn(`npm`, [`run`, `dashboard`, `${dataDir}esphome.${this.instance}`], {
+				// cwd: '/opt/iobroker/node_modules/iobroker.esphome '
 			});
 
 			this.log.debug(`espHomeDashboard_Process ${JSON.stringify(dashboardProcess)}`);

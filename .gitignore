@@ -17,3 +17,6 @@ admin/i18n/*/flat.txt
 
 # ioBroker dev-server
 .dev-server/
+
+# python venv
+env/

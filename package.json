@@ -57,10 +57,10 @@
     "test": "npm run test:js && npm run test:package",
     "check": "tsc --noEmit -p tsconfig.check.json",
     "lint": "eslint",
-    "install": "npip install",
+    "postinstall": "python3 -m venv env && env/bin/python -m pip install esphome",
     "nopy": "nopy",
     "npip": "npip",
-    "dashboard": "npm run -s nopy ./python_modules/bin/esphome config/ dashboard"
+    "dashboard": "env/bin/esphome dashboard"
   },
   "python": {
     "execPath": [
