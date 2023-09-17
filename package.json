@@ -20,6 +20,7 @@
   "dependencies": {
     "@iobroker/adapter-core": "^3.0.3",
     "@sentry/node": "^7.69.0",
+    "autopy": "^1.1.1",
     "esphome-native-api": "^1.0.9",
     "nopy": "^0.2.9",
     "tree-kill": "^1.2.2"
@@ -57,10 +58,11 @@
     "test": "npm run test:js && npm run test:package",
     "check": "tsc --noEmit -p tsconfig.check.json",
     "lint": "eslint",
-    "postinstall": "python3 -m venv env && env/bin/python -m pip install esphome",
+    "ainstall": "pwd && python3 -m venv env && env/bin/python -m pip install esphome",
+    "postinstall": "node scripts/install.mjs",
     "nopy": "nopy",
     "npip": "npip",
-    "dashboard": "env/bin/esphome dashboard"
+    "dashboard": "pwd && env/bin/esphome dashboard"
   },
   "python": {
     "execPath": [
