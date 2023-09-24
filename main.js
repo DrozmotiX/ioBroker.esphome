@@ -76,44 +76,27 @@ class Esphome extends utils.Adapter {
     }
 
     async espHomeDashboard() {
-        const {getVenv} = await import('autopy');
-
-        // Create a virtual environment with mitmproxy installed.
-        const python = await getVenv({
-            name: 'esphome',
-            pythonVersion: '~3.11', // Use any Python 3.11.x version.
-            requirements: [{name: 'esphome', version: ''}], // Use latest esphome
-        });
-
-        // Run mitmdump to start a proxy server on port 8081.
-        const dataDir = utils.getAbsoluteDefaultDataDir();
-        const proc = python('esphome', ['dashboard', `${dataDir}esphome.${this.instance}`]);
-        proc.stdout?.pipe(process.stdout);
-        this.log.info("test");
-
-        // setTimeout(() => proc.kill(), 1000);
-    }
-
-    async espHomeDashboardOld() {
-
         try {
+            const {getVenv} = await import('autopy');
+
+            // Create a virtual environment with mitmproxy installed.
+            const python = await getVenv({
+                name: 'esphome',
+                pythonVersion: '~3.11', // Use any Python 3.11.x version.
+                requirements: [{name: 'esphome', version: ''}], // Use latest esphome
+            });
 
             // Define directory to store configuration files
             const dataDir = utils.getAbsoluteDefaultDataDir();
-            this.log.error(process.cwd())
-            this.log.error(dataDir)
-            this.log.error(utils.controllerDir)
-            dashboardProcess = spawn(`npm`, [`run`, `dashboard`, `${dataDir}esphome.${this.instance}`], {
-                // cwd: '/opt/iobroker/node_modules/iobroker.esphome '
-            });
+            const dashboardProcess = python('esphome', ['dashboard', `${dataDir}esphome.${this.instance}`]);
 
             this.log.debug(`espHomeDashboard_Process ${JSON.stringify(dashboardProcess)}`);
 
-            dashboardProcess.stdout.on('data', (data) => {
+            dashboardProcess.stdout?.on('data', (data) => {
                 this.log.info(`[dashboardProcess - Data] ${data}`);
             });
 
-            dashboardProcess.stderr.on('data', (data) => {
+            dashboardProcess.stderr?.on('data', (data) => {
                 // this.log.warn(`[dashboardProcess ERROR] ${data}`);
                 if (data.includes('INFO')) {
                     if (data.includes('Starting')) {
@@ -417,7 +400,7 @@ class Esphome extends utils.Adapter {
                                     break;
 
                                 case 'Light':
-                                    await this.handleStateArrays(`${host}`, entity, state, false);
+                                    await this.handleStateArrays(`${host}`, entity, state);
                                     break;
 
                                 case 'Sensor':
@@ -722,7 +705,7 @@ class Esphome extends utils.Adapter {
         this.log.debug('Create_state called for : ' + objName + ' with value : ' + value);
         try {
 
-            // Try to get details from state lib, if not use defaults. throw warning is states is not known in attribute list
+            // Try to get details from state lib, if not use defaults. throw warning if states is not known in attribute list
             const common = {};
             // const entityID = objName.split('.');
             common.modify = {};
@@ -884,8 +867,10 @@ class Esphome extends utils.Adapter {
                 reconnectTimer = clearTimeout();
             }
             try {
-                if (dashboardProcess && dashboardProcess.pid) {
-                    kill(dashboardProcess.pid);
+                if (dashboardProcess) {
+                    dashboardProcess.kill('SIGTERM', {
+                        forceKillAfterTimeout: 2000
+                    });
                 }
             } catch (e) {
                 this.log.error(`[onUnload - dashboardProcess] ${JSON.stringify(e)}`);
@@ -1097,8 +1082,7 @@ class Esphome extends utils.Adapter {
     }
 }
 
-// @ts-ignore parent is a valid property on module
-if (module.parent) {
+if (require.main !== module) {
     // Export the constructor in compact mode
     /**
      * @param {Partial<utils.AdapterOptions>} [options={}]
