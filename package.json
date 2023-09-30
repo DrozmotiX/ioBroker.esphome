@@ -18,10 +18,10 @@
     "url": "https://github.com/DrozmotiX/ioBroker.esphome"
   },
   "dependencies": {
+    "@2colors/esphome-native-api": "^1.2.4",
     "@iobroker/adapter-core": "^3.0.3",
     "@sentry/node": "^7.70.0",
-    "autopy": "^1.1.1",
-    "esphome-native-api": "^1.0.9"
+    "autopy": "^1.1.1"
   },
   "devDependencies": {
     "@alcalzone/release-script": "^3.6.0",

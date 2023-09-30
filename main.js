@@ -7,18 +7,14 @@
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 const utils = require('@iobroker/adapter-core');
-const {Client} = require('esphome-native-api');
-const {Discovery} = require('esphome-native-api');
-const kill = require('tree-kill');
+// @ts-ignore Client is just missing in index.d.ts file
+const {Client, Discovery} = require('@2colors/esphome-native-api');
 let discovery;
 const stateAttr = require(__dirname + '/lib/stateAttr.js'); // Load attribute library
 const disableSentry = false; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
 const client = {};
 let reconnectTimer, reconnectInterval, apiPass, autodiscovery, dashboardProcess, createConfigStates;
-
-// const exec = require('child_process').exec;
-const {fork, spawn} = require('child_process');
 
 class Esphome extends utils.Adapter {
 
@@ -126,9 +122,6 @@ class Esphome extends utils.Adapter {
                     this.log.error(`[dashboardProcess Error] ${data}`);
                 }
             });
-
-            // dashboardProcess.kill();
-
         } catch (e) {
             this.log.error(`[espHomeDashboard] ${e}`);
         }
@@ -184,7 +177,6 @@ class Esphome extends utils.Adapter {
 
     // Handle Socket connections
     connectDevices(host, pass) {
-
         try {
             // const host = espDevices[device].ip;
             this.log.info(`Try to connect to ${host}`);
@@ -415,6 +407,10 @@ class Esphome extends utils.Adapter {
                                     await this.handleRegularState(`${host}`, entity, state, true);
                                     break;
 
+                                case 'Number':
+                                    await this.handleRegularState(`${host}`, entity, state, true);
+                                    break;
+
                                 default:
 
                                     if (!warnMessages[this.deviceInfo[host][entity.id].type]) {
@@ -510,7 +506,6 @@ class Esphome extends utils.Adapter {
         } catch (e) {
             this.log.error(`ESP device error for ${host}`);
         }
-
     }
 
     /**
@@ -993,6 +988,10 @@ class Esphome extends utils.Adapter {
                 } else if (this.deviceInfo[deviceIP][device[4]].type === `Climate`) {
                     this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
                     await client[deviceIP].connection.climateCommandService(this.deviceInfo[deviceIP][device[4]].states);
+
+                    // Handle Number State
+                } else if (this.deviceInfo[deviceIP][device[4]].type === `Number`) {
+                    await client[deviceIP].connection.numberCommandService({key: device[4], state: state.val});
 
                     // Handle Cover Position
                 } else if (device[5] === `position`) {
