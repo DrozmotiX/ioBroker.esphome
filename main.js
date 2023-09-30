@@ -358,6 +358,8 @@ class Esphome extends utils.Adapter {
                         await this.TraverseJson(entity.config, `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`);
                     }
 
+                    await this.createNonStateDevices(host, entity);
+
                     // Request current state values
                     await client[host].connection.subscribeStatesService();
                     this.log.debug(`[DeviceInfoData] ${this.deviceInfo[host].deviceInfo.name} ${JSON.stringify(this.deviceInfo[host])}`);
@@ -993,6 +995,10 @@ class Esphome extends utils.Adapter {
                 } else if (this.deviceInfo[deviceIP][device[4]].type === `Number`) {
                     await client[deviceIP].connection.numberCommandService({key: device[4], state: state.val});
 
+                    // Handle Button State
+                } else if (this.deviceInfo[deviceIP][device[4]].type === `Button`) {
+                    await client[deviceIP].connection.buttonCommandService({key: device[4]});
+
                     // Handle Cover Position
                 } else if (device[5] === `position`) {
                     // this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
@@ -1077,6 +1083,21 @@ class Esphome extends utils.Adapter {
             }
         } catch (e) {
             this.log.error(`[onStateChange] ${e}`);
+        }
+    }
+
+    /**
+     * Some types (like Button) don't have a state. So standard method of creating iobroker objects when receiving state event via api doesn't work here
+     * @returns {Promise<void>}
+     */
+    async createNonStateDevices(host, entity) {
+        console.error("")
+        // `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}`
+        switch (this.deviceInfo[host][entity.id].type) {
+            case 'Button': {
+                await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.SET`, `Button`, false, '', true);
+                break;
+            }
         }
     }
 }
