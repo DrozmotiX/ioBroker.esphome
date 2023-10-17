@@ -7,9 +7,8 @@
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 const utils = require('@iobroker/adapter-core');
-const { Client } = require('esphome-native-api');
-const { Discovery } = require('esphome-native-api');
-const kill = require('tree-kill');
+// @ts-ignore Client is just missing in index.d.ts file
+const {Client, Discovery} = require('@2colors/esphome-native-api');
 let discovery;
 const stateAttr = require(__dirname + '/lib/stateAttr.js'); // Load attribute library
 const disableSentry = false; // Ensure to set to true during development!
@@ -17,14 +16,11 @@ const warnMessages = {}; // Store warn messages to avoid multiple sending to sen
 const client = {};
 let reconnectTimer, reconnectInterval, apiPass, autodiscovery, dashboardProcess, createConfigStates;
 
-// const exec = require('child_process').exec;
-const { fork, spawn } = require('child_process');
-
 class Esphome extends utils.Adapter {
 
 	/**
-	 * @param {Partial<utils.AdapterOptions>} [options={}]
-	 */
+     * @param {Partial<utils.AdapterOptions>} [options={}]
+     */
 	constructor(options) {
 		super({
 			...options,
@@ -36,20 +32,20 @@ class Esphome extends utils.Adapter {
 		this.on('message', this.onMessage.bind(this));
 		this.on('unload', this.onUnload.bind(this));
 
-		this.deviceInfo  = {}; // Memory array of initiated objects
-		this.deviceStateRelation  = {}; // Memory array of initiated device by Device Identifier (name) and IP
+		this.deviceInfo = {}; // Memory array of initiated objects
+		this.deviceStateRelation = {}; // Memory array of initiated device by Device Identifier (name) and IP
 		this.createdStatesDetails = {}; // Array to store information of created states
 		this.messageResponse = {}; // Array to store messages from admin and provide proper message to add/remove devices
 	}
 
 	/**
-	 * Is called when databases are connected and adapter received configuration.
-	 */
+     * Is called when databases are connected and adapter received configuration.
+     */
 	async onReady() {
 		await this.setStateAsync('info.connection', {val: true, ack: true});
 		try {
 			apiPass = this.config.apiPass;
-			autodiscovery =  this.config.autodiscovery;
+			autodiscovery = this.config.autodiscovery;
 			reconnectInterval = this.config.reconnectInterval * 1000;
 			createConfigStates = this.config.configStates;
 
@@ -57,13 +53,13 @@ class Esphome extends utils.Adapter {
 			await this.tryKnownDevices();
 
 			// Start MDNS discovery when enabled
-			if (autodiscovery){
+			if (autodiscovery) {
 				this.deviceDiscovery(); // Start MDNS autodiscovery
 			} else {
 				this.log.warn(`Auto Discovery disabled, new devices (or IP changes) will NOT be detected automatically!`);
 			}
 
-			if (this.config.ESPHomeDashboardEnabled){
+			if (this.config.ESPHomeDashboardEnabled) {
 				this.log.info(`Native Integration of ESPHome Dashboard enabled `);
 				await this.espHomeDashboard();
 			} else {
@@ -76,30 +72,36 @@ class Esphome extends utils.Adapter {
 	}
 
 	async espHomeDashboard() {
-
 		try {
+			// @ts-ignore
+			const {getVenv} = await import('autopy');
+
+			// Create a virtual environment with mitmproxy installed.
+			const python = await getVenv({
+				name: 'esphome',
+				pythonVersion: '~3.11', // Use any Python 3.11.x version.
+				requirements: [{name: 'esphome', version: ''}], // Use latest esphome
+			});
 
 			// Define directory to store configuration files
 			const dataDir = utils.getAbsoluteDefaultDataDir();
-			dashboardProcess = spawn(`npm`, [`run`, `-s`, `nopy`, `/opt/iobroker/node_modules/iobroker.esphome/python_modules/bin/esphome`, `dashboard`, `${dataDir}esphome.${this.instance}`], {
-				cwd: '/opt/iobroker/node_modules/iobroker.esphome'
-			});
+			const dashboardProcess = python('esphome', ['dashboard', `${dataDir}esphome.${this.instance}`]);
 
 			this.log.debug(`espHomeDashboard_Process ${JSON.stringify(dashboardProcess)}`);
 
-			dashboardProcess.stdout.on('data', (data) => {
+			dashboardProcess.stdout?.on('data', (data) => {
 				this.log.info(`[dashboardProcess - Data] ${data}`);
 			});
 
-			dashboardProcess.stderr.on('data', (data) => {
+			dashboardProcess.stderr?.on('data', (data) => {
 				// this.log.warn(`[dashboardProcess ERROR] ${data}`);
-				if (data.includes('INFO')){
-					if (data.includes('Starting')){
+				if (data.includes('INFO')) {
+					if (data.includes('Starting')) {
 						this.log.info(`[ESPHome - Console] ${data}`);
 					} else {
 						this.log.debug(`[ESPHome - Console] ${data}`);
 					}
-				} else  {
+				} else {
 					this.log.error(`[dashboardProcess ERROR] ${data}`);
 				}
 			});
@@ -108,12 +110,13 @@ class Esphome extends utils.Adapter {
 				this.log.info(`[dashboardProcess MESSAGE] Exit code is: ${code} | ${signal}`);
 			});
 
+			// eslint-disable-next-line no-unused-vars
 			dashboardProcess.on('exit', (code, signal) => {
 				this.log.warn(`ESPHome Dashboard deactivated`);
 			});
 
 			dashboardProcess.on('error', (data) => {
-				if (data.message.includes('INFO')){
+				if (data.message.includes('INFO')) {
 					this.log.info(`[dashboardProcess Info] ${data}`);
 				} else if (data.message.includes('ERROR')) {
 					this.log.error(`[dashboardProcess Warn] ${data}`);
@@ -121,9 +124,6 @@ class Esphome extends utils.Adapter {
 					this.log.error(`[dashboardProcess Error] ${data}`);
 				}
 			});
-
-			// dashboardProcess.kill();
-
 		} catch (e) {
 			this.log.error(`[espHomeDashboard] ${e}`);
 		}
@@ -149,7 +149,7 @@ class Esphome extends utils.Adapter {
 	}
 
 	// MDNS discovery handler for ESPHome devices
-	deviceDiscovery(){
+	deviceDiscovery() {
 		try {
 
 			this.log.info(`Auto Discovery startet, new devices (or IP changes) will be detected automatically`);
@@ -158,14 +158,14 @@ class Esphome extends utils.Adapter {
 			discovery.on('info', async (message) => {
 				try {
 					this.log.debug(`Discovery message ${JSON.stringify(message)}`);
-					if (this.deviceInfo[message.address] == null){
+					if (this.deviceInfo[message.address] == null) {
 						this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${message.address}`);
 						// Store new Device information to device array in memory
 						this.deviceInfo[message.address] = {
 							ip: message.address,
 							passWord: apiPass
 						};
-						this.connectDevices(`${message.address}`,`${apiPass}`);
+						this.connectDevices(`${message.address}`, `${apiPass}`);
 					}
 				} catch (e) {
 					this.log.error(`[deviceDiscovery handler] ${e}`);
@@ -178,16 +178,15 @@ class Esphome extends utils.Adapter {
 	}
 
 	// Handle Socket connections
-	connectDevices(host, pass){
-
+	connectDevices(host, pass) {
 		try {
 			// const host = espDevices[device].ip;
 			this.log.info(`Try to connect to ${host}`);
 			// Prepare connection attributes
 			client[host] = new Client({
 				host: host,
-				password : pass,
-				clientInfo : `${this.host}`,
+				password: pass,
+				clientInfo: `${this.host}`,
 				clearSession: true,
 				initializeDeviceInfo: true,
 				initializeListEntities: true,
@@ -259,7 +258,7 @@ class Esphome extends utils.Adapter {
 					};
 
 					// Store MAC & IP relation
-					this.deviceStateRelation[deviceName] = {'ip' : host};
+					this.deviceStateRelation[deviceName] = {'ip': host};
 
 					this.log.debug(`DeviceInfo ${this.deviceInfo[host].deviceInfo.name}: ${JSON.stringify(this.deviceInfo)}`);
 
@@ -302,13 +301,13 @@ class Esphome extends utils.Adapter {
 
 			// Initialise data for states
 			client[host].on('newEntity', async entity => {
-				this.log.debug(`EntityData: ${JSON.stringify(entity.config)	}`);
+				this.log.debug(`EntityData: ${JSON.stringify(entity.config)}`);
 				try {
 					// Store relevant information into memory object
 					this.deviceInfo[host][entity.id] = {
-						config : entity.config,
-						name : entity.name,
-						type : entity.type,
+						config: entity.config,
+						name: entity.name,
+						type: entity.type,
 						unit: entity.config.unitOfMeasurement !== undefined ? entity.config.unitOfMeasurement || '' : ''
 					};
 
@@ -338,7 +337,7 @@ class Esphome extends utils.Adapter {
 					});
 
 					//Check if config channel should be created
-					if (!createConfigStates){
+					if (!createConfigStates) {
 						// Delete folder structure if already present
 						try {
 							const obj = await this.getObjectAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`);
@@ -361,6 +360,8 @@ class Esphome extends utils.Adapter {
 						await this.TraverseJson(entity.config, `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`);
 					}
 
+					await this.createNonStateDevices(host, entity);
+
 					// Request current state values
 					await client[host].connection.subscribeStatesService();
 					this.log.debug(`[DeviceInfoData] ${this.deviceInfo[host].deviceInfo.name} ${JSON.stringify(this.deviceInfo[host])}`);
@@ -376,7 +377,7 @@ class Esphome extends utils.Adapter {
 							// Ensure proper initialisation of the state
 							switch (this.deviceInfo[host][entity.id].type) {
 								case 'BinarySensor':
-									await this.handleRegularState(`${host}`, entity, state, false );
+									await this.handleRegularState(`${host}`, entity, state, false);
 									break;
 
 								case 'Climate':
@@ -391,28 +392,32 @@ class Esphome extends utils.Adapter {
 
 
 								case 'Fan':
-									await this.handleRegularState(`${host}`, entity, state, false );
+									await this.handleRegularState(`${host}`, entity, state, false);
 									break;
 
 								case 'Light':
-									await this.handleStateArrays(`${host}`, entity, state, false );
+									await this.handleStateArrays(`${host}`, entity, state);
 									break;
 
 								case 'Sensor':
-									await this.handleRegularState(`${host}`, entity, state, false );
+									await this.handleRegularState(`${host}`, entity, state, false);
 									break;
 
 								case 'TextSensor':
-									await this.handleRegularState(`${host}`, entity, state, true );
+									await this.handleRegularState(`${host}`, entity, state, true);
 									break;
 
 								case 'Switch':
-									await this.handleRegularState(`${host}`, entity, state, true );
+									await this.handleRegularState(`${host}`, entity, state, true);
+									break;
+
+								case 'Number':
+									await this.handleRegularState(`${host}`, entity, state, true);
 									break;
 
 								default:
 
-									if (!warnMessages[this.deviceInfo[host][entity.id].type]){
+									if (!warnMessages[this.deviceInfo[host][entity.id].type]) {
 										this.log.warn(`DeviceType ${this.deviceInfo[host][entity.id].type} not yet supported`);
 										this.log.warn(`Please submit git issue with all information from next line`);
 										this.log.warn(`DeviceType ${this.deviceInfo[host][entity.id].type} | State-Keys ${JSON.stringify(state)} | [entityStateConfig] ${JSON.stringify(this.deviceInfo[host][entity.id])}`);
@@ -451,22 +456,22 @@ class Esphome extends utils.Adapter {
 				try {
 					let optimisedError = error.message;
 					// Optimise error messages
-					if (error.message.includes('EHOSTUNREACH')){
+					if (error.message.includes('EHOSTUNREACH')) {
 						optimisedError = `Client ${this.deviceInfo[host].ip} not reachable !`;
 						if (!warnMessages[host].connectError) {
 							this.log.error(optimisedError);
 							warnMessages[host].connectError = true;
 						}
-					} else if (error.message.includes('Invalid password')){
+					} else if (error.message.includes('Invalid password')) {
 						optimisedError = `Client ${host} incorrect password !`;
 						this.log.error(optimisedError);
-					} else if (error.message.includes('ECONNRESET')){
+					} else if (error.message.includes('ECONNRESET')) {
 						optimisedError = `Client ${this.deviceInfo[host].ip} Connection Lost, will reconnect automatically when device is available!`;
 						this.log.warn(optimisedError);
-					} else if (error.message.includes('timeout')){
+					} else if (error.message.includes('timeout')) {
 						optimisedError = `Client ${host} Timeout, connection Lost, will reconnect automatically when device is available!`;
 						this.log.warn(optimisedError);
-					} else if (error.message.includes('write after end')){
+					} else if (error.message.includes('write after end')) {
 						// Ignore error
 					} else {
 						this.log.error(`ESPHome client ${host} ${error}`);
@@ -484,7 +489,7 @@ class Esphome extends utils.Adapter {
 						this.messageResponse[host] = null;
 					}
 
-				}  catch (e) {
+				} catch (e) {
 					this.log.error(`ESPHome error handling issue ${host} ${e}`);
 				}
 			});
@@ -495,37 +500,36 @@ class Esphome extends utils.Adapter {
 				this.log.debug(`trying to connect to ${host}`);
 				// Reserve memory for warn messages
 				warnMessages[host] = {
-					connectError : false
+					connectError: false
 				};
 				client[host].connect();
 			} catch (e) {
 				this.log.error(`Client ${host} connect error ${e}`);
 			}
 
-		}  catch (e) {
+		} catch (e) {
 			this.log.error(`ESP device error for ${host}`);
 		}
-
 	}
 
 	/**
-	 * Handle regular state values
-	 * @param {string} host IP-Address of client
-	 * @param {object} entity Entity-Object of value
-	 * @param {object} state State-Object
-	 * @param {boolean} writable Indicate if state should be writable
-	 */
-	async handleRegularState(host, entity, state, writable){
+     * Handle regular state values
+     * @param {string} host IP-Address of client
+     * @param {object} entity Entity-Object of value
+     * @param {object} state State-Object
+     * @param {boolean} writable Indicate if state should be writable
+     */
+	async handleRegularState(host, entity, state, writable) {
 		// Round value to digits as known by configuration
 		let stateVal = state.state;
 
 		if (this.deviceInfo[host][entity.id].config.accuracyDecimals != null) {
-			const rounding = `round(${this.deviceInfo[host][entity.id].config.accuracyDecimals })`;
+			const rounding = `round(${this.deviceInfo[host][entity.id].config.accuracyDecimals})`;
 			this.log.debug(`Value "${stateVal}" for name "${entity}" before function modify with method "round(${this.deviceInfo[host][entity.id].config.accuracyDecimals})"`);
 			stateVal = this.modify(rounding, stateVal);
 			this.log.debug(`Value "${stateVal}" for name "${entity}" after function modify with method "${rounding}"`);
 		}
-		await this.stateSetCreate( `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, `State of ${entity.config.name}`, stateVal, this.deviceInfo[host][entity.id].unit, writable);
+		await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, `State of ${entity.config.name}`, stateVal, this.deviceInfo[host][entity.id].unit, writable);
 	}
 
 	async handleStateArrays(host, entity, state) {
@@ -534,31 +538,31 @@ class Esphome extends utils.Adapter {
 
 		for (const stateName in this.deviceInfo[host][entity.id].states) {
 			let unit = '';
-			let writable  = true;
+			let writable = true;
 			let writeValue = state[stateName];
 
 			// Define if state should be writable
 			switch (stateName) {
 				case 'currentTemperature':
 					unit = `°C`;
-					writable =  false;
+					writable = false;
 					this.deviceInfo[host][entity.id].states.currentTemperature = this.modify('round(2)', state[stateName]);
 					break;
 
 				case 'oscillating': // Sensor type = Fan, write not supported
-					writable =  false;
+					writable = false;
 					break;
 
 				case 'speed': // Sensor type = Fan, write not supported
-					writable =  false;
+					writable = false;
 					break;
 
 			}
 
 			// Add unit to temperature states
 			if (stateName === `targetTemperature`
-				|| stateName === `targetTemperatureLow`
-				|| stateName === `targetTemperatureHigh`) {
+                || stateName === `targetTemperatureLow`
+                || stateName === `targetTemperatureHigh`) {
 
 				unit = `°C`;
 
@@ -566,11 +570,11 @@ class Esphome extends utils.Adapter {
 
 			// Add unit to states
 			if (stateName === `brightness`
-				|| stateName === `blue`
-				|| stateName === `green`
-				|| stateName === `red`
-				|| stateName === `white`
-				|| stateName === `colorTemperature`) {
+                || stateName === `blue`
+                || stateName === `green`
+                || stateName === `red`
+                || stateName === `white`
+                || stateName === `colorTemperature`) {
 
 				writeValue = Math.round((state[stateName] * 100) * 2.55);
 
@@ -585,11 +589,12 @@ class Esphome extends utils.Adapter {
 						transitionLength = await this.getStateAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`);
 
 						// Check if state contains value
-						if (transitionLength){
+						if (transitionLength) {
 							this.deviceInfo[host][entity.id].states.transitionLength = transitionLength.val;
 						} else { // Else just create it
 							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
-							this.deviceInfo[host][entity.id].states.transitionLength = 0;}
+							this.deviceInfo[host][entity.id].states.transitionLength = 0;
+						}
 
 					} catch (e) { // Else just create it
 						await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
@@ -606,8 +611,8 @@ class Esphome extends utils.Adapter {
 
 		// Convert RGB to HEX an write to state
 		if (this.deviceInfo[host][entity.id].states.red != null &&
-			this.deviceInfo[host][entity.id].states.blue != null &&
-			this.deviceInfo[host][entity.id].states.green != null){
+            this.deviceInfo[host][entity.id].states.blue != null &&
+            this.deviceInfo[host][entity.id].states.green != null) {
 			const hexValue = await this.rgbToHex(
 				Math.round((this.deviceInfo[host][entity.id].states.red * 100) * 2.55),
 				Math.round((this.deviceInfo[host][entity.id].states.green * 100) * 2.55),
@@ -618,13 +623,13 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-	 * Traverses the json-object and provides all information for creating/updating states
-	 * @param {object} jObject Json-object to be added as states
-	 * @param {string | null} parent Defines the parent object in the state tree; default=root
-	 * @param {boolean} replaceName Steers if name from child should be used as name for structure element (channel); default=false
-	 * @param {boolean} replaceID Steers if ID from child should be used as ID for structure element (channel); default=false;
-	 * @param {number} state_expire expire time for the current setState in seconds; default is no expire
-	 */
+     * Traverses the json-object and provides all information for creating/updating states
+     * @param {object} jObject Json-object to be added as states
+     * @param {string | null} parent Defines the parent object in the state tree; default=root
+     * @param {boolean} replaceName Steers if name from child should be used as name for structure element (channel); default=false
+     * @param {boolean} replaceID Steers if ID from child should be used as ID for structure element (channel); default=false;
+     * @param {number} state_expire expire time for the current setState in seconds; default is no expire
+     */
 	async TraverseJson(jObject, parent = null, replaceName = false, replaceID = false, state_expire = 0) {
 		let id = null;
 		let value = null;
@@ -686,20 +691,20 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-	 * Function to handle state creation
-	 * proper object definitions
-	 * rounding of values
-	 * @param {string} objName ID of the object
-	 * @param {string} name Name of state (also used for stattAttrlib!)
-	 * @param {boolean | string | number | null} [value] Value of the state
-	 * @param {string} [unit] Unit to be set
-	 * @param {boolean} [writable] state writable ?
-	 */
+     * Function to handle state creation
+     * proper object definitions
+     * rounding of values
+     * @param {string} objName ID of the object
+     * @param {string} name Name of state (also used for stattAttrlib!)
+     * @param {boolean | string | number | null} [value] Value of the state
+     * @param {string} [unit] Unit to be set
+     * @param {boolean} [writable] state writable ?
+     */
 	async stateSetCreate(objName, name, value, unit, writable) {
 		this.log.debug('Create_state called for : ' + objName + ' with value : ' + value);
 		try {
 
-			// Try to get details from state lib, if not use defaults. throw warning is states is not known in attribute list
+			// Try to get details from state lib, if not use defaults. throw warning if states is not known in attribute list
 			const common = {};
 			// const entityID = objName.split('.');
 			common.modify = {};
@@ -722,22 +727,22 @@ class Esphome extends utils.Adapter {
 			this.log.debug(`MODIFY to ${name}: ${JSON.stringify(common.modify)}`);
 
 			if ((!this.createdStatesDetails[objName])
-				|| (this.createdStatesDetails[objName]
-					&& (
-						common.name !== this.createdStatesDetails[objName].name
-						|| common.name !== this.createdStatesDetails[objName].name
-						|| common.type !== this.createdStatesDetails[objName].type
-						|| common.role !== this.createdStatesDetails[objName].role
-						|| common.read !== this.createdStatesDetails[objName].read
-						|| common.unit !== this.createdStatesDetails[objName].unit
-						|| common.write !== this.createdStatesDetails[objName].write
-					)
-				)) {
+                || (this.createdStatesDetails[objName]
+                    && ( common.name !== this.createdStatesDetails[objName].name
+                        || common.name !== this.createdStatesDetails[objName].name
+                        || common.type !== this.createdStatesDetails[objName].type
+                        || common.role !== this.createdStatesDetails[objName].role
+                        || common.read !== this.createdStatesDetails[objName].read
+                        || common.unit !== this.createdStatesDetails[objName].unit
+                        || common.write !== this.createdStatesDetails[objName].write
+                    )
+                )) {
 
 				// console.log(`An attribute has changed : ${state}`);
 				await this.extendObjectAsync(objName, {
 					type: 'state',
-					common
+					common,
+					native: {}
 				});
 
 			} else {
@@ -763,9 +768,9 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-	 * Handles error mesages for log and Sentry
-	 * @param {string} msg Error message
-	 */
+     * Handles error mesages for log and Sentry
+     * @param {string} msg Error message
+     */
 	sendSentry(msg) {
 		try {
 			if (!disableSentry) {
@@ -794,10 +799,10 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-	 * Analysis modify element in stateAttr.js and executes command
-	 * @param {string} method defines the method to be executed (e.g. round())
-	 * @param {string | number | boolean} value value to be executed
-	 */
+     * Analysis modify element in stateAttr.js and executes command
+     * @param {string} method defines the method to be executed (e.g. round())
+     * @param {string | number | boolean} value value to be executed
+     */
 	modify(method, value) {
 		this.log.debug(`Function modify with method "${method}" and value "${value}"`);
 		let result = null;
@@ -819,8 +824,7 @@ class Esphome extends utils.Adapter {
 			} else if (method.match(/^substract\(/gi) != null) {                    //check if starts with "substract("
 				const inBracket = parseFloat(method.match(/(?<=\()(.*?)(?=\))/g));    //get value in brackets
 				value = parseFloat(value) - inBracket;
-			}
-			else {
+			} else {
 				const methodUC = method.toUpperCase();
 				switch (methodUC) {
 					case 'UPPERCASE':
@@ -845,9 +849,9 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-	 * Is called when adapter shuts down - callback has to be called under any circumstances!
-	 * @param {() => void} callback
-	 */
+     * Is called when adapter shuts down - callback has to be called under any circumstances!
+     * @param {() => void} callback
+     */
 	onUnload(callback) {
 		try {
 			this.log.debug(JSON.stringify(this.deviceInfo));
@@ -858,12 +862,14 @@ class Esphome extends utils.Adapter {
 					this.log.debug(`[onUnload] ${JSON.stringify(e)}`);
 				}
 			}
-			if (reconnectTimer){
+			if (reconnectTimer) {
 				reconnectTimer = clearTimeout();
 			}
 			try {
-				if (dashboardProcess && dashboardProcess.pid){
-					kill(dashboardProcess.pid);
+				if (dashboardProcess) {
+					dashboardProcess.kill('SIGTERM', {
+						forceKillAfterTimeout: 2000
+					});
 				}
 			} catch (e) {
 				this.log.error(`[onUnload - dashboardProcess] ${JSON.stringify(e)}`);
@@ -877,10 +883,10 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-	 * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
-	 * Using this method requires "common.message" property to be set to true in io-package.json
-	 * @param {ioBroker.Message} obj
-	 */
+     * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
+     * Using this method requires "common.message" property to be set to true in io-package.json
+     * @param {ioBroker.Message} obj
+     */
 	async onMessage(obj) {
 		this.log.debug('Data from configuration received : ' + JSON.stringify(obj));
 		try {
@@ -890,8 +896,7 @@ class Esphome extends utils.Adapter {
 						.catch(async error => {
 							if (error !== 'Not exists') {
 								this.log.error(`deleteDeviceAsync has a problem: ${error.message}, stack: ${error.stack}`);
-							}
-							else {
+							} else {
 								// do nothing
 							}
 						});
@@ -901,10 +906,8 @@ class Esphome extends utils.Adapter {
 				case 'addDevice':
 
 					// eslint-disable-next-line no-case-declarations,no-inner-declarations
-					function validateIPaddress(ipaddress)
-					{
-						if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress))
-						{
+					function validateIPaddress(ipaddress) {
+						if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress)) {
 							return (true);
 						}
 						return (false);
@@ -926,7 +929,7 @@ class Esphome extends utils.Adapter {
 						this.log.info(`Valid IP address received`);
 						this.messageResponse[obj.message['device-ip']] = obj;
 						const pass = this.decrypt(obj.message['device-pass']);
-						await this.connectDevices(obj.message['device-ip'],pass);
+						await this.connectDevices(obj.message['device-ip'], pass);
 					}
 					break;
 			}
@@ -936,10 +939,10 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-	 * responds to the adapter that sent the original message
-	 * @param {string} response
-	 * @param {object} obj
-	 */
+     * responds to the adapter that sent the original message
+     * @param {string} response
+     * @param {object} obj
+     */
 	respond(response, obj) {
 		if (obj.callback)
 			this.sendTo(obj.from, obj.command, response, obj.callback);
@@ -964,15 +967,16 @@ class Esphome extends utils.Adapter {
 			const hex = color.toString(16);
 			return hex.length == 1 ? '0' + hex : hex;
 		}
+
 		const hex = '#' + componentToHex(r) + componentToHex(g) + componentToHex(b);
 		return hex;
 	}
 
 	/**
-	 * Is called if a subscribed state changes
-	 * @param {string} id
-	 * @param {ioBroker.State | null | undefined} state
-	 */
+     * Is called if a subscribed state changes
+     * @param {string} id
+     * @param {ioBroker.State | null | undefined} state
+     */
 	async onStateChange(id, state) {
 		try {
 			if (state && state.ack === false) {
@@ -981,13 +985,21 @@ class Esphome extends utils.Adapter {
 
 				// Handle Switch State
 				if (this.deviceInfo[deviceIP][device[4]].type === `Switch`
-					|| this.deviceInfo[deviceIP][device[4]].type === `Fan`) {
+                    || this.deviceInfo[deviceIP][device[4]].type === `Fan`) {
 					await client[deviceIP].connection.switchCommandService({key: device[4], state: state.val});
 
 					// Handle Climate State
 				} else if (this.deviceInfo[deviceIP][device[4]].type === `Climate`) {
 					this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
 					await client[deviceIP].connection.climateCommandService(this.deviceInfo[deviceIP][device[4]].states);
+
+					// Handle Number State
+				} else if (this.deviceInfo[deviceIP][device[4]].type === `Number`) {
+					await client[deviceIP].connection.numberCommandService({key: device[4], state: state.val});
+
+					// Handle Button State
+				} else if (this.deviceInfo[deviceIP][device[4]].type === `Button`) {
+					await client[deviceIP].connection.buttonCommandService({key: device[4]});
 
 					// Handle Cover Position
 				} else if (device[5] === `position`) {
@@ -1008,11 +1020,11 @@ class Esphome extends utils.Adapter {
 					let writeValue = state.val;
 					// Add unit to temperature states
 					if (device[5] === `brightness`
-						|| device[5]  === `blue`
-						|| device[5]  === `green`
-						|| device[5]  === `red`
-						|| device[5]  === `white`
-						|| device[5]  === `colorTemperature`) {
+                        || device[5] === `blue`
+                        || device[5] === `green`
+                        || device[5] === `red`
+                        || device[5] === `white`
+                        || device[5] === `colorTemperature`) {
 
 						// Convert value to 255 range
 						writeValue = (writeValue / 100) / 2.55;
@@ -1026,21 +1038,21 @@ class Esphome extends utils.Adapter {
 						const rgbConversion = await this.hexToRgb(writeValue);
 						if (!rgbConversion) return;
 						this.deviceInfo[deviceIP][device[4]].states.red = (rgbConversion.red / 100) / 2.55;
-						this.deviceInfo[deviceIP][device[4]].states.blue = (rgbConversion.blue  / 100) / 2.55;
-						this.deviceInfo[deviceIP][device[4]].states.green = (rgbConversion.green  / 100) / 2.55;
+						this.deviceInfo[deviceIP][device[4]].states.blue = (rgbConversion.blue / 100) / 2.55;
+						this.deviceInfo[deviceIP][device[4]].states.green = (rgbConversion.green / 100) / 2.55;
 
-					} else if (device[5]  === `transitionLength`){
+					} else if (device[5] === `transitionLength`) {
 
 						this.deviceInfo[deviceIP][device[4]].states[device[5]] = writeValue;
 
 					} else if (device[5] === 'effect') {
-						
+
 						this.deviceInfo[deviceIP][device[4]].states.effect = writeValue;
-						
+
 					} else if (device[5] === 'state') {
-						
+
 						this.deviceInfo[deviceIP][device[4]].states.state = writeValue;
-						
+
 					}
 
 					const data = {
@@ -1048,22 +1060,22 @@ class Esphome extends utils.Adapter {
 						state: this.deviceInfo[deviceIP][device[4]].states.state,
 						transitionLength: this.deviceInfo[deviceIP][device[4]].states.transitionLength
 					};
-					if(this.deviceInfo[deviceIP][device[4]].config.supportsBrightness === true){
+					if (this.deviceInfo[deviceIP][device[4]].config.supportsBrightness === true) {
 						data.brightness = this.deviceInfo[deviceIP][device[4]].states.brightness;
 					}
-					if(this.deviceInfo[deviceIP][device[4]].config.supportsRgb === true){
+					if (this.deviceInfo[deviceIP][device[4]].config.supportsRgb === true) {
 						data.red = this.deviceInfo[deviceIP][device[4]].states.red;
 						data.green = this.deviceInfo[deviceIP][device[4]].states.green;
 						data.blue = this.deviceInfo[deviceIP][device[4]].states.blue;
 					}
-					if(this.deviceInfo[deviceIP][device[4]].config.supportsWhiteValue === true){
+					if (this.deviceInfo[deviceIP][device[4]].config.supportsWhiteValue === true) {
 						data.white = this.deviceInfo[deviceIP][device[4]].states.white;
 					}
-					if(this.deviceInfo[deviceIP][device[4]].config.supportsColorTemperature === true){
+					if (this.deviceInfo[deviceIP][device[4]].config.supportsColorTemperature === true) {
 						data.colorTemperature = this.deviceInfo[deviceIP][device[4]].states.colorTemperature;
 					}
 					const effect = this.deviceInfo[deviceIP][device[4]].states.effect;
-					if(effect !== '' && effect !== null && effect !== undefined){
+					if (effect !== '' && effect !== null && effect !== undefined) {
 						data.effect = effect;
 					}
 
@@ -1075,14 +1087,28 @@ class Esphome extends utils.Adapter {
 			this.log.error(`[onStateChange] ${e}`);
 		}
 	}
+
+	/**
+     * Some types (like Button) don't have a state. So standard method of creating iobroker objects when receiving state event via api doesn't work here
+     * @returns {Promise<void>}
+     */
+	async createNonStateDevices(host, entity) {
+		console.error('');
+		// `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}`
+		switch (this.deviceInfo[host][entity.id].type) {
+			case 'Button': {
+				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.SET`, `Button`, false, '', true);
+				break;
+			}
+		}
+	}
 }
 
-// @ts-ignore parent is a valid property on module
-if (module.parent) {
+if (require.main !== module) {
 	// Export the constructor in compact mode
 	/**
-	 * @param {Partial<utils.AdapterOptions>} [options={}]
-	 */
+     * @param {Partial<utils.AdapterOptions>} [options={}]
+     */
 	module.exports = (options) => new Esphome(options);
 } else {
 	// otherwise start the instance directly
