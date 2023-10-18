@@ -129,7 +129,7 @@ class Esphome extends utils.Adapter {
 		}
 	}
 
-	// Try to contact to contact and read data of already known devices
+	// Try to contact and read data of already known devices
 	async tryKnownDevices() {
 		try {
 			const knownDevices = await this.getDevicesAsync();
@@ -177,7 +177,11 @@ class Esphome extends utils.Adapter {
 		}
 	}
 
-	// Handle Socket connections
+	/**
+	 * Handle Socket connections
+	 * @param {string} host IP adress of device
+	 * @param {string | number | boolean} pass Password used for APU
+	 */
 	connectDevices(host, pass) {
 		try {
 			// const host = espDevices[device].ip;
@@ -227,21 +231,21 @@ class Esphome extends utils.Adapter {
 				this.log.info(`ESPHome  client ${this.deviceInfo[host].deviceInfo.name} on ip ${host} initialized`);
 			});
 
-			client[host].on('logs', (messageObj) => {
+			client[host].on('logs', (/** @type {object} */ messageObj) => {
 				this.log.debug(`ESPHome client log : ${JSON.stringify(messageObj)}`);
 			});
 
 			// Log message listener
-			client[host].connection.on('message', (message) => {
+			client[host].connection.on('message', (/** @type {object} */ message) => {
 				this.log.debug(`${host} client log ${message}`);
 			});
 
-			client[host].connection.on('data', (data) => {
+			client[host].connection.on('data', (/** @type {object} */ data) => {
 				this.log.debug(`${host} client data ${data}`);
 			});
 
 			// Handle device information when connected or information updated
-			client[host].on('deviceInfo', async (deviceInfo) => {
+			client[host].on('deviceInfo', async (/** @type {object} */ deviceInfo) => {
 				try {
 					this.log.info(`ESPHome Device info received for ${deviceInfo.name}`);
 					this.log.debug(`DeviceData: ${JSON.stringify(deviceInfo)}`);
@@ -367,7 +371,7 @@ class Esphome extends utils.Adapter {
 					this.log.debug(`[DeviceInfoData] ${this.deviceInfo[host].deviceInfo.name} ${JSON.stringify(this.deviceInfo[host])}`);
 
 					// Listen to state changes an write values to states (create state if not yet exists)
-					entity.on(`state`, async (state) => {
+					entity.on(`state`, async (/** @type {object} */ state) => {
 						this.log.debug(`StateData: ${JSON.stringify(state)}`);
 						try {
 							this.log.debug(`[entityStateConfig] ${JSON.stringify(this.deviceInfo[host][entity.id])}`);
@@ -431,7 +435,7 @@ class Esphome extends utils.Adapter {
 
 					});
 
-					entity.connection.on(`destroyed`, async (state) => {
+					entity.connection.on(`destroyed`, async (/** @type {object} */ state) => {
 						try {
 							this.log.warn(`Connection destroyed for ${state}`);
 						} catch (e) {
@@ -440,7 +444,7 @@ class Esphome extends utils.Adapter {
 
 					});
 
-					entity.on(`error`, async (name) => {
+					entity.on(`error`, async (/** @type {object} */ name) => {
 						this.log.error(`Entity error: ${name}`);
 					});
 
@@ -532,6 +536,12 @@ class Esphome extends utils.Adapter {
 		await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, `State of ${entity.config.name}`, stateVal, this.deviceInfo[host][entity.id].unit, writable);
 	}
 
+	/**
+	 * Handle state values
+	 * @param {string} host IP-Address of client
+	 * @param {object} entity Entity-Object of value
+	 * @param {object} state State-Object
+	 */
 	async handleStateArrays(host, entity, state) {
 
 		this.deviceInfo[host][entity.id].states = state;
@@ -613,7 +623,7 @@ class Esphome extends utils.Adapter {
 		if (this.deviceInfo[host][entity.id].states.red != null &&
             this.deviceInfo[host][entity.id].states.blue != null &&
             this.deviceInfo[host][entity.id].states.green != null) {
-			const hexValue = await this.rgbToHex(
+			const hexValue = this.rgbToHex(
 				Math.round((this.deviceInfo[host][entity.id].states.red * 100) * 2.55),
 				Math.round((this.deviceInfo[host][entity.id].states.green * 100) * 2.55),
 				Math.round((this.deviceInfo[host][entity.id].states.blue * 100) * 2.55),
@@ -638,7 +648,7 @@ class Esphome extends utils.Adapter {
 		try {
 			for (const i in jObject) {
 				name = i;
-				if (!!jObject[i] && typeof (jObject[i]) == 'object' && jObject[i] == '[object Object]') {
+				if (!!jObject[i] && typeof (jObject[i]) === 'object' && jObject[i] === '[object Object]') {
 					if (parent == null) {
 						id = i;
 						if (replaceName) {
@@ -679,7 +689,7 @@ class Esphome extends utils.Adapter {
 					}
 					if (typeof (jObject[i]) == 'object') value = JSON.stringify(value);
 					//avoid state creation if empty
-					if (value != '[]') {
+					if (value !== '[]') {
 						this.log.debug('create id ' + id + ' with value ' + value + ' and name ' + name);
 						await this.stateSetCreate(id, name, value);
 					}
@@ -739,6 +749,7 @@ class Esphome extends utils.Adapter {
                 )) {
 
 				// console.log(`An attribute has changed : ${state}`);
+				// @ts-ignore values are correctly provided by state Attribute definitions, error can be ignored
 				await this.extendObjectAsync(objName, {
 					type: 'state',
 					common,
@@ -789,11 +800,20 @@ class Esphome extends utils.Adapter {
 		}
 	}
 
-	// Helper replace functions
+	/**
+	 * Helper replace function
+	 * @param {string} string String to replace invalid chars
+	 */
 	escapeRegExp(string) {
 		return string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 	}
 
+	/**
+	 * Helper replace function
+	 * @param {string} str String to replace invalid chars
+	 * @param {string} find String to find for replace function
+	 * @param {string} replace String to replace
+	 */
 	replaceAll(str, find, replace) {
 		return str.replace(new RegExp(this.escapeRegExp(find), 'g'), replace);
 	}
@@ -908,9 +928,9 @@ class Esphome extends utils.Adapter {
 					// eslint-disable-next-line no-case-declarations,no-inner-declarations
 					function validateIPaddress(ipaddress) {
 						if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress)) {
-							return (true);
+							return true;
 						}
-						return (false);
+						return false;
 					}
 
 					// eslint-disable-next-line no-case-declarations
@@ -965,11 +985,9 @@ class Esphome extends utils.Adapter {
 	rgbToHex(r, g, b) {
 		function componentToHex(color) {
 			const hex = color.toString(16);
-			return hex.length == 1 ? '0' + hex : hex;
+			return hex.length === 1 ? '0' + hex : hex;
 		}
-
-		const hex = '#' + componentToHex(r) + componentToHex(g) + componentToHex(b);
-		return hex;
+		return '#' + componentToHex(r) + componentToHex(g) + componentToHex(b);
 	}
 
 	/**
@@ -1035,7 +1053,7 @@ class Esphome extends utils.Adapter {
 					} else if (device[5] === `colorHEX`) {
 
 						// Convert hex to rgb
-						const rgbConversion = await this.hexToRgb(writeValue);
+						const rgbConversion = this.hexToRgb(writeValue);
 						if (!rgbConversion) return;
 						this.deviceInfo[deviceIP][device[4]].states.red = (rgbConversion.red / 100) / 2.55;
 						this.deviceInfo[deviceIP][device[4]].states.blue = (rgbConversion.blue / 100) / 2.55;
