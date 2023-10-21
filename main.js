@@ -1111,8 +1111,6 @@ class Esphome extends utils.Adapter {
      * @returns {Promise<void>}
      */
 	async createNonStateDevices(host, entity) {
-		console.error('');
-		// `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}`
 		switch (this.deviceInfo[host][entity.id].type) {
 			case 'Button': {
 				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.SET`, `Button`, false, '', true);
