@@ -419,6 +419,11 @@ class Esphome extends utils.Adapter {
 									await this.handleRegularState(`${host}`, entity, state, true);
 									break;
 
+								case 'Select': {
+									await this.handleRegularState(`${host}`, entity, state, true);
+									break;
+								}
+
 								default:
 
 									if (!warnMessages[this.deviceInfo[host][entity.id].type]) {
@@ -533,7 +538,17 @@ class Esphome extends utils.Adapter {
 			stateVal = this.modify(rounding, stateVal);
 			this.log.debug(`Value "${stateVal}" for name "${entity}" after function modify with method "${rounding}"`);
 		}
-		await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, `State of ${entity.config.name}`, stateVal, this.deviceInfo[host][entity.id].unit, writable);
+
+
+		/** @type {ioBroker.StateCommon} */
+		const stateCommon = {
+		};
+
+		if(entity.config.optionsList != null) {
+			stateCommon.states = entity.config.optionsList;
+		}
+
+		await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, `State of ${entity.config.name}`, stateVal, this.deviceInfo[host][entity.id].unit, writable, stateCommon);
 	}
 
 	/**
@@ -701,23 +716,25 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-     * Function to handle state creation
-     * proper object definitions
-     * rounding of values
-     * @param {string} objName ID of the object
-     * @param {string} name Name of state (also used for stattAttrlib!)
-     * @param {boolean | string | number | null} [value] Value of the state
-     * @param {string} [unit] Unit to be set
-     * @param {boolean} [writable] state writable ?
-     */
-	async stateSetCreate(objName, name, value, unit, writable) {
+	 * Function to handle state creation
+	 * proper object definitions
+	 * rounding of values
+	 * @param {string} objName ID of the object
+	 * @param {string} name Name of state (also used for stattAttrlib!)
+	 * @param {boolean | string | number | null} [value] Value of the state
+	 * @param {string} [unit] Unit to be set
+	 * @param {boolean} [writable] state writable ?
+	 * @param {object} initialStateCommon Additional attributes for state.common
+	 */
+	async stateSetCreate(objName, name, value, unit, writable, /** @type Partial<ioBroker.StateCommon> **/ initialStateCommon = {}) {
 		this.log.debug('Create_state called for : ' + objName + ' with value : ' + value);
 		try {
 
 			// Try to get details from state lib, if not use defaults. throw warning if states is not known in attribute list
-			const common = {};
+			/** @type {Partial<ioBroker.StateCommon>} */
+			const common = initialStateCommon;
 			// const entityID = objName.split('.');
-			common.modify = {};
+			// common.modify = {};
 			if (!stateAttr[name]) {
 				const warnMessage = `State attribute definition missing for '${name}'`;
 				if (warnMessages[name] !== warnMessage) {
@@ -733,8 +750,8 @@ class Esphome extends utils.Adapter {
 			common.unit = unit !== undefined ? unit || '' : '';
 			// common.write = stateAttr[name] !== undefined ? stateAttr[name].write || false : false;
 			common.write = writable !== undefined ? writable || false : false;
-			common.modify = stateAttr[name] !== undefined ? stateAttr[name].modify || '' : '';
-			this.log.debug(`MODIFY to ${name}: ${JSON.stringify(common.modify)}`);
+			// common.modify = stateAttr[name] !== undefined ? stateAttr[name].modify || '' : '';
+			// this.log.debug(`MODIFY to ${name}: ${JSON.stringify(common.modify)}`);
 
 			if ((!this.createdStatesDetails[objName])
                 || (this.createdStatesDetails[objName]
@@ -1018,6 +1035,10 @@ class Esphome extends utils.Adapter {
 					// Handle Button State
 				} else if (this.deviceInfo[deviceIP][device[4]].type === `Button`) {
 					await client[deviceIP].connection.buttonCommandService({key: device[4]});
+
+					// Handle Select State
+				} else if (this.deviceInfo[deviceIP][device[4]].type === `Select`) {
+					await client[deviceIP].connection.selectCommandService({key: device[4], state: state.val});
 
 					// Handle Cover Position
 				} else if (device[5] === `position`) {
