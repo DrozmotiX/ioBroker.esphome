@@ -20,8 +20,8 @@ let reconnectTimer, reconnectInterval, apiPass, autodiscovery, dashboardProcess,
 class Esphome extends utils.Adapter {
 
 	/**
-     * @param {Partial<utils.AdapterOptions>} [options={}]
-     */
+	 * @param {Partial<utils.AdapterOptions>} [options={}]
+	 */
 	constructor(options) {
 		super({
 			...options,
@@ -40,8 +40,8 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-     * Is called when databases are connected and adapter received configuration.
-     */
+	 * Is called when databases are connected and adapter received configuration.
+	 */
 	async onReady() {
 		await this.setStateAsync('info.connection', {val: true, ack: true});
 		try {
@@ -50,7 +50,7 @@ class Esphome extends utils.Adapter {
 			reconnectInterval = this.config.reconnectInterval * 1000;
 			createConfigStates = this.config.configStates;
 
-			// Try connecting to already knwon devices
+			// Try connecting to already known devices
 			await this.tryKnownDevices();
 
 			// Start MDNS discovery when enabled
@@ -536,12 +536,12 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-     * Handle regular state values
-     * @param {string} host IP-Address of client
-     * @param {object} entity Entity-Object of value
-     * @param {object} state State-Object
-     * @param {boolean} writable Indicate if state should be writable
-     */
+	 * Handle regular state values
+	 * @param {string} host IP-Address of client
+	 * @param {object} entity Entity-Object of value
+	 * @param {object} state State-Object
+	 * @param {boolean} writable Indicate if state should be writable
+	 */
 	async handleRegularState(host, entity, state, writable) {
 		// Round value to digits as known by configuration
 		let stateVal = state.state;
@@ -600,8 +600,8 @@ class Esphome extends utils.Adapter {
 
 			// Add unit to temperature states
 			if (stateName === `targetTemperature`
-                || stateName === `targetTemperatureLow`
-                || stateName === `targetTemperatureHigh`) {
+				|| stateName === `targetTemperatureLow`
+				|| stateName === `targetTemperatureHigh`) {
 
 				unit = `°C`;
 
@@ -609,11 +609,11 @@ class Esphome extends utils.Adapter {
 
 			// Add unit to states
 			if (stateName === `brightness`
-                || stateName === `blue`
-                || stateName === `green`
-                || stateName === `red`
-                || stateName === `white`
-                || stateName === `colorTemperature`) {
+				|| stateName === `blue`
+				|| stateName === `green`
+				|| stateName === `red`
+				|| stateName === `white`
+				|| stateName === `colorTemperature`) {
 
 				writeValue = Math.round((state[stateName] * 100) * 2.55);
 
@@ -650,8 +650,8 @@ class Esphome extends utils.Adapter {
 
 		// Convert RGB to HEX an write to state
 		if (this.deviceInfo[host][entity.id].states.red != null &&
-            this.deviceInfo[host][entity.id].states.blue != null &&
-            this.deviceInfo[host][entity.id].states.green != null) {
+			this.deviceInfo[host][entity.id].states.blue != null &&
+			this.deviceInfo[host][entity.id].states.green != null) {
 			const hexValue = this.rgbToHex(
 				Math.round((this.deviceInfo[host][entity.id].states.red * 100) * 2.55),
 				Math.round((this.deviceInfo[host][entity.id].states.green * 100) * 2.55),
@@ -662,13 +662,13 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-     * Traverses the json-object and provides all information for creating/updating states
-     * @param {object} jObject Json-object to be added as states
-     * @param {string | null} parent Defines the parent object in the state tree; default=root
-     * @param {boolean} replaceName Steers if name from child should be used as name for structure element (channel); default=false
-     * @param {boolean} replaceID Steers if ID from child should be used as ID for structure element (channel); default=false;
-     * @param {number} state_expire expire time for the current setState in seconds; default is no expire
-     */
+	 * Traverses the json-object and provides all information for creating/updating states
+	 * @param {object} jObject Json-object to be added as states
+	 * @param {string | null} parent Defines the parent object in the state tree; default=root
+	 * @param {boolean} replaceName Steers if name from child should be used as name for structure element (channel); default=false
+	 * @param {boolean} replaceID Steers if ID from child should be used as ID for structure element (channel); default=false;
+	 * @param {number} state_expire expire time for the current setState in seconds; default is no expire
+	 */
 	async TraverseJson(jObject, parent = null, replaceName = false, replaceID = false, state_expire = 0) {
 		let id = null;
 		let value = null;
@@ -768,16 +768,16 @@ class Esphome extends utils.Adapter {
 			// this.log.debug(`MODIFY to ${name}: ${JSON.stringify(common.modify)}`);
 
 			if ((!this.createdStatesDetails[objName])
-                || (this.createdStatesDetails[objName]
-                    && ( common.name !== this.createdStatesDetails[objName].name
-                        || common.name !== this.createdStatesDetails[objName].name
-                        || common.type !== this.createdStatesDetails[objName].type
-                        || common.role !== this.createdStatesDetails[objName].role
-                        || common.read !== this.createdStatesDetails[objName].read
-                        || common.unit !== this.createdStatesDetails[objName].unit
-                        || common.write !== this.createdStatesDetails[objName].write
-                    )
-                )) {
+				|| (this.createdStatesDetails[objName]
+					&& ( common.name !== this.createdStatesDetails[objName].name
+						|| common.name !== this.createdStatesDetails[objName].name
+						|| common.type !== this.createdStatesDetails[objName].type
+						|| common.role !== this.createdStatesDetails[objName].role
+						|| common.read !== this.createdStatesDetails[objName].read
+						|| common.unit !== this.createdStatesDetails[objName].unit
+						|| common.write !== this.createdStatesDetails[objName].write
+					)
+				)) {
 
 				// console.log(`An attribute has changed : ${state}`);
 				// @ts-ignore values are correctly provided by state Attribute definitions, error can be ignored
@@ -810,9 +810,9 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-     * Handles error mesages for log and Sentry
-     * @param {string} msg Error message
-     */
+	 * Handles error mesages for log and Sentry
+	 * @param {string} msg Error message
+	 */
 	sendSentry(msg) {
 		try {
 			if (!disableSentry) {
@@ -850,10 +850,10 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-     * Analysis modify element in stateAttr.js and executes command
-     * @param {string} method defines the method to be executed (e.g. round())
-     * @param {string | number | boolean} value value to be executed
-     */
+	 * Analysis modify element in stateAttr.js and executes command
+	 * @param {string} method defines the method to be executed (e.g. round())
+	 * @param {string | number | boolean} value value to be executed
+	 */
 	modify(method, value) {
 		this.log.debug(`Function modify with method "${method}" and value "${value}"`);
 		let result = null;
@@ -900,9 +900,9 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-     * Is called when adapter shuts down - callback has to be called under any circumstances!
-     * @param {() => void} callback
-     */
+	 * Is called when adapter shuts down - callback has to be called under any circumstances!
+	 * @param {() => void} callback
+	 */
 	onUnload(callback) {
 		try {
 			this.log.debug(JSON.stringify(this.deviceInfo));
@@ -934,10 +934,10 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-     * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
-     * Using this method requires "common.message" property to be set to true in io-package.json
-     * @param {ioBroker.Message} obj
-     */
+	 * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
+	 * Using this method requires "common.message" property to be set to true in io-package.json
+	 * @param {ioBroker.Message} obj
+	 */
 	async onMessage(obj) {
 		this.log.debug('Data from configuration received : ' + JSON.stringify(obj));
 		try {
@@ -990,10 +990,10 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-     * responds to the adapter that sent the original message
-     * @param {string} response
-     * @param {object} obj
-     */
+	 * responds to the adapter that sent the original message
+	 * @param {string} response
+	 * @param {object} obj
+	 */
 	respond(response, obj) {
 		if (obj.callback)
 			this.sendTo(obj.from, obj.command, response, obj.callback);
@@ -1022,10 +1022,10 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-     * Is called if a subscribed state changes
-     * @param {string} id
-     * @param {ioBroker.State | null | undefined} state
-     */
+	 * Is called if a subscribed state changes
+	 * @param {string} id
+	 * @param {ioBroker.State | null | undefined} state
+	 */
 	async onStateChange(id, state) {
 		try {
 			if (state && state.ack === false) {
@@ -1034,7 +1034,7 @@ class Esphome extends utils.Adapter {
 
 				// Handle Switch State
 				if (this.deviceInfo[deviceIP][device[4]].type === `Switch`
-                    || this.deviceInfo[deviceIP][device[4]].type === `Fan`) {
+					|| this.deviceInfo[deviceIP][device[4]].type === `Fan`) {
 					await client[deviceIP].connection.switchCommandService({key: device[4], state: state.val});
 
 					// Handle Climate State
@@ -1073,11 +1073,11 @@ class Esphome extends utils.Adapter {
 					let writeValue = state.val;
 					// Add unit to temperature states
 					if (device[5] === `brightness`
-                        || device[5] === `blue`
-                        || device[5] === `green`
-                        || device[5] === `red`
-                        || device[5] === `white`
-                        || device[5] === `colorTemperature`) {
+						|| device[5] === `blue`
+						|| device[5] === `green`
+						|| device[5] === `red`
+						|| device[5] === `white`
+						|| device[5] === `colorTemperature`) {
 
 						// Convert value to 255 range
 						writeValue = (writeValue / 100) / 2.55;
@@ -1142,9 +1142,9 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-     * Some types (like Button) don't have a state. So standard method of creating iobroker objects when receiving state event via api doesn't work here
-     * @returns {Promise<void>}
-     */
+	 * Some types (like Button) don't have a state. So standard method of creating iobroker objects when receiving state event via api doesn't work here
+	 * @returns {Promise<void>}
+	 */
 	async createNonStateDevices(host, entity) {
 		switch (this.deviceInfo[host][entity.id].type) {
 			case 'Button': {
@@ -1158,8 +1158,8 @@ class Esphome extends utils.Adapter {
 if (require.main !== module) {
 	// Export the constructor in compact mode
 	/**
-     * @param {Partial<utils.AdapterOptions>} [options={}]
-     */
+	 * @param {Partial<utils.AdapterOptions>} [options={}]
+	 */
 	module.exports = (options) => new Esphome(options);
 } else {
 	// otherwise start the instance directly
