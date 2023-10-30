@@ -13,6 +13,7 @@ let discovery;
 const stateAttr = require(__dirname + '/lib/stateAttr.js'); // Load attribute library
 const disableSentry = false; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
+const fs = require('fs');
 const client = {};
 let reconnectTimer, reconnectInterval, apiPass, autodiscovery, dashboardProcess, createConfigStates;
 
@@ -85,6 +86,19 @@ class Esphome extends utils.Adapter {
 
 			// Define directory to store configuration files
 			const dataDir = utils.getAbsoluteDefaultDataDir();
+
+			try {
+				fs.mkdir(`${dataDir}esphome.${this.instance}`, (err) => {
+					if (err) {
+						return console.log(`ESPHome directory exists`);
+					}
+					console.log(`ESPHome directory created`);
+				});
+				// );
+			} catch (e) {
+				// Directory has an issue reading/writing data, iob fix should be executed
+			}
+
 			const dashboardProcess = python('esphome', ['dashboard', `${dataDir}esphome.${this.instance}`]);
 
 			this.log.debug(`espHomeDashboard_Process ${JSON.stringify(dashboardProcess)}`);
