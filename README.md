@@ -112,6 +112,10 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
+
+### __WORK IN PROGRESS__
+* (DutchmanNL) Bugfix: Show online state of ESP Device correctly, Fixes #106
+
 ### 0.3.0 (2023-10-31) - Bugfixes & Improvements
 * (Dutchman & SimonFischer04) Several Bugfixes
 * (SimonFischer04) Support type "select device"
