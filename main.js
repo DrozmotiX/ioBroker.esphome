@@ -50,6 +50,9 @@ class Esphome extends utils.Adapter {
 			reconnectInterval = this.config.reconnectInterval * 1000;
 			createConfigStates = this.config.configStates;
 
+			// Ensure all online states are set to false during adapter start
+			await this.resetOnlineStates();
+
 			// Try connecting to already known devices
 			await this.tryKnownDevices();
 
@@ -285,6 +288,9 @@ class Esphome extends utils.Adapter {
 						type: 'device',
 						common: {
 							name: deviceInfo.name,
+							statusStates: {
+								onlineId: `${this.namespace}.${deviceName}.info._online`
+							}
 						},
 						native: {
 							ip: host,
@@ -907,6 +913,13 @@ class Esphome extends utils.Adapter {
 		try {
 			this.log.debug(JSON.stringify(this.deviceInfo));
 			for (const device in this.deviceInfo) {
+
+				// Ensure all known online states are set to false
+				if (this.deviceInfo[device].mac != null) {
+					const deviceName = this.replaceAll(this.deviceInfo[device].mac, `:`, ``);
+					this.setState(`${deviceName}.info._online`, {val: false, ack: true});
+				}
+
 				try {
 					client[device].disconnect();
 				} catch (e) {
@@ -1153,6 +1166,38 @@ class Esphome extends utils.Adapter {
 			}
 		}
 	}
+
+	async resetOnlineStates(){
+		try {
+			// Set parameters for object view to only include objects within adapter namespace
+			const params = {
+				startkey : `${this.namespace}.`,
+				endkey : `${this.namespace}.\u9999`,
+			};
+
+			// Get all current devices in adapter tree
+			const _devices = await this.getObjectViewAsync('system', 'device', params);
+			// List all found devices & set online state to false
+			for (const currDevice in _devices.rows) {
+
+				// Extend online state to device (to ensure migration of version < 0.3.1
+				await this.extendObjectAsync(_devices.rows[currDevice].id, {
+					common: {
+						statusStates: {
+							onlineId: `${_devices.rows[currDevice].id}.info._online`
+						}
+					},
+				});
+
+				// Set online state to false, will be set to true at successfully connected
+				this.setState(`${_devices.rows[currDevice].id}.info._online`, {val: false, ack: true});
+			}
+
+		} catch (e) {
+			this.log.error(`[resetOnlineState] ${e}`);
+		}
+	}
+
 }
 
 if (require.main !== module) {
