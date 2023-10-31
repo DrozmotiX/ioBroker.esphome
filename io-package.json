@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "esphome",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "news": {
+      "0.3.1": {
+        "en": "Bugfix: Show online state of ESP Device correctly, Fixes #106",
+        "de": "Bugfix: Online-Zustand von ESP Device korrekt anzeigen, Fixes #106",
+        "ru": "Bugfix: Показать онлайн состояние ESP Device правильно, Fixes #106",
+        "pt": "Bugfix: Mostrar estado on-line de ESP dispositivo corretamente, correções #106",
+        "nl": "Bugfix: Vertoon online staat van ESP Device correct, Fixes 106",
+        "fr": "Bugfix: Afficher l'état en ligne de l'appareil ESP correctement, Fixes #106",
+        "it": "Bugfix: Mostrare lo stato online del dispositivo ESP correttamente, Fisse #106",
+        "es": "Bugfix: Mostrar el estado online del dispositivo ESP correctamente, Fijaciones #106",
+        "pl": "Bugfix: Programy internetowe ESP Device poprawnie ↓, s. 106",
+        "uk": "Помилки: Показати онлайн стан ESP Пристрої правильно, Виправлення #106",
+        "zh-cn": "Bugfix: ESP Device在线状况,Fixes #106"
+      },
       "0.3.0": {
         "en": "Several Bugfixes\nSupport type \"select device\"\nESPHome dashboard default disabled\nMigrate to @2colors/esphome-native-api\nAutomatically create needed directories, Fixes #168\nMigrate usage of python to new structure, should solve all ESPHome Dashboard related installation issues",
         "de": "Mehrere Bugfixes\nSupport-Typ \"Auswahlgerät\"\nESPHome Dashboard default deaktiviert\nMigration auf @2colors/esphome-native-api\nAutomatische Erstellung erforderlicher Verzeichnisse, Fixes #168\nMigration der Nutzung von Python zu neuer Struktur, sollte alle ESPHome Dashboard bezogene Installation Probleme lösen",
@@ -75,18 +88,6 @@
         "es": "Registro mejorado, resuelve [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nNombre de los estados cambiado, resuelve [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
         "pl": "Logowanie poprawione, rozwiązuje [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nZmiana nazwy stanów, rozwiązuje [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
         "zh-cn": "日志记录得到改进，解决了[＃48]（https://github.com/DrozmotiX/ioBroker.esphome/issues/48）\n状态名称更改，解决[＃49]（https://github.com/DrozmotiX/ioBroker.esphome/issues/49）"
-      },
-      "0.2.0": {
-        "en": "Translations updated\nConfiguration page updated\nAdded to sentry error reporting\nNative integration of ESPHome Dashboard added",
-        "de": "Übersetzungen aktualisiert\nKonfigurationsseite aktualisiert\nZur Sentry-Fehlerberichterstattung hinzugefügt\nNative Integration von ESPHome Dashboard hinzugefügt",
-        "ru": "Переводы обновлены\nСтраница конфигурации обновлена\nДобавлен в отчет об ошибках караула\nДобавлена встроенная интеграция ESPHome Dashboard.",
-        "pt": "Traduções atualizadas\nPágina de configuração atualizada\nAdicionado ao relatório de erro de sentinela\nIntegração nativa do ESPHome Dashboard adicionada",
-        "nl": "Vertalingen bijgewerkt\nConfiguratiepagina bijgewerkt\nToegevoegd aan sentry-foutrapportage\nNative integratie van ESPHome Dashboard toegevoegd",
-        "fr": "Traductions mises à jour\nPage de configuration mise à jour\nAjouté au rapport d'erreurs de sentinelle\nAjout de l'intégration native du tableau de bord ESPHome",
-        "it": "Traduzioni aggiornate\nPagina di configurazione aggiornata\nAggiunto alla segnalazione degli errori di sentinella\nAggiunta integrazione nativa di ESPHome Dashboard",
-        "es": "Traducciones actualizadas\nPágina de configuración actualizada\nAgregado al informe de errores de centinela\nSe agregó la integración nativa de ESPHome Dashboard",
-        "pl": "Zaktualizowano tłumaczenia\nStrona konfiguracji została zaktualizowana\nDodano do raportowania błędów wartowników\nDodano natywną integrację z ESPHome Dashboard",
-        "zh-cn": "翻译已更新\n配置页面已更新\n已添加到哨兵错误报告中\nESPHome仪表板的本机集成已添加"
       }
     },
     "title": "Control ESPHome managed devices",
