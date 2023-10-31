@@ -119,7 +119,7 @@ class Esphome extends utils.Adapter {
 						this.log.debug(`[ESPHome - Console] ${data}`);
 					}
 				} else {
-					this.log.error(`[dashboardProcess ERROR] ${data}`);
+					console.debug(`[espHomeDashboard] Unknown logging data : ${JSON.stringify(data)}`);
 				}
 			});
 
