@@ -97,9 +97,7 @@ Example config, for more examples see [The DrozmotiX Docu Page](https://Drozmoti
 Migrating from previous Sonoff Tasmota or ESPEasy setups is very easy. You just need to have ESPHome create a binary for you and then upload that in the web interface.  
 See for more details our [Docu Page](https://DrozmotiX.github.io/languages/en/Adapter/ESPHome/06.migration.html)
 
-.. note::
-
-    Generated yaml files are stored at ```/opt/iobroker/node_modules/iobroker.esphome/config/>device<.yaml```
+**_NOTE:_** Generated yaml files are stored at ```/opt/iobroker/iobroker-data/iobroker.esphome.>instance</>device<.yaml
 
 
 ## Support me
@@ -115,8 +113,8 @@ If you like my work, please consider a personal donation
     * (DutchmanNL) 
 -->
 
-### __WORK IN PROGRESS__
-* (SimonFischer04) Support type "Button"
+### __WORK IN PROGRESS__ - Bugfixes & Improvements
+* (Dutchman & SimonFischer04) Several Bugfixes
 * (SimonFischer04) Support type "select device"
 * (DutchmanNL) ESPHome dashboard default disabled
 * (SimonFischer04) Migrate to @2colors/esphome-native-api
@@ -181,7 +179,7 @@ If you like my work, please consider a personal donation
 ## License
 MIT License
 
-Copyright (c) 2021 DutchmanNL <rdrozda86@gmail.com>
+Copyright (c) 2023 DutchmanNL <rdrozda86@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

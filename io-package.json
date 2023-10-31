@@ -1,21 +1,8 @@
 {
     "common": {
         "name": "esphome",
-        "version": "0.3.0-beta.0",
+        "version": "0.3.0-beta.1",
         "news": {
-            "0.3.0-beta.0" : {
-                "en": "Several bug fixes, warning: Beta testing release!",
-                "de": "Mehrere Fehlerbehebungen, Warnung: Beta-Testversion!",
-                "ru": "Несколько исправлений ошибок, предупреждение: Beta тестирование релиз!",
-                "pt": "Várias correções de bugs, aviso: Lançamento de testes Beta!",
-                "nl": "Verschillende bugfixes, waarschuwing: Beta testen!",
-                "fr": "Plusieurs corrections de bug, avertissement: Sortie de test de Beta !",
-                "it": "Diversi correzioni di bug, avviso: Beta testing release!",
-                "es": "Varias correcciones de errores, advertencia: ¡Libertad de pruebas de beta!",
-                "pl": "Several bug fixes (ang.). Beta test release (ang.)!",
-                "uk": "Кілька виправлень помилок, попередження: Випробування бета!",
-                "zh-cn": "警告: 汽车释放!"
-            },
             "0.2.4": {
                 "en": "Version of ESPHome Dashboard updated to 2021.8\nAdd option if config of ESPHome device should be shown as states (default = FALSE, safes 8 states for each sensor)",
                 "de": "Version des ESPHome Dashboards aktualisiert auf 2021.8\nOption hinzufügen, wenn die Konfiguration des ESPHome-Geräts als Zustände angezeigt werden soll (Standard = FALSE, sichert 8 Zustände für jeden Sensor)",
