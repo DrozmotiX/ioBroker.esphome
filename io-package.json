@@ -1,270 +1,199 @@
 {
-    "common": {
-        "name": "esphome",
-        "version": "0.3.0-beta.1",
-        "news": {
-            "0.2.4": {
-                "en": "Version of ESPHome Dashboard updated to 2021.8\nAdd option if config of ESPHome device should be shown as states (default = FALSE, safes 8 states for each sensor)",
-                "de": "Version des ESPHome Dashboards aktualisiert auf 2021.8\nOption hinzufügen, wenn die Konfiguration des ESPHome-Geräts als Zustände angezeigt werden soll (Standard = FALSE, sichert 8 Zustände für jeden Sensor)",
-                "ru": "Версия ESPHome Dashboard обновлена до 2021.8\nДобавить параметр, если конфигурация устройства ESPHome должна отображаться в виде состояний (по умолчанию = FALSE, сохраняет 8 состояний для каждого датчика)",
-                "pt": "Versão do ESPHome Dashboard atualizada para 2021.8\nAdicionar opção se a configuração do dispositivo ESPHome deve ser mostrada como estados (padrão = FALSE, cofres 8 estados para cada sensor)",
-                "nl": "Versie van ESPHome Dashboard bijgewerkt naar 2021.8\nOptie toevoegen als de configuratie van het ESPHome-apparaat moet worden weergegeven als statussen (standaard = FALSE, beveiligt 8 statussen voor elke sensor)",
-                "fr": "Version d'ESPHome Dashboard mise à jour vers 201.8\nAjouter une option si la configuration de l'appareil ESPHome doit être affichée sous forme d'états (par défaut = FALSE, coffre-fort 8 états pour chaque capteur)",
-                "it": "Versione di ESPHome Dashboard aggiornata a 2021.8\nAggiungi un'opzione se la configurazione del dispositivo ESPHome deve essere mostrata come stati (predefinito = FALSE, salva 8 stati per ciascun sensore)",
-                "es": "Versión de ESPHome Dashboard actualizada a 2021.8\nAgregue la opción si la configuración del dispositivo ESPHome debe mostrarse como estados (predeterminado = FALSO, guarda 8 estados para cada sensor)",
-                "pl": "Wersja pulpitu nawigacyjnego ESPHome zaktualizowana do 2021,8\nDodaj opcję, jeśli konfiguracja urządzenia ESPHome powinna być pokazywana jako stany (domyślnie = FALSE, sejfy 8 stanów dla każdego czujnika)",
-                "zh-cn": "ESPHome Dashboard 版本更新至 2021.8\n如果 ESPHome 设备的配置应显示为状态，则添加选项（默认值 = FALSE，每个传感器有 8 个状态）"
-            },
-            "0.2.3": {
-                "en": "Bugfix : Light component state not changed [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nUpdate compatibility to version 1.19.4 of ESPHome Dashboard",
-                "de": "Bugfix : Lichtkomponentenstatus nicht geändert [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nUpdate-Kompatibilität auf Version 1.19.4 von ESPHome Dashboard",
-                "ru": "Исправление: состояние компонента Light не изменялось [# 74] (https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nОбновите совместимость до версии 1.19.4 ESPHome Dashboard",
-                "pt": "Correção de bug: o estado do componente leve não foi alterado [# 74] (https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nAtualizar compatibilidade para a versão 1.19.4 do ESPHome Dashboard",
-                "nl": "Bugfix: Status lichtcomponent niet gewijzigd [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nCompatibiliteit bijwerken naar versie 1.19.4 van ESPHome Dashboard",
-                "fr": "Correction de bug : l'état du composant Light n'a pas changé [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nMettre à jour la compatibilité vers la version 1.19.4 d'ESPHome Dashboard",
-                "it": "Bugfix: lo stato del componente Light non è cambiato [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nAggiorna la compatibilità alla versione 1.19.4 di ESPHome Dashboard",
-                "es": "Corrección de error: el estado del componente de luz no ha cambiado [# 74] (https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nActualizar la compatibilidad a la versión 1.19.4 de ESPHome Dashboard",
-                "pl": "Poprawka błędu: stan lekkiego komponentu nie uległ zmianie [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nZaktualizuj kompatybilność do wersji 1.19.4 ESPHome Dashboard",
-                "zh-cn": "修正：轻组件状态没有改变 [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\n更新与 ESPHome Dashboard 1.19.4 版的兼容性"
-            },
-            "0.2.2": {
-                "en": "[!!! Breaking !!!] Make YAML file persistent, backup your configuration before updating ! solves [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nUpdate ESPHome Dashboard to 1.18.0, requires  Python >=3.7 (and ensure <4.0!)\nBugfix : Reconnect to devices without autodiscovery / MDNS-Broadcast in network, solves [#66](https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
-                "de": "[!!! Breaking !!!] Machen Sie die YAML-Datei persistent, sichern Sie Ihre Konfiguration vor dem Update! löst [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nAktualisieren Sie das ESPHome-Dashboard auf 1.18.0, erfordert Python >=3.7 (und stellen Sie sicher <4.0!)\nBugfix : Reconnect zu Geräten ohne Autodiscovery / MDNS-Broadcast im Netzwerk, behebt [#66](https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
-                "ru": "[!!! Ломаю !!!] Сделайте файл YAML постоянным, сделайте резервную копию конфигурации перед обновлением! решает [# 57] (https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nОбновите ESPHome Dashboard до 1.18.0, требуется Python> = 3.7 (и убедитесь, что <4.0!)\nИсправление: повторное подключение к устройствам без автообнаружения / MDNS-трансляции в сети, решает [# 66] (https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
-                "pt": "[!!! Quebrando !!!] Torne o arquivo YAML persistente, faça backup de sua configuração antes de atualizar! resolve [# 57] (https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nAtualize o painel ESPHome para 1.18.0, requer Python> = 3.7 (e garanta <4.0!)\nCorreção de bug: reconectar a dispositivos sem autodiscovery / MDNS-Broadcast na rede, resolve [# 66] (https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
-                "nl": "[!!! Breaking !!!] Maak het YAML-bestand persistent, maak een back-up van uw configuratie voordat u deze bijwerkt! lost [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57) op\nUpdate ESPHome Dashboard naar 1.18.0, vereist Python >=3.7 (en zorg voor <4.0!)\nBugfix: opnieuw verbinding maken met apparaten zonder autodiscovery / MDNS-uitzending in netwerk, lost [#66](https://github.com/DrozmotiX/ioBroker.esphome/issues/66) op",
-                "fr": "[!!! Breaking !!!] Rendez le fichier YAML persistant, sauvegardez votre configuration avant de mettre à jour ! résout [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nMettez à jour ESPHome Dashboard vers 1.18.0, nécessite Python >=3.7 (et assurez-vous <4.0 !)\nCorrection de bug : se reconnecter aux appareils sans découverte automatique / MDNS-Broadcast en réseau, résout [#66](https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
-                "it": "[!!! Breaking !!!] Rendi persistente il file YAML, esegui il backup della configurazione prima di aggiornare! risolve [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nAggiorna ESPHome Dashboard a 1.18.0, richiede Python >=3.7 (e assicurati <4.0!)\nBugfix: riconnettersi ai dispositivi senza autodiscovery / MDNS-Broadcast in rete, risolve [#66] (https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
-                "es": "[!!! ¡¡¡Rompiendo !!!] ¡Haga que el archivo YAML sea persistente, haga una copia de seguridad de su configuración antes de actualizar! resuelve [# 57] (https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nActualice ESPHome Dashboard a 1.18.0, requiere Python> = 3.7 (¡y asegúrese de <4.0!)\nCorrección de error: vuelva a conectarse a dispositivos sin detección automática / MDNS-Broadcast en la red, resuelve [# 66] (https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
-                "pl": "[!!! Breaking !!!] Utrwal plik YAML, wykonaj kopię zapasową konfiguracji przed aktualizacją! rozwiązuje [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nZaktualizuj pulpit nawigacyjny ESPHome do wersji 1.18.0, wymaga Pythona >=3.7 (i upewnij się, że <4.0!)\nBugfix: Połącz się ponownie z urządzeniami bez automatycznego wykrywania / MDNS-Broadcast w sieci, rozwiązuje [#66](https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
-                "zh-cn": "[！！！打破 !!!] 使 YAML 文件持久化，更新前备份您的配置！解决 [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\n将 ESPHome Dashboard 更新到 1.18.0，需要 Python >=3.7（并确保 <4.0！）\n修正：在网络中没有自动发现/MDNS-Broadcast 的情况下重新连接到设备，解决[#66](https://github.com/DrozmotiX/ioBroker.esphome/issues/66)"
-            },
-            "0.2.1-1": {
-                "en": "add cover component\nadd transitionLength for lights",
-                "de": "Abdeckungskomponente hinzufügen\nÜbergangslänge für Lichter hinzufügen",
-                "ru": "добавить компонент обложки\nдобавить transitionLength для огней",
-                "pt": "adicionar componente de capa\nadicionar comprimento de transição para luzes",
-                "nl": "voeg een omslagcomponent toe\nvoeg transitionLength toe voor lichten",
-                "fr": "ajouter un composant de couverture\najouter une longueur de transition pour les lumières",
-                "it": "aggiungi il componente di copertina\naggiungi TransitionLength per le luci",
-                "es": "agregar componente de portada\nagregar transiciónLength para luces",
-                "pl": "dodaj komponent okładki\ndodaj długość przejścia dla świateł",
-                "zh-cn": "添加封面组件\n为灯光添加transitionLength"
-            },
-            "0.2.1-0": {
-                "en": "Logging improved, solves [#48](https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nName of states changed, solves [#49](https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-                "de": "Protokollierung verbessert, löst [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nName der Staaten geändert, löst [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-                "ru": "Ведение журнала улучшено, решает [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nНазвание состояний изменено, решает [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-                "pt": "Logging melhorado, resolve [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nNome dos estados alterados, resolve [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-                "nl": "Logboekregistratie verbeterd, lost op [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nNaam van staten gewijzigd, lost [# 49] op (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-                "fr": "Journalisation améliorée, résout [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nLe nom des états a changé, résout [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-                "it": "Registrazione migliorata, risolve [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nIl nome degli stati è cambiato, risolve [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-                "es": "Registro mejorado, resuelve [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nNombre de los estados cambiado, resuelve [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-                "pl": "Logowanie poprawione, rozwiązuje [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nZmiana nazwy stanów, rozwiązuje [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-                "zh-cn": "日志记录得到改进，解决了[＃48]（https://github.com/DrozmotiX/ioBroker.esphome/issues/48）\n状态名称更改，解决[＃49]（https://github.com/DrozmotiX/ioBroker.esphome/issues/49）"
-            },
-            "0.2.0": {
-                "en": "Translations updated\nConfiguration page updated\nAdded to sentry error reporting\nNative integration of ESPHome Dashboard added",
-                "de": "Übersetzungen aktualisiert\nKonfigurationsseite aktualisiert\nZur Sentry-Fehlerberichterstattung hinzugefügt\nNative Integration von ESPHome Dashboard hinzugefügt",
-                "ru": "Переводы обновлены\nСтраница конфигурации обновлена\nДобавлен в отчет об ошибках караула\nДобавлена встроенная интеграция ESPHome Dashboard.",
-                "pt": "Traduções atualizadas\nPágina de configuração atualizada\nAdicionado ao relatório de erro de sentinela\nIntegração nativa do ESPHome Dashboard adicionada",
-                "nl": "Vertalingen bijgewerkt\nConfiguratiepagina bijgewerkt\nToegevoegd aan sentry-foutrapportage\nNative integratie van ESPHome Dashboard toegevoegd",
-                "fr": "Traductions mises à jour\nPage de configuration mise à jour\nAjouté au rapport d'erreurs de sentinelle\nAjout de l'intégration native du tableau de bord ESPHome",
-                "it": "Traduzioni aggiornate\nPagina di configurazione aggiornata\nAggiunto alla segnalazione degli errori di sentinella\nAggiunta integrazione nativa di ESPHome Dashboard",
-                "es": "Traducciones actualizadas\nPágina de configuración actualizada\nAgregado al informe de errores de centinela\nSe agregó la integración nativa de ESPHome Dashboard",
-                "pl": "Zaktualizowano tłumaczenia\nStrona konfiguracji została zaktualizowana\nDodano do raportowania błędów wartowników\nDodano natywną integrację z ESPHome Dashboard",
-                "zh-cn": "翻译已更新\n配置页面已更新\n已添加到哨兵错误报告中\nESPHome仪表板的本机集成已添加"
-            },
-            "0.1.5": {
-                "en": "Add Translations",
-                "de": "Übersetzungen hinzufügen",
-                "ru": "Добавить перевод",
-                "pt": "Adicionar traduções",
-                "nl": "Voeg vertalingen toe",
-                "fr": "Ajouter des traductions",
-                "it": "Aggiungi traduzioni",
-                "es": "Agregar traducciones",
-                "pl": "Dodaj tłumaczenia",
-                "zh-cn": "添加翻译"
-            },
-            "0.1.4": {
-                "en": "Implemented RGBW\nEnsure correct encryption and storage of passwords\nProper value ranges for type light (255 instead 100)\nImplemented hex color state for type light (if RGB is available)",
-                "de": "RGBW implementiert\nStellen Sie die korrekte Verschlüsselung und Speicherung von Passwörtern sicher\nRichtige Wertebereiche für Typ Licht (255 statt 100)\nHex-Farbstatus für Typ Licht implementiert (falls RGB verfügbar ist)",
-                "ru": "Реализован RGBW\nОбеспечьте правильное шифрование и хранение паролей\nПравильные диапазоны значений для типа light (255 вместо 100)\nРеализовано шестнадцатеричное цветовое состояние для типа света (если доступен RGB)",
-                "pt": "RGBW implementado\nGaranta a criptografia e o armazenamento corretos de senhas\nIntervalos de valores adequados para tipo de luz (255 em vez de 100)\nEstado de cor hexadecimal implementado para o tipo de luz (se RGB estiver disponível)",
-                "nl": "Geïmplementeerde RGBW\nZorg voor correcte versleuteling en opslag van wachtwoorden\nJuiste waardebereiken voor type licht (255 in plaats van 100)\nGeïmplementeerde hex-kleurstatus voor type licht (als RGB beschikbaar is)",
-                "fr": "RGBW implémenté\nAssurer un cryptage et un stockage corrects des mots de passe\nPlages de valeurs appropriées pour le type light (255 au lieu de 100)\nÉtat de couleur hexadécimal implémenté pour la lumière de type (si RVB est disponible)",
-                "it": "RGBW implementato\nGarantire la corretta crittografia e archiviazione delle password\nIntervalli corretti per il tipo di luce (255 invece di 100)\nStato colore esadecimale implementato per il tipo di luce (se RGB è disponibile)",
-                "es": "RGBW implementado\nGarantizar el cifrado y el almacenamiento correctos de contraseñas.\nRangos de valores adecuados para el tipo de luz (255 en lugar de 100)\nEstado de color hexadecimal implementado para el tipo de luz (si RGB está disponible)",
-                "pl": "Zaimplementowano RGBW\nZapewnij prawidłowe szyfrowanie i przechowywanie haseł\nPrawidłowe zakresy wartości dla typu światła (255 zamiast 100)\nZaimplementowano stan koloru szesnastkowego dla typu światła (jeśli RGB jest dostępne)",
-                "zh-cn": "实作RGBW\n确保正确加密和存储密码\nlight类型的正确值范围（255而不是100）\n为类型的灯实现了十六进制颜色状态（如果可用RGB）"
-            },
-            "0.1.3": {
-                "en": "Proper value ranges for type light",
-                "de": "Richtige Wertebereiche für Typ Licht",
-                "ru": "Подходящие диапазоны значений для типа света",
-                "pt": "Intervalos de valores adequados para o tipo de luz",
-                "nl": "Juiste waardebereiken voor type licht",
-                "fr": "Plages de valeurs appropriées pour le type lumière",
-                "it": "Intervalli di valori adeguati per il tipo di luce",
-                "es": "Rangos de valores adecuados para el tipo de luz",
-                "pl": "Prawidłowe zakresy wartości dla typu światła",
-                "zh-cn": "光线类型的正确值范围"
-            },
-            "0.1.2": {
-                "en": "Type Fan added\nType Light added\nError messages optimized\nDevice reconnect handling improved\n[Breaking!] Change state name to default \"state\" for type BinarySensor / Climate / Sensor / TextSensor & Switch  \nAutodiscovery improved, non-ESPHome devices excluded",
-                "de": "Typ Lüfter hinzugefügt\nTyp Licht hinzugefügt\nFehlermeldungen optimiert\nDie Handhabung der Gerätewiederverbindung wurde verbessert\n[Breaking!] Ändern Sie den Statusnamen für den Typ BinarySensor / Climate / Sensor / TextSensor & Switch in den Standardstatus \"state\"\nAutodiscovery verbessert, Nicht-ESPHome-Geräte ausgeschlossen",
-                "ru": "Тип вентилятора добавлен\nТип Light добавлен\nОптимизированы сообщения об ошибках\nУлучшена обработка переподключения устройства\n[Breaking!] Изменить имя состояния на \"состояние\" по умолчанию для типа BinarySensor / Climate / Sensor / TextSensor & Switch\nУлучшено автообнаружение, исключены устройства, не поддерживающие ESPHome",
-                "pt": "Tipo Ventilador adicionado\nLight Type adicionado\nMensagens de erro otimizadas\nManuseio de reconexão de dispositivo aprimorado\n[Quebrando!] Mude o nome do estado para o \"estado\" padrão para o tipo BinarySensor / Climate / Sensor / TextSensor & Switch\nAutodiscovery melhorada, dispositivos não ESPHome excluídos",
-                "nl": "Type Fan toegevoegd\nType Light toegevoegd\nFoutmeldingen geoptimaliseerd\nVerwerking van het opnieuw verbinden van apparaten is verbeterd\n[Breaking!] Verander de naam van de staat in de standaard \"staat\" voor type BinarySensor / Climate / Sensor / TextSensor & Switch\nAutodiscovery verbeterd, niet-ESPHome-apparaten uitgesloten",
-                "fr": "Type de ventilateur ajouté\nType Light ajouté\nMessages d'erreur optimisés\nGestion de la reconnexion des appareils améliorée\n[Breaking!] Remplacez le nom de l'état par \"état\" par défaut pour le type BinarySensor / Climate / Sensor / TextSensor & Switch\nDécouverte automatique améliorée, appareils non ESPHome exclus",
-                "it": "Tipo Fan aggiunto\nTipo Luce aggiunta\nMessaggi di errore ottimizzati\nGestione della riconnessione del dispositivo migliorata\n[Breaking!] Cambia il nome dello stato in \"state\" predefinito per il tipo BinarySensor / Climate / Sensor / TextSensor e Switch\nRilevamento automatico migliorato, dispositivi non ESPHome esclusi",
-                "es": "Tipo de ventilador agregado\nTipo de luz añadido\nMensajes de error optimizados\nManejo de reconexión del dispositivo mejorado\n[¡Rompiendo!] Cambia el nombre del estado al \"estado\" predeterminado para el tipo BinarySensor / Climate / Sensor / TextSensor & Switch\nDetección automática mejorada, dispositivos que no son ESPHome excluidos",
-                "pl": "Dodano wentylator typu\nDodano typ Light\nZoptymalizowane komunikaty o błędach\nPoprawiono obsługę ponownego łączenia urządzenia\n[Breaking!] Zmień nazwę stanu na domyślny „stan” dla typu BinarySensor / Climate / Sensor / TextSensor & Switch\nUlepszone automatyczne wykrywanie, z wyłączeniem urządzeń innych niż ESPHome",
-                "zh-cn": "风扇类型已添加\n类型轻已添加\n错误消息已优化\n设备重新连接处理得到改善\n[突破！]将BinarySensor / Climate / Sensor / TextSensor和Switch类型的状态名称更改为默认的“状态”\n改进了自动发现，排除了非ESPHome设备"
-            },
-            "0.1.1": {
-                "en": "Type Fan added\nType Light added\nError messages optimized\nDevice reconnect handling improved\n[Breaking!] Change state name to default \"state\" for type BinarySensor / Climate / Sensor / TextSensor & Switch  \nAutodiscovery improved, non-ESPHome devices excluded",
-                "de": "Typ Lüfter hinzugefügt\nTyp Licht hinzugefügt\nFehlermeldungen optimiert\nDie Handhabung der Gerätewiederverbindung wurde verbessert\n[Breaking!] Ändern Sie den Statusnamen für den Typ BinarySensor / Climate / Sensor / TextSensor & Switch in den Standardstatus \"state\"\nAutodiscovery verbessert, Nicht-ESPHome-Geräte ausgeschlossen",
-                "ru": "Тип вентилятора добавлен\nТип Light добавлен\nОптимизированы сообщения об ошибках\nУлучшена обработка переподключения устройства\n[Breaking!] Изменить имя состояния на \"состояние\" по умолчанию для типа BinarySensor / Climate / Sensor / TextSensor & Switch\nУлучшено автообнаружение, исключены устройства, не поддерживающие ESPHome",
-                "pt": "Tipo Ventilador adicionado\nLight Type adicionado\nMensagens de erro otimizadas\nManuseio de reconexão de dispositivo aprimorado\n[Quebrando!] Mude o nome do estado para o \"estado\" padrão para o tipo BinarySensor / Climate / Sensor / TextSensor & Switch\nAutodiscovery melhorada, dispositivos não ESPHome excluídos",
-                "nl": "Type Fan toegevoegd\nType Light toegevoegd\nFoutmeldingen geoptimaliseerd\nVerwerking van het opnieuw verbinden van apparaten is verbeterd\n[Breaking!] Verander de naam van de staat in de standaard \"staat\" voor type BinarySensor / Climate / Sensor / TextSensor & Switch\nAutodiscovery verbeterd, niet-ESPHome-apparaten uitgesloten",
-                "fr": "Type de ventilateur ajouté\nType Light ajouté\nMessages d'erreur optimisés\nGestion de la reconnexion des appareils améliorée\n[Breaking!] Remplacez le nom de l'état par \"état\" par défaut pour le type BinarySensor / Climate / Sensor / TextSensor & Switch\nDécouverte automatique améliorée, appareils non ESPHome exclus",
-                "it": "Tipo Fan aggiunto\nTipo Luce aggiunta\nMessaggi di errore ottimizzati\nGestione della riconnessione del dispositivo migliorata\n[Breaking!] Cambia il nome dello stato in \"state\" predefinito per il tipo BinarySensor / Climate / Sensor / TextSensor e Switch\nRilevamento automatico migliorato, dispositivi non ESPHome esclusi",
-                "es": "Tipo de ventilador agregado\nTipo de luz añadido\nMensajes de error optimizados\nManejo de reconexión del dispositivo mejorado\n[¡Rompiendo!] Cambia el nombre del estado al \"estado\" predeterminado para el tipo BinarySensor / Climate / Sensor / TextSensor & Switch\nDetección automática mejorada, dispositivos que no son ESPHome excluidos",
-                "pl": "Dodano wentylator typu\nDodano typ Light\nZoptymalizowane komunikaty o błędach\nPoprawiono obsługę ponownego łączenia urządzenia\n[Breaking!] Zmień nazwę stanu na domyślny „stan” dla typu BinarySensor / Climate / Sensor / TextSensor & Switch\nUlepszone automatyczne wykrywanie, z wyłączeniem urządzeń innych niż ESPHome",
-                "zh-cn": "风扇类型已添加\n类型轻已添加\n错误消息已优化\n设备重新连接处理得到改善\n[突破！]将BinarySensor / Climate / Sensor / TextSensor和Switch类型的状态名称更改为默认的“状态”\n改进了自动发现，排除了非ESPHome设备"
-            },
-            "0.1.0": {
-                "en": "Autodiscovery implemented\nType Climat added\nType TextSensor added\nSolved reconnection issues\nOptimized error messages for unknown types\n(DutchmanNL & @xXBJXx) Adapter configuration page optimized",
-                "de": "Autodiscovery implementiert\nTyp Climat hinzugefügt\nTyp TextSensor hinzugefügt\nProbleme beim erneuten Verbinden behoben\nOptimierte Fehlermeldungen für unbekannte Typen\n(DutchmanNL & @xXBJXx) Adapterkonfigurationsseite optimiert",
-                "ru": "Реализовано автообнаружение\nДобавлен тип Climat\nДобавлен тип TextSensor\nРешенные проблемы переподключения\nОптимизированные сообщения об ошибках для неизвестных типов\n(DutchmanNL & @xXBJXx) Оптимизирована страница конфигурации адаптера",
-                "pt": "Autodiscovery implementado\nTipo Climat adicionado\nType TextSensor adicionado\nResolvidos problemas de reconexão\nMensagens de erro otimizadas para tipos desconhecidos\n(DutchmanNL & @xXBJXx) Página de configuração do adaptador otimizada",
-                "nl": "Autodiscovery geïmplementeerd\nType Climat toegevoegd\nTyp TextSensor toegevoegd\nProblemen met opnieuw verbinden opgelost\nGeoptimaliseerde foutmeldingen voor onbekende typen\n(DutchmanNL & @xXBJXx) Adapter configuratiepagina geoptimaliseerd",
-                "fr": "Découverte automatique implémentée\nType de climat ajouté\nType TextSensor ajouté\nProblèmes de reconnexion résolus\nMessages d'erreur optimisés pour les types inconnus\n(DutchmanNL & @xXBJXx) Page de configuration de l'adaptateur optimisée",
-                "it": "Rilevamento automatico implementato\nTipo Climat aggiunto\nTipo TextSensor aggiunto\nRisolti i problemi di riconnessione\nMessaggi di errore ottimizzati per tipi sconosciuti\n(DutchmanNL & @xXBJXx) Pagina di configurazione dell'adattatore ottimizzata",
-                "es": "Detección automática implementada\nTipo Climat agregado\nType TextSensor agregado\nProblemas de reconexión resueltos\nMensajes de error optimizados para tipos desconocidos\n(DutchmanNL & @xXBJXx) Página de configuración del adaptador optimizada",
-                "pl": "Zaimplementowano automatyczne wykrywanie\nDodano typ Climat\nDodano TextSensor\nRozwiązano problemy z ponownym połączeniem\nZoptymalizowane komunikaty o błędach dla nieznanych typów\n(DutchmanNL & @xXBJXx) Zoptymalizowana strona konfiguracji adaptera",
-                "zh-cn": "实施自动发现\n类型气候已添加\n类型TextSensor已添加\n解决了重新连接问题\n针对未知类型的优化错误消息\n（DutchmanNL＆@xXBJXx）适配器配置页面已优化"
-            },
-            "0.0.1": {
-                "en": "initial release",
-                "de": "Erstveröffentlichung",
-                "ru": "Начальная версия",
-                "pt": "lançamento inicial",
-                "nl": "Eerste uitgave",
-                "fr": "Première version",
-                "it": "Versione iniziale",
-                "es": "Versión inicial",
-                "pl": "Pierwsze wydanie",
-                "zh-cn": "首次出版"
-            }
-        },
-        "title": "Control ESPHome managed devices",
-        "titleLang": {
-            "en": "Control ESPHome managed devices",
-            "de": "Steuern Sie von ESPHome verwaltete Geräte",
-            "ru": "Управление устройствами ESPHome",
-            "pt": "Controlar dispositivos gerenciados ESPHome",
-            "nl": "Beheer door ESPHome beheerde apparaten",
-            "fr": "Contrôle des appareils gérés ESPHome",
-            "it": "Controlla i dispositivi gestiti da ESPHome",
-            "es": "Controle los dispositivos administrados por ESPHome",
-            "pl": "Kontroluj urządzenia zarządzane przez ESPHome",
-            "zh-cn": "控制ESPHome受管设备"
-        },
-        "desc": {
-            "en": "Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome",
-            "de": "Steuern Sie Ihren ESP8266 / ESP32 mit einfachen, aber leistungsstarken Konfigurationsdateien, die von ESPHome erstellt und verwaltet werden",
-            "ru": "Управляйте своим ESP8266 / ESP32 с помощью простых, но мощных файлов конфигурации, созданных и управляемых ESPHome",
-            "pt": "Controle seu ESP8266 / ESP32 com arquivos de configuração simples, mas poderosos, criados e gerenciados por ESPHome",
-            "nl": "Beheer uw ESP8266 / ESP32 met eenvoudige maar krachtige configuratiebestanden die zijn gemaakt en beheerd door ESPHome",
-            "fr": "Contrôlez votre ESP8266 / ESP32 avec des fichiers de configuration simples mais puissants créés et gérés par ESPHome",
-            "it": "Controlla il tuo ESP8266 / ESP32 con file di configurazione semplici ma potenti creati e gestiti da ESPHome",
-            "es": "Controle su ESP8266 / ESP32 con archivos de configuración simples pero potentes creados y administrados por ESPHome",
-            "pl": "Steruj ESP8266 / ESP32 za pomocą prostych, ale potężnych plików konfiguracyjnych utworzonych i zarządzanych przez ESPHome",
-            "zh-cn": "使用由ESPHome创建和管理的简单但功能强大的配置文件控制ESP8266 / ESP32"
-        },
-        "authors": [
-            "DutchmanNL <rdrozda86@gmail.com>"
-        ],
-        "keywords": [
-            "ESPHome",
-            "ESP",
-            "ESP32"
-        ],
-        "license": "MIT",
-        "platform": "Javascript/Node.js",
-        "main": "main.js",
-        "icon": "esphome.png",
-        "enabled": true,
-        "messagebox": true,
-        "subscribe": "messagebox",
-        "extIcon": "https://raw.githubusercontent.com/DrozmotiX/ioBroker.esphome/main/admin/esphome.png",
-        "readme": "https://github.com/DrozmotiX/ioBroker.esphome/blob/main/README.md",
-        "loglevel": "info",
-        "mode": "daemon",
-        "type": "hardware",
-        "compact": true,
-        "connectionType": "local",
-        "dataSource": "push",
-        "materialize": true,
-        "plugins": {
-            "sentry": {
-                "dsn": "https://52227cfa250b49e99b1f28408273402c@sentry.iobroker.net/122"
-            }
-        },
-        "dataFolder": "esphome.%INSTANCE%",
-        "localLink": "http://%ESPHomeDashboardIP%:%ESPHomeDashboardPort%",
-        "adminTab": {
-            "link": "http://%ESPHomeDashboardIP%:%ESPHomeDashboardPort%",
-            "fa-icon": "settings_input_composite"
-        },
-        "dependencies": [
-            {
-                "js-controller": ">=3.3.22"
-            }
-        ],
-        "globalDependencies": [
-            {
-                "admin": ">=5.1.13"
-            }
-        ]
+  "common": {
+    "name": "esphome",
+    "version": "0.3.0",
+    "news": {
+      "0.3.0": {
+        "en": "Several Bugfixes\nSupport type \"select device\"\nESPHome dashboard default disabled\nMigrate to @2colors/esphome-native-api\nAutomatically create needed directories, Fixes #168\nMigrate usage of python to new structure, should solve all ESPHome Dashboard related installation issues",
+        "de": "Mehrere Bugfixes\nSupport-Typ \"Auswahlgerät\"\nESPHome Dashboard default deaktiviert\nMigration auf @2colors/esphome-native-api\nAutomatische Erstellung erforderlicher Verzeichnisse, Fixes #168\nMigration der Nutzung von Python zu neuer Struktur, sollte alle ESPHome Dashboard bezogene Installation Probleme lösen",
+        "ru": "Несколько багфиксов\nТип поддержки \"выберите устройство\"\nESPHome dashboard дефолт отключен\nMigrate в @2colors/esphome-native-api\nАвтоматически создавать необходимые директории, Fixes #168\nMigrate использование python к новой структуре, должен решить все ESPHome Dashboard связанные с установкой вопросы",
+        "pt": "Vários Bugfixes\nTipo de suporte \"selecionar dispositivo\"\nDesativado padrão do painel da ESPHome\nMigrar para @2colors/esphome-native-api\nCrie automaticamente diretórios necessários, correções #168\nMigrar o uso de python para nova estrutura, deve resolver todos os problemas de instalação relacionados ESPHome Dashboard",
+        "nl": "Vertaling:\nSteun type \"select apparaat\"\nVertaling:\nVertaling:\nAutomatisch gecreëerd nodige regisseurs, Fixes 168\nVermenigvuldig gebruik van python naar nieuwe structuur, moet alle ESPHome Dashboard gerelateerde installatie kwesties oplossen",
+        "fr": "Plusieurs Bugfixes\nType de support \"select device\"\nESPHome tableau de bord par défaut désactivé\nMigrate to @2colors/esphome-native-api\nCréez automatiquement les répertoires nécessaires, Fixes #168\nMigrate utilisation de python à une nouvelle structure, devrait résoudre tous les problèmes d'installation liés à ESPHome Dashboard",
+        "it": "Diversi bugfix\nTipo di supporto \"seleziona dispositivo\"\nESPHome dashboard disattivato\nMigra a @2colors/esphome-native-api\nCrea automaticamente directory necessarie, Fixs #168\nUso migrato di pitone a nuova struttura, dovrebbe risolvere tutti i problemi di installazione relativi ESPHome Dashboard",
+        "es": "Varios Bugfixes\nTipo de soporte \"dispositivo selecto\"\nESPHome dashboard default disabled\nMigrar a @2colores/esphome-native-api\nCrea automáticamente directorios necesarios, Fixes #168\nMigrar el uso de pitón a nueva estructura, debe resolver todos los problemas de instalación relacionados con ESPHome Dashboard",
+        "pl": "Several Bugfixów\nTyp wsparcia „urządzeniem wyborowym”\nESPHome dashboard\nMigrate to @2colors/esphome-native-api-native\nAutomatycznie potrzebuje katalogów, Fixes #168\nMigrate wykorzystanie pytonu do nowej struktury powinien rozwiązać wszystkie problemy z instalacją ESPHome Dashboard",
+        "uk": "Кілька Виправлень\nТип підтримки \"виберіть пристрій\"\nESPHome панель за замовчуванням вимкнено\nMigrate до @2colors/esphome-native-api\nАвтоматично створювати потрібні каталоги, Виправлення #168\nМигратне використання пітону до нової структури, повинні вирішувати всі проблеми з монтажу ESPHome",
+        "zh-cn": "Bugfix\n支助类型“更换装置”\nESPHome dashing\n@2colors/esphome-native-api\n自动创建必要的直接理论,第168号行动\n应该解决所有ESPHome Dashing板相关的安装问题,将磷酸盐用于新结构。"
+      },
+      "0.2.4": {
+        "en": "Version of ESPHome Dashboard updated to 2021.8\nAdd option if config of ESPHome device should be shown as states (default = FALSE, safes 8 states for each sensor)",
+        "de": "Version des ESPHome Dashboards aktualisiert auf 2021.8\nOption hinzufügen, wenn die Konfiguration des ESPHome-Geräts als Zustände angezeigt werden soll (Standard = FALSE, sichert 8 Zustände für jeden Sensor)",
+        "ru": "Версия ESPHome Dashboard обновлена до 2021.8\nДобавить параметр, если конфигурация устройства ESPHome должна отображаться в виде состояний (по умолчанию = FALSE, сохраняет 8 состояний для каждого датчика)",
+        "pt": "Versão do ESPHome Dashboard atualizada para 2021.8\nAdicionar opção se a configuração do dispositivo ESPHome deve ser mostrada como estados (padrão = FALSE, cofres 8 estados para cada sensor)",
+        "nl": "Versie van ESPHome Dashboard bijgewerkt naar 2021.8\nOptie toevoegen als de configuratie van het ESPHome-apparaat moet worden weergegeven als statussen (standaard = FALSE, beveiligt 8 statussen voor elke sensor)",
+        "fr": "Version d'ESPHome Dashboard mise à jour vers 201.8\nAjouter une option si la configuration de l'appareil ESPHome doit être affichée sous forme d'états (par défaut = FALSE, coffre-fort 8 états pour chaque capteur)",
+        "it": "Versione di ESPHome Dashboard aggiornata a 2021.8\nAggiungi un'opzione se la configurazione del dispositivo ESPHome deve essere mostrata come stati (predefinito = FALSE, salva 8 stati per ciascun sensore)",
+        "es": "Versión de ESPHome Dashboard actualizada a 2021.8\nAgregue la opción si la configuración del dispositivo ESPHome debe mostrarse como estados (predeterminado = FALSO, guarda 8 estados para cada sensor)",
+        "pl": "Wersja pulpitu nawigacyjnego ESPHome zaktualizowana do 2021,8\nDodaj opcję, jeśli konfiguracja urządzenia ESPHome powinna być pokazywana jako stany (domyślnie = FALSE, sejfy 8 stanów dla każdego czujnika)",
+        "zh-cn": "ESPHome Dashboard 版本更新至 2021.8\n如果 ESPHome 设备的配置应显示为状态，则添加选项（默认值 = FALSE，每个传感器有 8 个状态）"
+      },
+      "0.2.3": {
+        "en": "Bugfix : Light component state not changed [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nUpdate compatibility to version 1.19.4 of ESPHome Dashboard",
+        "de": "Bugfix : Lichtkomponentenstatus nicht geändert [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nUpdate-Kompatibilität auf Version 1.19.4 von ESPHome Dashboard",
+        "ru": "Исправление: состояние компонента Light не изменялось [# 74] (https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nОбновите совместимость до версии 1.19.4 ESPHome Dashboard",
+        "pt": "Correção de bug: o estado do componente leve não foi alterado [# 74] (https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nAtualizar compatibilidade para a versão 1.19.4 do ESPHome Dashboard",
+        "nl": "Bugfix: Status lichtcomponent niet gewijzigd [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nCompatibiliteit bijwerken naar versie 1.19.4 van ESPHome Dashboard",
+        "fr": "Correction de bug : l'état du composant Light n'a pas changé [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nMettre à jour la compatibilité vers la version 1.19.4 d'ESPHome Dashboard",
+        "it": "Bugfix: lo stato del componente Light non è cambiato [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nAggiorna la compatibilità alla versione 1.19.4 di ESPHome Dashboard",
+        "es": "Corrección de error: el estado del componente de luz no ha cambiado [# 74] (https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nActualizar la compatibilidad a la versión 1.19.4 de ESPHome Dashboard",
+        "pl": "Poprawka błędu: stan lekkiego komponentu nie uległ zmianie [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nZaktualizuj kompatybilność do wersji 1.19.4 ESPHome Dashboard",
+        "zh-cn": "修正：轻组件状态没有改变 [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\n更新与 ESPHome Dashboard 1.19.4 版的兼容性"
+      },
+      "0.2.2": {
+        "en": "[!!! Breaking !!!] Make YAML file persistent, backup your configuration before updating ! solves [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nUpdate ESPHome Dashboard to 1.18.0, requires  Python >=3.7 (and ensure <4.0!)\nBugfix : Reconnect to devices without autodiscovery / MDNS-Broadcast in network, solves [#66](https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
+        "de": "[!!! Breaking !!!] Machen Sie die YAML-Datei persistent, sichern Sie Ihre Konfiguration vor dem Update! löst [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nAktualisieren Sie das ESPHome-Dashboard auf 1.18.0, erfordert Python >=3.7 (und stellen Sie sicher <4.0!)\nBugfix : Reconnect zu Geräten ohne Autodiscovery / MDNS-Broadcast im Netzwerk, behebt [#66](https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
+        "ru": "[!!! Ломаю !!!] Сделайте файл YAML постоянным, сделайте резервную копию конфигурации перед обновлением! решает [# 57] (https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nОбновите ESPHome Dashboard до 1.18.0, требуется Python> = 3.7 (и убедитесь, что <4.0!)\nИсправление: повторное подключение к устройствам без автообнаружения / MDNS-трансляции в сети, решает [# 66] (https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
+        "pt": "[!!! Quebrando !!!] Torne o arquivo YAML persistente, faça backup de sua configuração antes de atualizar! resolve [# 57] (https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nAtualize o painel ESPHome para 1.18.0, requer Python> = 3.7 (e garanta <4.0!)\nCorreção de bug: reconectar a dispositivos sem autodiscovery / MDNS-Broadcast na rede, resolve [# 66] (https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
+        "nl": "[!!! Breaking !!!] Maak het YAML-bestand persistent, maak een back-up van uw configuratie voordat u deze bijwerkt! lost [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57) op\nUpdate ESPHome Dashboard naar 1.18.0, vereist Python >=3.7 (en zorg voor <4.0!)\nBugfix: opnieuw verbinding maken met apparaten zonder autodiscovery / MDNS-uitzending in netwerk, lost [#66](https://github.com/DrozmotiX/ioBroker.esphome/issues/66) op",
+        "fr": "[!!! Breaking !!!] Rendez le fichier YAML persistant, sauvegardez votre configuration avant de mettre à jour ! résout [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nMettez à jour ESPHome Dashboard vers 1.18.0, nécessite Python >=3.7 (et assurez-vous <4.0 !)\nCorrection de bug : se reconnecter aux appareils sans découverte automatique / MDNS-Broadcast en réseau, résout [#66](https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
+        "it": "[!!! Breaking !!!] Rendi persistente il file YAML, esegui il backup della configurazione prima di aggiornare! risolve [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nAggiorna ESPHome Dashboard a 1.18.0, richiede Python >=3.7 (e assicurati <4.0!)\nBugfix: riconnettersi ai dispositivi senza autodiscovery / MDNS-Broadcast in rete, risolve [#66] (https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
+        "es": "[!!! ¡¡¡Rompiendo !!!] ¡Haga que el archivo YAML sea persistente, haga una copia de seguridad de su configuración antes de actualizar! resuelve [# 57] (https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nActualice ESPHome Dashboard a 1.18.0, requiere Python> = 3.7 (¡y asegúrese de <4.0!)\nCorrección de error: vuelva a conectarse a dispositivos sin detección automática / MDNS-Broadcast en la red, resuelve [# 66] (https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
+        "pl": "[!!! Breaking !!!] Utrwal plik YAML, wykonaj kopię zapasową konfiguracji przed aktualizacją! rozwiązuje [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\nZaktualizuj pulpit nawigacyjny ESPHome do wersji 1.18.0, wymaga Pythona >=3.7 (i upewnij się, że <4.0!)\nBugfix: Połącz się ponownie z urządzeniami bez automatycznego wykrywania / MDNS-Broadcast w sieci, rozwiązuje [#66](https://github.com/DrozmotiX/ioBroker.esphome/issues/66)",
+        "zh-cn": "[！！！打破 !!!] 使 YAML 文件持久化，更新前备份您的配置！解决 [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57)\n将 ESPHome Dashboard 更新到 1.18.0，需要 Python >=3.7（并确保 <4.0！）\n修正：在网络中没有自动发现/MDNS-Broadcast 的情况下重新连接到设备，解决[#66](https://github.com/DrozmotiX/ioBroker.esphome/issues/66)"
+      },
+      "0.2.1-1": {
+        "en": "add cover component\nadd transitionLength for lights",
+        "de": "Abdeckungskomponente hinzufügen\nÜbergangslänge für Lichter hinzufügen",
+        "ru": "добавить компонент обложки\nдобавить transitionLength для огней",
+        "pt": "adicionar componente de capa\nadicionar comprimento de transição para luzes",
+        "nl": "voeg een omslagcomponent toe\nvoeg transitionLength toe voor lichten",
+        "fr": "ajouter un composant de couverture\najouter une longueur de transition pour les lumières",
+        "it": "aggiungi il componente di copertina\naggiungi TransitionLength per le luci",
+        "es": "agregar componente de portada\nagregar transiciónLength para luces",
+        "pl": "dodaj komponent okładki\ndodaj długość przejścia dla świateł",
+        "zh-cn": "添加封面组件\n为灯光添加transitionLength"
+      },
+      "0.2.1-0": {
+        "en": "Logging improved, solves [#48](https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nName of states changed, solves [#49](https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+        "de": "Protokollierung verbessert, löst [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nName der Staaten geändert, löst [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+        "ru": "Ведение журнала улучшено, решает [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nНазвание состояний изменено, решает [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+        "pt": "Logging melhorado, resolve [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nNome dos estados alterados, resolve [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+        "nl": "Logboekregistratie verbeterd, lost op [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nNaam van staten gewijzigd, lost [# 49] op (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+        "fr": "Journalisation améliorée, résout [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nLe nom des états a changé, résout [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+        "it": "Registrazione migliorata, risolve [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nIl nome degli stati è cambiato, risolve [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+        "es": "Registro mejorado, resuelve [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nNombre de los estados cambiado, resuelve [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+        "pl": "Logowanie poprawione, rozwiązuje [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nZmiana nazwy stanów, rozwiązuje [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
+        "zh-cn": "日志记录得到改进，解决了[＃48]（https://github.com/DrozmotiX/ioBroker.esphome/issues/48）\n状态名称更改，解决[＃49]（https://github.com/DrozmotiX/ioBroker.esphome/issues/49）"
+      },
+      "0.2.0": {
+        "en": "Translations updated\nConfiguration page updated\nAdded to sentry error reporting\nNative integration of ESPHome Dashboard added",
+        "de": "Übersetzungen aktualisiert\nKonfigurationsseite aktualisiert\nZur Sentry-Fehlerberichterstattung hinzugefügt\nNative Integration von ESPHome Dashboard hinzugefügt",
+        "ru": "Переводы обновлены\nСтраница конфигурации обновлена\nДобавлен в отчет об ошибках караула\nДобавлена встроенная интеграция ESPHome Dashboard.",
+        "pt": "Traduções atualizadas\nPágina de configuração atualizada\nAdicionado ao relatório de erro de sentinela\nIntegração nativa do ESPHome Dashboard adicionada",
+        "nl": "Vertalingen bijgewerkt\nConfiguratiepagina bijgewerkt\nToegevoegd aan sentry-foutrapportage\nNative integratie van ESPHome Dashboard toegevoegd",
+        "fr": "Traductions mises à jour\nPage de configuration mise à jour\nAjouté au rapport d'erreurs de sentinelle\nAjout de l'intégration native du tableau de bord ESPHome",
+        "it": "Traduzioni aggiornate\nPagina di configurazione aggiornata\nAggiunto alla segnalazione degli errori di sentinella\nAggiunta integrazione nativa di ESPHome Dashboard",
+        "es": "Traducciones actualizadas\nPágina de configuración actualizada\nAgregado al informe de errores de centinela\nSe agregó la integración nativa de ESPHome Dashboard",
+        "pl": "Zaktualizowano tłumaczenia\nStrona konfiguracji została zaktualizowana\nDodano do raportowania błędów wartowników\nDodano natywną integrację z ESPHome Dashboard",
+        "zh-cn": "翻译已更新\n配置页面已更新\n已添加到哨兵错误报告中\nESPHome仪表板的本机集成已添加"
+      }
     },
-    "encryptedNative": [
-        "apiPass"
+    "title": "Control ESPHome managed devices",
+    "titleLang": {
+      "en": "Control ESPHome managed devices",
+      "de": "Steuern Sie von ESPHome verwaltete Geräte",
+      "ru": "Управление устройствами ESPHome",
+      "pt": "Controlar dispositivos gerenciados ESPHome",
+      "nl": "Beheer door ESPHome beheerde apparaten",
+      "fr": "Contrôle des appareils gérés ESPHome",
+      "it": "Controlla i dispositivi gestiti da ESPHome",
+      "es": "Controle los dispositivos administrados por ESPHome",
+      "pl": "Kontroluj urządzenia zarządzane przez ESPHome",
+      "zh-cn": "控制ESPHome受管设备"
+    },
+    "desc": {
+      "en": "Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome",
+      "de": "Steuern Sie Ihren ESP8266 / ESP32 mit einfachen, aber leistungsstarken Konfigurationsdateien, die von ESPHome erstellt und verwaltet werden",
+      "ru": "Управляйте своим ESP8266 / ESP32 с помощью простых, но мощных файлов конфигурации, созданных и управляемых ESPHome",
+      "pt": "Controle seu ESP8266 / ESP32 com arquivos de configuração simples, mas poderosos, criados e gerenciados por ESPHome",
+      "nl": "Beheer uw ESP8266 / ESP32 met eenvoudige maar krachtige configuratiebestanden die zijn gemaakt en beheerd door ESPHome",
+      "fr": "Contrôlez votre ESP8266 / ESP32 avec des fichiers de configuration simples mais puissants créés et gérés par ESPHome",
+      "it": "Controlla il tuo ESP8266 / ESP32 con file di configurazione semplici ma potenti creati e gestiti da ESPHome",
+      "es": "Controle su ESP8266 / ESP32 con archivos de configuración simples pero potentes creados y administrados por ESPHome",
+      "pl": "Steruj ESP8266 / ESP32 za pomocą prostych, ale potężnych plików konfiguracyjnych utworzonych i zarządzanych przez ESPHome",
+      "zh-cn": "使用由ESPHome创建和管理的简单但功能强大的配置文件控制ESP8266 / ESP32"
+    },
+    "authors": [
+      "DutchmanNL <rdrozda86@gmail.com>"
     ],
-    "native": {
-        "reconnectInterval": 30,
-        "apiPass": "",
-        "autodiscovery": true,
-        "configStates": false,
-        "ESPHomeDashboardEnabled": false,
-        "ESPHomeDashboardPort": 6052,
-        "ESPHomeDashboardIP": "localhost"
+    "keywords": [
+      "ESPHome",
+      "ESP",
+      "ESP32"
+    ],
+    "license": "MIT",
+    "platform": "Javascript/Node.js",
+    "main": "main.js",
+    "icon": "esphome.png",
+    "enabled": true,
+    "messagebox": true,
+    "subscribe": "messagebox",
+    "extIcon": "https://raw.githubusercontent.com/DrozmotiX/ioBroker.esphome/main/admin/esphome.png",
+    "readme": "https://github.com/DrozmotiX/ioBroker.esphome/blob/main/README.md",
+    "loglevel": "info",
+    "mode": "daemon",
+    "type": "hardware",
+    "compact": true,
+    "connectionType": "local",
+    "dataSource": "push",
+    "materialize": true,
+    "plugins": {
+      "sentry": {
+        "dsn": "https://52227cfa250b49e99b1f28408273402c@sentry.iobroker.net/122"
+      }
     },
-    "objects": [],
-    "instanceObjects": [
-        {
-            "_id": "info",
-            "type": "channel",
-            "common": {
-                "name": "Information"
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.connection",
-            "type": "state",
-            "common": {
-                "role": "indicator.connected",
-                "name": "Device or service connected",
-                "type": "boolean",
-                "read": true,
-                "write": false,
-                "def": false
-            },
-            "native": {}
-        }
+    "dataFolder": "esphome.%INSTANCE%",
+    "localLink": "http://%ESPHomeDashboardIP%:%ESPHomeDashboardPort%",
+    "adminTab": {
+      "link": "http://%ESPHomeDashboardIP%:%ESPHomeDashboardPort%",
+      "fa-icon": "settings_input_composite"
+    },
+    "dependencies": [
+      {
+        "js-controller": ">=3.3.22"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=5.1.13"
+      }
     ]
+  },
+  "encryptedNative": [
+    "apiPass"
+  ],
+  "native": {
+    "reconnectInterval": 30,
+    "apiPass": "",
+    "autodiscovery": true,
+    "configStates": false,
+    "ESPHomeDashboardEnabled": false,
+    "ESPHomeDashboardPort": 6052,
+    "ESPHomeDashboardIP": "localhost"
+  },
+  "objects": [],
+  "instanceObjects": [
+    {
+      "_id": "info",
+      "type": "channel",
+      "common": {
+        "name": "Information"
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.connection",
+      "type": "state",
+      "common": {
+        "role": "indicator.connected",
+        "name": "Device or service connected",
+        "type": "boolean",
+        "read": true,
+        "write": false,
+        "def": false
+      },
+      "native": {}
+    }
+  ]
 }

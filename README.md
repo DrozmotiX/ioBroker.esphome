@@ -112,8 +112,7 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
-
-### __WORK IN PROGRESS__ - Bugfixes & Improvements
+### 0.3.0 (2023-10-31) - Bugfixes & Improvements
 * (Dutchman & SimonFischer04) Several Bugfixes
 * (SimonFischer04) Support type "select device"
 * (DutchmanNL) ESPHome dashboard default disabled
@@ -123,7 +122,7 @@ If you like my work, please consider a personal donation
 
 ### 0.2.4 (2021-08-24)
 * (DutchmanNL) Version of ESPHome Dashboard updated to 2021.8
-* (DutchmanNL) Add option if config of ESPHome device should be shown as states (default = FALSE, safes 8 states for each sensor) 
+* (DutchmanNL) Add option if config of ESPHome device should be shown as states (default = FALSE, safes 8 states for each sensor)
 
 ### 0.2.3 (2021-06-29)
 * (Jey-Cee) Bugfix : Light component state not changed [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)
