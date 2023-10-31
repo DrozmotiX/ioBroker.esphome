@@ -226,6 +226,7 @@ class Esphome extends utils.Adapter {
 					this.log.info(`ESPHome client ${host} connected`);
 					// Clear possible present warn messages for device from previous connection
 					delete warnMessages[host];
+					this.connectError(host, false);
 				} catch (e) {
 					this.log.error(`connection error ${e}`);
 				}
@@ -235,6 +236,7 @@ class Esphome extends utils.Adapter {
 				try {
 					if (this.deviceInfo[host].deviceName != null) {
 						this.setState(`${this.deviceInfo[host].deviceName}.info._online`, {val: false, ack: true});
+						this.connectError(host, true);
 						this.log.warn(`ESPHome  client  ${this.deviceInfo[host].deviceInfo.name} disconnected`);
 					} else {
 						this.log.warn(`ESPHome  client  ${host} disconnected`);
@@ -259,6 +261,7 @@ class Esphome extends utils.Adapter {
 
 			client[host].connection.on('data', (/** @type {object} */ data) => {
 				this.log.debug(`${host} client data ${data}`);
+				this.connectError(host, false);
 			});
 
 			// Handle device information when connected or information updated
@@ -489,7 +492,7 @@ class Esphome extends utils.Adapter {
 						optimisedError = `Client ${this.deviceInfo[host].ip} not reachable !`;
 						if (!warnMessages[host].connectError) {
 							this.log.error(optimisedError);
-							warnMessages[host].connectError = true;
+							this.connectError(host, true);
 						}
 					} else if (error.message.includes('Invalid password')) {
 						optimisedError = `Client ${host} incorrect password !`;
@@ -1198,6 +1201,19 @@ class Esphome extends utils.Adapter {
 		}
 	}
 
+	/**
+	 * Function to handle memory status of connection issues
+	 * @param {string} host host (ip) to which an connection error occured
+	 * @param {boolean} status of cennectionError, true = no connection due to error
+	 */
+	connectError(host, status){
+		if (!warnMessages[host]) {
+			warnMessages[host] = {
+				connectError : status};
+		} else {
+			warnMessages[host].connectError = status;
+		}
+	}
 }
 
 if (require.main !== module) {
