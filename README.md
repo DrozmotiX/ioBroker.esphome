@@ -115,6 +115,8 @@ If you like my work, please consider a personal donation
     * (DutchmanNL) 
 -->
 
+### __WORK IN PROGRESS__
+* (DutchmanNL) ESPHome dashboard default disabled
 ### 0.2.4 (2021-08-24)
 * (DutchmanNL) Version of ESPHome Dashboard updated to 2021.8
 * (DutchmanNL) Add option if config of ESPHome device should be shown as states (default = FALSE, safes 8 states for each sensor) 
