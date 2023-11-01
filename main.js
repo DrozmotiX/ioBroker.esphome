@@ -71,7 +71,7 @@ class Esphome extends utils.Adapter {
 			}
 
 		} catch (e) {
-			this.log.error(`Connection issue ${e}`);
+			this.log.error(`[Adapter start] Fatal error occurred ${e}`);
 		}
 	}
 
@@ -154,11 +154,7 @@ class Esphome extends utils.Adapter {
 
 			// Get basic data of known devices and start reading data
 			for (const i in knownDevices) {
-				this.deviceInfo[knownDevices[i].native.ip] = {
-					ip: knownDevices[i].native.ip,
-					passWord: this.decrypt(knownDevices[i].native.passWord),
-				};
-				this.connectDevices(knownDevices[i].native.ip, this.deviceInfo[knownDevices[i].native.ip].passWord);
+				this.connectDevices(knownDevices[i].native.ip, this.decrypt(knownDevices[i].native.passWord));
 			}
 		} catch (e) {
 			this.sendSentry(`[tryKnownDevices] ${e}`);
@@ -176,12 +172,7 @@ class Esphome extends utils.Adapter {
 				try {
 					this.log.debug(`Discovery message ${JSON.stringify(message)}`);
 					if (this.deviceInfo[message.address] == null) {
-						this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${message.address}`);
-						// Store new Device information to device array in memory
-						this.deviceInfo[message.address] = {
-							ip: message.address,
-							passWord: apiPass
-						};
+						this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${message.address}, trying to initialize`);
 						this.connectDevices(`${message.address}`, `${apiPass}`);
 					}
 				} catch (e) {
@@ -206,7 +197,7 @@ class Esphome extends utils.Adapter {
 			// Prepare connection attributes
 			client[host] = new Client({
 				host: host,
-				password: pass,
+				password: apiPass,
 				clientInfo: `${this.host}`,
 				clearSession: true,
 				initializeDeviceInfo: true,
@@ -223,23 +214,49 @@ class Esphome extends utils.Adapter {
 			// Connection listener
 			client[host].on('connected', async () => {
 				try {
+					// Clear any existing memory information for this device
+					delete this.deviceInfo[host];
+
+					// Reserve basic memory information for this device
+					this.deviceInfo[host] = {
+						connected : true,
+						connectionError : false,
+						initialized: false,
+						ip : host
+					};
 					this.log.info(`ESPHome client ${host} connected`);
 					// Clear possible present warn messages for device from previous connection
 					delete warnMessages[host];
-					this.connectError(host, false);
 				} catch (e) {
 					this.log.error(`connection error ${e}`);
 				}
 			});
 
-			client[host].on('disconnected', () => {
+			client[host].on('disconnected', () => 	{
 				try {
 					if (this.deviceInfo[host].deviceName != null) {
 						this.setState(`${this.deviceInfo[host].deviceName}.info._online`, {val: false, ack: true});
-						this.connectError(host, true);
-						this.log.warn(`ESPHome  client  ${this.deviceInfo[host].deviceInfo.name} disconnected`);
+
+						// Cache relevant data before clearing memory space of device
+						const cacheDeviceInformation = {
+							deviceName: this.deviceInfo[host].deviceName,
+							deviceInfoName: this.deviceInfo[host].deviceInfoName,
+						};
+
+						// Clear any existing memory information for this device
+						delete this.deviceInfo[host];
+
+						// Reserve basic memory information for this device
+						this.deviceInfo[host] = {
+							connected : false,
+							connectionError : true,
+							deviceName : cacheDeviceInformation.deviceName,
+							deviceInfoName : cacheDeviceInformation.deviceInfoName,
+							ip : host
+						};
+						this.log.warn(`ESPHome client ${this.deviceInfo[host].deviceInfoName} | ${this.deviceInfo[host].deviceName} | on ${host} disconnected`);
 					} else {
-						this.log.warn(`ESPHome  client  ${host} disconnected`);
+						this.log.warn(`ESPHome client ${host} disconnected`);
 					}
 				} catch (e) {
 					this.log.debug(`ESPHome disconnect error : ${e}`);
@@ -247,21 +264,17 @@ class Esphome extends utils.Adapter {
 			});
 
 			client[host].on('initialized', () => {
-				this.log.info(`ESPHome  client ${this.deviceInfo[host].deviceInfo.name} on ip ${host} initialized`);
-			});
-
-			client[host].on('logs', (/** @type {object} */ messageObj) => {
-				this.log.debug(`ESPHome client log : ${JSON.stringify(messageObj)}`);
+				this.log.info(`ESPHome  client ${this.deviceInfo[host].deviceInfoName} on ip ${host} initialized`);
+				this.deviceInfo[host].initialized = true;
 			});
 
 			// Log message listener
 			client[host].connection.on('message', (/** @type {object} */ message) => {
-				this.log.debug(`${host} client log ${message}`);
+				this.log.debug(`[ESPHome Device Message] ${host} client log ${message}`);
 			});
 
 			client[host].connection.on('data', (/** @type {object} */ data) => {
-				this.log.debug(`${host} client data ${data}`);
-				this.connectError(host, false);
+				this.log.debug(`[ESPHome Device Data] ${host} client data ${data}`);
 			});
 
 			// Handle device information when connected or information updated
@@ -278,10 +291,11 @@ class Esphome extends utils.Adapter {
 						deviceInfo: deviceInfo,
 						deviceName: deviceName,
 						deviceInfoName: deviceInfo.name,
-						passWord: pass,
+						passWord: apiPass,
 					};
 
-					// Store MAC & IP relation
+					// Store MAC & IP relation, delete possible existing entry before
+					delete this.deviceStateRelation[deviceName];
 					this.deviceStateRelation[deviceName] = {'ip': host};
 
 					this.log.debug(`DeviceInfo ${this.deviceInfo[host].deviceInfo.name}: ${JSON.stringify(this.deviceInfo)}`);
@@ -300,7 +314,7 @@ class Esphome extends utils.Adapter {
 							name: this.deviceInfo[host].deviceInfoName,
 							mac: deviceInfo.macAddress,
 							deviceName: deviceName,
-							passWord: this.encrypt(pass),
+							passWord: this.encrypt(apiPass),
 						},
 					});
 
@@ -486,23 +500,46 @@ class Esphome extends utils.Adapter {
 			// Connection data handler
 			client[host].on('error', (error) => {
 				try {
+
+					// Reserve memory space for connection error if not already exist
+					if (!this.deviceInfo[host]){
+						this.deviceInfo[host] = {
+							ip : host,
+							connectError : false,
+							connected : false
+						};
+					}
+
 					let optimisedError = error.message;
 					// Optimise error messages
-					if (error.message.includes('EHOSTUNREACH')) {
-						optimisedError = `Client ${this.deviceInfo[host].ip} not reachable !`;
-						if (!warnMessages[host].connectError) {
+					if (error.code === 'ETIMEDOUT') {
+						optimisedError = `Client ${host} not reachable !`;
+						if (!this.deviceInfo[host].connectError) {
 							this.log.error(optimisedError);
-							this.connectError(host, true);
+							this.deviceInfo[host].connectError = true;
 						}
 					} else if (error.message.includes('Invalid password')) {
 						optimisedError = `Client ${host} incorrect password !`;
-						this.log.error(optimisedError);
+						if (!this.deviceInfo[host].connectError) {
+							this.log.error(optimisedError);
+							this.deviceInfo[host].connectError = true;
+						}
 					} else if (error.message.includes('ECONNRESET')) {
-						optimisedError = `Client ${this.deviceInfo[host].ip} Connection Lost, will reconnect automatically when device is available!`;
-						this.log.warn(optimisedError);
+						optimisedError = `Client ${host} Connection Lost, will reconnect automatically when device is available!`;
+						if (!this.deviceInfo[host].connectError) {
+							this.log.warn(optimisedError);
+							this.deviceInfo[host].connectError = true;
+						}
 					} else if (error.message.includes('timeout')) {
-						optimisedError = `Client ${host} Timeout, connection Lost, will reconnect automatically when device is available!`;
+						optimisedError = `Client ${host} Timeout, will reconnect automatically when device is available!`;
+						if (!this.deviceInfo[host].connectError) {
+							this.log.warn(optimisedError);
+							this.deviceInfo[host].connectError = true;
+						}
+					}  else if (error.message.includes('ECONNREFUSED')) {
+						optimisedError = `Client ${host} not yet ready to connect, will try again!`;
 						this.log.warn(optimisedError);
+
 					} else if (error.message.includes('write after end')) {
 						// Ignore error
 					} else {
@@ -530,10 +567,6 @@ class Esphome extends utils.Adapter {
 			// connect to socket
 			try {
 				this.log.debug(`trying to connect to ${host}`);
-				// Reserve memory for warn messages
-				warnMessages[host] = {
-					connectError: false
-				};
 				client[host].connect();
 			} catch (e) {
 				this.log.error(`Client ${host} connect error ${e}`);
@@ -995,8 +1028,8 @@ class Esphome extends utils.Adapter {
 					} else {
 						this.log.info(`Valid IP address received`);
 						this.messageResponse[obj.message['device-ip']] = obj;
-						const pass = this.decrypt(obj.message['device-pass']);
-						await this.connectDevices(obj.message['device-ip'], pass);
+						// const pass = this.decrypt(obj.message['device-pass']);
+						await this.connectDevices(obj.message['device-ip'], apiPass);
 					}
 					break;
 			}
@@ -1198,20 +1231,6 @@ class Esphome extends utils.Adapter {
 
 		} catch (e) {
 			this.log.error(`[resetOnlineState] ${e}`);
-		}
-	}
-
-	/**
-	 * Function to handle memory status of connection issues
-	 * @param {string} host host (ip) to which an connection error occured
-	 * @param {boolean} status of cennectionError, true = no connection due to error
-	 */
-	connectError(host, status){
-		if (!warnMessages[host]) {
-			warnMessages[host] = {
-				connectError : status};
-		} else {
-			warnMessages[host].connectError = status;
 		}
 	}
 }

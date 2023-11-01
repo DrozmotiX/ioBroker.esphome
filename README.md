@@ -114,6 +114,7 @@ If you like my work, please consider a personal donation
 -->
 
 ### __WORK IN PROGRESS__
+* (DutchmanNL) Improved error handling if devices are not reachable/disconnected
 * (DutchmanNL) Bugfix: Allow control of brightness and color for light component, fixes #173
 
 ### 0.3.1 (2023-10-31)
