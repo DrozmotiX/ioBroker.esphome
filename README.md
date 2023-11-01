@@ -112,6 +112,10 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
+
+### __WORK IN PROGRESS__
+* (DutchmanNL) Bugfix: Allow control of brightness and color for light component, fixes #173
+
 ### 0.3.1 (2023-10-31)
 * (DutchmanNL) Bugfix: Show online state of ESP Device correctly, Fixes #106
 

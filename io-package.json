@@ -1,7 +1,7 @@
 {
   "common": {
     "name": "esphome",
-    "version": "0.3.1",
+    "version": "0.3.2-beta.0",
     "news": {
       "0.3.1": {
         "en": "Bugfix: Show online state of ESP Device correctly, Fixes #106",

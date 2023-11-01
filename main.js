@@ -393,7 +393,7 @@ class Esphome extends utils.Adapter {
 					await client[host].connection.subscribeStatesService();
 					this.log.debug(`[DeviceInfoData] ${this.deviceInfo[host].deviceInfo.name} ${JSON.stringify(this.deviceInfo[host])}`);
 
-					// Listen to state changes an write values to states (create state if not yet exists)
+					// Listen to state changes and write values to states (create state if not yet exists)
 					entity.on(`state`, async (/** @type {object} */ state) => {
 						this.log.debug(`StateData: ${JSON.stringify(state)}`);
 						try {
@@ -1129,18 +1129,18 @@ class Esphome extends utils.Adapter {
 						state: this.deviceInfo[deviceIP][device[4]].states.state,
 						transitionLength: this.deviceInfo[deviceIP][device[4]].states.transitionLength
 					};
-					if (this.deviceInfo[deviceIP][device[4]].config.supportsBrightness === true) {
+					if (this.deviceInfo[deviceIP][device[4]].config.legacySupportsBrightness === true) {
 						data.brightness = this.deviceInfo[deviceIP][device[4]].states.brightness;
 					}
-					if (this.deviceInfo[deviceIP][device[4]].config.supportsRgb === true) {
+					if (this.deviceInfo[deviceIP][device[4]].config.legacySupportsRgb === true) {
 						data.red = this.deviceInfo[deviceIP][device[4]].states.red;
 						data.green = this.deviceInfo[deviceIP][device[4]].states.green;
 						data.blue = this.deviceInfo[deviceIP][device[4]].states.blue;
 					}
-					if (this.deviceInfo[deviceIP][device[4]].config.supportsWhiteValue === true) {
+					if (this.deviceInfo[deviceIP][device[4]].config.legacySupportsWhiteValue === true) {
 						data.white = this.deviceInfo[deviceIP][device[4]].states.white;
 					}
-					if (this.deviceInfo[deviceIP][device[4]].config.supportsColorTemperature === true) {
+					if (this.deviceInfo[deviceIP][device[4]].config.legacySupportsColorTemperature === true) {
 						data.colorTemperature = this.deviceInfo[deviceIP][device[4]].states.colorTemperature;
 					}
 					const effect = this.deviceInfo[deviceIP][device[4]].states.effect;
