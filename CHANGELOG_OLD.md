@@ -1,4 +1,9 @@
 # Older changes
+## 0.2.2 (2021-06-24)
+* (DutchmanNL) [!!! Breaking !!!] Make YAML file persistent, backup your configuration before updating ! solves [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57)
+* (DutchmanNL) Update ESPHome Dashboard to 1.18.0, requires  Python >=3.7 (and ensure <4.0!)
+* (DutchmanNL) Bugfix : Reconnect to devices without autodiscovery / MDNS-Broadcast in network, solves [#66](https://github.com/DrozmotiX/ioBroker.esphome/issues/66)
+
 ## 0.2.1-1 (2021-03-30)
 * (DutchmanNL) add cover component
 * (DutchmanNL) add transitionLength for lights

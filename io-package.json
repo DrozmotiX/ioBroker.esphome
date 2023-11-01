@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "esphome",
-    "version": "0.3.2-beta.0",
+    "version": "0.3.2",
     "news": {
+      "0.3.2": {
+        "en": "Improved error handling if devices are not reachable/disconnected\nBugfix: Allow control of brightness and color for light component, fixes #173",
+        "de": "Verbesserte Fehlerbehandlung, wenn Geräte nicht erreichbar/vernetzt sind\nBugfix: Erlauben Sie die Kontrolle von Helligkeit und Farbe für die Lichtkomponente, fixiert #173",
+        "ru": "Улучшена обработка ошибок, если устройства не доступны / отключены\nBugfix: Разрешить контроль яркости и цвета для легкой составляющей, исправляет #173",
+        "pt": "Melhor manuseio de erros se os dispositivos não forem acessíveis/desconectados\nBugfix: Permitir controle de brilho e cor para componente de luz, correções #173",
+        "nl": "Improviserende fouten als de apparatuur niet bereikbaar is\nBugfix: Controle van helderheid en kleur voor lichtcomonent, reparatie #173",
+        "fr": "Amélioration de la manipulation des erreurs si les dispositifs ne sont pas accessibles/déconnectés\nBugfix: Permettre le contrôle de la luminosité et de la couleur pour le composant de lumière, corrige #173",
+        "it": "Miglioramento della gestione degli errori se i dispositivi non sono raggiungibili/disconnessi\nBugfix: Consentire il controllo di luminosità e colore per componenti leggeri, correzioni #173",
+        "es": "Mejor manejo de errores si los dispositivos no son accesibles/desconectados\nBugfix: Permitir el control del brillo y el color para el componente de luz, fija #173",
+        "pl": "Poprawiona obsługa błędów, jeśli urządzenia nie są dosyć dopasowalne i rozproszone\nBugfix: Allow kontrola jasności i koloru dla komponentów świetlnych naprawia numer #173",
+        "uk": "Поліпшення обробки помилок, якщо пристрої не досягаються / відключені\nПомилки: Дозволяє контролювати яскравість і колір для легкого компонента, закріплює #173",
+        "zh-cn": "如果装置无法达到/无联系,改进错误处理\nBugfix: 允许控制光明和颜色,确定第173号行动。"
+      },
       "0.3.1": {
         "en": "Bugfix: Show online state of ESP Device correctly, Fixes #106",
         "de": "Bugfix: Online-Zustand von ESP Device korrekt anzeigen, Fixes #106",
@@ -76,18 +89,6 @@
         "es": "agregar componente de portada\nagregar transiciónLength para luces",
         "pl": "dodaj komponent okładki\ndodaj długość przejścia dla świateł",
         "zh-cn": "添加封面组件\n为灯光添加transitionLength"
-      },
-      "0.2.1-0": {
-        "en": "Logging improved, solves [#48](https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nName of states changed, solves [#49](https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-        "de": "Protokollierung verbessert, löst [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nName der Staaten geändert, löst [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-        "ru": "Ведение журнала улучшено, решает [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nНазвание состояний изменено, решает [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-        "pt": "Logging melhorado, resolve [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nNome dos estados alterados, resolve [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-        "nl": "Logboekregistratie verbeterd, lost op [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nNaam van staten gewijzigd, lost [# 49] op (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-        "fr": "Journalisation améliorée, résout [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nLe nom des états a changé, résout [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-        "it": "Registrazione migliorata, risolve [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nIl nome degli stati è cambiato, risolve [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-        "es": "Registro mejorado, resuelve [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nNombre de los estados cambiado, resuelve [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-        "pl": "Logowanie poprawione, rozwiązuje [# 48] (https://github.com/DrozmotiX/ioBroker.esphome/issues/48)\nZmiana nazwy stanów, rozwiązuje [# 49] (https://github.com/DrozmotiX/ioBroker.esphome/issues/49)",
-        "zh-cn": "日志记录得到改进，解决了[＃48]（https://github.com/DrozmotiX/ioBroker.esphome/issues/48）\n状态名称更改，解决[＃49]（https://github.com/DrozmotiX/ioBroker.esphome/issues/49）"
       }
     },
     "title": "Control ESPHome managed devices",

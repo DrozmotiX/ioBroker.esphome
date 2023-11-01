@@ -112,8 +112,7 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
-
-### __WORK IN PROGRESS__
+### 0.3.2 (2023-11-01)
 * (DutchmanNL) Improved error handling if devices are not reachable/disconnected
 * (DutchmanNL) Bugfix: Allow control of brightness and color for light component, fixes #173
 
@@ -135,11 +134,6 @@ If you like my work, please consider a personal donation
 ### 0.2.3 (2021-06-29)
 * (Jey-Cee) Bugfix : Light component state not changed [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)
 * (DutchmanNL) Update compatibility to version 1.19.4 of ESPHome Dashboard
-
-### 0.2.2 (2021-06-24)
-* (DutchmanNL) [!!! Breaking !!!] Make YAML file persistent, backup your configuration before updating ! solves [#57](https://github.com/DrozmotiX/ioBroker.esphome/issues/57)
-* (DutchmanNL) Update ESPHome Dashboard to 1.18.0, requires  Python >=3.7 (and ensure <4.0!)
-* (DutchmanNL) Bugfix : Reconnect to devices without autodiscovery / MDNS-Broadcast in network, solves [#66](https://github.com/DrozmotiX/ioBroker.esphome/issues/66)
 
 ## License
 MIT License
