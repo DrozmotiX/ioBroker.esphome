@@ -112,6 +112,10 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
+
+### __WORK IN PROGRESS__
+* (DutchmanNL) cleanup unused channels & states after initialisation of device, fixes #39
+
 ### 0.3.2 (2023-11-01)
 * (DutchmanNL) Improved error handling if devices are not reachable/disconnected
 * (DutchmanNL) Bugfix: Allow control of brightness and color for light component, fixes #173

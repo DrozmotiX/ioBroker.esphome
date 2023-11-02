@@ -14,8 +14,10 @@ const stateAttr = require(__dirname + '/lib/stateAttr.js'); // Load attribute li
 const disableSentry = false; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
 const fs = require('fs');
+const {clearTimeout} = require('timers');
 const client = {};
-let reconnectTimer, reconnectInterval, apiPass, autodiscovery, dashboardProcess, createConfigStates;
+const resetTimers = {}; // Memory allocation for all running timers
+let reconnectInterval, apiPass, autodiscovery, dashboardProcess, createConfigStates;
 
 class Esphome extends utils.Adapter {
 
@@ -236,6 +238,14 @@ class Esphome extends utils.Adapter {
 					if (this.deviceInfo[host].deviceName != null) {
 						this.setState(`${this.deviceInfo[host].deviceName}.info._online`, {val: false, ack: true});
 
+						// Check all created states in memory if their are related to this device
+						for (const state in this.createdStatesDetails) {
+							// Remove states from cache
+							if (state.split('.')[0] === this.deviceInfo[host].deviceName) {
+								delete this.createdStatesDetails[state];
+							}
+						}
+
 						// Cache relevant data before clearing memory space of device
 						const cacheDeviceInformation = {
 							deviceName: this.deviceInfo[host].deviceName,
@@ -265,6 +275,12 @@ class Esphome extends utils.Adapter {
 			client[host].on('initialized', () => {
 				this.log.info(`ESPHome  client ${this.deviceInfo[host].deviceInfoName} on ip ${host} initialized`);
 				this.deviceInfo[host].initialized = true;
+
+				// Start timer to cleanup unneeded objects
+				if (resetTimers[host]) resetTimers[host] = clearTimeout(resetTimers[host]);
+				resetTimers[host] = setTimeout(async () => {
+					await this.objectCleanup(host);
+				}, (10000));
 			});
 
 			// Log message listener
@@ -285,7 +301,12 @@ class Esphome extends utils.Adapter {
 					// Store device information into memory
 					const deviceName = this.replaceAll(deviceInfo.macAddress, `:`, ``);
 					this.deviceInfo[host] = {
+						adapterObjects : {
+							channels : []
+						},
 						ip: host,
+						connectError : false,
+						connected : true,
 						mac: deviceInfo.macAddress,
 						deviceInfo: deviceInfo,
 						deviceName: deviceName,
@@ -367,6 +388,11 @@ class Esphome extends utils.Adapter {
 						native: {},
 					});
 
+					// Cache created channel in device memory
+					if (!this.deviceInfo[host].adapterObjects.channels.includes(`${this.namespace}.${this.deviceInfo[host].deviceName}.${entity.type}`)) {
+						this.deviceInfo[host].adapterObjects.channels.push(`${this.namespace}.${this.deviceInfo[host].deviceName}.${entity.type}`);
+					}
+
 					// Create state specific channel by id
 					await this.extendObjectAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}`, {
 						type: 'channel',
@@ -375,6 +401,11 @@ class Esphome extends utils.Adapter {
 						},
 						native: {},
 					});
+
+					// Cache created channel in device memory
+					if (!this.deviceInfo[host].adapterObjects.channels.includes(`${this.namespace}.${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}`)) {
+						this.deviceInfo[host].adapterObjects.channels.push(`${this.namespace}.${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}`);
+					}
 
 					//Check if config channel should be created
 					if (!createConfigStates) {
@@ -396,6 +427,12 @@ class Esphome extends utils.Adapter {
 							},
 							native: {},
 						});
+
+						// Cache created channel in device memory
+						if (!this.deviceInfo[host].adapterObjects.channels.includes(`${this.namespace}.${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`)) {
+							this.deviceInfo[host].adapterObjects.channels.push(`${this.namespace}.${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`);
+						}
+
 						// Handle Entity JSON structure and write related config channel data
 						await this.TraverseJson(entity.config, `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`);
 					}
@@ -491,7 +528,7 @@ class Esphome extends utils.Adapter {
 
 
 				} catch (e) {
-					this.log.error(`Connection issue for ${entity.name} ${e}`);
+					this.log.error(`Connection issue for ${entity.name} ${e} | ${e.stack}`);
 				}
 
 			});
@@ -671,6 +708,8 @@ class Esphome extends utils.Adapter {
 						// Check if state contains value
 						if (transitionLength) {
 							this.deviceInfo[host][entity.id].states.transitionLength = transitionLength.val;
+							// Run create state routine to ensure state is cached in memory
+							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, transitionLength.val, `s`, writable);
 						} else { // Else just create it
 							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
 							this.deviceInfo[host][entity.id].states.transitionLength = 0;
@@ -947,6 +986,8 @@ class Esphome extends utils.Adapter {
 	onUnload(callback) {
 		try {
 			this.log.debug(JSON.stringify(this.deviceInfo));
+
+			// Set all online states to false
 			for (const device in this.deviceInfo) {
 
 				// Ensure all known online states are set to false
@@ -961,9 +1002,12 @@ class Esphome extends utils.Adapter {
 					this.log.debug(`[onUnload] ${JSON.stringify(e)}`);
 				}
 			}
-			if (reconnectTimer) {
-				reconnectTimer = clearTimeout();
+
+			// Ensure all possible running timers are cleared
+			for (const timer in resetTimers) {
+				if (resetTimers[timer]) resetTimers[timer] = clearTimeout(resetTimers[timer]);
 			}
+			
 			try {
 				if (dashboardProcess) {
 					dashboardProcess.kill('SIGTERM', {
@@ -1232,6 +1276,48 @@ class Esphome extends utils.Adapter {
 			this.log.error(`[resetOnlineState] ${e}`);
 		}
 	}
+
+	async objectCleanup(ip){
+		try {
+			this.log.debug(`[objectCleanup] Starting channel and state cleanup for ${this.deviceInfo[ip].deviceName} | ${ip} | ${this.deviceInfo[ip].ip}`);
+
+			// Cancel cleanup operation in case device is not connected anymore
+			if (this.deviceInfo[ip].connectionError || !this.deviceInfo[ip].connected) return;
+
+			// Set parameters for object view to only include objects within adapter namespace
+			const params = {
+				startkey : `${this.namespace}.${this.deviceInfo[ip].deviceName}.`,
+				endkey : `${this.namespace}.\u9999`,
+			};
+
+			// Get all current channels
+			const _channels = await this.getObjectViewAsync('system', 'channel', params);
+			// List all found channels & compare with memory, delete unneeded channels
+			for (const currDevice in _channels.rows) {
+				// @ts-ignore
+				if (!this.deviceInfo[ip].adapterObjects.channels.includes(_channels.rows[currDevice].id)
+				&& _channels.rows[currDevice].id.split('.')[2] === this.deviceInfo[ip].deviceName){
+					this.log.debug(`[objectCleanup] Unknown Channel found, delete ${_channels.rows[currDevice].id}`);
+					await this.delObjectAsync(_channels.rows[currDevice].id, {recursive: true});
+				}
+			}
+
+			// Get all current states in adapter tree
+			const _states = await this.getObjectViewAsync('system', 'state', params);
+			// List all found states & compare with memory, delete unneeded states
+			for (const currDevice in _states.rows) {
+				if (!this.createdStatesDetails[_states.rows[currDevice].id.replace(`esphome.0.`, ``)]
+					&& _states.rows[currDevice].id.split('.')[2] === this.deviceInfo[ip].deviceName){
+					this.log.debug(`[objectCleanup] Unknown State found, delete ${_states.rows[currDevice].id}`);
+					// await this.delObjectAsync(_states.rows[currDevice].id);
+				}
+			}
+
+		} catch (e) {
+			this.log.error(`[objectCleanup] Fatal error ${e} | ${e.stack}`);
+		}
+	}
+
 }
 
 if (require.main !== module) {
