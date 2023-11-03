@@ -72,6 +72,21 @@ class Esphome extends utils.Adapter {
 				this.log.info(`Native Integration of ESPHome Dashboard disabled `);
 			}
 
+			// Create & Subscribe to button handling offline Device cleanup
+			this.extendObjectAsync('esphome.0.info.deviceCleanup',
+				{
+					'type': 'state',
+					'common': {
+						'role': 'button',
+						'name': 'Device or service connected',
+						'type': 'boolean',
+						'read': false,
+						'write': true,
+						'def': false
+					}
+				});
+			this.subscribeStates('esphome.0.info.deviceCleanup');
+
 		} catch (e) {
 			this.log.error(`[Adapter start] Fatal error occurred ${e}`);
 		}
@@ -1049,12 +1064,12 @@ class Esphome extends utils.Adapter {
 				case 'addDevice':
 
 					// eslint-disable-next-line no-case-declarations,no-inner-declarations
-					function validateIPaddress(ipaddress) {
-						if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress)) {
-							return true;
-						}
-						return false;
+				function validateIPaddress(ipaddress) {
+					if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress)) {
+						return true;
 					}
+					return false;
+				}
 
 					// eslint-disable-next-line no-case-declarations
 					const ipValid = validateIPaddress(obj.message['device-ip']);
@@ -1307,7 +1322,7 @@ class Esphome extends utils.Adapter {
 			for (const currDevice in _channels.rows) {
 				// @ts-ignore
 				if (!this.deviceInfo[ip].adapterObjects.channels.includes(_channels.rows[currDevice].id)
-				&& _channels.rows[currDevice].id.split('.')[2] === this.deviceInfo[ip].deviceName){
+					&& _channels.rows[currDevice].id.split('.')[2] === this.deviceInfo[ip].deviceName){
 					this.log.debug(`[objectCleanup] Unknown Channel found, delete ${_channels.rows[currDevice].id}`);
 					await this.delObjectAsync(_channels.rows[currDevice].id, {recursive: true});
 				}
@@ -1343,10 +1358,9 @@ class Esphome extends utils.Adapter {
 
 				// Get online value
 				const online = await this.getStateAsync(`${knownDevices[device]._id}.info._online`);
-				this.log.info(`Online state ${JSON.stringify(online)}`);
 				if (!online || !online.val){
 					this.log.info(`Offline device ${knownDevices[device]._id.split('.')[2]} expected on ip ${knownDevices[device].native.ip} removed`);
-					this.deleteDevice(knownDevices[device]._id);
+					await this.delObjectAsync(knownDevices[device]._id, {recursive: true});
 				}
 
 			}
