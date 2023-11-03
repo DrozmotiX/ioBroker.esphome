@@ -114,21 +114,23 @@ If you like my work, please consider a personal donation
 -->
 
 ### __WORK IN PROGRESS__
+* (DutchmanNL) Added cleanup capability for unused channels & states after initialisation of device, resolves #39
+* (DutchmanNL) Added button to info channel which allows to delete all offline devices from adapter tree. resolves #39
 * (DutchmanNL) [Breaking] Backup strategy changed, requires [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) and activate option for ESPHome, fixes #129
 
 ### 0.3.2 (2023-11-01)
 * (DutchmanNL) Improved error handling if devices are not reachable/disconnected
-* (DutchmanNL) Bugfix: Allow control of brightness and color for light component, fixes #173
+* (DutchmanNL) Bugfix: Allow control of brightness and color for light component, resolves #173
 
 ### 0.3.1 (2023-10-31)
-* (DutchmanNL) Bugfix: Show online state of ESP Device correctly, Fixes #106
+* (DutchmanNL) Bugfix: Show online state of ESP Device correctly, resolves #106
 
 ### 0.3.0 (2023-10-31) - Bugfixes & Improvements
 * (Dutchman & SimonFischer04) Several Bugfixes
 * (SimonFischer04) Support type "select device"
 * (DutchmanNL) ESPHome dashboard default disabled
 * (SimonFischer04) Migrate to @2colors/esphome-native-api
-* (DutchmanNL) Automatically create needed directories, Fixes #168
+* (DutchmanNL) Automatically create needed directories, resolves #168
 * (SimonFischer04) Migrate usage of python to new structure, should solve all ESPHome Dashboard related installation issues
 
 ### 0.2.4 (2021-08-24)
