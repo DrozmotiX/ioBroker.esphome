@@ -1064,12 +1064,12 @@ class Esphome extends utils.Adapter {
 				case 'addDevice':
 
 					// eslint-disable-next-line no-case-declarations,no-inner-declarations
-				function validateIPaddress(ipaddress) {
-					if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress)) {
-						return true;
+					function validateIPaddress(ipaddress) {
+						if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress)) {
+							return true;
+						}
+						return false;
 					}
-					return false;
-				}
 
 					// eslint-disable-next-line no-case-declarations
 					const ipValid = validateIPaddress(obj.message['device-ip']);
@@ -1368,7 +1368,7 @@ class Esphome extends utils.Adapter {
 			if (!knownDevices) return; // exit function if no known device are detected
 			if (knownDevices.length > 0) this.log.info(`Try to contact ${knownDevices.length} known devices`);
 		} catch (e) {
-			this.log.error(`[offlineDeviceCleanup] Fatal error occured, cannot cleanup offline devices ${e} | ${e.stack}`);
+			this.log.error(`[offlineDeviceCleanup] Fatal error occurred, cannot cleanup offline devices ${e} | ${e.stack}`);
 
 		}
 	}
