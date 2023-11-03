@@ -116,6 +116,7 @@ If you like my work, please consider a personal donation
 ### __WORK IN PROGRESS__
 * (DutchmanNL) Added cleanup capability for unused channels & states after initialisation of device, resolves #39
 * (DutchmanNL) Added button to info channel which allows to delete all offline devices from adapter tree. resolves #39
+* (DutchmanNL) [Breaking] Backup strategy changed, requires [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) and activate option for ESPHome, fixes #129
 
 ### 0.3.2 (2023-11-01)
 * (DutchmanNL) Improved error handling if devices are not reachable/disconnected
