@@ -1007,7 +1007,7 @@ class Esphome extends utils.Adapter {
 			for (const timer in resetTimers) {
 				if (resetTimers[timer]) resetTimers[timer] = clearTimeout(resetTimers[timer]);
 			}
-			
+
 			try {
 				if (dashboardProcess) {
 					dashboardProcess.kill('SIGTERM', {
