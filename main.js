@@ -1122,6 +1122,17 @@ class Esphome extends utils.Adapter {
 		try {
 			if (state && state.ack === false) {
 				const device = id.split('.');
+
+				try {
+					// Verify if trigger is related to device-cleanup
+					if (id.split('.')[3] === 'deviceCleanup'){
+						await this.offlineDeviceCleanup();
+						return;
+					}
+				} catch (e) {
+					// Skip action
+				}
+
 				const deviceIP = this.deviceStateRelation[device[2]].ip;
 
 				// Handle Switch State
@@ -1315,6 +1326,35 @@ class Esphome extends utils.Adapter {
 
 		} catch (e) {
 			this.log.error(`[objectCleanup] Fatal error ${e} | ${e.stack}`);
+		}
+	}
+
+	async offlineDeviceCleanup () {
+		this.log.info(`Offline Device cleanup started`);
+
+		try {
+
+			// Get an overview of all current devices known by adapter
+			const knownDevices = await this.getDevicesAsync();
+			console.log(`KnownDevices: ${knownDevices}`);
+
+			// Loop to all devices, check if online state = TRUE otherwise delete device
+			for (const device in knownDevices){
+
+				// Get online value
+				const online = await this.getStateAsync(`${knownDevices[device]._id}.info._online`);
+				this.log.info(`Online state ${JSON.stringify(online)}`);
+				if (!online || !online.val){
+					this.log.info(`Offline device ${knownDevices[device]._id.split('.')[2]} expected on ip ${knownDevices[device].native.ip} removed`);
+				}
+
+			}
+
+			if (!knownDevices) return; // exit function if no known device are detected
+			if (knownDevices.length > 0) this.log.info(`Try to contact ${knownDevices.length} known devices`);
+		} catch (e) {
+			this.log.error(`[offlineDeviceCleanup] Fatal error occured, cannot cleanup offline devices ${e} | ${e.stack}`);
+
 		}
 	}
 
