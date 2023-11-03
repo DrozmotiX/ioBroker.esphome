@@ -1346,6 +1346,7 @@ class Esphome extends utils.Adapter {
 				this.log.info(`Online state ${JSON.stringify(online)}`);
 				if (!online || !online.val){
 					this.log.info(`Offline device ${knownDevices[device]._id.split('.')[2]} expected on ip ${knownDevices[device].native.ip} removed`);
+					this.deleteDevice(knownDevices[device]._id);
 				}
 
 			}
