@@ -112,8 +112,7 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
-
-### __WORK IN PROGRESS__
+### 0.4.1 (2023-11-05)
 * (DutchmanNL) Bugfix: Password / connection issues in previous beta resolves #179
 * (DutchmanNL) Bugfix: Allow individual API password or encryption keys for devices, resolves #174
 * (DutchmanNL) Support ESPHome device Encryption Key (you should migrate from API password to Encryption Key ! resolves #152)
@@ -137,10 +136,6 @@ If you like my work, please consider a personal donation
 * (SimonFischer04) Migrate to @2colors/esphome-native-api
 * (DutchmanNL) Automatically create needed directories, resolves #168
 * (SimonFischer04) Migrate usage of python to new structure, should solve all ESPHome Dashboard related installation issues
-
-### 0.2.4 (2021-08-24)
-* (DutchmanNL) Version of ESPHome Dashboard updated to 2021.8
-* (DutchmanNL) Add option if config of ESPHome device should be shown as states (default = FALSE, safes 8 states for each sensor)
 
 ## License
 MIT License
