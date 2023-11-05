@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "esphome",
-        "version": "0.4.1-beta.4",
+        "version": "0.4.1-beta.5",
         "news": {
             "0.4.0": {
                 "en": "Added cleanup capability for unused channels & states after initialisation of device, resolves #39\nAdded button to info channel which allows to delete all offline devices from adapter tree. resolves #39\n[Breaking] Backup strategy changed, requires [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) and activate option for ESPHome, fixes #129",

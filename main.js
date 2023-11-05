@@ -223,20 +223,20 @@ class Esphome extends utils.Adapter {
 			// const host = espDevices[device].ip;
 			this.log.info(`Try to connect to ${host}`);
 
+			// Cancel process if connection try is already in progress
+			if (this.deviceInfo[host] && this.deviceInfo[host].connecting) return;
+
 			// Clear any existing memory information for this device
 			delete this.deviceInfo[host];
 
-			// Cancel process if connection try is already in progress
-			if (this.deviceInfo[host] && this.deviceInfo[host].connecting)
-
 			// Reserve basic memory information for this device
-				this.deviceInfo[host] = {
-					connected : false,
-					connecting : true,
-					connectionError : false,
-					initialized: false,
-					ip : host
-				};
+			this.deviceInfo[host] = {
+				connected : false,
+				connecting : true,
+				connectionError : false,
+				initialized: false,
+				ip : host
+			};
 
 			if (!deviceEncryptionKey || deviceEncryptionKey === '') {
 				client[host] = new Client({
@@ -275,18 +275,20 @@ class Esphome extends utils.Adapter {
 			// Connection listener
 			client[host].on('connected', async () => {
 				try {
-					this.deviceInfo[host].connected = true;
-					this.deviceInfo[host].connecting = false;
 					// Clear any existing memory information for this device
 					delete this.deviceInfo[host];
-
-					// Reserve basic memory information for this device
-					this.deviceInfo[host] = {
-						connected : true,
-						connectionError : false,
-						initialized: false,
-						ip : host
-					};
+					if (!this.deviceInfo[host]) {
+						this.deviceInfo[host] = {
+							connected : false,
+							connecting : true,
+							connectionError : false,
+							initialized: false,
+							ip : host
+						};
+					} else {
+						this.deviceInfo[host].connected = true;
+						this.deviceInfo[host].connecting = false;
+					}
 					this.log.info(`ESPHome client ${host} connected`);
 					// Clear possible present warn messages for device from previous connection
 					delete warnMessages[host];
