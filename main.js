@@ -592,6 +592,12 @@ class Esphome extends utils.Adapter {
 							this.log.error(optimisedError);
 							this.deviceInfo[host].connectError = true;
 						}
+					} else if (error.message.includes('EHOSTUNREACH')) {
+						optimisedError = `Client ${host} incorrect password !`;
+						if (!this.deviceInfo[host].connectError) {
+							this.log.error(optimisedError);
+							this.deviceInfo[host].connectError = true;
+						}
 					} else if (error.message.includes('Invalid password')) {
 						optimisedError = `Client ${host} incorrect password !`;
 						if (!this.deviceInfo[host].connectError) {
