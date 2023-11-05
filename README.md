@@ -112,6 +112,10 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
+
+### __WORK IN PROGRESS__
+* (DutchmanNL) Bugfix: Allow individual API password for devices, solves #174
+
 ### 0.4.0 (2023-11-03)
 * (DutchmanNL) Added cleanup capability for unused channels & states after initialisation of device, resolves #39
 * (DutchmanNL) Added button to info channel which allows to delete all offline devices from adapter tree. resolves #39

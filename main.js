@@ -171,7 +171,7 @@ class Esphome extends utils.Adapter {
 
 			// Get basic data of known devices and start reading data
 			for (const i in knownDevices) {
-				this.connectDevices(knownDevices[i].native.ip);
+				this.connectDevices(knownDevices[i].native.ip, this.decrypt(knownDevices[i].native.passWord));
 			}
 		} catch (e) {
 			this.sendSentry(`[tryKnownDevices] ${e}`);
@@ -190,7 +190,7 @@ class Esphome extends utils.Adapter {
 					this.log.debug(`Discovery message ${JSON.stringify(message)}`);
 					if (this.deviceInfo[message.address] == null) {
 						this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${message.address}, trying to initialize`);
-						this.connectDevices(`${message.address}`);
+						this.connectDevices(`${message.address}`, apiPass);
 					}
 				} catch (e) {
 					this.log.error(`[deviceDiscovery handler] ${e}`);
@@ -206,14 +206,14 @@ class Esphome extends utils.Adapter {
 	 * Handle Socket connections
 	 * @param {string} host IP adress of device
 	 */
-	connectDevices(host) {
+	connectDevices(host, deviceApiPass) {
 		try {
 			// const host = espDevices[device].ip;
 			this.log.info(`Try to connect to ${host}`);
 			// Prepare connection attributes
 			client[host] = new Client({
 				host: host,
-				password: apiPass,
+				password: deviceApiPass,
 				clientInfo: `${this.host}`,
 				clearSession: true,
 				initializeDeviceInfo: true,
@@ -1086,8 +1086,8 @@ class Esphome extends utils.Adapter {
 					} else {
 						this.log.info(`Valid IP address received`);
 						this.messageResponse[obj.message['device-ip']] = obj;
-						// const pass = this.decrypt(obj.message['device-pass']);
-						await this.connectDevices(obj.message['device-ip']);
+						const pass = this.decrypt(obj.message['device-pass']);
+						await this.connectDevices(obj.message['device-ip'], pass);
 					}
 					break;
 			}
