@@ -114,7 +114,9 @@ If you like my work, please consider a personal donation
 -->
 
 ### __WORK IN PROGRESS__
-* (DutchmanNL) Bugfix: Allow individual API password for devices, solves #174
+* (DutchmanNL) Bugfix: Password / connection issues in previous beta resolves #179
+* (DutchmanNL) Bugfix: Allow individual API password or encryption keys for devices, resolves #174
+* (DutchmanNL) Support ESPHome device Encryption Key (you should migrate from API password to Encryption Key ! resolves #152)
 
 ### 0.4.0 (2023-11-03)
 * (DutchmanNL) Added cleanup capability for unused channels & states after initialisation of device, resolves #39
