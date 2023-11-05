@@ -196,7 +196,7 @@ class Esphome extends utils.Adapter {
 						this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${message.address}, trying to initialize`);
 						//ToDo: Add default Encryption Key
 						// Only run autodiscovery if device is unknown yet
-						if (!this.deviceInfo[message.address]) this.connectDevices(`${message.address}`, apiPass, '');
+						if (!this.deviceInfo[message.address] && this.deviceInfo[message.address].connectError === false) this.connectDevices(`${message.address}`, apiPass, '');
 					}
 				} catch (e) {
 					this.log.error(`[deviceDiscovery handler] ${e}`);
