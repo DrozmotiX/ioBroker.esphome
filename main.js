@@ -269,10 +269,10 @@ class Esphome extends utils.Adapter {
 				}
 			});
 
-			client[host].on('disconnected', () => 	{
+			client[host].on('disconnected', async () => 	{
 				try {
 					if (this.deviceInfo[host].deviceName != null) {
-						this.setState(`${this.deviceInfo[host].deviceName}.info._online`, {val: false, ack: true});
+						await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
 
 						// Check all created states in memory if their are related to this device
 						for (const state in this.createdStatesDetails) {
@@ -572,7 +572,7 @@ class Esphome extends utils.Adapter {
 			});
 
 			// Connection data handler
-			client[host].on('error', (error) => {
+			client[host].on('error', async (error) => {
 				try {
 
 					// Reserve memory space for connection error if not already exist
@@ -591,36 +591,42 @@ class Esphome extends utils.Adapter {
 						if (!this.deviceInfo[host].connectError) {
 							this.log.error(optimisedError);
 							this.deviceInfo[host].connectError = true;
+							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
 						}
 					} else if (error.message.includes('EHOSTUNREACH')) {
-						optimisedError = `Client ${host} incorrect password !`;
+						optimisedError = `Client ${host} unreachable !`;
 						if (!this.deviceInfo[host].connectError) {
 							this.log.error(optimisedError);
 							this.deviceInfo[host].connectError = true;
+							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
 						}
 					} else if (error.message.includes('Invalid password')) {
 						optimisedError = `Client ${host} incorrect password !`;
 						if (!this.deviceInfo[host].connectError) {
 							this.log.error(optimisedError);
 							this.deviceInfo[host].connectError = true;
+							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
 						}
 					} else if (error.message.includes('Encryption expected')) {
 						optimisedError = `Client ${host} requires encryption key which has not been provided, please enter encryption key in adapter settings for this device !`;
 						if (!this.deviceInfo[host].connectError) {
 							this.log.error(optimisedError);
 							this.deviceInfo[host].connectError = true;
+							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
 						}
 					} else if (error.message.includes('ECONNRESET')) {
 						optimisedError = `Client ${host} Connection Lost, will reconnect automatically when device is available!`;
 						if (!this.deviceInfo[host].connectError) {
 							this.log.warn(optimisedError);
 							this.deviceInfo[host].connectError = true;
+							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
 						}
 					} else if (error.message.includes('timeout')) {
 						optimisedError = `Client ${host} Timeout, will reconnect automatically when device is available!`;
 						if (!this.deviceInfo[host].connectError) {
 							this.log.warn(optimisedError);
 							this.deviceInfo[host].connectError = true;
+							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
 						}
 					}  else if (error.message.includes('ECONNREFUSED')) {
 						optimisedError = `Client ${host} not yet ready to connect, will try again!`;
@@ -1329,7 +1335,7 @@ class Esphome extends utils.Adapter {
 				});
 
 				// Set online state to false, will be set to true at successfully connected
-				this.setState(`${_devices.rows[currDevice].id}.info._online`, {val: false, ack: true});
+				await this.stateSetCreate(`${_devices.rows[currDevice].id}.info._online`, `Online state`, false);
 			}
 
 		} catch (e) {
