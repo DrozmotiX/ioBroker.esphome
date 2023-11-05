@@ -196,7 +196,11 @@ class Esphome extends utils.Adapter {
 						this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${message.address}, trying to initialize`);
 						//ToDo: Add default Encryption Key
 						// Only run autodiscovery if device is unknown yet
-						if (!this.deviceInfo[message.address] && this.deviceInfo[message.address].connectError === false) this.connectDevices(`${message.address}`, apiPass, '');
+						if (!this.deviceInfo[message.address]
+							&& this.deviceInfo[message.address].connectError === false
+						&& !this.deviceInfo[message.address] && this.deviceInfo[message.address].connecting) {
+							this.connectDevices(`${message.address}`, apiPass, '');
+						}
 					}
 				} catch (e) {
 					this.log.error(`[deviceDiscovery handler] ${e}`);
@@ -218,6 +222,21 @@ class Esphome extends utils.Adapter {
 		try {
 			// const host = espDevices[device].ip;
 			this.log.info(`Try to connect to ${host}`);
+
+			// Clear any existing memory information for this device
+			delete this.deviceInfo[host];
+
+			// Cancel process if connection try is already in progress
+			if (this.deviceInfo[host] && this.deviceInfo[host].connecting)
+
+			// Reserve basic memory information for this device
+				this.deviceInfo[host] = {
+					connected : false,
+					connecting : true,
+					connectionError : false,
+					initialized: false,
+					ip : host
+				};
 
 			if (!deviceEncryptionKey || deviceEncryptionKey === '') {
 				client[host] = new Client({
@@ -256,6 +275,8 @@ class Esphome extends utils.Adapter {
 			// Connection listener
 			client[host].on('connected', async () => {
 				try {
+					this.deviceInfo[host].connected = true;
+					this.deviceInfo[host].connecting = false;
 					// Clear any existing memory information for this device
 					delete this.deviceInfo[host];
 
@@ -299,6 +320,7 @@ class Esphome extends utils.Adapter {
 						// Reserve basic memory information for this device
 						this.deviceInfo[host] = {
 							connected : false,
+							connecting: false,
 							connectionError : true,
 							deviceName : cacheDeviceInformation.deviceName,
 							deviceInfoName : cacheDeviceInformation.deviceInfoName,
