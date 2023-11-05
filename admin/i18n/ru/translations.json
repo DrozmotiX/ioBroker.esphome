@@ -16,6 +16,9 @@
     "IP-Address": "IP адрес",
     "Name": "Имя",
     "Show configuration as states": "Показать конфигурацию как состояния",
+    "When Encryption Key is provided, API-Password will be ignored": "Если предоставлен ключ шифрования, пароль API будет игнорироваться.",
+    "You can either choose to use the Device Encryption Key (preferred) or API-Password (legacy)": "Вы можете использовать либо ключ шифрования устройства (предпочтительно), либо пароль API (устаревший вариант).",
     "device-pass": "Пароль",
+    "deviceEncryptionKey": "Ключ шифрования устройства (предпочтительно)",
     "reconnect interval": "Интервал повторного соединения"
 }

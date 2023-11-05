@@ -16,6 +16,9 @@
     "IP-Address": "IP地址",
     "Name": "姓名",
     "Show configuration as states": "将配置显示为状态",
+    "When Encryption Key is provided, API-Password will be ignored": "当提供加密密钥时，API-密码将被忽略",
+    "You can either choose to use the Device Encryption Key (preferred) or API-Password (legacy)": "您可以选择使用设备加密密钥（首选）或 API 密码（旧版）",
     "device-pass": "密码",
+    "deviceEncryptionKey": "设备加密密钥（首选）",
     "reconnect interval": "重新连接间隔"
 }

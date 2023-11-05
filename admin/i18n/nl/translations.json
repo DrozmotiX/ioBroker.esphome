@@ -16,6 +16,9 @@
     "IP-Address": "IP adres",
     "Name": "Naam",
     "Show configuration as states": "Configuratie weergeven als toestanden",
+    "When Encryption Key is provided, API-Password will be ignored": "Wanneer de coderingssleutel wordt opgegeven, wordt het API-wachtwoord genegeerd",
+    "You can either choose to use the Device Encryption Key (preferred) or API-Password (legacy)": "U kunt ervoor kiezen om de Device Encryption Key (bij voorkeur) of het API-wachtwoord (verouderd) te gebruiken",
     "device-pass": "Wachtwoord",
+    "deviceEncryptionKey": "Apparaatcoderingssleutel (bij voorkeur)",
     "reconnect interval": "interval voor opnieuw verbinden"
 }

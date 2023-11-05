@@ -16,6 +16,9 @@
     "IP-Address": "Adresse IP",
     "Name": "Nom",
     "Show configuration as states": "Afficher la configuration sous forme d'états",
+    "When Encryption Key is provided, API-Password will be ignored": "Lorsque la clé de cryptage est fournie, le mot de passe API sera ignoré",
+    "You can either choose to use the Device Encryption Key (preferred) or API-Password (legacy)": "Vous pouvez choisir d'utiliser la clé de chiffrement de l'appareil (de préférence) ou le mot de passe API (ancien)",
     "device-pass": "Mot de passe",
+    "deviceEncryptionKey": "Clé de chiffrement de l'appareil (de préférence)",
     "reconnect interval": "intervalle de reconnexion"
 }

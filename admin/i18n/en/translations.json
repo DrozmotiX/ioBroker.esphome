@@ -16,6 +16,9 @@
     "IP-Address": "IP Address",
     "Name": "Name",
     "Show configuration as states": "Show configuration as states",
-    "device-pass": "Password",
+    "When Encryption Key is provided, API-Password will be ignored": "When Encryption Key is provided, API-Password will be ignored",
+    "You can either choose to use the Device Encryption Key (preferred) or API-Password (legacy)": "You can either choose to use the Device Encryption Key (preferred) or API-Password (legacy)",
+    "device-pass": "Device API Password (legacy)",
+    "deviceEncryptionKey": "Device EncryptionKey (preferred)",
     "reconnect interval": "Reconnect Interval"
 }

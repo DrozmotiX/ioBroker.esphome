@@ -171,7 +171,7 @@ class Esphome extends utils.Adapter {
 
 			// Get basic data of known devices and start reading data
 			for (const i in knownDevices) {
-				this.connectDevices(knownDevices[i].native.ip, this.decrypt(knownDevices[i].native.passWord));
+				this.connectDevices(knownDevices[i].native.ip, knownDevices[i].native.passWord, knownDevices[i].native.encryptionKey ? knownDevices[i].native.encryptionKey : '');
 			}
 		} catch (e) {
 			this.sendSentry(`[tryKnownDevices] ${e}`);
@@ -182,7 +182,7 @@ class Esphome extends utils.Adapter {
 	deviceDiscovery() {
 		try {
 
-			this.log.info(`Auto Discovery startet, new devices (or IP changes) will be detected automatically`);
+			this.log.info(`Auto Discovery started, new devices (or IP changes) will be detected automatically`);
 			discovery = new Discovery();
 
 			discovery.on('info', async (message) => {
@@ -190,7 +190,8 @@ class Esphome extends utils.Adapter {
 					this.log.debug(`Discovery message ${JSON.stringify(message)}`);
 					if (this.deviceInfo[message.address] == null) {
 						this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${message.address}, trying to initialize`);
-						this.connectDevices(`${message.address}`, apiPass);
+						//ToDo: Add default Encryption Key
+						this.connectDevices(`${message.address}`, apiPass, '');
 					}
 				} catch (e) {
 					this.log.error(`[deviceDiscovery handler] ${e}`);
@@ -205,27 +206,47 @@ class Esphome extends utils.Adapter {
 	/**
 	 * Handle Socket connections
 	 * @param {string} host IP adress of device
+	 * @param {string} deviceApiPass Native API credentials
+	 * @param {string} deviceEncryptionKey Encryption Key credentials
 	 */
-	connectDevices(host, deviceApiPass) {
+	connectDevices(host, deviceApiPass, deviceEncryptionKey) {
 		try {
 			// const host = espDevices[device].ip;
 			this.log.info(`Try to connect to ${host}`);
-			// Prepare connection attributes
-			client[host] = new Client({
-				host: host,
-				password: deviceApiPass,
-				clientInfo: `${this.host}`,
-				clearSession: true,
-				initializeDeviceInfo: true,
-				initializeListEntities: true,
-				initializeSubscribeStates: false,
-				// initializeSubscribeLogs: false, //ToDo: Make configurable by adapter settings
-				reconnect: true,
-				reconnectInterval: reconnectInterval,
-				pingInterval: 15000, //ToDo: Make configurable by adapter settings
-				pingAttempts: 3
-				// port: espDevices[device].port //ToDo: Make configurable by adapter settings
-			});
+
+			if (!deviceEncryptionKey || deviceEncryptionKey === '') {
+				client[host] = new Client({
+					host: host,
+					clientInfo: `${this.host}`,
+					clearSession: true,
+					initializeDeviceInfo: true,
+					initializeListEntities: true,
+					initializeSubscribeStates: false,
+					// initializeSubscribeLogs: false, //ToDo: Make configurable by adapter settings
+					reconnect: true,
+					reconnectInterval: reconnectInterval,
+					pingInterval: 15000, //ToDo: Make configurable by adapter settings
+					pingAttempts: 3,
+					password : this.decrypt(deviceApiPass)
+					// port: espDevices[device].port //ToDo: Make configurable by adapter settings
+				});
+			} else {
+				client[host] = new Client({
+					host: host,
+					clientInfo: `${this.host}`,
+					clearSession: true,
+					initializeDeviceInfo: true,
+					initializeListEntities: true,
+					initializeSubscribeStates: false,
+					// initializeSubscribeLogs: false, //ToDo: Make configurable by adapter settings
+					reconnect: true,
+					reconnectInterval: reconnectInterval,
+					pingInterval: 15000, //ToDo: Make configurable by adapter settings
+					pingAttempts: 3,
+					encryptionKey: this.decrypt(deviceEncryptionKey)
+					// port: espDevices[device].port //ToDo: Make configurable by adapter settings
+				});
+			}
 
 			// Connection listener
 			client[host].on('connected', async () => {
@@ -326,7 +347,8 @@ class Esphome extends utils.Adapter {
 						deviceInfo: deviceInfo,
 						deviceName: deviceName,
 						deviceInfoName: deviceInfo.name,
-						passWord: apiPass,
+						passWord: deviceApiPass,
+						encryptionKey: deviceEncryptionKey,
 					};
 
 					// Store MAC & IP relation, delete possible existing entry before
@@ -349,7 +371,8 @@ class Esphome extends utils.Adapter {
 							name: this.deviceInfo[host].deviceInfoName,
 							mac: deviceInfo.macAddress,
 							deviceName: deviceName,
-							passWord: this.encrypt(apiPass),
+							passWord: deviceApiPass,
+							encryptionKey: deviceEncryptionKey
 						},
 					});
 
@@ -575,6 +598,12 @@ class Esphome extends utils.Adapter {
 							this.log.error(optimisedError);
 							this.deviceInfo[host].connectError = true;
 						}
+					} else if (error.message.includes('Encryption expected')) {
+						optimisedError = `Client ${host} requires encryption key which has not been provided, please enter encryption key in adapter settings for this device !`;
+						if (!this.deviceInfo[host].connectError) {
+							this.log.error(optimisedError);
+							this.deviceInfo[host].connectError = true;
+						}
 					} else if (error.message.includes('ECONNRESET')) {
 						optimisedError = `Client ${host} Connection Lost, will reconnect automatically when device is available!`;
 						if (!this.deviceInfo[host].connectError) {
@@ -624,7 +653,7 @@ class Esphome extends utils.Adapter {
 			}
 
 		} catch (e) {
-			this.log.error(`ESP device error for ${host}`);
+			this.log.error(`ESP device error for ${host} | ${e} | ${e.stack}`);
 		}
 	}
 
@@ -1086,8 +1115,7 @@ class Esphome extends utils.Adapter {
 					} else {
 						this.log.info(`Valid IP address received`);
 						this.messageResponse[obj.message['device-ip']] = obj;
-						const pass = this.decrypt(obj.message['device-pass']);
-						await this.connectDevices(obj.message['device-ip'], pass);
+						await this.connectDevices(obj.message['device-ip'], obj.message['device-pass'], obj.message['deviceEncryptionKey']);
 					}
 					break;
 			}
