@@ -60,7 +60,11 @@ class Esphome extends utils.Adapter {
 
 			// Start MDNS discovery when enabled
 			if (autodiscovery) {
-				this.deviceDiscovery(); // Start MDNS autodiscovery
+				if (resetTimers['autodiscovery']) resetTimers['autodiscovery'] = clearTimeout(resetTimers['autodiscovery']);
+				this.log.info(`Adapter ready, automatic Device Discovery will be acticated in 30 seconds.`);
+				resetTimers['autodiscovery'] = setTimeout(async () => {
+					this.deviceDiscovery(); // Start MDNS autodiscovery
+				}, (30000));
 			} else {
 				this.log.warn(`Auto Discovery disabled, new devices (or IP changes) will NOT be detected automatically!`);
 			}
@@ -182,7 +186,7 @@ class Esphome extends utils.Adapter {
 	deviceDiscovery() {
 		try {
 
-			this.log.info(`Auto Discovery started, new devices (or IP changes) will be detected automatically`);
+			this.log.info(`Automatic device Discovery started, new devices (or IP changes) will be detected automatically`);
 			discovery = new Discovery();
 
 			discovery.on('info', async (message) => {
@@ -191,7 +195,8 @@ class Esphome extends utils.Adapter {
 					if (this.deviceInfo[message.address] == null) {
 						this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${message.address}, trying to initialize`);
 						//ToDo: Add default Encryption Key
-						this.connectDevices(`${message.address}`, apiPass, '');
+						// Only run autodiscovery if device is unknown yet
+						if (!this.deviceInfo[message.address]) this.connectDevices(`${message.address}`, apiPass, '');
 					}
 				} catch (e) {
 					this.log.error(`[deviceDiscovery handler] ${e}`);
