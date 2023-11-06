@@ -1187,7 +1187,7 @@ class Esphome extends utils.Adapter {
 						for (const device in this.deviceInfo) {
 							tableEntrys.push({
 								'MACAddress' : this.deviceInfo[device].mac,
-								'deviceName' : this.deviceInfo[device].deviceName,
+								'deviceName' : this.deviceInfo[device].deviceInfo.name,
 								'ip' : this.deviceInfo[device].ip,
 								'connectState' : this.deviceInfo[device].connectStatus
 							});
