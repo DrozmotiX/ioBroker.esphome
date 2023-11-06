@@ -2,211 +2,297 @@
 	"i18n": true,
 	"type": "tabs",
 	"items": {
+		// Main Page and generic Setting of Adapter & ESPHome Dashboard
 		"_options": {
 			"type": "panel",
 			"label": "Main settings",
 			"items": {
+				// Header ESPHome
 				"headerESPHomeDashboard": {
 					"type": "header",
-					"text": "ESPHome Dashboard integration",
+					"text": "lblHeaderMainpage",
 					"size": 1
 				},
-				"headerESPHomeDashboard-details-1": {
+				// Introduction text
+				"introLine-1": {
 					"type": "staticText",
-					"text": "ioBroker ESPHome allows to manage and control ESPHome capable devices, you must create and upload these binaries by yourself!"
+					"text": "introLine-1"
 				},
-				"headerESPHomeDashboard-details-2": {
+				"introLine-2": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "ESPHome Dashboard is required to build these binaries. As soon a device firmware is flashed and operational, ESPHome Dashboard is not required anymore to allow communications with ioBroker"
+					"text": "introLine-2"
 				},
-				"headerESPHomeDashboard-details-emptyLine-1": {
+
+				"emptyLine-1": {
 					"newLine": true,
 					"type": "staticText",
 					"text": ""
 				},
+
+				// Mentioning & link to ESPHome project
 				"headerESPHomeDashboard-details-3": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "For more information about ESPHome, example configuration and links to communities please visit:"
+					"text": "ESPHomeCommunityLink"
 				},
 				"headerESPHomeDashboard-details-Link": {
 					"type": "staticLink",
 					"label": "esphome.io",
 					"href" : "https://esphome.io/"
 				},
-				"headerESPHomeDashboard-details-emptyLine-2": {
+				"emptyLine-2": {
 					"newLine": true,
 					"type": "staticText",
 					"text": ""
 				},
+
+				// ESPHome Dashboard Explanation
 				"headerESPHomeDashboard-details-4": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "You can either run ESPHome Dashboard separately, or activate the option below to run it native in ioBroker"
+					"text": "lblEnableESPHome"
 				},
+
+				// ESPHome Dashboard configuration
 				"ESPHomeDashboardEnabled": {
 					"newLine": true,
 					"type": "checkbox",
 					"sm": 2,
 					"md": 2,
 					"lg": 2,
-					"label": "Enable built-in ESPHome dashboard"
+					"label": "chkEnableESPHome"
 				},
 				"ESPHomeDashboardIP": {
 					"type": "text",
 					"text": "",
 					"sm": 3,
-					"label": "IP-Address where ESPHome Dashboard is running to integrate in ioBroker Admin"
+					"label": "lblESPHomeIP"
 				},
 				"ESPHomeDashboardPort": {
 					"type": "text",
 					"text": "",
 					"sm": 1,
 					"readOnly" : true,
-					"label": "Port of ESPHome Dashboard"
+					"label": "lblESPHomePort"
 				},
+
+				// Explanation usage of IP-Address input field
 				"headerESPHomeDashboard-details-5": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "To show ESPHome dashboard in ioBroker admin tab, its required to provide the IP-Ares on which installation its running"
+					"text": "lblDashboardLink"
 				},
 
-				"headerESPHomeDashboard-details-emptyLine-3": {
+				// Some empty lines to move next head a little down
+				"emptyLine-3": {
 					"newLine": true,
 					"type": "staticText",
 					"text": ""
 				},
-				"headerESPHomeDashboard-details-emptyLine-4": {
+				"emptyLine-4": {
 					"newLine": true,
 					"type": "staticText",
 					"text": ""
 				},
-				"headerESPHomeDashboard-details-emptyLine-5": {
+				"emptyLine-5": {
 					"newLine": true,
 					"type": "staticText",
 					"text": ""
 				},
 
+				// Header ESPHome communication details
 				"howToConnect": {
 					"type": "header",
-					"text": "How to connect an ESPHome capable device to ioBroker",
+					"text": "lblHeaderConnect",
 					"size": 1
 				},
 
+				// Lines of text with details
 				"headerhowToConnect-details-1": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "The ESPHome native API is used to communicate with clients directly, with a highly-optimized network protocol. Native API has many advantages over using MQTT for communication with Home Automation software "
+					"text": "lblConnectDetails-Line-1"
 				},
 
 				"headerhowToConnect-details-2": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "After adding an api: line to your ESPHome configuration you can go to this page and and wait for the ESPHome device to show up under the discovered devices section (can take up to 5 minutes) or add the device manually by choosing “add Device” from the devices overview and entering “<NODE_NAME>.local” or the IP address of the unit in the “Host” field."
+					"text": "lblConnectDetails-Line-2"
 				},
 				"headerhowToConnect-details-3": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "The ESPHome native API is based on a custom TCP protocol using protocol buffers. You can find the protocol data structure definitions here:"
+					"text": "lblConnectDetails-Line-3"
 				},
+
+				// Mention & link to api.proto project
 				"headerESPHomeDashboard-details-api.proto": {
 					"type": "staticLink",
 					"label": "api.proto",
 					"href" : "https://github.com/esphome/esphome/blob/dev/esphome/components/api/api.proto"
 				},
 
-				"headerHowToConnect-details-emptyLine-1": {
+				"emptyLine-6": {
 					"newLine": true,
 					"type": "staticText",
 					"text": ""
 				},
+
+				// Text explaining ioBroker integration
 				"headerHowToConnect-details-3": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "ioBroker communicates directly by Native API instead of MQTT to provide you the best possible experience and support of encryption keys (recommend) instead of API/MQTT passwords"
+					"text": "lblConnectIobroker"
 				},
 
-				"headerHowToConnect-details-emptyLine-2": {
+				"emptyLine-7": {
 					"newLine": true,
 					"type": "staticText",
 					"text": ""
 				},
-				"headerHowToConnect-details-emptyLine-3": {
+				"emptyLine-8": {
 					"newLine": true,
 					"type": "staticText",
 					"text": ""
 				},
 
+				// Header default credentials
 				"defaultCredentials": {
 					"type": "header",
-					"text": "Default API / Encryption keys settings devices (not recommended)",
+					"text": "lblDefaultCredentials",
 					"size": 1
 				},
+
+				// Explanation of usage and warning
 				"headerdefaultCredentials-details-1": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "Each devices should have its own unique encryption Key (recommended) or API password, device discovery (when enabled) detects all devices and tries to connect with credentials below"
+					"text": "lblDefaultCredentials-Line-1"
 				},
 				"headerdefaultCredentials-details-2": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "If you assign an unique encryption key (recommended) or API password, new devices will show up on Discovered Devices tab (or must be added) and you must provide the unique credentials manually"
+					"text": "lblDefaultCredentials-Line-2"
 				},
+
+				// Credentials which will be stored (encrypted) in adapter config object
 				"encryptionKey": {
 					"newLine": true,
 					"type": "password",
-					"label": "Default encryption Key",
+					"label": "lblEncryptionKey",
 					"sm": 3
 				},
 				"apiPass": {
 					"type": "password",
-					"label": "Default native API password (legacy)",
+					"label": "lblApiPass",
 					"sm": 2
 				}
 			}
 		},
+
+		// Tab devices
 		"devices": {
 			"type": "panel",
 			"label": "Devices",
 			"items": {
+
+				// Enable/disable autodiscovery and store setting in adapter config object
 				"autodiscovery": {
 					"newLine": true,
 					"type": "checkbox",
 					"sm": 12,
 					"md": 2,
-					"label": "Device Discovery enabled"
-				},
-				"loadDevices": {
-					"type": "sendTo",
-					"command": "loadDevices",
-					"jsonData": "{ \"service\": \"template\"}",
-					"label": "Refresh device overview",
-					"tooltip": "restoreDefaultToolTip",
-					"useNative": true,
-					"xs": 2,
-					"sm": 2,
-					"md": 2,
-					"lg": 2
-				},
-				"addModDevices": {
-					"type": "sendTo",
-					"command": "loadDevices",
-					"jsonData": "{ \"service\": \"template\"}",
-					"label": "ADD / Modify devices",
-					"tooltip": "restoreDefaultToolTip",
-					"useNative": true,
-					"xs": 2,
-					"sm": 2,
-					"md": 2,
-					"lg": 2
-				},
-				"details-1": {
-					"newLine": true,
-					"type": "staticText",
-					"text": "Adapter must be running to load/managed devices ! Changes cannot be made directly into this table, use ADD / Modify Devices button: "
+					"label": "lblAutoDiscovery"
 				},
 
+				// Refresh table showing all devices
+				// Sends message to backend to get all current known devices, their configuration and connection status
+				"loadDevices": {
+					"type": "sendTo",
+					"hidden": "!_alive",
+					"command": "loadDevices",
+					"jsonData": "{ \"service\": \"template\"}",
+					"label": "lblLoadDevices",
+					"tooltip": "restoreDefaultToolTip",
+					"useNative": true,
+					"xs": 2,
+					"sm": 2,
+					"md": 2,
+					"lg": 2
+				},
+
+				// Text to explain adapter must be running to load this table
+				"details-1": {
+					"type": "staticText",
+					"text": "lblTxtNoButtonsIfNotActive",
+					"hidden": "_alive"
+				},
+
+				// Input fields to ADD / Modify devices
+				"deviceIP": {
+					"newLine": true,
+					"type": "autocompleteSendTo",
+					"command": "getDeviceIPs",
+					"jsonData": "{ \"service\": \"${data.deviceInputIP}\" }",
+					"xs": 3,
+					"sm": 3,
+					"md": 3,
+					"lg": 3,
+					"label": "lblInputDeviceIP",
+					"tooltip": "TypeFilter"
+				},
+				"encryptionKey": {
+					"type": "password",
+					"label": "lblInputEncryptionKey",
+					"doNotSave": true,
+					"default": "",
+					"tooltip": "ttCloudPassword",
+					"help": "hlpCloudPassword",
+					"xs": 2,
+					"sm": 2,
+					"md": 2,
+					"lg": 2
+				},
+				"apiPassword": {
+					"type": "password",
+					"label": "lblInputApiPassword",
+					"doNotSave": true,
+					"default": "",
+					"tooltip": "ttCloudPassword",
+					"help": "hlpCloudPassword"
+				},
+
+				// Button do ADD / Modify devices, sends
+				// Sends device IP and credentials to backend
+				"_addUpdateDevice": {
+					"type": "sendTo",
+					"label": "lbl_addUpdateDevice",
+					"variant": "outlined",
+					"showProcess" : true,
+					"command": "_addUpdateDevice",
+					"jsonData": "{ \"ip\": \"${data.deviceIP}\", \"encryptionKey\": \"${data.encryptionKey}\", \"apiPassword\": \"${data.apiPassword}\" }",
+					"useNative": true,
+					"disabled": "data.deviceIP===''",
+					"hidden": "!_alive",
+					"tooltip": "ttGetStationId",
+					"help": "hlpGetStationId"
+				},
+
+				"deleteDevice": {
+					"type": "sendTo",
+					"label": "lblDelDevice",
+					"variant": "outlined",
+					"showProcess" : true,
+					"command": "deleteDevice",
+					"jsonData": "{ \"ip\": \"${data.deviceIP}\"}",
+					"useNative": true,
+					"hidden": "!_alive",
+					"tooltip": "ttGetStationId",
+					"help": "hlpGetStationId"
+				},
+
+				// Table (provided by backend) of all devices and their connection status
 				"templateTable": {
 					"type": "table",
 					"noDelete": true,
@@ -215,8 +301,8 @@
 					"sm": 12,
 					"md": 5,
 					"lg": 12,
-					"hidden": "data.templateTable[0].template == 'template.NewMessage'",
-					"label": "",
+					"hidden": "data._templateTable[0].template == 'template.NewMessage'",
+					"label": "lblDevicesTable",
 					"showSecondAddAt": 5,
 					"items": [
 						{
@@ -276,9 +362,7 @@
 		"ignoreList": {
 			"type": "panel",
 			"label": "Ignore List",
-			"items": {
-
-			}
+			"items": {}
 		}
 	}
 }
