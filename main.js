@@ -233,6 +233,7 @@ class Esphome extends utils.Adapter {
 			this.deviceInfo[host] = {
 				connected : false,
 				connecting : true,
+				connectStatus: 'Connecting',
 				connectionError : false,
 				initialized: false,
 				ip : host
@@ -282,12 +283,14 @@ class Esphome extends utils.Adapter {
 							connected : false,
 							connecting : true,
 							connectionError : false,
+							connectStatus: 'Connected',
 							initialized: false,
 							ip : host
 						};
 					} else {
 						this.deviceInfo[host].connected = true;
 						this.deviceInfo[host].connecting = false;
+						this.deviceInfo[host].connectStatus = 'Connected';
 					}
 					this.log.info(`ESPHome client ${host} connected`);
 					// Clear possible present warn messages for device from previous connection
@@ -323,7 +326,8 @@ class Esphome extends utils.Adapter {
 						this.deviceInfo[host] = {
 							connected : false,
 							connecting: false,
-							connectionError : true,
+							connectionError : false,
+							connectStatus: 'Disconnected',
 							deviceName : cacheDeviceInformation.deviceName,
 							deviceInfoName : cacheDeviceInformation.deviceInfoName,
 							ip : host
@@ -340,6 +344,7 @@ class Esphome extends utils.Adapter {
 			client[host].on('initialized', () => {
 				this.log.info(`ESPHome  client ${this.deviceInfo[host].deviceInfoName} on ip ${host} initialized`);
 				this.deviceInfo[host].initialized = true;
+				this.deviceInfo[host].connectStatus = "initialized";
 
 				// Start timer to cleanup unneeded objects
 				if (resetTimers[host]) resetTimers[host] = clearTimeout(resetTimers[host]);
@@ -372,6 +377,7 @@ class Esphome extends utils.Adapter {
 						ip: host,
 						connectError : false,
 						connected : true,
+						connectStatus: 'connected',
 						mac: deviceInfo.macAddress,
 						deviceInfo: deviceInfo,
 						deviceName: deviceName,
@@ -512,6 +518,7 @@ class Esphome extends utils.Adapter {
 
 					// Listen to state changes and write values to states (create state if not yet exists)
 					entity.on(`state`, async (/** @type {object} */ state) => {
+						this.deviceInfo[host].connectStatus = 'connected';
 						this.log.debug(`StateData: ${JSON.stringify(state)}`);
 						try {
 							this.log.debug(`[entityStateConfig] ${JSON.stringify(this.deviceInfo[host][entity.id])}`);
@@ -609,7 +616,9 @@ class Esphome extends utils.Adapter {
 						this.deviceInfo[host] = {
 							ip : host,
 							connectError : false,
-							connected : false
+							connected : false,
+							connecting : false,
+							connectStatus: 'Error',
 						};
 					}
 
@@ -620,6 +629,7 @@ class Esphome extends utils.Adapter {
 						if (!this.deviceInfo[host].connectError) {
 							this.log.error(optimisedError);
 							this.deviceInfo[host].connectError = true;
+							this.deviceInfo[host].connectStatus = 'Unreachable';
 							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
 						}
 					} else if (error.message.includes('EHOSTUNREACH')) {
@@ -627,6 +637,7 @@ class Esphome extends utils.Adapter {
 						if (!this.deviceInfo[host].connectError) {
 							this.log.error(optimisedError);
 							this.deviceInfo[host].connectError = true;
+							this.deviceInfo[host].connectStatus = 'Unreachable';
 							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
 						}
 					} else if (error.message.includes('Invalid password')) {
@@ -634,6 +645,7 @@ class Esphome extends utils.Adapter {
 						if (!this.deviceInfo[host].connectError) {
 							this.log.error(optimisedError);
 							this.deviceInfo[host].connectError = true;
+							this.deviceInfo[host].connectStatus = 'Invalid Password';
 							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
 						}
 					} else if (error.message.includes('Encryption expected')) {
@@ -641,6 +653,7 @@ class Esphome extends utils.Adapter {
 						if (!this.deviceInfo[host].connectError) {
 							this.log.error(optimisedError);
 							this.deviceInfo[host].connectError = true;
+							this.deviceInfo[host].connectStatus = 'Encryption Key Missing';
 							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
 						}
 					} else if (error.message.includes('ECONNRESET')) {
@@ -655,10 +668,12 @@ class Esphome extends utils.Adapter {
 						if (!this.deviceInfo[host].connectError) {
 							this.log.warn(optimisedError);
 							this.deviceInfo[host].connectError = true;
+							this.deviceInfo[host].connectStatus = 'unreachable';
 							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
 						}
 					}  else if (error.message.includes('ECONNREFUSED')) {
 						optimisedError = `Client ${host} not yet ready to connect, will try again!`;
+						this.deviceInfo[host].connectStatus = 'Initializing';
 						this.log.warn(optimisedError);
 
 					} else if (error.message.includes('write after end')) {
@@ -1174,7 +1189,7 @@ class Esphome extends utils.Adapter {
 								'MACAddress' : this.deviceInfo[device].mac,
 								'deviceName' : this.deviceInfo[device].deviceName,
 								'ip' : this.deviceInfo[device].ip,
-								'connectState' : 'Not Ye Implemented'
+								'connectState' : this.deviceInfo[device].connectStatus
 							});
 						}
 
