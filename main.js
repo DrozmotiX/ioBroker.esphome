@@ -226,18 +226,22 @@ class Esphome extends utils.Adapter {
 			// Cancel process if connection try is already in progress
 			if (this.deviceInfo[host] && this.deviceInfo[host].connecting) return;
 
-			// Clear any existing memory information for this device
-			delete this.deviceInfo[host];
-
 			// Reserve basic memory information for this device
-			this.deviceInfo[host] = {
-				connected : false,
-				connecting : true,
-				connectStatus: 'Connecting',
-				connectionError : false,
-				initialized: false,
-				ip : host
-			};
+
+			if (!this.deviceInfo[host]) {
+				this.deviceInfo[host] = {
+					connected : true,
+					connecting : false,
+					connectionError : false,
+					connectStatus: 'Connecting',
+					initialized: false,
+					ip : host
+				};
+			} else {
+				this.deviceInfo[host].connected = true;
+				this.deviceInfo[host].connecting = false;
+				this.deviceInfo[host].connectStatus = 'Connecting';
+			}
 
 			if (!deviceEncryptionKey || deviceEncryptionKey === '') {
 				client[host] = new Client({
@@ -280,8 +284,8 @@ class Esphome extends utils.Adapter {
 					delete this.deviceInfo[host];
 					if (!this.deviceInfo[host]) {
 						this.deviceInfo[host] = {
-							connected : false,
-							connecting : true,
+							connected : true,
+							connecting : false,
 							connectionError : false,
 							connectStatus: 'Connected',
 							initialized: false,
@@ -344,7 +348,7 @@ class Esphome extends utils.Adapter {
 			client[host].on('initialized', () => {
 				this.log.info(`ESPHome  client ${this.deviceInfo[host].deviceInfoName} on ip ${host} initialized`);
 				this.deviceInfo[host].initialized = true;
-				this.deviceInfo[host].connectStatus = "initialized";
+				this.deviceInfo[host].connectStatus = 'initialized';
 
 				// Start timer to cleanup unneeded objects
 				if (resetTimers[host]) resetTimers[host] = clearTimeout(resetTimers[host]);
@@ -386,8 +390,7 @@ class Esphome extends utils.Adapter {
 						encryptionKey: deviceEncryptionKey,
 					};
 
-					// Store MAC & IP relation, delete possible existing entry before
-					delete this.deviceStateRelation[deviceName];
+					this.deviceInfo[host].connectStatus = 'initialising';
 					this.deviceStateRelation[deviceName] = {'ip': host};
 
 					this.log.debug(`DeviceInfo ${this.deviceInfo[host].deviceInfo.name}: ${JSON.stringify(this.deviceInfo)}`);
@@ -1179,15 +1182,12 @@ class Esphome extends utils.Adapter {
 					{
 						let data = {};
 
-						console.log(`mWSSAGE`);
-
-
 						const tableEntrys = [];
 
 						for (const device in this.deviceInfo) {
 							tableEntrys.push({
 								'MACAddress' : this.deviceInfo[device].mac,
-								'deviceName' : this.deviceInfo[device].deviceInfo.name,
+								'deviceName' : this.deviceInfo[device].deviceInfo ? this.deviceInfo[device].deviceInfo.name : '',
 								'ip' : this.deviceInfo[device].ip,
 								'connectState' : this.deviceInfo[device].connectStatus
 							});
