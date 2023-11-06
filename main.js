@@ -1159,6 +1159,33 @@ class Esphome extends utils.Adapter {
 						await this.connectDevices(obj.message['device-ip'], obj.message['device-pass'], obj.message['deviceEncryptionKey']);
 					}
 					break;
+
+				case 'loadDevices':
+					{
+						let data = {};
+
+						console.log(`mWSSAGE`);
+
+
+						const tableEntrys = [];
+
+						for (const device in this.deviceInfo) {
+							tableEntrys.push({
+								'MACAddress' : this.deviceInfo[device].mac,
+								'deviceName' : this.deviceInfo[device].deviceName,
+								'ip' : this.deviceInfo[device].ip,
+								'connectState' : 'Not Ye Implemented'
+							});
+						}
+
+						data = {
+							native: {
+								templateTable: tableEntrys,
+							},
+						};
+						this.sendTo(obj.from, obj.command, data, obj.callback);
+					}
+					break;
 			}
 		} catch (e) {
 			this.sendSentry(`[onMessage] ${e}`);

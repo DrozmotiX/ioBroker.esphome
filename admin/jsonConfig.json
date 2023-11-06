@@ -1,0 +1,284 @@
+{
+	"i18n": true,
+	"type": "tabs",
+	"items": {
+		"_options": {
+			"type": "panel",
+			"label": "Main settings",
+			"items": {
+				"headerESPHomeDashboard": {
+					"type": "header",
+					"text": "ESPHome Dashboard integration",
+					"size": 1
+				},
+				"headerESPHomeDashboard-details-1": {
+					"type": "staticText",
+					"text": "ioBroker ESPHome allows to manage and control ESPHome capable devices, you must create and upload these binaries by yourself!"
+				},
+				"headerESPHomeDashboard-details-2": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "ESPHome Dashboard is required to build these binaries. As soon a device firmware is flashed and operational, ESPHome Dashboard is not required anymore to allow communications with ioBroker"
+				},
+				"headerESPHomeDashboard-details-emptyLine-1": {
+					"newLine": true,
+					"type": "staticText",
+					"text": ""
+				},
+				"headerESPHomeDashboard-details-3": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "For more information about ESPHome, example configuration and links to communities please visit:"
+				},
+				"headerESPHomeDashboard-details-Link": {
+					"type": "staticLink",
+					"label": "esphome.io",
+					"href" : "https://esphome.io/"
+				},
+				"headerESPHomeDashboard-details-emptyLine-2": {
+					"newLine": true,
+					"type": "staticText",
+					"text": ""
+				},
+				"headerESPHomeDashboard-details-4": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "You can either run ESPHome Dashboard separately, or activate the option below to run it native in ioBroker"
+				},
+				"ESPHomeDashboardEnabled": {
+					"newLine": true,
+					"type": "checkbox",
+					"sm": 2,
+					"md": 2,
+					"lg": 2,
+					"label": "Enable built-in ESPHome dashboard"
+				},
+				"ESPHomeDashboardIP": {
+					"type": "text",
+					"text": "",
+					"sm": 3,
+					"label": "IP-Address where ESPHome Dashboard is running to integrate in ioBroker Admin"
+				},
+				"ESPHomeDashboardPort": {
+					"type": "text",
+					"text": "",
+					"sm": 1,
+					"readOnly" : true,
+					"label": "Port of ESPHome Dashboard"
+				},
+				"headerESPHomeDashboard-details-5": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "To show ESPHome dashboard in ioBroker admin tab, its required to provide the IP-Ares on which installation its running"
+				},
+
+				"headerESPHomeDashboard-details-emptyLine-3": {
+					"newLine": true,
+					"type": "staticText",
+					"text": ""
+				},
+				"headerESPHomeDashboard-details-emptyLine-4": {
+					"newLine": true,
+					"type": "staticText",
+					"text": ""
+				},
+				"headerESPHomeDashboard-details-emptyLine-5": {
+					"newLine": true,
+					"type": "staticText",
+					"text": ""
+				},
+
+				"howToConnect": {
+					"type": "header",
+					"text": "How to connect an ESPHome capable device to ioBroker",
+					"size": 1
+				},
+
+				"headerhowToConnect-details-1": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "The ESPHome native API is used to communicate with clients directly, with a highly-optimized network protocol. Native API has many advantages over using MQTT for communication with Home Automation software "
+				},
+
+				"headerhowToConnect-details-2": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "After adding an api: line to your ESPHome configuration you can go to this page and and wait for the ESPHome device to show up under the discovered devices section (can take up to 5 minutes) or add the device manually by choosing “add Device” from the devices overview and entering “<NODE_NAME>.local” or the IP address of the unit in the “Host” field."
+				},
+				"headerhowToConnect-details-3": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "The ESPHome native API is based on a custom TCP protocol using protocol buffers. You can find the protocol data structure definitions here:"
+				},
+				"headerESPHomeDashboard-details-api.proto": {
+					"type": "staticLink",
+					"label": "api.proto",
+					"href" : "https://github.com/esphome/esphome/blob/dev/esphome/components/api/api.proto"
+				},
+
+				"headerHowToConnect-details-emptyLine-1": {
+					"newLine": true,
+					"type": "staticText",
+					"text": ""
+				},
+				"headerHowToConnect-details-3": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "ioBroker communicates directly by Native API instead of MQTT to provide you the best possible experience and support of encryption keys (recommend) instead of API/MQTT passwords"
+				},
+
+				"headerHowToConnect-details-emptyLine-2": {
+					"newLine": true,
+					"type": "staticText",
+					"text": ""
+				},
+				"headerHowToConnect-details-emptyLine-3": {
+					"newLine": true,
+					"type": "staticText",
+					"text": ""
+				},
+
+				"defaultCredentials": {
+					"type": "header",
+					"text": "Default API / Encryption keys settings devices (not recommended)",
+					"size": 1
+				},
+				"headerdefaultCredentials-details-1": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "Each devices should have its own unique encryption Key (recommended) or API password, device discovery (when enabled) detects all devices and tries to connect with credentials below"
+				},
+				"headerdefaultCredentials-details-2": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "If you assign an unique encryption key (recommended) or API password, new devices will show up on Discovered Devices tab (or must be added) and you must provide the unique credentials manually"
+				},
+				"encryptionKey": {
+					"newLine": true,
+					"type": "password",
+					"label": "Default encryption Key",
+					"sm": 3
+				},
+				"apiPass": {
+					"type": "password",
+					"label": "Default native API password (legacy)",
+					"sm": 2
+				}
+			}
+		},
+		"devices": {
+			"type": "panel",
+			"label": "Devices",
+			"items": {
+				"autodiscovery": {
+					"newLine": true,
+					"type": "checkbox",
+					"sm": 12,
+					"md": 2,
+					"label": "Device Discovery enabled"
+				},
+				"loadDevices": {
+					"type": "sendTo",
+					"command": "loadDevices",
+					"jsonData": "{ \"service\": \"template\"}",
+					"label": "Refresh device overview",
+					"tooltip": "restoreDefaultToolTip",
+					"useNative": true,
+					"xs": 2,
+					"sm": 2,
+					"md": 2,
+					"lg": 2
+				},
+				"addModDevices": {
+					"type": "sendTo",
+					"command": "loadDevices",
+					"jsonData": "{ \"service\": \"template\"}",
+					"label": "ADD / Modify devices",
+					"tooltip": "restoreDefaultToolTip",
+					"useNative": true,
+					"xs": 2,
+					"sm": 2,
+					"md": 2,
+					"lg": 2
+				},
+				"details-1": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "Adapter must be running to load/managed devices ! Changes cannot be made directly into this table, use ADD / Modify Devices button: "
+				},
+
+				"templateTable": {
+					"type": "table",
+					"noDelete": true,
+					"newLine": true,
+					"xs": 12,
+					"sm": 12,
+					"md": 5,
+					"lg": 12,
+					"hidden": "data.templateTable[0].template == 'template.NewMessage'",
+					"label": "",
+					"showSecondAddAt": 5,
+					"items": [
+						{
+							"type": "text",
+							"readOnly" : true,
+							"attr": "MACAddress",
+							"width": "15% ",
+							"title": "MAC-Address",
+							"tooltip": "templateKeyTip",
+							"filter": false,
+							"sort": false,
+							"default": "",
+							"validatorNoSaveOnError": true
+						},
+						{
+							"type": "text",
+							"readOnly" : true,
+							"attr": "deviceName",
+							"width": "15% ",
+							"title": "Device Name",
+							"tooltip": "templateKeyTip",
+							"filter": false,
+							"sort": false,
+							"default": "",
+							"validatorNoSaveOnError": true
+						},
+						{
+							"type": "text",
+							"attr": "ip",
+							"readOnly" : true,
+							"width": "15% ",
+							"title": "IP Address",
+							"tooltip": "templateKeyTip",
+							"filter": false,
+							"sort": false,
+							"default": "",
+//							"validator": "const x={};for (const c of globalData.templateTable) {if (x[c.templateKey]==='x') return false; x[c.templateKey]='x';}; return true;",
+							"validatorNoSaveOnError": true
+						},
+						{
+							"type": "text",
+							"readOnly" : true,
+							"attr": "connectState",
+							"width": "15% ",
+							"title": "Connection Status",
+							"tooltip": "templateKeyTip",
+							"filter": false,
+							"sort": false,
+							"default": "",
+							"validatorNoSaveOnError": true
+						}
+
+					]
+				}
+			}
+		},
+		"ignoreList": {
+			"type": "panel",
+			"label": "Ignore List",
+			"items": {
+
+			}
+		}
+	}
+}

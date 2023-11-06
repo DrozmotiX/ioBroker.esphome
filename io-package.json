@@ -141,6 +141,9 @@
     "compact": true,
     "connectionType": "local",
     "dataSource": "push",
+    "adminUI": {
+      "config": "json"
+    },
     "materialize": true,
     "plugins": {
       "sentry": {
@@ -164,11 +167,13 @@
     ]
   },
   "encryptedNative": [
-    "apiPass"
+    "apiPass",
+    "encryptionKey"
   ],
   "native": {
     "reconnectInterval": 30,
     "apiPass": "",
+    "encryptionKey": "",
     "autodiscovery": true,
     "configStates": false,
     "ESPHomeDashboardEnabled": false,
