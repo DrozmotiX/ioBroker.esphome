@@ -6,6 +6,11 @@
     "name": "DutchmanNL",
     "email": "rdrozda86@gmail.com"
   },
+  "contributors": [
+    {
+      "name": "SimonFischer04"
+    }
+  ],
   "homepage": "https://github.com/DrozmotiX/ioBroker.esphome",
   "license": "MIT",
   "keywords": [
