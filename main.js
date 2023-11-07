@@ -969,21 +969,23 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-	 * Handles error mesages for log and Sentry
-	 * @param {string} msg Error message
+	 * Handles error messages for log and Sentry
+	 * @param {any} error Error message
 	 */
-	sendSentry(msg) {
+	errorHandler(error) {
+		let errorMsg = error;
+		if (error instanceof Error && error.stack != null) errorMsg = error.stack;
 		try {
 			if (!disableSentry) {
-				this.log.info(`[Error caught and send to Sentry, thank you collaborating!] error: ${msg}`);
+				this.log.info(`[Error caught and send to Sentry, thank you collaborating!] error: ${errorMsg}`);
 				if (this.supportsFeature && this.supportsFeature('PLUGINS')) {
 					const sentryInstance = this.getPluginInstance('sentry');
 					if (sentryInstance) {
-						sentryInstance.getSentryObject().captureException(msg);
+						sentryInstance.getSentryObject().captureException(errorMsg);
 					}
 				}
 			} else {
-				this.log.error(`Sentry disabled, error caught : ${msg}`);
+				this.log.error(`Sentry disabled, error caught : ${errorMsg}`);
 			}
 		} catch (error) {
 			this.log.error(`Error in function sendSentry: ${error}`);

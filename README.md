@@ -19,7 +19,7 @@
 ## ESPHome adapter for ioBroker
 
 Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome.
-Native integration of ESPHome managed device (Including Dashboard) by its native API and ensure all data is synchronised (live-event handling, no data polling ! :)
+Native integration of ESPHome managed device (Including Dashboard) by its native API and ensure all data is synchronized (live-event handling, no data polling ! :)
 
 ![Logo](admin/img/dashboard.png)
 
@@ -112,13 +112,20 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
+
+### __WORK IN PROGRESS__ - Rebuild Admin Interface & Connection handler
+* (DutchmanNL) Admin interface redesigned to JSON-Config
+* (DutchmanNL) Device connection handling and visibility of devices in admin improved
+* (DutchmanNL) Possibility added to exclude IP-Addresses from device discovery, resolves #175
+* (DutchmanNL) State implemented to show current connection status (unreachable/disconnected/connected) to improve management of devices
+
 ### 0.4.1 (2023-11-05)
 * (DutchmanNL) Bugfix: Password / connection issues in previous beta resolves #179
 * (DutchmanNL) Bugfix: Allow individual API password or encryption keys for devices, resolves #174
 * (DutchmanNL) Support ESPHome device Encryption Key (you should migrate from API password to Encryption Key ! resolves #152)
 
 ### 0.4.0 (2023-11-03)
-* (DutchmanNL) Added cleanup capability for unused channels & states after initialisation of device, resolves #39
+* (DutchmanNL) Added cleanup capability for unused channels & states after initialization of device, resolves #39
 * (DutchmanNL) Added button to info channel which allows to delete all offline devices from adapter tree. resolves #39
 * (DutchmanNL) [Breaking] Backup strategy changed, requires [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) and activate option for ESPHome, fixes #129
 
@@ -135,7 +142,7 @@ If you like my work, please consider a personal donation
 * (DutchmanNL) ESPHome dashboard default disabled
 * (SimonFischer04) Migrate to @2colors/esphome-native-api
 * (DutchmanNL) Automatically create needed directories, resolves #168
-* (SimonFischer04) Migrate usage of python to new structure, should solve all ESPHome Dashboard related installation issues
+* (SimonFischer04) Migrate usage of python to new structure should solve all ESPHome Dashboard-related installation issues
 
 ## License
 MIT License
