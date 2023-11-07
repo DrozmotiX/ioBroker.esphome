@@ -7,6 +7,7 @@
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 const utils = require('@iobroker/adapter-core');
+const deviceInfo = require('./lib/helpers.js');
 // @ts-ignore Client is just missing in index.d.ts file
 const {Client, Discovery} = require('@2colors/esphome-native-api');
 let discovery;
@@ -18,6 +19,7 @@ const {clearTimeout} = require('timers');
 const client = {};
 const resetTimers = {}; // Memory allocation for all running timers
 let reconnectInterval, apiPass, autodiscovery, dashboardProcess, createConfigStates;
+const clientDetails = {};
 
 class Esphome extends utils.Adapter {
 
@@ -121,6 +123,7 @@ class Esphome extends utils.Adapter {
 				// );
 			} catch (e) {
 				// Directory has an issue reading/writing data, iob fix should be executed
+				this.log.warn(`ESPHome DDashboard is unable to access directory to store YAML configuration data, please run ioBroker fix`);
 			}
 
 			const dashboardProcess = python('esphome', ['dashboard', `${dataDir}esphome.${this.instance}`]);
@@ -150,7 +153,7 @@ class Esphome extends utils.Adapter {
 
 			// eslint-disable-next-line no-unused-vars
 			dashboardProcess.on('exit', (code, signal) => {
-				this.log.warn(`ESPHome Dashboard deactivated`);
+				this.log.warn(`ESPHome Dashboard stopped`);
 			});
 
 			dashboardProcess.on('error', (data) => {
@@ -175,7 +178,15 @@ class Esphome extends utils.Adapter {
 
 			// Get basic data of known devices and start reading data
 			for (const i in knownDevices) {
-				this.connectDevices(knownDevices[i].native.ip, knownDevices[i].native.passWord, knownDevices[i].native.encryptionKey ? knownDevices[i].native.encryptionKey : '');
+				const deviceDetails = knownDevices[i].native;
+				this.connectDevices(
+					deviceDetails.ip,
+					deviceDetails.passWord ? deviceDetails.passWord : '',
+					deviceDetails.encryptionKey ? deviceDetails.encryptionKey : '',
+					deviceDetails.mac ? deviceDetails.mac : '',
+					deviceDetails.deviceName ? deviceDetails.deviceName : '',
+					deviceDetails.deviceFriendlyName ? deviceDetails.deviceName : ''
+				);
 			}
 		} catch (e) {
 			this.sendSentry(`[tryKnownDevices] ${e}`);
@@ -186,7 +197,7 @@ class Esphome extends utils.Adapter {
 	deviceDiscovery() {
 		try {
 
-			// Get list of IP-Addresses from Adapter config to exclude by autodiscovery
+			// Get a list of IP-Addresses from Adapter config to exclude by autodiscovery
 			const exludedIP = [];
 
 			for (const entry in this.config.ignoredDevices) {
@@ -198,24 +209,26 @@ class Esphome extends utils.Adapter {
 			this.log.info(`Automatic device Discovery started, new devices (or IP changes) will be detected automatically`);
 			discovery = new Discovery();
 
+			// Start device discory (MDNS)
+			discovery.run();
+
+			// Listener for discovered devices
 			discovery.on('info', async (message) => {
 				try {
 					this.log.debug(`Discovery message ${JSON.stringify(message)}`);
-					if (this.deviceInfo[message.address] == null && !exludedIP.includes(message.address)) {
-						this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${message.address}, trying to initialize`);
-						//ToDo: Add default Encryption Key
-						// Only run autodiscovery if device is unknown yet
-						if (!this.deviceInfo[message.address]
-							&& this.deviceInfo[message.address].connectError === false
-						&& !this.deviceInfo[message.address] && this.deviceInfo[message.address].connecting) {
-							this.connectDevices(`${message.address}`, apiPass, '');
+					// Ensure discovery process triggers only if a device is unknown (by IP) and not part of the exclusion list
+					if (this.deviceInfo[message.address] == null && !excludedIP.includes(message.address)) {
+						// Only run autodiscovery if a device is not yet connected or in progress to connect/deleting
+						if (!clientDetails[message.address]
+							this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${message.address}, trying to initialize`);
+							this.connectDevices(`${message.address}`, defaultApiPass, defaultEncryptionKey);
 						}
 					}
 				} catch (e) {
 					this.log.error(`[deviceDiscovery handler] ${e}`);
 				}
 			});
-			discovery.run();
+		} catch (error) {
 		} catch (e) {
 			this.sendSentry(`[deviceDiscovery] ${e}`);
 		}
@@ -223,33 +236,25 @@ class Esphome extends utils.Adapter {
 
 	/**
 	 * Handle Socket connections
-	 * @param {string} host IP adress of device
+	 * @param {string} host IP address of device
 	 * @param {string} deviceApiPass Native API credentials
 	 * @param {string} deviceEncryptionKey Encryption Key credentials
+	 * @param {string} [device] MAC-Address of a device
+	 * @param {string} [deviceName] Name of a device (MAC address without ":")
+	 * @param {string} [deviceFriendlyName] Friendly name of a device taken from YAML configuration
 	 */
-	connectDevices(host, deviceApiPass, deviceEncryptionKey) {
+	connectDevices(host, deviceApiPass, deviceEncryptionKey, device, deviceName, deviceFriendlyName) {
 		try {
 			// const host = espDevices[device].ip;
 			this.log.info(`Try to connect to ${host}`);
 
-			// Cancel process if connection try is already in progress
-			if (this.deviceInfo[host] && this.deviceInfo[host].connecting) return;
-
-			// Reserve basic memory information for this device
-
-			if (!this.deviceInfo[host]) {
-				this.deviceInfo[host] = {
-					connected : true,
-					connecting : false,
-					connectionError : false,
-					connectStatus: 'Connecting',
-					initialized: false,
-					ip : host
-				};
+			// PrepareMemory area for device and connection details
+			if (!clientDetails[host]){
+				clientDetails[host] = new deviceInfo(host,device, deviceName, deviceFriendlyName);
 			} else {
-				this.deviceInfo[host].connected = true;
-				this.deviceInfo[host].connecting = false;
-				this.deviceInfo[host].connectStatus = 'Connecting';
+				// Cancel procedure if connection try or action to delete this device is already in progress or
+				if (clientDetails[host] && (clientDetails[host].connecting || clientDetails[host].deletionRequested)) return;
+				this.updateConnectionStatus(host,false,true, 'connecting');
 			}
 
 			if (!deviceEncryptionKey || deviceEncryptionKey === '') {
@@ -289,25 +294,13 @@ class Esphome extends utils.Adapter {
 			// Connection listener
 			client[host].on('connected', async () => {
 				try {
-					// Clear any existing memory information for this device
-					delete this.deviceInfo[host];
-					if (!this.deviceInfo[host]) {
-						this.deviceInfo[host] = {
-							connected : true,
-							connecting : false,
-							connectionError : false,
-							connectStatus: 'Connected',
-							initialized: false,
-							ip : host
-						};
-					} else {
-						this.deviceInfo[host].connected = true;
-						this.deviceInfo[host].connecting = false;
-						this.deviceInfo[host].connectStatus = 'Connected';
-					}
+
+					await this.updateConnectionStatus(host, true, false, 'Connected', false);
+
 					this.log.info(`ESPHome client ${host} connected`);
-					// Clear possible present warn messages for device from previous connection
+					// Clear possible present warning messages for devices from previous connection
 					delete warnMessages[host];
+
 				} catch (e) {
 					this.log.error(`connection error ${e}`);
 				}
@@ -316,9 +309,8 @@ class Esphome extends utils.Adapter {
 			client[host].on('disconnected', async () => 	{
 				try {
 					if (this.deviceInfo[host].deviceName != null) {
-						await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
-
-						// Check all created states in memory if their are related to this device
+						await this.updateConnectionStatus(host, false, false, 'disconnected', false);
+						// Cleanup all known states in memory related to this device
 						for (const state in this.createdStatesDetails) {
 							// Remove states from cache
 							if (state.split('.')[0] === this.deviceInfo[host].deviceName) {
@@ -326,25 +318,6 @@ class Esphome extends utils.Adapter {
 							}
 						}
 
-						// Cache relevant data before clearing memory space of device
-						const cacheDeviceInformation = {
-							deviceName: this.deviceInfo[host].deviceName,
-							deviceInfoName: this.deviceInfo[host].deviceInfoName,
-						};
-
-						// Clear any existing memory information for this device
-						delete this.deviceInfo[host];
-
-						// Reserve basic memory information for this device
-						this.deviceInfo[host] = {
-							connected : false,
-							connecting: false,
-							connectionError : false,
-							connectStatus: 'Disconnected',
-							deviceName : cacheDeviceInformation.deviceName,
-							deviceInfoName : cacheDeviceInformation.deviceInfoName,
-							ip : host
-						};
 						this.log.warn(`ESPHome client ${this.deviceInfo[host].deviceInfoName} | ${this.deviceInfo[host].deviceName} | on ${host} disconnected`);
 					} else {
 						this.log.warn(`ESPHome client ${host} disconnected`);
@@ -354,12 +327,14 @@ class Esphome extends utils.Adapter {
 				}
 			});
 
-			client[host].on('initialized', () => {
-				this.log.info(`ESPHome  client ${this.deviceInfo[host].deviceInfoName} on ip ${host} initialized`);
-				this.deviceInfo[host].initialized = true;
-				this.deviceInfo[host].connectStatus = 'initialized';
+			client[host].on('initialized', async () => {
+				this.log.info(`ESPHome  client ${clientDetails[host].deviceFriendlyName} on ip ${host} initialized`);
+				clientDetails[host].initialized = true;
+				clientDetails[host].connectStatus = 'initialized';
 
-				// Start timer to cleanup unneeded objects
+				await this.updateConnectionStatus(host, true, false, 'disconnected', false);
+
+				// Start timer to clean up unneeded objects
 				if (resetTimers[host]) resetTimers[host] = clearTimeout(resetTimers[host]);
 				resetTimers[host] = setTimeout(async () => {
 					await this.objectCleanup(host);
@@ -383,14 +358,18 @@ class Esphome extends utils.Adapter {
 
 					// Store device information into memory
 					const deviceName = this.replaceAll(deviceInfo.macAddress, `:`, ``);
+
+					clientDetails[host].mac = deviceInfo.macAddress;
+					clientDetails[host].deviceName = deviceName;
+					clientDetails[host].deviceFriendlyName = deviceInfo.name;
+
+					await this.updateConnectionStatus(host, true, false, 'Initializing', false);
+
 					this.deviceInfo[host] = {
 						adapterObjects : {
 							channels : []
 						},
 						ip: host,
-						connectError : false,
-						connected : true,
-						connectStatus: 'connected',
 						mac: deviceInfo.macAddress,
 						deviceInfo: deviceInfo,
 						deviceName: deviceName,
@@ -399,7 +378,6 @@ class Esphome extends utils.Adapter {
 						encryptionKey: deviceEncryptionKey,
 					};
 
-					this.deviceInfo[host].connectStatus = 'initialising';
 					this.deviceStateRelation[deviceName] = {'ip': host};
 
 					this.log.debug(`DeviceInfo ${this.deviceInfo[host].deviceInfo.name}: ${JSON.stringify(this.deviceInfo)}`);
@@ -418,6 +396,7 @@ class Esphome extends utils.Adapter {
 							name: this.deviceInfo[host].deviceInfoName,
 							mac: deviceInfo.macAddress,
 							deviceName: deviceName,
+							deviceFriendlyName : deviceInfo.name,
 							passWord: deviceApiPass,
 							encryptionKey: deviceEncryptionKey
 						},
@@ -426,10 +405,8 @@ class Esphome extends utils.Adapter {
 					// Read JSON and handle states
 					await this.TraverseJson(deviceInfo, `${deviceName}.info`);
 
-					// Create connection indicator at device info channel
-					await this.stateSetCreate(`${deviceName}.info._online`, `Online state`, true);
-
 					// Check if device connection is caused by adding  device from admin, if yes send OK message
+					// ToDo rebuild to new logic
 					if (this.messageResponse[host]) {
 						const massageObj = {
 							'type': 'info',
@@ -487,12 +464,12 @@ class Esphome extends utils.Adapter {
 						native: {},
 					});
 
-					// Cache created channel in device memory
+					// Create a channel in device memory
 					if (!this.deviceInfo[host].adapterObjects.channels.includes(`${this.namespace}.${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}`)) {
 						this.deviceInfo[host].adapterObjects.channels.push(`${this.namespace}.${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}`);
 					}
 
-					//Check if config channel should be created
+					//Check if a config channel should be created
 					if (!createConfigStates) {
 						// Delete folder structure if already present
 						try {
@@ -513,7 +490,7 @@ class Esphome extends utils.Adapter {
 							native: {},
 						});
 
-						// Cache created channel in device memory
+						// Store channel in device memory
 						if (!this.deviceInfo[host].adapterObjects.channels.includes(`${this.namespace}.${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`)) {
 							this.deviceInfo[host].adapterObjects.channels.push(`${this.namespace}.${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`);
 						}
@@ -531,13 +508,14 @@ class Esphome extends utils.Adapter {
 					// Listen to state changes and write values to states (create state if not yet exists)
 					entity.on(`state`, async (/** @type {object} */ state) => {
 						this.deviceInfo[host].connectStatus = 'connected';
+						await this.updateConnectionStatus(host, true, false, 'connected', false);
 						this.log.debug(`StateData: ${JSON.stringify(state)}`);
 						try {
 							this.log.debug(`[entityStateConfig] ${JSON.stringify(this.deviceInfo[host][entity.id])}`);
 							this.log.debug(`[entityStateData] ${JSON.stringify(state)}`);
 							const deviceDetails = `DeviceType ${this.deviceInfo[host][entity.id].type} | State-Keys ${JSON.stringify(state)} | [entityStateConfig] ${JSON.stringify(this.deviceInfo[host][entity.id])}`;
 
-							// Ensure proper initialisation of the state
+							// Ensure proper initialization of the state
 							switch (this.deviceInfo[host][entity.id].type) {
 								case 'BinarySensor':
 									await this.handleRegularState(`${host}`, entity, state, false);
@@ -623,69 +601,41 @@ class Esphome extends utils.Adapter {
 			client[host].on('error', async (error) => {
 				try {
 
-					// Reserve memory space for connection error if not already exist
-					if (!this.deviceInfo[host]){
-						this.deviceInfo[host] = {
-							ip : host,
-							connectError : false,
-							connected : false,
-							connecting : false,
-							connectStatus: 'Error',
-						};
-					}
-
 					let optimisedError = error.message;
 					// Optimise error messages
-					if (error.code === 'ETIMEDOUT') {
-						optimisedError = `Client ${host} not reachable !`;
-						if (!this.deviceInfo[host].connectError) {
-							this.log.error(optimisedError);
-							this.deviceInfo[host].connectError = true;
-							this.deviceInfo[host].connectStatus = 'Unreachable';
-							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
-						}
-					} else if (error.message.includes('EHOSTUNREACH')) {
+					if (error.message.includes('EHOSTUNREACH') || error.message.includes('EHOSTDOWN') || error.code.includes('ETIMEDOUT')) {
 						optimisedError = `Client ${host} unreachable !`;
-						if (!this.deviceInfo[host].connectError) {
+						if (!clientDetails[host].connectError) {
 							this.log.error(optimisedError);
-							this.deviceInfo[host].connectError = true;
-							this.deviceInfo[host].connectStatus = 'Unreachable';
-							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
+							await this.updateConnectionStatus(host, false, false, 'unreachable', true);
 						}
 					} else if (error.message.includes('Invalid password')) {
 						optimisedError = `Client ${host} incorrect password !`;
-						if (!this.deviceInfo[host].connectError) {
+						if (!clientDetails.connectError) {
 							this.log.error(optimisedError);
-							this.deviceInfo[host].connectError = true;
-							this.deviceInfo[host].connectStatus = 'Invalid Password';
-							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
+							await this.updateConnectionStatus(host, false, false, 'API password incorrect', true);
 						}
 					} else if (error.message.includes('Encryption expected')) {
 						optimisedError = `Client ${host} requires encryption key which has not been provided, please enter encryption key in adapter settings for this device !`;
-						if (!this.deviceInfo[host].connectError) {
+						if (!clientDetails[host].connectError) {
 							this.log.error(optimisedError);
-							this.deviceInfo[host].connectError = true;
-							this.deviceInfo[host].connectStatus = 'Encryption Key Missing';
-							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
+							await this.updateConnectionStatus(host, false, false, 'Encryption Key Missing', true);
 						}
 					} else if (error.message.includes('ECONNRESET')) {
 						optimisedError = `Client ${host} Connection Lost, will reconnect automatically when device is available!`;
-						if (!this.deviceInfo[host].connectError) {
+						if (!clientDetails[host].connectError) {
 							this.log.warn(optimisedError);
-							this.deviceInfo[host].connectError = true;
-							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
+							await this.updateConnectionStatus(host, false, false, 'connection lost', true);
 						}
 					} else if (error.message.includes('timeout')) {
 						optimisedError = `Client ${host} Timeout, will reconnect automatically when device is available!`;
-						if (!this.deviceInfo[host].connectError) {
+						if (!clientDetails[host].connectError) {
 							this.log.warn(optimisedError);
-							this.deviceInfo[host].connectError = true;
-							this.deviceInfo[host].connectStatus = 'unreachable';
-							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.info._online`, `Online state`, false);
+							await this.updateConnectionStatus(host, false, false, 'unreachable', true);
 						}
 					}  else if (error.message.includes('ECONNREFUSED')) {
 						optimisedError = `Client ${host} not yet ready to connect, will try again!`;
-						this.deviceInfo[host].connectStatus = 'Initializing';
+						await this.updateConnectionStatus(host, false, true, 'initializing', true);
 						this.log.warn(optimisedError);
 
 					} else if (error.message.includes('write after end')) {
@@ -742,7 +692,6 @@ class Esphome extends utils.Adapter {
 			stateVal = this.modify(rounding, stateVal);
 			this.log.debug(`Value "${stateVal}" for name "${entity}" after function modify with method "${rounding}"`);
 		}
-
 
 		/** @type {ioBroker.StateCommon} */
 		const stateCommon = {
@@ -822,12 +771,12 @@ class Esphome extends utils.Adapter {
 							this.deviceInfo[host][entity.id].states.transitionLength = transitionLength.val;
 							// Run create state routine to ensure state is cached in memory
 							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, transitionLength.val, `s`, writable);
-						} else { // Else just create it
+						} else { // Else create it
 							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
 							this.deviceInfo[host][entity.id].states.transitionLength = 0;
 						}
 
-					} catch (e) { // Else just create it
+					} catch (e) { // Else create it
 						await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
 						this.deviceInfo[host][entity.id].states.transitionLength = 0;
 					}
@@ -936,7 +885,7 @@ class Esphome extends utils.Adapter {
 		this.log.debug('Create_state called for : ' + objName + ' with value : ' + value);
 		try {
 
-			// Try to get details from state lib, if not use defaults. throw warning if states is not known in attribute list
+			// Try to get details from state lib, if not use defaults. Throw warning if states are not known in attribute list
 			/** @type {Partial<ioBroker.StateCommon>} */
 			const common = initialStateCommon;
 			// const entityID = objName.split('.');
@@ -1042,7 +991,7 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
-	 * Analysis modify element in stateAttr.js and executes command
+	 * Analysis modify an element in stateAttr.js and execute command
 	 * @param {string} method defines the method to be executed (e.g. round())
 	 * @param {string | number | boolean} value value to be executed
 	 */
@@ -1146,6 +1095,9 @@ class Esphome extends utils.Adapter {
 		this.log.debug('Data from configuration received : ' + JSON.stringify(obj));
 		try {
 			switch (obj.command) {
+
+				//Handle device deletion
+				//ToDo: Change routine to proper handling by adapter instead of just removing a device
 				case 'removeDevice':
 					await this.deleteDeviceAsync(`${obj.message}`)
 						.catch(async error => {
@@ -1158,18 +1110,11 @@ class Esphome extends utils.Adapter {
 
 					break;
 
+					//ToDo previous add function to be removed
 				case 'addDevice':
 
-					// eslint-disable-next-line no-case-declarations,no-inner-declarations
-					function validateIPaddress(ipaddress) {
-						if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress)) {
-							return true;
-						}
-						return false;
-					}
-
 					// eslint-disable-next-line no-case-declarations
-					const ipValid = validateIPaddress(obj.message['device-ip']);
+					const ipValid = validateIPAddress(obj.message['device-ip']);
 					if (!ipValid) {
 						this.log.warn(`You entered an incorrect IP-Address, cannot add device !`);
 
@@ -1191,14 +1136,14 @@ class Esphome extends utils.Adapter {
 					{
 						let data = {};
 
-						const tableEntrys = [];
+						const tableEntry = [];
 
-						for (const device in this.deviceInfo) {
-							tableEntrys.push({
-								'MACAddress' : this.deviceInfo[device].mac,
-								'deviceName' : this.deviceInfo[device].deviceInfo ? this.deviceInfo[device].deviceInfo.name : '',
-								'ip' : this.deviceInfo[device].ip,
-								'connectState' : this.deviceInfo[device].connectStatus
+						for (const device in clientDetails) {
+							tableEntry.push({
+								'MACAddress' : clientDetails[device].mac,
+								'deviceName' : clientDetails[device].deviceInfo ? clientDetails[device].deviceInfo.name : '',
+								'ip' : clientDetails[device].ip,
+								'connectState' : clientDetails[device].connectStatus
 							});
 						}
 
@@ -1400,7 +1345,7 @@ class Esphome extends utils.Adapter {
 				endkey : `${this.namespace}.\u9999`,
 			};
 
-			// Get all current devices in adapter tree
+			// Get all current devices in an adapter tree
 			const _devices = await this.getObjectViewAsync('system', 'device', params);
 			// List all found devices & set online state to false
 			for (const currDevice in _devices.rows) {
@@ -1428,7 +1373,7 @@ class Esphome extends utils.Adapter {
 			this.log.debug(`[objectCleanup] Starting channel and state cleanup for ${this.deviceInfo[ip].deviceName} | ${ip} | ${this.deviceInfo[ip].ip}`);
 
 			// Cancel cleanup operation in case device is not connected anymore
-			if (this.deviceInfo[ip].connectionError || !this.deviceInfo[ip].connected) return;
+			if (clientDetails[ip].connectionError || !clientDetails[ip].connected) return;
 
 			// Set parameters for object view to only include objects within adapter namespace
 			const params = {
@@ -1491,6 +1436,32 @@ class Esphome extends utils.Adapter {
 			this.log.error(`[offlineDeviceCleanup] Fatal error occurred, cannot cleanup offline devices ${e} | ${e.stack}`);
 
 		}
+	}
+
+	/**
+	 * Generic function to properly update memory connection details of a device in all scenarios
+	 * @param {string} host IP-Address of device
+	 * @param {boolean} connected Indicator if a device is connected
+	 * @param {boolean} connecting Indicator if a device is initializing
+	 * @param {string} [connectionStatus] Connection status shown in Adapter instance / Device Manager
+	 * @param {boolean} [connectionError] Indicator if a connection error (like incorrect password or timeout) is present
+	 */
+	async updateConnectionStatus(host, connected, connecting, connectionStatus, connectionError){
+		clientDetails[host].connected = true;
+		clientDetails[host].connecting = false;
+		clientDetails[host].connectionError = connectionError != null ? connectionError : clientDetails[host].connectionError;
+		clientDetails[host].connectStatus = connectionStatus != null ? connectionStatus : clientDetails[host].connectStatus;
+
+		// Update device connection indicator
+		if (!connected || connectionError || connecting) {
+			// Device not connected or initializing, set _online state to false
+			await this.stateSetCreate(`${clientDetails[host].deviceName}.info._online`, `Online state`, false);
+		} else {
+			// Device connected, set _online state to true
+			await this.stateSetCreate(`${clientDetails[host].deviceName}.info._online`, `Online state`, true);
+		}
+		// Write connection status to info channel
+		if (connectionStatus) await this.stateSetCreate(`${clientDetails[host].deviceName}.info._connectionStatus`, `Connection status`, connectionStatus);
 	}
 
 }
