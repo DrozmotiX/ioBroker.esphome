@@ -10,7 +10,6 @@ const utils = require('@iobroker/adapter-core');
 const deviceInfo = require('./lib/helpers.js');
 // @ts-ignore Client is just missing in index.d.ts file
 const {Client, Discovery} = require('@2colors/esphome-native-api');
-let discovery;
 const stateAttr = require(__dirname + '/lib/stateAttr.js'); // Load attribute library
 const disableSentry = false; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
@@ -18,7 +17,7 @@ const fs = require('fs');
 const {clearTimeout} = require('timers');
 const client = {};
 const resetTimers = {}; // Memory allocation for all running timers
-let reconnectInterval, apiPass, autodiscovery, dashboardProcess, createConfigStates;
+let reconnectInterval, defaultApiPass, defaultEncryptionKey, autodiscovery, dashboardProcess, createConfigStates, discovery;
 const clientDetails = {};
 
 class Esphome extends utils.Adapter {
@@ -49,7 +48,9 @@ class Esphome extends utils.Adapter {
 	async onReady() {
 		await this.setStateAsync('info.connection', {val: true, ack: true});
 		try {
-			apiPass = this.config.apiPass;
+
+			// Store settings in global variables
+			defaultApiPass = this.config.apiPass;
 			autodiscovery = this.config.autodiscovery;
 			reconnectInterval = this.config.reconnectInterval * 1000;
 			createConfigStates = this.config.configStates;
@@ -63,7 +64,7 @@ class Esphome extends utils.Adapter {
 			// Start MDNS discovery when enabled
 			if (autodiscovery) {
 				if (resetTimers['autodiscovery']) resetTimers['autodiscovery'] = clearTimeout(resetTimers['autodiscovery']);
-				this.log.info(`Adapter ready, automatic Device Discovery will be acticated in 30 seconds.`);
+				this.log.info(`Adapter ready, automatic Device Discovery will be activated in 30 seconds.`);
 				resetTimers['autodiscovery'] = setTimeout(async () => {
 					this.deviceDiscovery(); // Start MDNS autodiscovery
 				}, (30000));
@@ -71,6 +72,7 @@ class Esphome extends utils.Adapter {
 				this.log.warn(`Auto Discovery disabled, new devices (or IP changes) will NOT be detected automatically!`);
 			}
 
+			// Start ESPHome Dashboard process
 			if (this.config.ESPHomeDashboardEnabled) {
 				this.log.info(`Native Integration of ESPHome Dashboard enabled `);
 				await this.espHomeDashboard();
@@ -79,7 +81,7 @@ class Esphome extends utils.Adapter {
 			}
 
 			// Create & Subscribe to button handling offline Device cleanup
-			this.extendObjectAsync('esphome.0.info.deviceCleanup',
+			this.extendObject('esphome.0.info.deviceCleanup',
 				{
 					'type': 'state',
 					'common': {
@@ -122,7 +124,7 @@ class Esphome extends utils.Adapter {
 				});
 				// );
 			} catch (e) {
-				// Directory has an issue reading/writing data, iob fix should be executed
+				// Directory has issues reading/writing data, iob fix should be executed
 				this.log.warn(`ESPHome DDashboard is unable to access directory to store YAML configuration data, please run ioBroker fix`);
 			}
 
@@ -173,13 +175,18 @@ class Esphome extends utils.Adapter {
 	// Try to contact and read data of already known devices
 	async tryKnownDevices() {
 		try {
+			// Get all current devices from adapter tree
 			const knownDevices = await this.getDevicesAsync();
+
+			// Cancel operation if no devices are found
 			if (!knownDevices) return;
 
-			// Get basic data of known devices and start reading data
+			// Get connection data of known devices and to connect
 			for (const i in knownDevices) {
 				const deviceDetails = knownDevices[i].native;
 				this.connectDevices(
+					// IP is a mandatory attribute and must be provided to connect
+					// If other attributes are missing, adapter still trys to connect to provide correct error message
 					deviceDetails.ip,
 					deviceDetails.passWord ? deviceDetails.passWord : '',
 					deviceDetails.encryptionKey ? deviceDetails.encryptionKey : '',
@@ -198,11 +205,12 @@ class Esphome extends utils.Adapter {
 		try {
 
 			// Get a list of IP-Addresses from Adapter config to exclude by autodiscovery
-			const exludedIP = [];
+			const excludedIP = [];
 
+			// Prepare an array to easy processing containing all IP addresses to be excluded from device discovery
 			for (const entry in this.config.ignoredDevices) {
 				if (this.config.ignoredDevices[entry] && this.config.ignoredDevices[entry]['this.config.ignoredDevices[entry]']){
-					exludedIP.push(this.config.ignoredDevices[entry]['this.config.ignoredDevices[entry]']);
+					excludedIP.push(this.config.ignoredDevices[entry]['this.config.ignoredDevices[entry]']);
 				}
 			}
 
@@ -220,6 +228,9 @@ class Esphome extends utils.Adapter {
 					if (this.deviceInfo[message.address] == null && !excludedIP.includes(message.address)) {
 						// Only run autodiscovery if a device is not yet connected or in progress to connect/deleting
 						if (!clientDetails[message.address]
+							&& !clientDetails[message.address].connected
+							&& !clientDetails[message.address].connecting
+							&& !clientDetails[message.address].connectionError) {
 							this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${message.address}, trying to initialize`);
 							this.connectDevices(`${message.address}`, defaultApiPass, defaultEncryptionKey);
 						}
@@ -244,7 +255,7 @@ class Esphome extends utils.Adapter {
 	 */
 	connectDevices(host, deviceApiPass, deviceEncryptionKey, device, deviceName, deviceFriendlyName) {
 		try {
-			// const host = espDevices[device].ip;
+
 			this.log.info(`Try to connect to ${host}`);
 
 			// PrepareMemory area for device and connection details
@@ -660,7 +671,7 @@ class Esphome extends utils.Adapter {
 				}
 			});
 
-			//ToDo: Review
+			//ToDo: Review should not be needed as reconnect process already takes care of it
 			// connect to socket
 			try {
 				this.log.debug(`trying to connect to ${host}`);
@@ -684,24 +695,24 @@ class Esphome extends utils.Adapter {
 	async handleRegularState(host, entity, state, writable) {
 		try {
 		// Round value to digits as known by configuration
-		let stateVal = state.state;
+			let stateVal = state.state;
 
-		if (this.deviceInfo[host][entity.id].config.accuracyDecimals != null) {
-			const rounding = `round(${this.deviceInfo[host][entity.id].config.accuracyDecimals})`;
-			this.log.debug(`Value "${stateVal}" for name "${entity}" before function modify with method "round(${this.deviceInfo[host][entity.id].config.accuracyDecimals})"`);
-			stateVal = this.modify(rounding, stateVal);
-			this.log.debug(`Value "${stateVal}" for name "${entity}" after function modify with method "${rounding}"`);
-		}
+			if (this.deviceInfo[host][entity.id].config.accuracyDecimals != null) {
+				const rounding = `round(${this.deviceInfo[host][entity.id].config.accuracyDecimals})`;
+				this.log.debug(`Value "${stateVal}" for name "${entity}" before function modify with method "round(${this.deviceInfo[host][entity.id].config.accuracyDecimals})"`);
+				stateVal = this.modify(rounding, stateVal);
+				this.log.debug(`Value "${stateVal}" for name "${entity}" after function modify with method "${rounding}"`);
+			}
 
-		/** @type {ioBroker.StateCommon} */
-		const stateCommon = {
-		};
+			//ToDo review this code section
+			/** @type {ioBroker.StateCommon} */
+			const stateCommon = {
+			};
 
-		if(entity.config.optionsList != null) {
-			stateCommon.states = entity.config.optionsList;
-		}
-
-		await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, `State of ${entity.config.name}`, stateVal, this.deviceInfo[host][entity.id].unit, writable, stateCommon);
+			if(entity.config.optionsList != null) {
+				stateCommon.states = entity.config.optionsList;
+			}
+			await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, `State of ${entity.config.name}`, stateVal, this.deviceInfo[host][entity.id].unit, writable, stateCommon);
 		} catch (error) {
 			this.errorHandler(`[espHomeDashboard] ${error}`);
 		}
@@ -716,94 +727,95 @@ class Esphome extends utils.Adapter {
 	async handleStateArrays(host, entity, state) {
 
 		try {
-		this.deviceInfo[host][entity.id].states = state;
+			this.deviceInfo[host][entity.id].states = state;
 
-		for (const stateName in this.deviceInfo[host][entity.id].states) {
-			let unit = '';
-			let writable = true;
-			let writeValue = state[stateName];
+			for (const stateName in this.deviceInfo[host][entity.id].states) {
+				let unit = '';
+				let writable = true;
+				let writeValue = state[stateName];
 
-			// Define if state should be writable
-			switch (stateName) {
-				case 'currentTemperature':
+				// Define if state should be writable
+				switch (stateName) {
+					case 'currentTemperature':
+						unit = `°C`;
+						writable = false;
+						this.deviceInfo[host][entity.id].states.currentTemperature = this.modify('round(2)', state[stateName]);
+						break;
+
+					case 'oscillating': // Sensor type = Fan, write not supported
+						writable = false;
+						break;
+
+					case 'speed': // Sensor type = Fan, write not supported
+						writable = false;
+						break;
+
+				}
+
+				// Add unit to temperature states
+				if (stateName === `targetTemperature`
+					|| stateName === `targetTemperatureLow`
+					|| stateName === `targetTemperatureHigh`) {
+
 					unit = `°C`;
-					writable = false;
-					this.deviceInfo[host][entity.id].states.currentTemperature = this.modify('round(2)', state[stateName]);
-					break;
 
-				case 'oscillating': // Sensor type = Fan, write not supported
-					writable = false;
-					break;
+				}
 
-				case 'speed': // Sensor type = Fan, write not supported
-					writable = false;
-					break;
+				// Add unit to states
+				if (stateName === `brightness`
+					|| stateName === `blue`
+					|| stateName === `green`
+					|| stateName === `red`
+					|| stateName === `white`
+					|| stateName === `colorTemperature`) {
 
-			}
+					writeValue = Math.round((state[stateName] * 100) * 2.55);
 
-			// Add unit to temperature states
-			if (stateName === `targetTemperature`
-				|| stateName === `targetTemperatureLow`
-				|| stateName === `targetTemperatureHigh`) {
+					// Create transitionLength state only ones
+					if (this.deviceInfo[host][entity.id].states.transitionLength == null) {
 
-				unit = `°C`;
+						// Check if state already exists
+						let transitionLength;
+						try {
 
-			}
+							// Try  to get current state
+							transitionLength = await this.getStateAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`);
 
-			// Add unit to states
-			if (stateName === `brightness`
-				|| stateName === `blue`
-				|| stateName === `green`
-				|| stateName === `red`
-				|| stateName === `white`
-				|| stateName === `colorTemperature`) {
+							// Check if state contains value
+							if (transitionLength) {
+								this.deviceInfo[host][entity.id].states.transitionLength = transitionLength.val;
+								// Run create state routine to ensure state is cached in memory
+								await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, transitionLength.val, `s`, writable);
+							} else { // Else create it
+								await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
+								this.deviceInfo[host][entity.id].states.transitionLength = 0;
+							}
 
-				writeValue = Math.round((state[stateName] * 100) * 2.55);
-
-				// Create transitionLength state only ones
-				if (this.deviceInfo[host][entity.id].states.transitionLength == null) {
-
-					// Check if state already exists
-					let transitionLength;
-					try {
-
-						// Try  to get current state
-						transitionLength = await this.getStateAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`);
-
-						// Check if state contains value
-						if (transitionLength) {
-							this.deviceInfo[host][entity.id].states.transitionLength = transitionLength.val;
-							// Run create state routine to ensure state is cached in memory
-							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, transitionLength.val, `s`, writable);
-						} else { // Else create it
+						} catch (e) { // Else create it
 							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
 							this.deviceInfo[host][entity.id].states.transitionLength = 0;
 						}
 
-					} catch (e) { // Else create it
-						await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
-						this.deviceInfo[host][entity.id].states.transitionLength = 0;
 					}
+				}
 
+				if (stateName !== 'key') {
+					await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`, `${stateName} of ${entity.config.name}`, writeValue, unit, writable);
 				}
 			}
 
-			if (stateName !== 'key') {
-				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`, `${stateName} of ${entity.config.name}`, writeValue, unit, writable);
+			// Convert RGB to HEX and write to state
+			if (this.deviceInfo[host][entity.id].states.red != null &&
+				this.deviceInfo[host][entity.id].states.blue != null &&
+				this.deviceInfo[host][entity.id].states.green != null) {
+				const hexValue = this.rgbToHex(
+					Math.round((this.deviceInfo[host][entity.id].states.red * 100) * 2.55),
+					Math.round((this.deviceInfo[host][entity.id].states.green * 100) * 2.55),
+					Math.round((this.deviceInfo[host][entity.id].states.blue * 100) * 2.55),
+				);
+				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.colorHEX`, `ColorHEX of ${entity.config.name}`, hexValue, '', true);
 			}
-		}
 
-		// Convert RGB to HEX an write to state
-		if (this.deviceInfo[host][entity.id].states.red != null &&
-			this.deviceInfo[host][entity.id].states.blue != null &&
-			this.deviceInfo[host][entity.id].states.green != null) {
-			const hexValue = this.rgbToHex(
-				Math.round((this.deviceInfo[host][entity.id].states.red * 100) * 2.55),
-				Math.round((this.deviceInfo[host][entity.id].states.green * 100) * 2.55),
-				Math.round((this.deviceInfo[host][entity.id].states.blue * 100) * 2.55),
-			);
-			await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.colorHEX`, `ColorHEX of ${entity.config.name}`, hexValue, '', true);
-		}
 		} catch (error) {
 			this.errorHandler(`[espHomeDashboard] ${error}`);
 		}
@@ -1098,8 +1110,18 @@ class Esphome extends utils.Adapter {
 	 * @param {ioBroker.Message} obj
 	 */
 	async onMessage(obj) {
-		this.log.debug('Data from configuration received : ' + JSON.stringify(obj));
+		this.log.info('Data from configuration received : ' + JSON.stringify(obj));
 		try {
+
+			/**
+			 * Validate a proper format of IP-Address
+			 * @param {string} ipAddress
+			 */
+			// eslint-disable-next-line no-case-declarations,no-inner-declarations
+			function validateIPAddress(ipAddress) {
+				return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipAddress);
+			}
+
 			switch (obj.command) {
 
 				//Handle device deletion
@@ -1155,11 +1177,40 @@ class Esphome extends utils.Adapter {
 
 						data = {
 							native: {
-								templateTable: tableEntrys,
+								templateTable: tableEntry,
 							},
 						};
 						this.sendTo(obj.from, obj.command, data, obj.callback);
 					}
+					break;
+
+				// Front End message handler to load table with all current known devices
+				case 'getDeviceIPs':
+					{
+						const dropDownEntrys = [];
+						for (const device in clientDetails) {
+							dropDownEntrys.push({label: device, value: clientDetails[device].ip});
+						}
+						this.sendTo(obj.from, obj.command, dropDownEntrys, obj.callback);
+					}
+					break;
+
+				// Handle front-end messages to ADD / Modify a devices
+				case '_addUpdateDevice':
+					//ToDo: Handle ADD / Modify of Device & return OK message when done
+					this.sendTo(obj.from, obj.command,
+						{result: 'OK - This is some text describing the result'},
+						obj.callback);
+					// this.sendTo(obj.from, obj.command, 1, obj.callback);
+					break;
+
+				// Handle front-end messages to delete devices
+				case 'deleteDevice':
+					//ToDo: Handle deletion of Device & return OK message when done
+					this.sendTo(obj.from, obj.command,
+						{error: 'FAIL - This text describes some error'},
+						obj.callback);
+					// this.sendTo(obj.from, obj.command, 1, obj.callback);
 					break;
 			}
 		} catch (error) {
@@ -1414,31 +1465,26 @@ class Esphome extends utils.Adapter {
 	}
 
 	async offlineDeviceCleanup () {
+
 		this.log.info(`Offline Device cleanup started`);
 
 		try {
-
 			// Get an overview of all current devices known by adapter
 			const knownDevices = await this.getDevicesAsync();
 			console.log(`KnownDevices: ${knownDevices}`);
-
 			// Loop to all devices, check if online state = TRUE otherwise delete device
 			for (const device in knownDevices){
-
 				// Get online value
 				const online = await this.getStateAsync(`${knownDevices[device]._id}.info._online`);
 				if (!online || !online.val){
 					this.log.info(`Offline device ${knownDevices[device]._id.split('.')[2]} expected on ip ${knownDevices[device].native.ip} removed`);
 					await this.delObjectAsync(knownDevices[device]._id, {recursive: true});
 				}
-
 			}
-
 			if (!knownDevices) return; // exit function if no known device are detected
 			if (knownDevices.length > 0) this.log.info(`Try to contact ${knownDevices.length} known devices`);
 		} catch (error) {
 			this.errorHandler(`[offlineDeviceCleanup] ${error}`);
-
 		}
 	}
 
@@ -1451,22 +1497,23 @@ class Esphome extends utils.Adapter {
 	 * @param {boolean} [connectionError] Indicator if a connection error (like incorrect password or timeout) is present
 	 */
 	async updateConnectionStatus(host, connected, connecting, connectionStatus, connectionError){
-		try {
-		clientDetails[host].connected = true;
-		clientDetails[host].connecting = false;
-		clientDetails[host].connectionError = connectionError != null ? connectionError : clientDetails[host].connectionError;
-		clientDetails[host].connectStatus = connectionStatus != null ? connectionStatus : clientDetails[host].connectStatus;
 
-		// Update device connection indicator
-		if (!connected || connectionError || connecting) {
-			// Device not connected or initializing, set _online state to false
-			await this.stateSetCreate(`${clientDetails[host].deviceName}.info._online`, `Online state`, false);
-		} else {
-			// Device connected, set _online state to true
-			await this.stateSetCreate(`${clientDetails[host].deviceName}.info._online`, `Online state`, true);
-		}
-		// Write connection status to info channel
-		if (connectionStatus) await this.stateSetCreate(`${clientDetails[host].deviceName}.info._connectionStatus`, `Connection status`, connectionStatus);
+		try {
+			clientDetails[host].connected = true;
+			clientDetails[host].connecting = false;
+			clientDetails[host].connectionError = connectionError != null ? connectionError : clientDetails[host].connectionError;
+			clientDetails[host].connectStatus = connectionStatus != null ? connectionStatus : clientDetails[host].connectStatus;
+
+			// Update device connection indicator
+			if (!connected || connectionError || connecting) {
+				// Device not connected or initializing, set _online state to false
+				await this.stateSetCreate(`${clientDetails[host].deviceName}.info._online`, `Online state`, false);
+			} else {
+				// Device connected, set _online state to true
+				await this.stateSetCreate(`${clientDetails[host].deviceName}.info._online`, `Online state`, true);
+			}
+			// Write connection status to info channel
+			if (connectionStatus) await this.stateSetCreate(`${clientDetails[host].deviceName}.info._connectionStatus`, `Connection status`, connectionStatus);
 		} catch (error) {
 			this.errorHandler(`[updateConnectionStatus] ${error}`);
 		}
