@@ -53,6 +53,7 @@
   },
   "main": "main.js",
   "scripts": {
+    "statDev" : "dev-server watch --noStart",
     "release": "release-script",
     "dev-server": "dev-server",
     "test:js": "mocha --config test/mocharc.custom.json \"{!(node_modules|test)/**/*.test.js,*.test.js,test/**/test!(PackageFiles|Startup).js}\"",

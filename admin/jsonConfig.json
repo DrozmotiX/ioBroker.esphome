@@ -7,99 +7,6 @@
 			"type": "panel",
 			"label": "Main settings",
 			"items": {
-				// Header ESPHome
-				"headerESPHomeDashboard": {
-					"type": "header",
-					"text": "lblHeaderMainpage",
-					"size": 1
-				},
-				// Introduction text
-				"introLine-1": {
-					"type": "staticText",
-					"text": "introLine-1"
-				},
-				"introLine-2": {
-					"newLine": true,
-					"type": "staticText",
-					"text": "introLine-2"
-				},
-
-				"emptyLine-1": {
-					"newLine": true,
-					"type": "staticText",
-					"text": ""
-				},
-
-				// Mentioning & link to ESPHome project
-				"headerESPHomeDashboard-details-3": {
-					"newLine": true,
-					"type": "staticText",
-					"text": "ESPHomeCommunityLink"
-				},
-				"headerESPHomeDashboard-details-Link": {
-					"type": "staticLink",
-					"label": "esphome.io",
-					"href" : "https://esphome.io/"
-				},
-				"emptyLine-2": {
-					"newLine": true,
-					"type": "staticText",
-					"text": ""
-				},
-
-				// ESPHome Dashboard Explanation
-				"headerESPHomeDashboard-details-4": {
-					"newLine": true,
-					"type": "staticText",
-					"text": "lblEnableESPHome"
-				},
-
-				// ESPHome Dashboard configuration
-				"ESPHomeDashboardEnabled": {
-					"newLine": true,
-					"type": "checkbox",
-					"sm": 2,
-					"md": 2,
-					"lg": 2,
-					"label": "chkEnableESPHome"
-				},
-				"ESPHomeDashboardIP": {
-					"type": "text",
-					"text": "",
-					"sm": 3,
-					"label": "lblESPHomeIP"
-				},
-				"ESPHomeDashboardPort": {
-					"type": "text",
-					"text": "",
-					"sm": 1,
-					"readOnly" : true,
-					"label": "lblESPHomePort"
-				},
-
-				// Explanation usage of IP-Address input field
-				"headerESPHomeDashboard-details-5": {
-					"newLine": true,
-					"type": "staticText",
-					"text": "lblDashboardLink"
-				},
-
-				// Some empty lines to move next head a little down
-				"emptyLine-3": {
-					"newLine": true,
-					"type": "staticText",
-					"text": ""
-				},
-				"emptyLine-4": {
-					"newLine": true,
-					"type": "staticText",
-					"text": ""
-				},
-				"emptyLine-5": {
-					"newLine": true,
-					"type": "staticText",
-					"text": ""
-				},
 
 				// Header ESPHome communication details
 				"howToConnect": {
@@ -201,32 +108,39 @@
 				"autodiscovery": {
 					"newLine": true,
 					"type": "checkbox",
-					"sm": 12,
-					"md": 2,
+					"sm": 6,
+					"md": 6,
 					"label": "lblAutoDiscovery"
 				},
 
 				// Refresh table showing all devices
 				// Sends message to backend to get all current known devices, their configuration and connection status
 				"loadDevices": {
+					"newLine": true,
 					"type": "sendTo",
 					"hidden": "!_alive",
 					"command": "loadDevices",
-					"jsonData": "{ \"service\": \"template\"}",
+					"jsonData": "{ \"date\": \"${data}\"}",
 					"label": "lblLoadDevices",
 					"tooltip": "restoreDefaultToolTip",
 					"useNative": true,
-					"xs": 2,
-					"sm": 2,
-					"md": 2,
-					"lg": 2
+					"variant": "outlined",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12
 				},
 
 				// Text to explain adapter must be running to load this table
 				"details-1": {
+					"newLine": true,
 					"type": "staticText",
 					"text": "lblTxtNoButtonsIfNotActive",
-					"hidden": "_alive"
+					"hidden": "_alive",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12
 				},
 
 				// Input fields to ADD / Modify devices
@@ -235,37 +149,43 @@
 					"type": "autocompleteSendTo",
 					"command": "getDeviceIPs",
 					"jsonData": "{ \"service\": \"${data.deviceInputIP}\" }",
-					"xs": 3,
-					"sm": 3,
-					"md": 3,
-					"lg": 3,
-					"label": "lblInputDeviceIP",
-					"tooltip": "TypeFilter"
+					"xs": 6,
+					"sm": 6,
+					"md": 6,
+					"lg": 6,
+					"label": "lblInputDeviceIP-content",
+//					"tooltip": "Select existing device or Enter IP of new device",
+					"help": "lblInputDeviceIP"
 				},
 				"encryptionKey": {
 					"type": "password",
 					"label": "lblInputEncryptionKey",
 					"doNotSave": true,
 					"default": "",
-					"tooltip": "ttCloudPassword",
+					"tooltip": "ttInputEncryptionKey",
 					"help": "hlpCloudPassword",
-					"xs": 2,
-					"sm": 2,
-					"md": 2,
-					"lg": 2
+					"xs": 3,
+					"sm": 3,
+					"md": 3,
+					"lg": 3
 				},
 				"apiPassword": {
 					"type": "password",
 					"label": "lblInputApiPassword",
 					"doNotSave": true,
 					"default": "",
-					"tooltip": "ttCloudPassword",
-					"help": "hlpCloudPassword"
+					"tooltip": "ttInputApiPassword",
+					"help": "hlpCloudPassword",
+					"xs": 3,
+					"sm": 3,
+					"md": 3,
+					"lg": 3
 				},
 
 				// Button do ADD / Modify devices, sends
 				// Sends device IP and credentials to backend
 				"_addUpdateDevice": {
+					"newLine": true,
 					"type": "sendTo",
 					"label": "lbl_addUpdateDevice",
 					"variant": "outlined",
@@ -276,10 +196,15 @@
 					"disabled": "data.deviceIP===''",
 					"hidden": "!_alive",
 					"tooltip": "ttGetStationId",
-					"help": "hlpGetStationId"
+					"help": "hlpGetStationId",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12
 				},
 
 				"deleteDevice": {
+					"newLine": true,
 					"type": "sendTo",
 					"label": "lblDelDevice",
 					"variant": "outlined",
@@ -289,12 +214,17 @@
 					"useNative": true,
 					"hidden": "!_alive",
 					"tooltip": "ttGetStationId",
-					"help": "hlpGetStationId"
+					"help": "hlpGetStationId",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12
 				},
 
 				// Table (provided by backend) of all devices and their connection status
 				"templateTable": {
 					"type": "table",
+					"doNotSave" : true,
 					"noDelete": true,
 					"newLine": true,
 					"xs": 12,
@@ -339,7 +269,8 @@
 							"filter": false,
 							"sort": false,
 							"default": "",
-//							"validator": "const x={};for (const c of globalData.templateTable) {if (x[c.templateKey]==='x') return false; x[c.templateKey]='x';}; return true;",
+							//ToDo add validation if IP-Address format
+							//"validator": "const x={};for (const c of globalData.templateTable) {if (x[c.templateKey]==='x') return false; x[c.templateKey]='x';}; return true;",
 							"validatorNoSaveOnError": true
 						},
 						{
@@ -359,10 +290,192 @@
 				}
 			}
 		},
+
+		"ESPHomeDashboard": {
+			"type": "panel",
+			"label": "ESPHome Dashboard",
+			"items": {
+
+				// Header ESPHome
+				"headerESPHomeDashboard": {
+					"type": "header",
+					"text": "lblHeaderMainpage",
+					"size": 1
+				},
+				// Introduction text
+				"introLine-1": {
+					"type": "staticText",
+					"text": "introLine-1"
+				},
+				"introLine-2": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "introLine-2"
+				},
+
+				"emptyLine-1": {
+					"newLine": true,
+					"type": "staticText",
+					"text": ""
+				},
+
+				// Mentioning & link to ESPHome project
+				"headerESPHomeDashboard-details-3": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "ESPHomeCommunityLink"
+				},
+				"headerESPHomeDashboard-details-Link": {
+					"type": "staticLink",
+					"label": "esphome.io",
+					"href" : "https://esphome.io/"
+				},
+				"emptyLine-2": {
+					"newLine": true,
+					"type": "staticText",
+					"text": ""
+				},
+
+				// ESPHome Dashboard Explanation
+				"headerESPHomeDashboard-details-4": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "lblEnableESPHome"
+				},
+
+				// ESPHome Dashboard configuration
+				"ESPHomeDashboardEnabled": {
+					"newLine": true,
+					"type": "checkbox",
+					"sm": 2,
+					"md": 2,
+					"lg": 2,
+					"label": "chkEnableESPHome"
+				},
+				"ESPHomeDashboardIP": {
+					"type": "text",
+					"text": "",
+					"sm": 3,
+					"label": "lblESPHomeIP"
+				},
+				"ESPHomeDashboardPort": {
+					"type": "text",
+					"text": "",
+					"sm": 1,
+					"readOnly" : true,
+					"label": "lblESPHomePort"
+				},
+
+				// Explanation usage of IP-Address input field
+				"headerESPHomeDashboard-details-5": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "lblDashboardLink"
+				},
+
+				// Some empty lines to move next head a little down
+				"emptyLine-3": {
+					"newLine": true,
+					"type": "staticText",
+					"text": ""
+				},
+				"emptyLine-4": {
+					"newLine": true,
+					"type": "staticText",
+					"text": ""
+				},
+				"emptyLine-5": {
+					"newLine": true,
+					"type": "staticText",
+					"text": ""
+				},
+
+
+				"bindAddress" : {
+					"type": "ip",
+					"onlyIp4": true,
+					"noInternal": true,
+					"newLine": true,
+					"sm": 3,
+					"md": 3,
+					"lg": 3
+				}
+
+			}
+		},
+
 		"ignoreList": {
 			"type": "panel",
 			"label": "Ignore List",
-			"items": {}
+			"items": {
+
+				// Table (stored in adapter instance native object), to be ignored for device discovery
+				"ignoredDevices": {
+					"type": "table",
+					"newLine": true,
+					"xs": 12,
+					"sm": 12,
+					"md": 5,
+					"lg": 12,
+					"hidden": "data._templateTable[0].template == 'template.NewMessage'",
+					"label": "lblDevicesTable",
+					"showSecondAddAt": 5,
+					"useNative": true,
+					"allowAddByFilter" : true,
+					"items": [
+						{
+							"type": "text",
+							"attr": "IP-Address",
+							"width": "30% ",
+							"title": "IP-Address",
+							"tooltip": "templateKeyTip",
+							"filter": false,
+							"sort": false,
+							"default": "",
+							//ToDo add validation if IP-Address format
+							//"validator": "const x={};for (const c of globalData.templateTable) {if (x[c.templateKey]==='x') return false; x[c.templateKey]='x';}; return true;",
+							"validatorNoSaveOnError": true
+						},
+						{
+							"type": "text",
+							"attr": "name",
+							"width": "20% ",
+							"title": "Name",
+							"tooltip": "templateKeyTip",
+							"filter": false,
+							"sort": false,
+							"default": "",
+							"validatorNoSaveOnError": true
+						},
+						{
+							"type": "text",
+							"attr": "description",
+							"width": "40% ",
+							"title": "Description",
+							"tooltip": "templateKeyTip",
+							"filter": false,
+							"sort": false,
+							"default": "",
+							"validatorNoSaveOnError": true
+						}
+
+					]
+				}
+
+			}
+		},
+
+		"sandBox": {
+			"type": "panel",
+			"label": "sandBox",
+			"items": {
+				"bindAddress" : {
+					"type": "ip",
+					"onlyIp4": true,
+					"noInternal": true
+				}
+
+			}
 		}
 	}
 }

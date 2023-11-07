@@ -186,13 +186,22 @@ class Esphome extends utils.Adapter {
 	deviceDiscovery() {
 		try {
 
+			// Get list of IP-Addresses from Adapter config to exclude by autodiscovery
+			const exludedIP = [];
+
+			for (const entry in this.config.ignoredDevices) {
+				if (this.config.ignoredDevices[entry] && this.config.ignoredDevices[entry]['this.config.ignoredDevices[entry]']){
+					exludedIP.push(this.config.ignoredDevices[entry]['this.config.ignoredDevices[entry]']);
+				}
+			}
+
 			this.log.info(`Automatic device Discovery started, new devices (or IP changes) will be detected automatically`);
 			discovery = new Discovery();
 
 			discovery.on('info', async (message) => {
 				try {
 					this.log.debug(`Discovery message ${JSON.stringify(message)}`);
-					if (this.deviceInfo[message.address] == null) {
+					if (this.deviceInfo[message.address] == null && !exludedIP.includes(message.address)) {
 						this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${message.address}, trying to initialize`);
 						//ToDo: Add default Encryption Key
 						// Only run autodiscovery if device is unknown yet
