@@ -165,8 +165,8 @@ class Esphome extends utils.Adapter {
 					this.log.error(`[dashboardProcess Error] ${data}`);
 				}
 			});
-		} catch (e) {
-			this.log.error(`[espHomeDashboard] ${e}`);
+		} catch (error) {
+			this.errorHandler(`[espHomeDashboard] ${error}`);
 		}
 	}
 
@@ -188,8 +188,8 @@ class Esphome extends utils.Adapter {
 					deviceDetails.deviceFriendlyName ? deviceDetails.deviceName : ''
 				);
 			}
-		} catch (e) {
-			this.sendSentry(`[tryKnownDevices] ${e}`);
+		} catch (error) {
+			this.errorHandler(`[tryKnownDevices] ${error}`);
 		}
 	}
 
@@ -229,8 +229,7 @@ class Esphome extends utils.Adapter {
 				}
 			});
 		} catch (error) {
-		} catch (e) {
-			this.sendSentry(`[deviceDiscovery] ${e}`);
+			this.errorHandler(`[deviceDiscovery] ${error}`);
 		}
 	}
 
@@ -417,8 +416,8 @@ class Esphome extends utils.Adapter {
 						this.messageResponse[host] = null;
 					}
 
-				} catch (e) {
-					this.log.error(`deviceInfo ${host} ${e}`);
+				} catch (error) {
+					this.errorHandler(`[deviceInfo] ${error}`);
 				}
 			});
 
@@ -571,8 +570,8 @@ class Esphome extends utils.Adapter {
 									}
 							}
 
-						} catch (e) {
-							this.log.error(`State handle error ${e}`);
+						} catch (error) {
+							this.errorHandler(`[connectHandler NewEntity] ${error}`);
 						}
 
 					});
@@ -656,8 +655,8 @@ class Esphome extends utils.Adapter {
 						this.messageResponse[host] = null;
 					}
 
-				} catch (e) {
-					this.log.error(`ESPHome error handling issue ${host} ${e}`);
+				} catch (error) {
+					this.errorHandler(`[connectedDevice onError] ${error}`);
 				}
 			});
 
@@ -683,6 +682,7 @@ class Esphome extends utils.Adapter {
 	 * @param {boolean} writable Indicate if state should be writable
 	 */
 	async handleRegularState(host, entity, state, writable) {
+		try {
 		// Round value to digits as known by configuration
 		let stateVal = state.state;
 
@@ -702,6 +702,9 @@ class Esphome extends utils.Adapter {
 		}
 
 		await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, `State of ${entity.config.name}`, stateVal, this.deviceInfo[host][entity.id].unit, writable, stateCommon);
+		} catch (error) {
+			this.errorHandler(`[espHomeDashboard] ${error}`);
+		}
 	}
 
 	/**
@@ -712,6 +715,7 @@ class Esphome extends utils.Adapter {
 	 */
 	async handleStateArrays(host, entity, state) {
 
+		try {
 		this.deviceInfo[host][entity.id].states = state;
 
 		for (const stateName in this.deviceInfo[host][entity.id].states) {
@@ -800,6 +804,9 @@ class Esphome extends utils.Adapter {
 			);
 			await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.colorHEX`, `ColorHEX of ${entity.config.name}`, hexValue, '', true);
 		}
+		} catch (error) {
+			this.errorHandler(`[espHomeDashboard] ${error}`);
+		}
 	}
 
 	/**
@@ -865,8 +872,8 @@ class Esphome extends utils.Adapter {
 					}
 				}
 			}
-		} catch (e) {
-			this.sendSentry(`[TraverseJson] ${e}`);
+		} catch (error) {
+			this.errorHandler(`[TraverseJson] ${error}`);
 		}
 	}
 
@@ -944,9 +951,8 @@ class Esphome extends utils.Adapter {
 			}
 			// Subscribe on state changes if writable
 			common.write && this.subscribeStates(objName);
-
-		} catch (e) {
-			this.sendSentry(`[stateSetCreate] ${e}`);
+		} catch (error) {
+			this.errorHandler(`[stateSetCreate] ${error}`);
 		}
 	}
 
@@ -1034,8 +1040,8 @@ class Esphome extends utils.Adapter {
 			}
 			if (!result) return value;
 			return result;
-		} catch (e) {
-			this.sendSentry(`[modify] ${e}`);
+		} catch (error) {
+			this.errorHandler(`[modify] ${error}`);
 			return value;
 		}
 	}
@@ -1080,8 +1086,8 @@ class Esphome extends utils.Adapter {
 			}
 
 			callback();
-		} catch (e) {
-			this.log.error(`[onUnload] ${JSON.stringify(e)}`);
+		} catch (error) {
+			this.errorHandler(`[onUnload] ${error}`);
 			callback();
 		}
 	}
@@ -1156,8 +1162,8 @@ class Esphome extends utils.Adapter {
 					}
 					break;
 			}
-		} catch (e) {
-			this.sendSentry(`[onMessage] ${e}`);
+		} catch (error) {
+			this.errorHandler(`[onMessage] ${error}`);
 		}
 	}
 
@@ -1362,9 +1368,8 @@ class Esphome extends utils.Adapter {
 				// Set online state to false, will be set to true at successfully connected
 				await this.stateSetCreate(`${_devices.rows[currDevice].id}.info._online`, `Online state`, false);
 			}
-
-		} catch (e) {
-			this.log.error(`[resetOnlineState] ${e}`);
+		} catch (error) {
+			this.errorHandler(`[resetOnlineStates] ${error}`);
 		}
 	}
 
@@ -1403,9 +1408,8 @@ class Esphome extends utils.Adapter {
 					// await this.delObjectAsync(_states.rows[currDevice].id);
 				}
 			}
-
-		} catch (e) {
-			this.log.error(`[objectCleanup] Fatal error ${e} | ${e.stack}`);
+		} catch (error) {
+			this.errorHandler(`[objectCleanup] ${error}`);
 		}
 	}
 
@@ -1432,8 +1436,8 @@ class Esphome extends utils.Adapter {
 
 			if (!knownDevices) return; // exit function if no known device are detected
 			if (knownDevices.length > 0) this.log.info(`Try to contact ${knownDevices.length} known devices`);
-		} catch (e) {
-			this.log.error(`[offlineDeviceCleanup] Fatal error occurred, cannot cleanup offline devices ${e} | ${e.stack}`);
+		} catch (error) {
+			this.errorHandler(`[offlineDeviceCleanup] ${error}`);
 
 		}
 	}
@@ -1447,6 +1451,7 @@ class Esphome extends utils.Adapter {
 	 * @param {boolean} [connectionError] Indicator if a connection error (like incorrect password or timeout) is present
 	 */
 	async updateConnectionStatus(host, connected, connecting, connectionStatus, connectionError){
+		try {
 		clientDetails[host].connected = true;
 		clientDetails[host].connecting = false;
 		clientDetails[host].connectionError = connectionError != null ? connectionError : clientDetails[host].connectionError;
@@ -1462,8 +1467,10 @@ class Esphome extends utils.Adapter {
 		}
 		// Write connection status to info channel
 		if (connectionStatus) await this.stateSetCreate(`${clientDetails[host].deviceName}.info._connectionStatus`, `Connection status`, connectionStatus);
+		} catch (error) {
+			this.errorHandler(`[updateConnectionStatus] ${error}`);
+		}
 	}
-
 }
 
 if (require.main !== module) {
