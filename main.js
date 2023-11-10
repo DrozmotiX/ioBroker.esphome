@@ -67,7 +67,7 @@ class Esphome extends utils.Adapter {
 				this.log.info(`Adapter ready, automatic Device Discovery will be activated in 30 seconds.`);
 				resetTimers['autodiscovery'] = setTimeout(async () => {
 					this.deviceDiscovery(); // Start MDNS autodiscovery
-				}, (30000));
+				}, (5000));
 			} else {
 				this.log.warn(`Auto Discovery disabled, new devices (or IP changes) will NOT be detected automatically!`);
 			}
@@ -225,15 +225,11 @@ class Esphome extends utils.Adapter {
 				try {
 					this.log.debug(`Discovery message ${JSON.stringify(message)}`);
 					// Ensure discovery process triggers only if a device is unknown (by IP) and not part of the exclusion list
-					if (this.deviceInfo[message.address] == null && !excludedIP.includes(message.address)) {
+					if (clientDetails[message.address] == null && !excludedIP.includes(message.address)) {
 						// Only run autodiscovery if a device is not yet connected or in progress to connect/deleting
-						if (!clientDetails[message.address]
-							&& !clientDetails[message.address].connected
-							&& !clientDetails[message.address].connecting
-							&& !clientDetails[message.address].connectionError) {
-							this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${message.address}, trying to initialize`);
-							this.connectDevices(`${message.address}`, defaultApiPass, defaultEncryptionKey);
-						}
+						this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${message.address}, trying to initialize`);
+						this.connectDevices(`${message.address}`, defaultApiPass, defaultEncryptionKey);
+
 					}
 				} catch (e) {
 					this.log.error(`[deviceDiscovery handler] ${e}`);
@@ -1532,3 +1528,4 @@ if (require.main !== module) {
 	// otherwise start the instance directly
 	new Esphome();
 }
+//# sourceMappingURL=main.js.map

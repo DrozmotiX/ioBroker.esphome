@@ -34,7 +34,7 @@
     "@alcalzone/release-script-plugin-license": "^3.5.9",
     "@alcalzone/release-script-plugin-manual-review": "^3.5.9",
     "@iobroker/adapter-dev": "^1.2.0",
-    "@iobroker/dev-server": "^0.6.0",
+    "@iobroker/dev-server": "^0.7.1",
     "@iobroker/testing": "^4.1.0",
     "@types/chai": "^4.3.6",
     "@types/chai-as-promised": "^7.1.6",
@@ -58,7 +58,7 @@
   },
   "main": "main.js",
   "scripts": {
-    "statDev" : "dev-server watch --noStart",
+    "statDev": "dev-server watch --noStart",
     "release": "release-script",
     "dev-server": "dev-server",
     "test:js": "mocha --config test/mocharc.custom.json \"{!(node_modules|test)/**/*.test.js,*.test.js,test/**/test!(PackageFiles|Startup).js}\"",
