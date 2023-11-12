@@ -226,6 +226,7 @@
 					"command": "deleteDevice",
 					"jsonData": "{ \"ip\": \"${data.deviceIP}\"}",
 					"useNative": true,
+					"disabled": "data.deviceIP===''",
 					"hidden": "!_alive",
 					"tooltip": "ttGetStationId",
 					"help": "hlpGetStationId",
