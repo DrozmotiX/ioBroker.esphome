@@ -107,6 +107,7 @@
 				// Enable/disable autodiscovery and store setting in adapter config object
 				"autodiscovery": {
 					"newLine": true,
+					"disabled": "true",
 					"type": "checkbox",
 					"sm": 2,
 					"md": 2,
@@ -115,6 +116,7 @@
 
 				"discoveryListeningAddress" : {
 					"type": "ip",
+					"disabled": "true",
 					"sm": 2,
 					"md": 2,
 					"default": "0.0.0.0",
@@ -426,7 +428,7 @@
 					"hidden": "data._templateTable[0].template == 'template.NewMessage'",
 					"label": "lblDevicesTable",
 					"showSecondAddAt": 5,
-					"useNative": true,
+//					"useNative": true,
 					"allowAddByFilter" : true,
 					"items": [
 						{

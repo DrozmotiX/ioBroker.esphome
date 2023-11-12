@@ -175,6 +175,7 @@
         "apiPass": "",
         "encryptionKey": "",
         "autodiscovery": true,
+        "discoveryListeningAddress": "0.0.0.0",
         "configStates": false,
         "ESPHomeDashboardEnabled": false,
         "ESPHomeDashboardPort": 6052,
