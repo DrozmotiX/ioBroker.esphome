@@ -1,4 +1,12 @@
 # Older changes
+## 0.3.0 (2023-10-31) - Bugfixes & Improvements
+* (Dutchman & SimonFischer04) Several Bugfixes
+* (SimonFischer04) Supports type "select device"
+* (DutchmanNL) ESPHome dashboard default disabled
+* (SimonFischer04) Migrate to @2colors/esphome-native-api
+* (DutchmanNL) Automatically create needed directories, resolves #168
+* (SimonFischer04) Migrate usage of python to new structure should solve all ESPHome Dashboard-related installation issues
+
 ## 0.2.4 (2021-08-24)
 * (DutchmanNL) Version of ESPHome Dashboard updated to 2021.8
 * (DutchmanNL) Add option if config of ESPHome device should be shown as states (default = FALSE, safes 8 states for each sensor)

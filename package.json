@@ -1,11 +1,16 @@
 {
   "name": "iobroker.esphome",
-  "version": "0.4.1",
+  "version": "0.5.0-beta.0",
   "description": "Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome",
   "author": {
     "name": "DutchmanNL",
     "email": "rdrozda86@gmail.com"
   },
+  "contributors": [
+    {
+      "name": "SimonFischer04"
+    }
+  ],
   "homepage": "https://github.com/DrozmotiX/ioBroker.esphome",
   "license": "MIT",
   "keywords": [
@@ -29,7 +34,7 @@
     "@alcalzone/release-script-plugin-license": "^3.5.9",
     "@alcalzone/release-script-plugin-manual-review": "^3.5.9",
     "@iobroker/adapter-dev": "^1.2.0",
-    "@iobroker/dev-server": "^0.6.0",
+    "@iobroker/dev-server": "^0.7.1",
     "@iobroker/testing": "^4.1.0",
     "@types/chai": "^4.3.6",
     "@types/chai-as-promised": "^7.1.6",
@@ -53,6 +58,8 @@
   },
   "main": "main.js",
   "scripts": {
+    "translate": "gulp translateAndUpdateWordsJS",
+    "statDev": "dev-server watch --noStart",
     "release": "release-script",
     "dev-server": "dev-server",
     "test:js": "mocha --config test/mocharc.custom.json \"{!(node_modules|test)/**/*.test.js,*.test.js,test/**/test!(PackageFiles|Startup).js}\"",

@@ -335,3 +335,4 @@ gulp.task('translate', async function (done) {
 gulp.task('translateAndUpdateWordsJS', gulp.series('translate', 'adminLanguages2words', 'adminWords2languages'));
 
 gulp.task('default', gulp.series('updatePackages', 'updateReadme'));
+//# sourceMappingURL=gulpfile.js.map

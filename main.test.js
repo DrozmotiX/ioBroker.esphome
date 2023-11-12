@@ -28,3 +28,4 @@ describe('module to test => function to test', () => {
 });
 
 // ... more test suites => describe
+//# sourceMappingURL=main.test.js.map

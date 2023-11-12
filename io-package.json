@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "esphome",
-    "version": "0.4.1",
+    "version": "0.5.0-beta.0",
     "news": {
+      "0.5.0-beta.0": {
+        "en": "Admin interface redesigned to JSON-Config relates #171\nBackend massages implemented to Add/Modify/Delete devices\nDevice connection handling and visibility of devices improved\nAuto device discovery temporary disabled due to external bug, relates #175\nPossibility added to exclude IP-Addresses from device discovery, relates #175\nAllow Selection to listen on specific interface or all for device discovery resolves #67\nState implemented to show current connection status (unreachable/disconnected/connected) to improve management of devices\nSeveral bugfixes, resolves #181 resolves #",
+        "de": "Admin-Schnittstelle neu gestaltet JSON-Config bezieht #171\nBackend-Massagen in Add/Modify/Delete-Geräte implementiert\nGeräteanschlusshandling und Sichtbarkeit von Geräten verbessert\nAuto-Gerät Entdeckung vorübergehend behindert durch externe Fehler, bezieht #175\nMöglichkeit hinzugefügt, IP-Adressen von der Geräteentdeckung auszuschließen, bezieht #175\nErlauben Sie der Auswahl, auf einer bestimmten Schnittstelle zuzuhören oder alles für Geräteentdeckungen löst #67\nStaat implementiert, um den aktuellen Verbindungsstatus (nicht erreichbar/vernetzt/vernetzt/vernetzt) zu zeigen, um die Verwaltung von Geräten zu verbessern\nMehrere Bugfixes, löst #181 löst #",
+        "ru": "Админ интерфейс переработан JSON-Config относится #171\nМассажи Backend реализованы для Add/Modify/Delete устройств\nОбработка соединения устройства и видимость улучшенных устройств\nАвтоматическое устройство обнаруживает временные инвалиды из-за внешней баг, относится #175\nВозможность добавлена для исключения IP-адресов с открытия устройства, относится #175\nРазрешить выбор, чтобы прослушать конкретный интерфейс или все для обнаружения устройств решает #67\nГосударство реализовано для демонстрации текущего состояния соединения (недоступно/отключено/подключено) для улучшения управления устройствами\nНесколько исправлений, решает #181 решает #",
+        "pt": "Interface de administrador redesenhada para JSON-Config relaciona #171\nMassagens de backend implementadas para dispositivos Add/Modify/Delete\nO manuseio e a visibilidade de dispositivos melhorados\nAuto detecção de dispositivo desativado temporário devido a bug externo, relaciona #175\nPossibilidade adicionada para excluir endereços IP da descoberta do dispositivo, relaciona #175\nPermitir Seleção para ouvir em interface específica ou tudo para a descoberta de dispositivos resolve #67\nEstado implementado para mostrar o estado de conexão atual (não acessível/desconectado/conectado) para melhorar a gestão de dispositivos\nVárias correções de bugs, resolve #181 resolve #",
+        "nl": "Admin interface opnieuw toegewezen aan JSON-Config relaties #171\nSteun massages geïnformeerd tot Add/Modificatie/ Delete apparaten\nVertaling:\nAuto-apparaat ontdekking tijdelijk gehandicapt door externe insecten, betrekking tot 175\nMogelijkheden toegevoegd om IP-Adresses uit te sluiten van apparaat ontdekking, relaties van 175\nVertaling:\nDe staat toont de huidige connectiestatus (ontvankelijke/geconnecteerd/geconnecteerd om het management van apparaten te verbeteren\nVerschillende insecten, oplossingen #181 oplossingen",
+        "fr": "L'interface d'administration repensée à JSON-Config se rapporte à #171\nMassages de backend mis en œuvre pour Add/Modify/Delete appareils\nManipulation et visibilité des dispositifs améliorés\nDécouverte de périphérique automobile temporaire désactivé en raison de bug externe, relate #175\nPossibilité ajoutée pour exclure les adresses IP de la découverte de l'appareil, se rapporte #175\nPermettre à Sélection d'écouter sur une interface spécifique ou tout pour la découverte de périphériques résout #67\nÉtat mis en œuvre pour montrer l ' état actuel de la connexion (non disponible/déconnecté/connecté) afin d ' améliorer la gestion des dispositifs\nPlusieurs bugfixes, résout #181 résout #",
+        "it": "L'interfaccia di amministrazione ridisegnata a JSON-Config riguarda #171\nI massaggi backend implementati per aggiungere/modifica/selezionare i dispositivi\nMiglioramento della gestione della connessione e della visibilità dei dispositivi\nAuto dispositivo scoperta temporaneamente disabilitato a causa di bug esterno, si riferisce #175\nPossibilità aggiunta per escludere gli indirizzi IP dalla scoperta del dispositivo, si riferisce #175\nConsentire Selezione di ascoltare su interfaccia specifica o tutto per la scoperta del dispositivo risolve #67\nStato implementato per mostrare lo stato di connessione corrente (non raggiungibile/disconnesso/connesso) per migliorare la gestione dei dispositivi\nDiversi bugfixes, risolve #181 risolve #",
+        "es": "Interfaz de Admin rediseñado con JSON-Config se relaciona con #171\nMasajes de backend implementados para dispositivos Add/Modify/Delete\nMejora del manejo y visibilidad de los dispositivos\nBúsqueda de dispositivos automáticos desactivados temporalmente debido a fallo externo, se relaciona #175\nPosibilidad añadida para excluir IP-Addresses del descubrimiento del dispositivo, se relaciona con #175\nPermitir que la selección escuche en una interfaz específica o todo para el descubrimiento del dispositivo resuelve #67\nEstado implementado para mostrar el estado actual de conexión (no accesible/desconectado/conectado) para mejorar la gestión de dispositivos\nVarios bugfixes, resuelve #181 resuelve #",
+        "pl": "Interfejs Admin został przeprojektowany przez JSON-Config z numerem #171\nMassage backendowe realizowane są przez Addd/Modify/Delete\nPrzestrzenie połączenia i widoczność ulepszały urządzenia\nOdkrycie urządzenia automatycznego związane jest tymczasowo ze względu na zewnętrzny błęd\nPozytywność dodaje się do wykluczenia IP-Adddress z odkrycia urządzenia, dodając numer #175\nAllow Selection to listen on specific interface or all for device discoveries. „Allow Selection”\nState zaimplementowała aktualny status połączenia (niezwiązany/rozłączony) w celu poprawy zarządzania urządzeniami\nKilka błędów rozwiązało numer #181",
+        "uk": "Інтерфейс адміністратора, перероблений на JSON-Config, відноситься до #171\nЗакінчення масажів, реалізованих для пристроїв Додавання/Modify/Delete\nПристрій з'єднання та видимість пристроїв\nАвтопристрою виявлення тимчасово відключених через зовнішній баг, відноситься #175\nМожливість довести до виключення IP-додатків з пристрою, відноситься #175\nДозволяє вибрати для прослуховування певного інтерфейсу або всіх для виявлення пристроїв вирішує #67\nСтан, що реалізується для відображення поточного стану з'єднання (невід'ємний / відключений / підключений) для поліпшення управління пристроями\nКілька виправлень, вирішує #181 #",
+        "zh-cn": "重新设计给联索行动-阿菲格的专用接口涉及第171号行动。\n增购/装卸装置\n装置的连接和可见度有所改善\n自动装置发现因外部纤维而临时残疾,涉及第175号行动。\n排除在装置发现中的IP-反应之外的可添加的灵活性涉及第175号行动。\n允许选择听取具体接口或所有装置的辨认办法\n国家执行了目前联系状况(可核查/无联系/连接)以改进装置的管理\n数个小册子,第181号行动决心"
+      },
       "0.4.1": {
         "en": "Bugfix: Password / connection issues in previous beta resolves #179\nBugfix: Allow individual API password or encryption keys for devices, resolves #174\nSupport ESPHome device Encryption Key (you should migrate from API password to Encryption Key ! resolves #152)",
         "de": "Bugfix: Passwort / Verbindungsprobleme in vorherigen beta löst #179\nBugfix: Lassen Sie individuelle API-Passwort oder Verschlüsselungsschlüssel für Geräte, löst #174\nSupport ESPHome Gerät Verschlüsselungsschlüssel (Sie sollten von API-Passwort zu Verschlüsselungsschlüssel migrieren! löst #152)",
@@ -79,18 +92,6 @@
         "es": "Versión de ESPHome Dashboard actualizada a 2021.8\nAgregue la opción si la configuración del dispositivo ESPHome debe mostrarse como estados (predeterminado = FALSO, guarda 8 estados para cada sensor)",
         "pl": "Wersja pulpitu nawigacyjnego ESPHome zaktualizowana do 2021,8\nDodaj opcję, jeśli konfiguracja urządzenia ESPHome powinna być pokazywana jako stany (domyślnie = FALSE, sejfy 8 stanów dla każdego czujnika)",
         "zh-cn": "ESPHome Dashboard 版本更新至 2021.8\n如果 ESPHome 设备的配置应显示为状态，则添加选项（默认值 = FALSE，每个传感器有 8 个状态）"
-      },
-      "0.2.3": {
-        "en": "Bugfix : Light component state not changed [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nUpdate compatibility to version 1.19.4 of ESPHome Dashboard",
-        "de": "Bugfix : Lichtkomponentenstatus nicht geändert [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nUpdate-Kompatibilität auf Version 1.19.4 von ESPHome Dashboard",
-        "ru": "Исправление: состояние компонента Light не изменялось [# 74] (https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nОбновите совместимость до версии 1.19.4 ESPHome Dashboard",
-        "pt": "Correção de bug: o estado do componente leve não foi alterado [# 74] (https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nAtualizar compatibilidade para a versão 1.19.4 do ESPHome Dashboard",
-        "nl": "Bugfix: Status lichtcomponent niet gewijzigd [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nCompatibiliteit bijwerken naar versie 1.19.4 van ESPHome Dashboard",
-        "fr": "Correction de bug : l'état du composant Light n'a pas changé [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nMettre à jour la compatibilité vers la version 1.19.4 d'ESPHome Dashboard",
-        "it": "Bugfix: lo stato del componente Light non è cambiato [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nAggiorna la compatibilità alla versione 1.19.4 di ESPHome Dashboard",
-        "es": "Corrección de error: el estado del componente de luz no ha cambiado [# 74] (https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nActualizar la compatibilidad a la versión 1.19.4 de ESPHome Dashboard",
-        "pl": "Poprawka błędu: stan lekkiego komponentu nie uległ zmianie [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\nZaktualizuj kompatybilność do wersji 1.19.4 ESPHome Dashboard",
-        "zh-cn": "修正：轻组件状态没有改变 [#74](https://github.com/DrozmotiX/ioBroker.esphome/issues/74)\n更新与 ESPHome Dashboard 1.19.4 版的兼容性"
       }
     },
     "title": "Control ESPHome managed devices",
@@ -141,6 +142,9 @@
     "compact": true,
     "connectionType": "local",
     "dataSource": "push",
+    "adminUI": {
+      "config": "json"
+    },
     "materialize": true,
     "plugins": {
       "sentry": {
@@ -164,16 +168,26 @@
     ]
   },
   "encryptedNative": [
-    "apiPass"
+    "apiPass",
+    "encryptionKey"
   ],
   "native": {
     "reconnectInterval": 30,
     "apiPass": "",
+    "encryptionKey": "",
     "autodiscovery": true,
+    "discoveryListeningAddress": "0.0.0.0",
     "configStates": false,
     "ESPHomeDashboardEnabled": false,
     "ESPHomeDashboardPort": 6052,
-    "ESPHomeDashboardIP": "localhost"
+    "ESPHomeDashboardIP": "localhost",
+    "ignoredDevices": [
+      {
+        "IP-Address": "192.168.0.1",
+        "name": "Gateway",
+        "description": "*.*.*.1 are usually gateway addresses"
+      }
+    ]
   },
   "objects": [],
   "instanceObjects": [
