@@ -1,4 +1,7 @@
 # Older changes
+## 0.3.1 (2023-10-31)
+* (DutchmanNL) Bugfix: Show online state of ESP Device correctly, resolves #106
+
 ## 0.3.0 (2023-10-31) - Bugfixes & Improvements
 * (Dutchman & SimonFischer04) Several Bugfixes
 * (SimonFischer04) Supports type "select device"

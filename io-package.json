@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "esphome",
-    "version": "0.5.0-beta.0",
+    "version": "0.5.0-beta.1",
     "news": {
+      "0.5.0-beta.1": {
+        "en": "Only show error messages once for unreachable devices",
+        "de": "Fehlermeldungen nur einmal anzeigen für nicht erreichbare Geräte",
+        "ru": "Только покажите сообщения об ошибках один раз для недоступных устройств",
+        "pt": "Apenas mostre mensagens de erro uma vez por dispositivos não acessíveis",
+        "nl": "Laat maar één keer foutmeldingen zien voor onbereikbare apparaten",
+        "fr": "Seulement afficher des messages d'erreur une fois pour les périphériques inaccessibles",
+        "it": "Mostra solo messaggi di errore una volta per dispositivi non accessibili",
+        "es": "Sólo mostrar mensajes de error una vez para dispositivos no accesibles",
+        "pl": "Wykorzystuje tylko błędy po raz pierwszy dla nieodwracalnych urządzeń",
+        "uk": "Тільки показувати повідомлення про помилки після ненадійних пристроїв",
+        "zh-cn": "只有当不可行的装置发生错误信息时才显示错误信息。"
+      },
       "0.5.0-beta.0": {
         "en": "Admin interface redesigned to JSON-Config relates #171\nBackend massages implemented to Add/Modify/Delete devices\nDevice connection handling and visibility of devices improved\nAuto device discovery temporary disabled due to external bug, relates #175\nPossibility added to exclude IP-Addresses from device discovery, relates #175\nAllow Selection to listen on specific interface or all for device discovery resolves #67\nState implemented to show current connection status (unreachable/disconnected/connected) to improve management of devices\nSeveral bugfixes, resolves #181 resolves #",
         "de": "Admin-Schnittstelle neu gestaltet JSON-Config bezieht #171\nBackend-Massagen in Add/Modify/Delete-Geräte implementiert\nGeräteanschlusshandling und Sichtbarkeit von Geräten verbessert\nAuto-Gerät Entdeckung vorübergehend behindert durch externe Fehler, bezieht #175\nMöglichkeit hinzugefügt, IP-Adressen von der Geräteentdeckung auszuschließen, bezieht #175\nErlauben Sie der Auswahl, auf einer bestimmten Schnittstelle zuzuhören oder alles für Geräteentdeckungen löst #67\nStaat implementiert, um den aktuellen Verbindungsstatus (nicht erreichbar/vernetzt/vernetzt/vernetzt) zu zeigen, um die Verwaltung von Geräten zu verbessern\nMehrere Bugfixes, löst #181 löst #",
@@ -80,18 +93,6 @@
         "pl": "Several Bugfixów\nTyp wsparcia „urządzeniem wyborowym”\nESPHome dashboard\nMigrate to @2colors/esphome-native-api-native\nAutomatycznie potrzebuje katalogów, Fixes #168\nMigrate wykorzystanie pytonu do nowej struktury powinien rozwiązać wszystkie problemy z instalacją ESPHome Dashboard",
         "uk": "Кілька Виправлень\nТип підтримки \"виберіть пристрій\"\nESPHome панель за замовчуванням вимкнено\nMigrate до @2colors/esphome-native-api\nАвтоматично створювати потрібні каталоги, Виправлення #168\nМигратне використання пітону до нової структури, повинні вирішувати всі проблеми з монтажу ESPHome",
         "zh-cn": "Bugfix\n支助类型“更换装置”\nESPHome dashing\n@2colors/esphome-native-api\n自动创建必要的直接理论,第168号行动\n应该解决所有ESPHome Dashing板相关的安装问题,将磷酸盐用于新结构。"
-      },
-      "0.2.4": {
-        "en": "Version of ESPHome Dashboard updated to 2021.8\nAdd option if config of ESPHome device should be shown as states (default = FALSE, safes 8 states for each sensor)",
-        "de": "Version des ESPHome Dashboards aktualisiert auf 2021.8\nOption hinzufügen, wenn die Konfiguration des ESPHome-Geräts als Zustände angezeigt werden soll (Standard = FALSE, sichert 8 Zustände für jeden Sensor)",
-        "ru": "Версия ESPHome Dashboard обновлена до 2021.8\nДобавить параметр, если конфигурация устройства ESPHome должна отображаться в виде состояний (по умолчанию = FALSE, сохраняет 8 состояний для каждого датчика)",
-        "pt": "Versão do ESPHome Dashboard atualizada para 2021.8\nAdicionar opção se a configuração do dispositivo ESPHome deve ser mostrada como estados (padrão = FALSE, cofres 8 estados para cada sensor)",
-        "nl": "Versie van ESPHome Dashboard bijgewerkt naar 2021.8\nOptie toevoegen als de configuratie van het ESPHome-apparaat moet worden weergegeven als statussen (standaard = FALSE, beveiligt 8 statussen voor elke sensor)",
-        "fr": "Version d'ESPHome Dashboard mise à jour vers 201.8\nAjouter une option si la configuration de l'appareil ESPHome doit être affichée sous forme d'états (par défaut = FALSE, coffre-fort 8 états pour chaque capteur)",
-        "it": "Versione di ESPHome Dashboard aggiornata a 2021.8\nAggiungi un'opzione se la configurazione del dispositivo ESPHome deve essere mostrata come stati (predefinito = FALSE, salva 8 stati per ciascun sensore)",
-        "es": "Versión de ESPHome Dashboard actualizada a 2021.8\nAgregue la opción si la configuración del dispositivo ESPHome debe mostrarse como estados (predeterminado = FALSO, guarda 8 estados para cada sensor)",
-        "pl": "Wersja pulpitu nawigacyjnego ESPHome zaktualizowana do 2021,8\nDodaj opcję, jeśli konfiguracja urządzenia ESPHome powinna być pokazywana jako stany (domyślnie = FALSE, sejfy 8 stanów dla każdego czujnika)",
-        "zh-cn": "ESPHome Dashboard 版本更新至 2021.8\n如果 ESPHome 设备的配置应显示为状态，则添加选项（默认值 = FALSE，每个传感器有 8 个状态）"
       }
     },
     "title": "Control ESPHome managed devices",

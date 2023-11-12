@@ -168,9 +168,8 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
-
-### __WORK IN PROGRESS__
-* (DutchmanNL) Only show error messages once for unreachable devices 
+### 0.5.0-beta.1 (2023-11-12)
+* (DutchmanNL) Only show error messages once for unreachable devices
 
 ### 0.5.0-beta.0 (2023-11-12) - Rebuild Admin Interface & Connection handler
 * (DutchmanNL) Admin interface redesigned to JSON-Config relates #171
@@ -195,9 +194,6 @@ If you like my work, please consider a personal donation
 ### 0.3.2 (2023-11-01)
 * (DutchmanNL) Improved error handling if devices are not reachable/disconnected
 * (DutchmanNL) Bugfix: Allow control of brightness and color for a light component, resolves #173
-
-### 0.3.1 (2023-10-31)
-* (DutchmanNL) Bugfix: Show online state of ESP Device correctly, resolves #106
 
 ## License
 MIT License
