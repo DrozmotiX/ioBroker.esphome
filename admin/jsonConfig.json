@@ -373,10 +373,11 @@
 					"label": "chkEnableESPHome"
 				},
 				"ESPHomeDashboardIP": {
-					"type": "text",
-					"text": "",
+					"type": "autocompleteSendTo",
 					"sm": 3,
-					"label": "lblESPHomeIP"
+					"label": "lblESPHomeIP",
+					"command": "getHostIp",
+					"jsonData": "{ \"service\": \"${data.deviceInputIP}\" }"
 				},
 				"ESPHomeDashboardPort": {
 					"type": "text",

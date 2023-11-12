@@ -58,6 +58,7 @@
   },
   "main": "main.js",
   "scripts": {
+    "translate" : "gulp translateAndUpdateWordsJS",
     "statDev": "dev-server watch --noStart",
     "release": "release-script",
     "dev-server": "dev-server",

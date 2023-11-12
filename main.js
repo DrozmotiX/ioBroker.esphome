@@ -48,6 +48,7 @@ class Esphome extends utils.Adapter {
 		await this.setStateAsync('info.connection', {val: true, ack: true});
 		try {
 
+			//ToDo: store default data into clientDetails object instead of global variable
 			// Store settings in global variables
 			defaultApiPass = this.config.apiPass;
 			autodiscovery = this.config.autodiscovery;
@@ -65,7 +66,9 @@ class Esphome extends utils.Adapter {
 				if (resetTimers['autodiscovery']) resetTimers['autodiscovery'] = clearTimeout(resetTimers['autodiscovery']);
 				this.log.info(`Adapter ready, automatic Device Discovery will be activated in 30 seconds.`);
 				resetTimers['autodiscovery'] = setTimeout(async () => {
-					this.deviceDiscovery(); // Start MDNS autodiscovery
+					// Temporary disabled, will be available in 0.5.0 release
+					// Requires bugfix in ignore-list & creation of new device
+					// this.deviceDiscovery(); // Start MDNS autodiscovery
 				}, (5000));
 			} else {
 				this.log.warn(`Auto Discovery disabled, new devices (or IP changes) will NOT be detected automatically!`);
@@ -99,6 +102,7 @@ class Esphome extends utils.Adapter {
 		}
 	}
 
+	// ToDo: move to separate module
 	async espHomeDashboard() {
 		try {
 			// @ts-ignore
@@ -222,6 +226,10 @@ class Esphome extends utils.Adapter {
 
 			this.log.info(`Automatic device Discovery started, new devices (or IP changes) will be detected automatically`);
 			discovery = new Discovery(
+				// @ts-ignore Type definition of export is incorrect, according to documentation interface can be set https://github.com/twocolors/esphome-native-api#discovery-1
+				{
+					interface : this.config.discoveryListeningAddress ? this.config.discoveryListeningAddress: '0.0.0.0'
+				});
 
 			// Start device discovery (MDNS)
 			discovery.run();
@@ -269,9 +277,9 @@ class Esphome extends utils.Adapter {
 				initializeSubscribeStates: false,
 				// initializeSubscribeLogs: false, //ToDo: Make configurable by adapter settings
 				reconnect: true,
-				reconnectInterval: reconnectInterval,
+				reconnectInterval: 5000,
 				pingInterval: 5000, //ToDo: Make configurable by adapter settings
-				pingAttempts: 3, //ToDo: Make configurable by adapter settings
+				pingAttempts: 1, //ToDo: Make configurable by adapter settings
 				password : this.decrypt(clientDetails[host].apiPassword)
 				// port: espDevices[device].port //ToDo: Make configurable by adapter settings
 			};
@@ -1116,7 +1124,7 @@ class Esphome extends utils.Adapter {
 	 * @param {ioBroker.Message} obj
 	 */
 	async onMessage(obj) {
-		this.log.info('Data from configuration received : ' + JSON.stringify(obj));
+		this.log.debug('Data from configuration received : ' + JSON.stringify(obj));
 		try {
 
 			switch (obj.command) {
@@ -1174,6 +1182,28 @@ class Esphome extends utils.Adapter {
 							dropDownEntrys.push({label: device, value: clientDetails[device].ip});
 						}
 						this.sendTo(obj.from, obj.command, dropDownEntrys, obj.callback);
+					}
+					break;
+
+				// Front End message handler to host IP-Address(es)
+				case 'getHostIp':
+					{
+
+						// Get all current known host IP-Adresses from System object
+						const hostIP = await this.getForeignObjectAsync(`system.host.${this.host}`);
+						const ip4List = [];
+
+						// Only show IP4 in dropdown
+						if (hostIP) {
+							for (const ip in hostIP.common.address) {
+								console.log(hostIP.common.address[ip]);
+								if (this.validateIPAddress(hostIP.common.address[ip])) ip4List.push({label: hostIP.common.address[ip], value: hostIP.common.address[ip]});
+							}
+						}
+
+						// console.log(`IP4 List ${ip4List}`);
+
+						this.sendTo(obj.from, obj.command, ip4List, obj.callback);
 					}
 					break;
 
