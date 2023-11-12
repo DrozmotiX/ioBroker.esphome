@@ -80,11 +80,13 @@ class Esphome extends utils.Adapter {
 			// @ts-ignore
 			const {getVenv} = await import('autopy');
 
+			const config = require(__dirname + '/package.json').iobroker_esphome_adapter;
+
 			// Create a virtual environment with mitmproxy installed.
 			const python = await getVenv({
 				name: 'esphome',
-				pythonVersion: '~3.11', // Use any Python 3.11.x version.
-				requirements: [{name: 'esphome', version: ''}], // Use latest esphome
+				pythonVersion: `~${config.python_version}`,
+				requirements: [{name: 'esphome', version: `==${config.dashboard_version}`}],
 			});
 
 			// Define directory to store configuration files
