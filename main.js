@@ -616,31 +616,31 @@ class Esphome extends utils.Adapter {
 					// Optimise error messages
 					if ((error.message && (error.message.includes('EHOSTUNREACH') || error.message.includes('EHOSTDOWN'))) || (error.code && error.code.includes('ETIMEDOUT'))) {
 						optimisedError = `Client ${host} unreachable !`;
-						if (!clientDetails[host].connectError) {
+						if (!clientDetails[host].connectionError) {
 							this.log.error(optimisedError);
 							await this.updateConnectionStatus(host, false, false, 'unreachable', true);
 						}
 					} else if (error.message.includes('Invalid password')) {
 						optimisedError = `Client ${host} incorrect password !`;
-						if (!clientDetails.connectError) {
+						if (!clientDetails.connectionError) {
 							this.log.error(optimisedError);
 							await this.updateConnectionStatus(host, false, false, 'API password incorrect', true);
 						}
 					} else if (error.message.includes('Encryption expected')) {
 						optimisedError = `Client ${host} requires encryption key which has not been provided, please enter encryption key in adapter settings for this device !`;
-						if (!clientDetails[host].connectError) {
+						if (!clientDetails[host].connectionError) {
 							this.log.error(optimisedError);
 							await this.updateConnectionStatus(host, false, false, 'Encryption Key Missing', true);
 						}
 					} else if (error.message.includes('ECONNRESET')) {
 						optimisedError = `Client ${host} Connection Lost, will reconnect automatically when device is available!`;
-						if (!clientDetails[host].connectError) {
+						if (!clientDetails[host].connectionError) {
 							this.log.warn(optimisedError);
 							await this.updateConnectionStatus(host, false, false, 'connection lost', true);
 						}
 					} else if (error.message.includes('timeout')) {
 						optimisedError = `Client ${host} Timeout, will reconnect automatically when device is available!`;
-						if (!clientDetails[host].connectError) {
+						if (!clientDetails[host].connectionError) {
 							this.log.warn(optimisedError);
 							await this.updateConnectionStatus(host, false, false, 'unreachable', true);
 						}
