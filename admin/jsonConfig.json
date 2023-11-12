@@ -16,18 +16,18 @@
 				},
 
 				// Lines of text with details
-				"headerhowToConnect-details-1": {
+				"headerHowToConnect-details-1": {
 					"newLine": true,
 					"type": "staticText",
 					"text": "lblConnectDetails-Line-1"
 				},
 
-				"headerhowToConnect-details-2": {
+				"headerHowToConnect-details-2": {
 					"newLine": true,
 					"type": "staticText",
 					"text": "lblConnectDetails-Line-2"
 				},
-				"headerhowToConnect-details-3": {
+				"headerHowToConnect-details-3": {
 					"newLine": true,
 					"type": "staticText",
 					"text": "lblConnectDetails-Line-3"
@@ -47,7 +47,7 @@
 				},
 
 				// Text explaining ioBroker integration
-				"headerHowToConnect-details-3": {
+				"headerHowToConnect-details-4": {
 					"newLine": true,
 					"type": "staticText",
 					"text": "lblConnectIobroker"
@@ -72,12 +72,12 @@
 				},
 
 				// Explanation of usage and warning
-				"headerdefaultCredentials-details-1": {
+				"headerDefaultCredentials-details-1": {
 					"newLine": true,
 					"type": "staticText",
 					"text": "lblDefaultCredentials-Line-1"
 				},
-				"headerdefaultCredentials-details-2": {
+				"headerDefaultCredentials-details-2": {
 					"newLine": true,
 					"type": "staticText",
 					"text": "lblDefaultCredentials-Line-2"
@@ -108,8 +108,8 @@
 				"autodiscovery": {
 					"newLine": true,
 					"type": "checkbox",
-					"sm": 6,
-					"md": 6,
+					"sm": 2,
+					"md": 2,
 					"label": "lblAutoDiscovery"
 				},
 
@@ -122,9 +122,10 @@
 					"command": "loadDevices",
 					"jsonData": "{ \"date\": \"${data}\"}",
 					"label": "lblLoadDevices",
-					"tooltip": "restoreDefaultToolTip",
+//					"tooltip": "restoreDefaultToolTip",
 					"useNative": true,
 					"variant": "outlined",
+					"showProcess" : true,
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
@@ -149,37 +150,37 @@
 					"type": "autocompleteSendTo",
 					"command": "getDeviceIPs",
 					"jsonData": "{ \"service\": \"${data.deviceInputIP}\" }",
-					"xs": 6,
-					"sm": 6,
-					"md": 6,
-					"lg": 6,
+					"xs": 2,
+					"sm": 2,
+					"md": 2,
+					"lg": 2,
 					"label": "lblInputDeviceIP-content",
-//					"tooltip": "Select existing device or Enter IP of new device",
-					"help": "lblInputDeviceIP"
+					"tooltip": "hlpInputDeviceIP",
+					"help": "hlpInputDeviceIP"
 				},
 				"encryptionKey": {
 					"type": "password",
 					"label": "lblInputEncryptionKey",
 					"doNotSave": true,
 					"default": "",
-					"tooltip": "ttInputEncryptionKey",
-					"help": "hlpCloudPassword",
-					"xs": 3,
-					"sm": 3,
-					"md": 3,
-					"lg": 3
+					"tooltip": "hlpInputEncryptionKey",
+					"help": "hlpInputEncryptionKey",
+					"xs": 4,
+					"sm": 4,
+					"md": 4,
+					"lg": 4
 				},
 				"apiPassword": {
 					"type": "password",
 					"label": "lblInputApiPassword",
 					"doNotSave": true,
 					"default": "",
-					"tooltip": "ttInputApiPassword",
-					"help": "hlpCloudPassword",
-					"xs": 3,
-					"sm": 3,
-					"md": 3,
-					"lg": 3
+					"tooltip": "hlpInputApiPassword",
+					"help": "hlpInputApiPassword",
+					"xs": 2,
+					"sm": 2,
+					"md": 2,
+					"lg": 2
 				},
 
 				// Button do ADD / Modify devices, sends
@@ -218,13 +219,19 @@
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
-					"lg": 12
+					"lg": 12,
+					"confirm" : {
+						"text" : "Are you sure to delete this device ? Alle states will be removed",
+						"title" : "Confirm device Deletion",
+						"ok" : "Delete Device",
+						"cancel" : "Cancel",
+						"type" : "warning"
+					}
 				},
 
 				// Table (provided by backend) of all devices and their connection status
 				"templateTable": {
 					"type": "table",
-					"doNotSave" : true,
 					"noDelete": true,
 					"newLine": true,
 					"xs": 12,
@@ -299,7 +306,7 @@
 				// Header ESPHome
 				"headerESPHomeDashboard": {
 					"type": "header",
-					"text": "lblHeaderMainpage",
+					"text": "lblHeaderMainPage",
 					"size": 1
 				},
 				// Introduction text
@@ -388,19 +395,7 @@
 					"newLine": true,
 					"type": "staticText",
 					"text": ""
-				},
-
-
-				"bindAddress" : {
-					"type": "ip",
-					"onlyIp4": true,
-					"noInternal": true,
-					"newLine": true,
-					"sm": 3,
-					"md": 3,
-					"lg": 3
 				}
-
 			}
 		},
 
@@ -465,17 +460,17 @@
 			}
 		},
 
-		"sandBox": {
-			"type": "panel",
-			"label": "sandBox",
-			"items": {
-				"bindAddress" : {
-					"type": "ip",
-					"onlyIp4": true,
-					"noInternal": true
-				}
-
-			}
-		}
+//		"sandBox": {
+//			"type": "panel",
+//			"label": "sandBox",
+//			"items": {
+//				"bindAddress" : {
+//					"type": "ip",
+//					"onlyIp4": true,
+//					"noInternal": true
+//				}
+//
+//			}
+//		}
 	}
 }

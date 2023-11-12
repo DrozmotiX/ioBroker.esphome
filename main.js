@@ -852,7 +852,7 @@ class Esphome extends utils.Adapter {
 					}
 					// Avoid channel creation for empty arrays/objects
 					if (Object.keys(jObject[i]).length !== 0) {
-						console.log(`park`);
+						// console.log(`park`);
 						await this.setObjectAsync(id, {
 							'type': 'channel',
 							'common': {
@@ -1102,6 +1102,15 @@ class Esphome extends utils.Adapter {
 	}
 
 	/**
+	 * Validate a proper format of IP-Address
+	 * @param {string} ipAddress
+	 */
+		// eslint-disable-next-line no-case-declarations,no-inner-declarations
+	validateIPAddress(ipAddress) {
+		return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipAddress);
+	}
+
+	/**
 	 * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
 	 * Using this method requires "common.message" property to be set to true in io-package.json
 	 * @param {ioBroker.Message} obj
@@ -1110,22 +1119,13 @@ class Esphome extends utils.Adapter {
 		this.log.info('Data from configuration received : ' + JSON.stringify(obj));
 		try {
 
-			/**
-			 * Validate a proper format of IP-Address
-			 * @param {string} ipAddress
-			 */
-			// eslint-disable-next-line no-case-declarations,no-inner-declarations
-			function validateIPAddress(ipAddress) {
-				return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipAddress);
-			}
-
 			switch (obj.command) {
 
 				//ToDo previous add function to be removed
 				case 'addDevice':
 
 					// eslint-disable-next-line no-case-declarations
-					const ipValid = validateIPAddress(obj.message['device-ip']);
+					const ipValid = this.validateIPAddress(obj.message['device-ip']);
 					if (!ipValid) {
 						this.log.warn(`You entered an incorrect IP-Address, cannot add device !`);
 
@@ -1166,7 +1166,7 @@ class Esphome extends utils.Adapter {
 					}
 					break;
 
-				// Front End message handler to load table with all current known devices
+				// Front End message handler to load IP-Address dropDown with all current known devices
 				case 'getDeviceIPs':
 					{
 						const dropDownEntrys = [];
@@ -1179,14 +1179,14 @@ class Esphome extends utils.Adapter {
 
 				// Handle front-end messages to ADD / Modify a devices
 				case '_addUpdateDevice':
-					console.log(JSON.stringify(obj));
+					// console.log(JSON.stringify(obj));
 					// IP input validation
 					if (obj.message.ip === 'undefined'){
 						this.sendTo(obj.from, obj.command,
 							{error: 'To add/modify a device, please enter the IP-Address accordingly'},
 							obj.callback);
 						return;
-					} else if (!validateIPAddress(obj.message.ip)){
+					} else if (!this.validateIPAddress(obj.message.ip)){
 						this.sendTo(obj.from, obj.command,
 							{error: 'Format of IP-Address is incorrect, please provide an valid IPV4 IP-Address'},
 							obj.callback);
@@ -1513,7 +1513,7 @@ class Esphome extends utils.Adapter {
 		try {
 			// Get an overview of all current devices known by adapter
 			const knownDevices = await this.getDevicesAsync();
-			console.log(`KnownDevices: ${knownDevices}`);
+			// console.log(`KnownDevices: ${knownDevices}`);
 			// Loop to all devices, check if online state = TRUE otherwise delete device
 			for (const device in knownDevices){
 				// Get online value
