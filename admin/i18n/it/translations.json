@@ -26,6 +26,7 @@
     "lblEncryptionKey": "Chiave di crittografia predefinita",
     "lblHeaderConnect": "Come connettere un dispositivo compatibile con ESPHome a ioBroker",
     "lblHeaderMainPage": "Integrazione della dashboard ESPHome",
+    "lblIgnoreList": "Indirizzi IP da escludere dal rilevamento del dispositivo",
     "lblInputApiPassword": "Password dell'API",
     "lblInputDeviceIP-content": "Indirizzo IP del dispositivo",
     "lblInputEncryptionKey": "Chiave crittografica",

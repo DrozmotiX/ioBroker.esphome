@@ -427,7 +427,7 @@
 					"md": 5,
 					"lg": 12,
 					"hidden": "data._templateTable[0].template == 'template.NewMessage'",
-					"label": "lblDevicesTable",
+					"label": "lblIgnoreList",
 					"showSecondAddAt": 5,
 //					"useNative": true,
 					"allowAddByFilter" : true,

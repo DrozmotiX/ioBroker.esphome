@@ -26,6 +26,7 @@
     "lblEncryptionKey": "Ключ шифрования по умолчанию",
     "lblHeaderConnect": "Как подключить устройство с поддержкой ESPHome к ioBroker",
     "lblHeaderMainPage": "Интеграция панели управления ESPHome",
+    "lblIgnoreList": "IP-адреса, которые будут исключены при обнаружении устройства",
     "lblInputApiPassword": "Пароль API",
     "lblInputDeviceIP-content": "IP-адрес устройства",
     "lblInputEncryptionKey": "Ключ шифрования",

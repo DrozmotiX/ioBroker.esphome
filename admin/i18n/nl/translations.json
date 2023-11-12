@@ -26,6 +26,7 @@
     "lblEncryptionKey": "Standaard coderingssleutel",
     "lblHeaderConnect": "Een ESPHome-compatibel apparaat verbinden met ioBroker",
     "lblHeaderMainPage": "ESPHome Dashboard-integratie",
+    "lblIgnoreList": "IP-adressen moeten worden uitgesloten bij apparaatdetectie",
     "lblInputApiPassword": "API-wachtwoord",
     "lblInputDeviceIP-content": "Apparaat IP-adres",
     "lblInputEncryptionKey": "Encryptiesleutel",

@@ -26,6 +26,7 @@
     "lblEncryptionKey": "默认加密密钥",
     "lblHeaderConnect": "如何将支持 ESPHome 的设备连接到 ioBroker",
     "lblHeaderMainPage": "ESPHome 仪表板集成",
+    "lblIgnoreList": "设备发现要排除的 IP 地址",
     "lblInputApiPassword": "接口密码",
     "lblInputDeviceIP-content": "设备 IP 地址",
     "lblInputEncryptionKey": "加密密钥",
