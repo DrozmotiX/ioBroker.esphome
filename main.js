@@ -16,7 +16,7 @@ const warnMessages = {}; // Store warn messages to avoid multiple sending to sen
 const fs = require('fs');
 const {clearTimeout} = require('timers');
 const resetTimers = {}; // Memory allocation for all running timers
-let reconnectInterval, defaultApiPass, defaultEncryptionKey, autodiscovery, dashboardProcess, createConfigStates, discovery;
+let autodiscovery, dashboardProcess, createConfigStates, discovery;
 const clientDetails = {}; // Memory cache of all devices and their connection status
 
 class Esphome extends utils.Adapter {
@@ -50,9 +50,9 @@ class Esphome extends utils.Adapter {
 
 			//ToDo: store default data into clientDetails object instead of global variable
 			// Store settings in global variables
-			defaultApiPass = this.config.apiPass;
+			// defaultApiPass = this.config.apiPass;
 			autodiscovery = this.config.autodiscovery;
-			reconnectInterval = this.config.reconnectInterval * 1000;
+			// reconnectInterval = this.config.reconnectInterval * 1000;
 			createConfigStates = this.config.configStates;
 
 			// Ensure all online states are set to false during adapter start
@@ -658,11 +658,6 @@ class Esphome extends utils.Adapter {
 					// Check if device connection is caused by adding  device from admin, if yes send OK message
 					if (this.messageResponse[host]) {
 
-						const massageObj = {
-							'type': 'error',
-							'message': optimisedError
-						};
-
 						this.sendTo(this.messageResponse[host].from, this.messageResponse[host].command,
 							{error: `${optimisedError}`},
 							this.messageResponse[host].callback);
@@ -1113,7 +1108,7 @@ class Esphome extends utils.Adapter {
 	 * Validate a proper format of IP-Address
 	 * @param {string} ipAddress
 	 */
-		// eslint-disable-next-line no-case-declarations,no-inner-declarations
+	// eslint-disable-next-line no-case-declarations,no-inner-declarations
 	validateIPAddress(ipAddress) {
 		return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipAddress);
 	}
