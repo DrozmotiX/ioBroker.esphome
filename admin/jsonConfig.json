@@ -113,6 +113,17 @@
 					"label": "lblAutoDiscovery"
 				},
 
+				"discoveryListeningAddress" : {
+					"type": "ip",
+					"sm": 2,
+					"md": 2,
+					"default": "0.0.0.0",
+					"label": "lblDiscoveryListeningAddress",
+					"help": "hlpDiscoveryListeningAddress",
+					"listenOnAllPorts" : true,
+					"onlyIp4" : true
+				},
+
 				// Refresh table showing all devices
 				// Sends message to backend to get all current known devices, their configuration and connection status
 				"loadDevices": {

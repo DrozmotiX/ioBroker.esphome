@@ -144,7 +144,7 @@ class Esphome extends utils.Adapter {
 						this.log.debug(`[ESPHome - Console] ${data}`);
 					}
 				} else {
-					console.debug(`[espHomeDashboard] Unknown logging data : ${JSON.stringify(data)}`);
+					// console.debug(`[espHomeDashboard] Unknown logging data : ${JSON.stringify(data)}`);
 				}
 			});
 
@@ -221,7 +221,7 @@ class Esphome extends utils.Adapter {
 			}
 
 			this.log.info(`Automatic device Discovery started, new devices (or IP changes) will be detected automatically`);
-			discovery = new Discovery();
+			discovery = new Discovery(
 
 			// Start device discovery (MDNS)
 			discovery.run();
