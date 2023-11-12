@@ -168,8 +168,7 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
-
-### __WORK IN PROGRESS__ - Rebuild Admin Interface & Connection handler
+### 0.5.0-beta.0 (2023-11-12) - Rebuild Admin Interface & Connection handler
 * (DutchmanNL) Admin interface redesigned to JSON-Config relates #171
 * (DutchmanNL) Backend massages implemented to Add/Modify/Delete devices
 * (DutchmanNL) Device connection handling and visibility of devices improved
@@ -177,7 +176,7 @@ If you like my work, please consider a personal donation
 * (DutchmanNL) Possibility added to exclude IP-Addresses from device discovery, relates #175
 * (DutchmanNL) Allow Selection to listen on specific interface or all for device discovery resolves #67
 * (DutchmanNL) State implemented to show current connection status (unreachable/disconnected/connected) to improve management of devices
-* (DutchmanNL) Several bugfixes, resolves #181 resolves # 
+* (DutchmanNL) Several bugfixes, resolves #181 resolves #
 
 ### 0.4.1 (2023-11-05)
 * (DutchmanNL) Bugfix: Password / connection issues in previous beta resolves #179
@@ -195,14 +194,6 @@ If you like my work, please consider a personal donation
 
 ### 0.3.1 (2023-10-31)
 * (DutchmanNL) Bugfix: Show online state of ESP Device correctly, resolves #106
-
-### 0.3.0 (2023-10-31) - Bugfixes & Improvements
-* (Dutchman & SimonFischer04) Several Bugfixes
-* (SimonFischer04) Supports type "select device"
-* (DutchmanNL) ESPHome dashboard default disabled
-* (SimonFischer04) Migrate to @2colors/esphome-native-api
-* (DutchmanNL) Automatically create needed directories, resolves #168
-* (SimonFischer04) Migrate usage of python to new structure should solve all ESPHome Dashboard-related installation issues
 
 ## License
 MIT License
