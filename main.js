@@ -171,7 +171,7 @@ class Esphome extends utils.Adapter {
 				}
 			});
 		} catch (error) {
-			this.errorHandler(`[espHomeDashboard] ${error}`);
+			this.errorHandler(`[espHomeDashboard]`, error);
 		}
 	}
 
@@ -205,7 +205,7 @@ class Esphome extends utils.Adapter {
 
 			}
 		} catch (error) {
-			this.errorHandler(`[tryKnownDevices] ${error}`);
+			this.errorHandler(`[tryKnownDevices]`, error);
 		}
 	}
 
@@ -250,7 +250,7 @@ class Esphome extends utils.Adapter {
 				}
 			});
 		} catch (error) {
-			this.errorHandler(`[deviceDiscovery] ${error}`);
+			this.errorHandler(`[deviceDiscovery]`, error);
 		}
 	}
 
@@ -429,7 +429,7 @@ class Esphome extends utils.Adapter {
 					}
 
 				} catch (error) {
-					this.errorHandler(`[deviceInfo] ${error}`);
+					this.errorHandler(`[deviceInfo]`, error);
 				}
 			});
 
@@ -583,7 +583,7 @@ class Esphome extends utils.Adapter {
 							}
 
 						} catch (error) {
-							this.errorHandler(`[connectHandler NewEntity] ${error}`);
+							this.errorHandler(`[connectHandler NewEntity]`, error);
 						}
 
 					});
@@ -603,7 +603,7 @@ class Esphome extends utils.Adapter {
 
 
 				} catch (e) {
-					this.log.error(`Connection issue for ${entity.name} ${e} | ${e.stack}`);
+					this.log.error(`Connection issue for ${entity.name} ${e}`);
 				}
 
 			});
@@ -665,7 +665,7 @@ class Esphome extends utils.Adapter {
 					}
 
 				} catch (error) {
-					this.errorHandler(`[connectedDevice onError] ${error}`);
+					this.errorHandler(`[connectedDevice onError]`, error);
 				}
 			});
 
@@ -679,7 +679,7 @@ class Esphome extends utils.Adapter {
 			}
 
 		} catch (e) {
-			this.log.error(`ESP device error for ${host} | ${e} | ${e.stack}`);
+			this.log.error(`ESP device error for ${host} | ${e}`);
 		}
 	}
 
@@ -712,7 +712,7 @@ class Esphome extends utils.Adapter {
 			}
 			await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, `State of ${entity.config.name}`, stateVal, this.deviceInfo[host][entity.id].unit, writable, stateCommon);
 		} catch (error) {
-			this.errorHandler(`[espHomeDashboard] ${error}`);
+			this.errorHandler(`[espHomeDashboard]`, error);
 		}
 	}
 
@@ -815,7 +815,7 @@ class Esphome extends utils.Adapter {
 			}
 
 		} catch (error) {
-			this.errorHandler(`[espHomeDashboard] ${error}`);
+			this.errorHandler(`[espHomeDashboard]`, error);
 		}
 	}
 
@@ -883,7 +883,7 @@ class Esphome extends utils.Adapter {
 				}
 			}
 		} catch (error) {
-			this.errorHandler(`[traverseJson] ${error}`);
+			this.errorHandler(`[traverseJson]`, error);
 		}
 	}
 
@@ -962,15 +962,16 @@ class Esphome extends utils.Adapter {
 			// Subscribe on state changes if writable
 			common.write && this.subscribeStates(objName);
 		} catch (error) {
-			this.errorHandler(`[stateSetCreate] ${error}`);
+			this.errorHandler(`[stateSetCreate]`, error);
 		}
 	}
 
 	/**
 	 * Handles error messages for log and Sentry
+	 * @param {string} codepart Function were exception occurred
 	 * @param {any} error Error message
 	 */
-	errorHandler(error) {
+	errorHandler(codepart, error) {
 		let errorMsg = error;
 		if (error instanceof Error && error.stack != null) errorMsg = error.stack;
 		try {
@@ -1053,7 +1054,7 @@ class Esphome extends utils.Adapter {
 			if (!result) return value;
 			return result;
 		} catch (error) {
-			this.errorHandler(`[modify] ${error}`);
+			this.errorHandler(`[modify]`, error);
 			return value;
 		}
 	}
@@ -1099,7 +1100,7 @@ class Esphome extends utils.Adapter {
 
 			callback();
 		} catch (error) {
-			this.errorHandler(`[onUnload] ${error}`);
+			this.errorHandler(`[onUnload]`, error);
 			callback();
 		}
 	}
@@ -1281,7 +1282,7 @@ class Esphome extends utils.Adapter {
 					break;
 			}
 		} catch (error) {
-			this.errorHandler(`[onMessage] ${error}`);
+			this.errorHandler(`[onMessage]`, error);
 		}
 	}
 
@@ -1487,7 +1488,7 @@ class Esphome extends utils.Adapter {
 				await this.stateSetCreate(`${_devices.rows[currDevice].id}.info._online`, `Online state`, false);
 			}
 		} catch (error) {
-			this.errorHandler(`[resetOnlineStates] ${error}`);
+			this.errorHandler(`[resetOnlineStates]`, error);
 		}
 	}
 
@@ -1527,7 +1528,7 @@ class Esphome extends utils.Adapter {
 				}
 			}
 		} catch (error) {
-			this.errorHandler(`[objectCleanup] ${error}`);
+			this.errorHandler(`[objectCleanup]`, error);
 		}
 	}
 
@@ -1551,7 +1552,7 @@ class Esphome extends utils.Adapter {
 			if (!knownDevices) return; // exit function if no known device are detected
 			if (knownDevices.length > 0) this.log.info(`Try to contact ${knownDevices.length} known devices`);
 		} catch (error) {
-			this.errorHandler(`[offlineDeviceCleanup] ${error}`);
+			this.errorHandler(`[offlineDeviceCleanup]`, error);
 		}
 	}
 
@@ -1584,7 +1585,7 @@ class Esphome extends utils.Adapter {
 			// Write connection status to info channel
 			if (clientDetails[host].connected) await this.stateSetCreate(`${clientDetails[host].deviceName}.info._connectionStatus`, `Connection status`, connectionStatus);
 		} catch (error) {
-			this.errorHandler(`[updateConnectionStatus] ${error} | ${error.stack}`);
+			this.errorHandler(`[updateConnectionStatus]`, error);
 		}
 	}
 }
