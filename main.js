@@ -219,8 +219,8 @@ class Esphome extends utils.Adapter {
 			// Prepare an array to easy processing containing all IP addresses to be excluded from device discovery
 			//ToDo: Check function doesn't look correct
 			for (const entry in this.config.ignoredDevices) {
-				if (this.config.ignoredDevices[entry] && this.config.ignoredDevices[entry]['this.config.ignoredDevices[entry]']){
-					excludedIP.push(this.config.ignoredDevices[entry]['this.config.ignoredDevices[entry]']);
+				if (this.config.ignoredDevices[entry] && this.config.ignoredDevices[entry]['IP-Address'] && !excludedIP.includes(this.config.ignoredDevices[entry]['IP-Address'])){
+					excludedIP.push(this.config.ignoredDevices[entry]['IP-Address']);
 				}
 			}
 
@@ -902,7 +902,7 @@ class Esphome extends utils.Adapter {
 		this.log.debug('Create_state called for : ' + objName + ' with value : ' + value);
 		try {
 
-			// Try to get details from state lib, if not use defaults. Throw warning if states are not known in attribute list
+			// Try to get details from state lib, if not use defaults. Throw warning if states are not known in an attribute list
 			/** @type {Partial<ioBroker.StateCommon>} */
 			const common = initialStateCommon;
 			// const entityID = objName.split('.');
@@ -1172,11 +1172,11 @@ class Esphome extends utils.Adapter {
 				// Front End message handler to load IP-Address dropDown with all current known devices
 				case 'getDeviceIPs':
 					{
-						const dropDownEntrys = [];
+						const dropDownEntry = [];
 						for (const device in clientDetails) {
-							dropDownEntrys.push({label: device, value: clientDetails[device].ip});
+							dropDownEntry.push({label: device, value: clientDetails[device].ip});
 						}
-						this.sendTo(obj.from, obj.command, dropDownEntrys, obj.callback);
+						this.sendTo(obj.from, obj.command, dropDownEntry, obj.callback);
 					}
 					break;
 
@@ -1184,7 +1184,7 @@ class Esphome extends utils.Adapter {
 				case 'getHostIp':
 					{
 
-						// Get all current known host IP-Adresses from System object
+						// Get all current known host IP-Addresses from System object
 						const hostIP = await this.getForeignObjectAsync(`system.host.${this.host}`);
 						const ip4List = [];
 
