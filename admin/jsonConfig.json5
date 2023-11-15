@@ -160,6 +160,7 @@
 				// Input fields to ADD / Modify devices
 				"deviceIP": {
 					"newLine": true,
+//					"doNotSave": true,
 					"type": "autocompleteSendTo",
 					"command": "getDeviceIPs",
 					"jsonData": "{ \"service\": \"${data.deviceInputIP}\" }",

@@ -168,6 +168,9 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
+### __WORK IN PROGRESS__
+* (DutchmanNL) Refactor memory caching of device data, resolves #189
+
 ### 0.5.0-beta.1 (2023-11-12)
 * (DutchmanNL) Only show error messages once for unreachable devices
 
