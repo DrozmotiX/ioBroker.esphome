@@ -4,6 +4,10 @@ on:
   schedule:
     - cron: '20 4 * * 6'
 
+  push:
+    branches:
+      - "*"
+
 jobs:
   build:
     runs-on: ubuntu-latest
