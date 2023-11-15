@@ -380,7 +380,7 @@ class Esphome extends utils.Adapter {
 
 					this.deviceStateRelation[deviceName] = {'ip': host};
 
-					this.log.debug(`DeviceInfo ${clientDetails[host].deviceInfo.name}: ${JSON.stringify(clientDetails[host].deviceInfo)}`);
+					this.log.debug(`DeviceInfo ${clientDetails[host].deviceFriendlyName}: ${JSON.stringify(clientDetails[host].deviceInfo)}`);
 
 					// Create Device main structure
 					await this.extendObjectAsync(deviceName, {
@@ -437,9 +437,9 @@ class Esphome extends utils.Adapter {
 
 
 					if (clientDetails[host][entity.id].config.deviceClass) {
-						this.log.info(`${clientDetails[host].deviceInfo.name} announced ${clientDetails[host][entity.id].config.deviceClass} "${clientDetails[host][entity.id].config.name}"`);
+						this.log.info(`${clientDetails[host].deviceFriendlyName} announced ${clientDetails[host][entity.id].config.deviceClass} "${clientDetails[host][entity.id].config.name}"`);
 					} else {
-						this.log.info(`${clientDetails[host].deviceInfo.name} announced ${clientDetails[host][entity.id].type} "${clientDetails[host][entity.id].config.name}"`);
+						this.log.info(`${clientDetails[host].deviceFriendlyName} announced ${clientDetails[host][entity.id].type} "${clientDetails[host][entity.id].config.name}"`);
 					}
 
 					// Create Device main structure
@@ -504,7 +504,7 @@ class Esphome extends utils.Adapter {
 
 					// Request current state values
 					await clientDetails[host].client.connection.subscribeStatesService();
-					this.log.debug(`[DeviceInfoData] ${clientDetails[host].deviceInfo.name} ${JSON.stringify(clientDetails[host].deviceInfo)}`);
+					this.log.debug(`[DeviceInfoData] ${clientDetails[host].deviceFriendlyName} ${JSON.stringify(clientDetails[host].deviceInfo)}`);
 
 					// Listen to state changes and write values to states (create state if not yet exists)
 					entity.on(`state`, async (/** @type {object} */ state) => {
