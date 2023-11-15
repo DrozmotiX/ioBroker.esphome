@@ -197,7 +197,7 @@ class Esphome extends utils.Adapter {
 					`${deviceDetails.deviceName}`,
 					`${deviceDetails.name}`,
 					!deviceDetails.encryptionKeyUsed ? deviceDetails.apiPassword ? deviceDetails.apiPassword : deviceDetails.passWord : null,
-					deviceDetails.encryptionKeyUsed ? deviceDetails.encryptionKeyUsed : null
+					deviceDetails.encryptionKeyUsed ? deviceDetails.encryptionKey : null
 				);
 
 				// Start connection to this device
@@ -280,7 +280,6 @@ class Esphome extends utils.Adapter {
 				reconnectInterval: 5000,
 				pingInterval: 5000, //ToDo: Make configurable by adapter settings
 				pingAttempts: 1, //ToDo: Make configurable by adapter settings
-				password : this.decrypt(clientDetails[host].apiPassword)
 				// port: espDevices[device].port //ToDo: Make configurable by adapter settings
 			};
 
@@ -679,7 +678,7 @@ class Esphome extends utils.Adapter {
 			}
 
 		} catch (e) {
-			this.log.error(`ESP device error for ${host} | ${e}`);
+			this.log.error(`ESP device error for ${host} | ${e} | ${e.stack}`);
 		}
 	}
 
