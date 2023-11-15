@@ -1,4 +1,8 @@
 # Older changes
+## 0.3.2 (2023-11-01)
+* (DutchmanNL) Improved error handling if devices are not reachable/disconnected
+* (DutchmanNL) Bugfix: Allow control of brightness and color for a light component, resolves #173
+
 ## 0.3.1 (2023-10-31)
 * (DutchmanNL) Bugfix: Show online state of ESP Device correctly, resolves #106
 

@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "esphome",
-    "version": "0.5.0-beta.3",
+    "version": "0.5.0-beta.4",
     "news": {
+      "0.5.0-beta.4": {
+        "en": "Refactor memory caching of device data, resolves #189",
+        "de": "Refactor-Speicher Caching von Gerätedaten, löst #189",
+        "ru": "Рефакторная память кэширования данных устройства, решает #189",
+        "pt": "Cache de memória refator dos dados do dispositivo, resolve #189",
+        "nl": "Refactor geheugen caching of apparatuur, resoluties 189",
+        "fr": "Rémunérer le cache mémoire des données de périphérique, résout #189",
+        "it": "Cache di memoria refactor dei dati del dispositivo, risolve #189",
+        "es": "Refactor memoria caching de datos del dispositivo, resuelve #189",
+        "pl": "Refactor memory cache of data (ang.)",
+        "uk": "Рефакторне кешування пам'яті даних пристрою, вирішує #189",
+        "zh-cn": "放映装置数据,解决第189号行动"
+      },
       "0.5.0-beta.1": {
         "en": "Only show error messages once for unreachable devices",
         "de": "Fehlermeldungen nur einmal anzeigen für nicht erreichbare Geräte",
@@ -80,19 +93,6 @@
         "pl": "Bugfix: Programy internetowe ESP Device poprawnie ↓, s. 106",
         "uk": "Помилки: Показати онлайн стан ESP Пристрої правильно, Виправлення #106",
         "zh-cn": "Bugfix: ESP Device在线状况,Fixes #106"
-      },
-      "0.3.0": {
-        "en": "Several Bugfixes\nSupport type \"select device\"\nESPHome dashboard default disabled\nMigrate to @2colors/esphome-native-api\nAutomatically create needed directories, Fixes #168\nMigrate usage of python to new structure, should solve all ESPHome Dashboard related installation issues",
-        "de": "Mehrere Bugfixes\nSupport-Typ \"Auswahlgerät\"\nESPHome Dashboard default deaktiviert\nMigration auf @2colors/esphome-native-api\nAutomatische Erstellung erforderlicher Verzeichnisse, Fixes #168\nMigration der Nutzung von Python zu neuer Struktur, sollte alle ESPHome Dashboard bezogene Installation Probleme lösen",
-        "ru": "Несколько багфиксов\nТип поддержки \"выберите устройство\"\nESPHome dashboard дефолт отключен\nMigrate в @2colors/esphome-native-api\nАвтоматически создавать необходимые директории, Fixes #168\nMigrate использование python к новой структуре, должен решить все ESPHome Dashboard связанные с установкой вопросы",
-        "pt": "Vários Bugfixes\nTipo de suporte \"selecionar dispositivo\"\nDesativado padrão do painel da ESPHome\nMigrar para @2colors/esphome-native-api\nCrie automaticamente diretórios necessários, correções #168\nMigrar o uso de python para nova estrutura, deve resolver todos os problemas de instalação relacionados ESPHome Dashboard",
-        "nl": "Vertaling:\nSteun type \"select apparaat\"\nVertaling:\nVertaling:\nAutomatisch gecreëerd nodige regisseurs, Fixes 168\nVermenigvuldig gebruik van python naar nieuwe structuur, moet alle ESPHome Dashboard gerelateerde installatie kwesties oplossen",
-        "fr": "Plusieurs Bugfixes\nType de support \"select device\"\nESPHome tableau de bord par défaut désactivé\nMigrate to @2colors/esphome-native-api\nCréez automatiquement les répertoires nécessaires, Fixes #168\nMigrate utilisation de python à une nouvelle structure, devrait résoudre tous les problèmes d'installation liés à ESPHome Dashboard",
-        "it": "Diversi bugfix\nTipo di supporto \"seleziona dispositivo\"\nESPHome dashboard disattivato\nMigra a @2colors/esphome-native-api\nCrea automaticamente directory necessarie, Fixs #168\nUso migrato di pitone a nuova struttura, dovrebbe risolvere tutti i problemi di installazione relativi ESPHome Dashboard",
-        "es": "Varios Bugfixes\nTipo de soporte \"dispositivo selecto\"\nESPHome dashboard default disabled\nMigrar a @2colores/esphome-native-api\nCrea automáticamente directorios necesarios, Fixes #168\nMigrar el uso de pitón a nueva estructura, debe resolver todos los problemas de instalación relacionados con ESPHome Dashboard",
-        "pl": "Several Bugfixów\nTyp wsparcia „urządzeniem wyborowym”\nESPHome dashboard\nMigrate to @2colors/esphome-native-api-native\nAutomatycznie potrzebuje katalogów, Fixes #168\nMigrate wykorzystanie pytonu do nowej struktury powinien rozwiązać wszystkie problemy z instalacją ESPHome Dashboard",
-        "uk": "Кілька Виправлень\nТип підтримки \"виберіть пристрій\"\nESPHome панель за замовчуванням вимкнено\nMigrate до @2colors/esphome-native-api\nАвтоматично створювати потрібні каталоги, Виправлення #168\nМигратне використання пітону до нової структури, повинні вирішувати всі проблеми з монтажу ESPHome",
-        "zh-cn": "Bugfix\n支助类型“更换装置”\nESPHome dashing\n@2colors/esphome-native-api\n自动创建必要的直接理论,第168号行动\n应该解决所有ESPHome Dashing板相关的安装问题,将磷酸盐用于新结构。"
       }
     },
     "title": "Control ESPHome managed devices",
