@@ -44,6 +44,7 @@
     "execa": "^8.0.1",
     "gulp": "^4.0.2",
     "mocha": "^10.2.0",
+    "node-fetch": "2.6.7",
     "promisify": "0.0.3",
     "proxyquire": "^2.1.3",
     "sinon": "^16.0.0",
@@ -69,6 +70,6 @@
   "readmeFilename": "README.md",
   "iobroker_esphome_adapter": {
     "python_version": "3.12",
-    "dashboard_version": "2023.10.0"
+    "dashboard_version": "2023.11.0"
   }
 }

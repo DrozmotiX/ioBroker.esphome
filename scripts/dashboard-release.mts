@@ -1,4 +1,5 @@
 import {$} from 'execa';
+import fetch from 'node-fetch';
 import pkg from '../package.json' assert {type: 'json'};
 
 interface DashboardConfig {
