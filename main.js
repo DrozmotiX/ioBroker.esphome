@@ -35,7 +35,6 @@ class Esphome extends utils.Adapter {
 		this.on('message', this.onMessage.bind(this));
 		this.on('unload', this.onUnload.bind(this));
 
-		this.deviceInfo = {}; // Memory array of initiated objects
 		this.deviceStateRelation = {}; // Memory array of an initiated device by Device Identifier (name) and IP
 		this.createdStatesDetails = {}; // Array to store information of created states
 		this.messageResponse = {}; // Array to store messages from admin and provide proper message to add/remove devices
@@ -321,6 +320,7 @@ class Esphome extends utils.Adapter {
 				try {
 					if (clientDetails[host].deviceName != null) {
 						await this.updateConnectionStatus(host, false, false, 'disconnected', false);
+						delete clientDetails[host].deviceInfo;
 						// Cleanup all known states in memory related to this device
 						for (const state in this.createdStatesDetails) {
 							// Remove states from cache
@@ -376,20 +376,11 @@ class Esphome extends utils.Adapter {
 
 					await this.updateConnectionStatus(host, true, false, 'Initializing', false);
 
-					this.deviceInfo[host] = {
-						adapterObjects : {
-							channels : []
-						},
-						ip: host,
-						mac: deviceInfo.macAddress,
-						deviceInfo: deviceInfo,
-						deviceName: deviceName,
-						deviceInfoName: deviceInfo.name,
-					};
+					clientDetails[host].deviceInfo = deviceInfo;
 
 					this.deviceStateRelation[deviceName] = {'ip': host};
 
-					this.log.debug(`DeviceInfo ${this.deviceInfo[host].deviceInfo.name}: ${JSON.stringify(this.deviceInfo)}`);
+					this.log.debug(`DeviceInfo ${clientDetails[host].deviceInfo.name}: ${JSON.stringify(clientDetails[host].deviceInfo)}`);
 
 					// Create Device main structure
 					await this.extendObjectAsync(deviceName, {
@@ -402,7 +393,7 @@ class Esphome extends utils.Adapter {
 						},
 						native: {
 							ip: host,
-							name: this.deviceInfo[host].deviceInfoName,
+							name: clientDetails[host].deviceInfoName,
 							mac: deviceInfo.macAddress,
 							deviceName: deviceName,
 							deviceFriendlyName : deviceInfo.name,
@@ -437,7 +428,7 @@ class Esphome extends utils.Adapter {
 				this.log.debug(`EntityData: ${JSON.stringify(entity.config)}`);
 				try {
 					// Store relevant information into memory object
-					this.deviceInfo[host][entity.id] = {
+					clientDetails[host][entity.id] = {
 						config: entity.config,
 						name: entity.name,
 						type: entity.type,
@@ -445,14 +436,14 @@ class Esphome extends utils.Adapter {
 					};
 
 
-					if (this.deviceInfo[host][entity.id].config.deviceClass) {
-						this.log.info(`${this.deviceInfo[host].deviceInfo.name} announced ${this.deviceInfo[host][entity.id].config.deviceClass} "${this.deviceInfo[host][entity.id].config.name}"`);
+					if (clientDetails[host][entity.id].config.deviceClass) {
+						this.log.info(`${clientDetails[host].deviceInfo.name} announced ${clientDetails[host][entity.id].config.deviceClass} "${clientDetails[host][entity.id].config.name}"`);
 					} else {
-						this.log.info(`${this.deviceInfo[host].deviceInfo.name} announced ${this.deviceInfo[host][entity.id].type} "${this.deviceInfo[host][entity.id].config.name}"`);
+						this.log.info(`${clientDetails[host].deviceInfo.name} announced ${clientDetails[host][entity.id].type} "${clientDetails[host][entity.id].config.name}"`);
 					}
 
 					// Create Device main structure
-					await this.extendObjectAsync(`${this.deviceInfo[host].deviceName}.${entity.type}`, {
+					await this.extendObjectAsync(`${clientDetails[host].deviceName}.${entity.type}`, {
 						type: 'channel',
 						common: {
 							name: entity.type,
@@ -461,12 +452,12 @@ class Esphome extends utils.Adapter {
 					});
 
 					// Cache created channel in device memory
-					if (!this.deviceInfo[host].adapterObjects.channels.includes(`${this.namespace}.${this.deviceInfo[host].deviceName}.${entity.type}`)) {
-						this.deviceInfo[host].adapterObjects.channels.push(`${this.namespace}.${this.deviceInfo[host].deviceName}.${entity.type}`);
+					if (!clientDetails[host].adapterObjects.channels.includes(`${this.namespace}.${clientDetails[host].deviceName}.${entity.type}`)) {
+						clientDetails[host].adapterObjects.channels.push(`${this.namespace}.${clientDetails[host].deviceName}.${entity.type}`);
 					}
 
 					// Create state specific channel by id
-					await this.extendObjectAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}`, {
+					await this.extendObjectAsync(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}`, {
 						type: 'channel',
 						common: {
 							name: entity.config.name
@@ -475,24 +466,24 @@ class Esphome extends utils.Adapter {
 					});
 
 					// Create a channel in device memory
-					if (!this.deviceInfo[host].adapterObjects.channels.includes(`${this.namespace}.${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}`)) {
-						this.deviceInfo[host].adapterObjects.channels.push(`${this.namespace}.${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}`);
+					if (!clientDetails[host].adapterObjects.channels.includes(`${this.namespace}.${clientDetails[host].deviceName}.${entity.type}.${entity.id}`)) {
+						clientDetails[host].adapterObjects.channels.push(`${this.namespace}.${clientDetails[host].deviceName}.${entity.type}.${entity.id}`);
 					}
 
 					//Check if a config channel should be created
 					if (!createConfigStates) {
 						// Delete folder structure if already present
 						try {
-							const obj = await this.getObjectAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`);
+							const obj = await this.getObjectAsync(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config`);
 							if (obj) {
-								await this.delObjectAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`, {recursive: true});
+								await this.delObjectAsync(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config`, {recursive: true});
 							}
 						} catch (error) {
 							// do nothing
 						}
 					} else {
 						// Create config channel
-						await this.extendObjectAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`, {
+						await this.extendObjectAsync(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config`, {
 							type: 'channel',
 							common: {
 								name: 'Configuration data'
@@ -501,32 +492,32 @@ class Esphome extends utils.Adapter {
 						});
 
 						// Store channel in device memory
-						if (!this.deviceInfo[host].adapterObjects.channels.includes(`${this.namespace}.${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`)) {
-							this.deviceInfo[host].adapterObjects.channels.push(`${this.namespace}.${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`);
+						if (!clientDetails[host].adapterObjects.channels.includes(`${this.namespace}.${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config`)) {
+							clientDetails[host].adapterObjects.channels.push(`${this.namespace}.${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config`);
 						}
 
 						// Handle Entity JSON structure and write related config channel data
-						await this.traverseJson(entity.config, `${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.config`);
+						await this.traverseJson(entity.config, `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config`);
 					}
 
 					await this.createNonStateDevices(host, entity);
 
 					// Request current state values
 					await clientDetails[host].client.connection.subscribeStatesService();
-					this.log.debug(`[DeviceInfoData] ${this.deviceInfo[host].deviceInfo.name} ${JSON.stringify(this.deviceInfo[host])}`);
+					this.log.debug(`[DeviceInfoData] ${clientDetails[host].deviceInfo.name} ${JSON.stringify(clientDetails[host].deviceInfo)}`);
 
 					// Listen to state changes and write values to states (create state if not yet exists)
 					entity.on(`state`, async (/** @type {object} */ state) => {
-						this.deviceInfo[host].connectStatus = 'connected';
+						clientDetails[host].connectStatus = 'connected';
 						await this.updateConnectionStatus(host, true, false, 'connected', false);
 						this.log.debug(`StateData: ${JSON.stringify(state)}`);
 						try {
-							this.log.debug(`[entityStateConfig] ${JSON.stringify(this.deviceInfo[host][entity.id])}`);
+							this.log.debug(`[entityStateConfig] ${JSON.stringify(clientDetails[host][entity.id])}`);
 							this.log.debug(`[entityStateData] ${JSON.stringify(state)}`);
-							const deviceDetails = `DeviceType ${this.deviceInfo[host][entity.id].type} | State-Keys ${JSON.stringify(state)} | [entityStateConfig] ${JSON.stringify(this.deviceInfo[host][entity.id])}`;
+							const deviceDetails = `DeviceType ${clientDetails[host][entity.id].type} | State-Keys ${JSON.stringify(state)} | [entityStateConfig] ${JSON.stringify(clientDetails[host][entity.id])}`;
 
 							// Ensure proper initialization of the state
-							switch (this.deviceInfo[host][entity.id].type) {
+							switch (clientDetails[host][entity.id].type) {
 								case 'BinarySensor':
 									await this.handleRegularState(`${host}`, entity, state, false);
 									break;
@@ -536,9 +527,9 @@ class Esphome extends utils.Adapter {
 									break;
 
 								case 'Cover':
-									await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.position`, `Position`, 0, `%`, true);
-									await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.tilt`, `Tilt`, 0, `%`, true);
-									await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.stop`, `Stop`, false, ``, true);
+									await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.position`, `Position`, 0, `%`, true);
+									await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.tilt`, `Tilt`, 0, `%`, true);
+									await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.stop`, `Stop`, false, ``, true);
 									break;
 
 
@@ -573,11 +564,11 @@ class Esphome extends utils.Adapter {
 
 								default:
 
-									if (!warnMessages[this.deviceInfo[host][entity.id].type]) {
-										this.log.warn(`DeviceType ${this.deviceInfo[host][entity.id].type} not yet supported`);
+									if (!warnMessages[clientDetails[host][entity.id].type]) {
+										this.log.warn(`DeviceType ${clientDetails[host][entity.id].type} not yet supported`);
 										this.log.warn(`Please submit git issue with all information from next line`);
-										this.log.warn(`DeviceType ${this.deviceInfo[host][entity.id].type} | State-Keys ${JSON.stringify(state)} | [entityStateConfig] ${JSON.stringify(this.deviceInfo[host][entity.id])}`);
-										warnMessages[this.deviceInfo[host][entity.id].type] = deviceDetails;
+										this.log.warn(`DeviceType ${clientDetails[host][entity.id].type} | State-Keys ${JSON.stringify(state)} | [entityStateConfig] ${JSON.stringify(clientDetails[host][entity.id])}`);
+										warnMessages[clientDetails[host][entity.id].type] = deviceDetails;
 									}
 							}
 
@@ -694,9 +685,9 @@ class Esphome extends utils.Adapter {
 		// Round value to digits as known by configuration
 			let stateVal = state.state;
 
-			if (this.deviceInfo[host][entity.id].config.accuracyDecimals != null) {
-				const rounding = `round(${this.deviceInfo[host][entity.id].config.accuracyDecimals})`;
-				this.log.debug(`Value "${stateVal}" for name "${entity}" before function modify with method "round(${this.deviceInfo[host][entity.id].config.accuracyDecimals})"`);
+			if (clientDetails[host][entity.id].config.accuracyDecimals != null) {
+				const rounding = `round(${clientDetails[host][entity.id].config.accuracyDecimals})`;
+				this.log.debug(`Value "${stateVal}" for name "${entity}" before function modify with method "round(${clientDetails[host][entity.id].config.accuracyDecimals})"`);
 				stateVal = this.modify(rounding, stateVal);
 				this.log.debug(`Value "${stateVal}" for name "${entity}" after function modify with method "${rounding}"`);
 			}
@@ -709,7 +700,7 @@ class Esphome extends utils.Adapter {
 			if(entity.config.optionsList != null) {
 				stateCommon.states = entity.config.optionsList;
 			}
-			await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.state`, `State of ${entity.config.name}`, stateVal, this.deviceInfo[host][entity.id].unit, writable, stateCommon);
+			await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.state`, `State of ${entity.config.name}`, stateVal, clientDetails[host][entity.id].unit, writable, stateCommon);
 		} catch (error) {
 			this.errorHandler(`[espHomeDashboard]`, error);
 		}
@@ -724,9 +715,9 @@ class Esphome extends utils.Adapter {
 	async handleStateArrays(host, entity, state) {
 
 		try {
-			this.deviceInfo[host][entity.id].states = state;
+			clientDetails[host][entity.id].states = state;
 
-			for (const stateName in this.deviceInfo[host][entity.id].states) {
+			for (const stateName in clientDetails[host][entity.id].states) {
 				let unit = '';
 				let writable = true;
 				let writeValue = state[stateName];
@@ -736,7 +727,7 @@ class Esphome extends utils.Adapter {
 					case 'currentTemperature':
 						unit = `°C`;
 						writable = false;
-						this.deviceInfo[host][entity.id].states.currentTemperature = this.modify('round(2)', state[stateName]);
+						clientDetails[host][entity.id].states.currentTemperature = this.modify('round(2)', state[stateName]);
 						break;
 
 					case 'oscillating': // Sensor type = Fan, write not supported
@@ -769,48 +760,48 @@ class Esphome extends utils.Adapter {
 					writeValue = Math.round((state[stateName] * 100) * 2.55);
 
 					// Create transitionLength state only ones
-					if (this.deviceInfo[host][entity.id].states.transitionLength == null) {
+					if (clientDetails[host][entity.id].states.transitionLength == null) {
 
 						// Check if state already exists
 						let transitionLength;
 						try {
 
 							// Try  to get current state
-							transitionLength = await this.getStateAsync(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`);
+							transitionLength = await this.getStateAsync(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`);
 
 							// Check if state contains value
 							if (transitionLength) {
-								this.deviceInfo[host][entity.id].states.transitionLength = transitionLength.val;
+								clientDetails[host][entity.id].states.transitionLength = transitionLength.val;
 								// Run create state routine to ensure state is cached in memory
-								await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, transitionLength.val, `s`, writable);
+								await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, transitionLength.val, `s`, writable);
 							} else { // Else create it
-								await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
-								this.deviceInfo[host][entity.id].states.transitionLength = 0;
+								await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
+								clientDetails[host][entity.id].states.transitionLength = 0;
 							}
 
 						} catch (e) { // Else create it
-							await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
-							this.deviceInfo[host][entity.id].states.transitionLength = 0;
+							await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
+							clientDetails[host][entity.id].states.transitionLength = 0;
 						}
 
 					}
 				}
 
 				if (stateName !== 'key') {
-					await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.${stateName}`, `${stateName} of ${entity.config.name}`, writeValue, unit, writable);
+					await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.${stateName}`, `${stateName} of ${entity.config.name}`, writeValue, unit, writable);
 				}
 			}
 
 			// Convert RGB to HEX and write to state
-			if (this.deviceInfo[host][entity.id].states.red != null &&
-				this.deviceInfo[host][entity.id].states.blue != null &&
-				this.deviceInfo[host][entity.id].states.green != null) {
+			if (clientDetails[host][entity.id].states.red != null &&
+				clientDetails[host][entity.id].states.blue != null &&
+				clientDetails[host][entity.id].states.green != null) {
 				const hexValue = this.rgbToHex(
-					Math.round((this.deviceInfo[host][entity.id].states.red * 100) * 2.55),
-					Math.round((this.deviceInfo[host][entity.id].states.green * 100) * 2.55),
-					Math.round((this.deviceInfo[host][entity.id].states.blue * 100) * 2.55),
+					Math.round((clientDetails[host][entity.id].states.red * 100) * 2.55),
+					Math.round((clientDetails[host][entity.id].states.green * 100) * 2.55),
+					Math.round((clientDetails[host][entity.id].states.blue * 100) * 2.55),
 				);
-				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.colorHEX`, `ColorHEX of ${entity.config.name}`, hexValue, '', true);
+				await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.colorHEX`, `ColorHEX of ${entity.config.name}`, hexValue, '', true);
 			}
 
 		} catch (error) {
@@ -1064,14 +1055,14 @@ class Esphome extends utils.Adapter {
 	 */
 	onUnload(callback) {
 		try {
-			this.log.debug(JSON.stringify(this.deviceInfo));
+			// this.log.debug(JSON.stringify(clientDetails));
 
 			// Set all online states to false
-			for (const device in this.deviceInfo) {
+			for (const device in clientDetails) {
 
 				// Ensure all known online states are set to false
-				if (this.deviceInfo[device].mac != null) {
-					const deviceName = this.replaceAll(this.deviceInfo[device].mac, `:`, ``);
+				if (clientDetails[device].mac != null) {
+					const deviceName = this.replaceAll(clientDetails[device].mac, `:`, ``);
 					this.setState(`${deviceName}.info._online`, {val: false, ack: true});
 				}
 
@@ -1235,6 +1226,7 @@ class Esphome extends utils.Adapter {
 						// Device is known, update encryptionKey or apiPass
 						// Ensure all existing connections are closed, will trigger disconnect event to clean-up memory attributes
 						try {
+							// if (clientDetails[obj.message.ip].connected) clientDetails[obj.message.ip].client.disconnect();
 							clientDetails[obj.message.ip].client.disconnect();
 						} catch (e) {
 							// There was no connection in memory
@@ -1340,43 +1332,43 @@ class Esphome extends utils.Adapter {
 				const deviceIP = this.deviceStateRelation[device[2]].ip;
 
 				// Handle Switch State
-				if (this.deviceInfo[deviceIP][device[4]].type === `Switch`
-					|| this.deviceInfo[deviceIP][device[4]].type === `Fan`) {
+				if (clientDetails[deviceIP][device[4]].type === `Switch`
+					|| clientDetails[deviceIP][device[4]].type === `Fan`) {
 					await clientDetails[deviceIP].client.connection.switchCommandService({key: device[4], state: state.val});
 
 					// Handle Climate State
-				} else if (this.deviceInfo[deviceIP][device[4]].type === `Climate`) {
-					this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
-					await clientDetails[deviceIP].client.connection.climateCommandService(this.deviceInfo[deviceIP][device[4]].states);
+				} else if (clientDetails[deviceIP][device[4]].type === `Climate`) {
+					clientDetails[deviceIP][device[4]].states[device[5]] = state.val;
+					await clientDetails[deviceIP].client.connection.climateCommandService(clientDetails[deviceIP][device[4]].states);
 
 					// Handle Number State
-				} else if (this.deviceInfo[deviceIP][device[4]].type === `Number`) {
+				} else if (clientDetails[deviceIP][device[4]].type === `Number`) {
 					await clientDetails[deviceIP].client.connection.numberCommandService({key: device[4], state: state.val});
 
 					// Handle Button State
-				} else if (this.deviceInfo[deviceIP][device[4]].type === `Button`) {
+				} else if (clientDetails[deviceIP][device[4]].type === `Button`) {
 					await clientDetails[deviceIP].client.connection.buttonCommandService({key: device[4]});
 
 					// Handle Select State
-				} else if (this.deviceInfo[deviceIP][device[4]].type === `Select`) {
+				} else if (clientDetails[deviceIP][device[4]].type === `Select`) {
 					await clientDetails[deviceIP].client.connection.selectCommandService({key: device[4], state: state.val});
 
 					// Handle Cover Position
 				} else if (device[5] === `position`) {
-					// this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
+					// clientDetails[deviceIP][device[4]].states[device[5]] = state.val;
 					await clientDetails[deviceIP].client.connection.climateCommandService({'key': device[4], 'position': state.val});
 
 					// Handle Cover Tilt
 				} else if (device[5] === `tilt`) {
-					// this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
+					// clientDetails[deviceIP][device[4]].states[device[5]] = state.val;
 					await clientDetails[deviceIP].client.connection.climateCommandService({'key': device[4], 'tilt': state.val});
 
 					// Handle Cover Stop
 				} else if (device[5] === `stop`) {
-					// this.deviceInfo[deviceIP][device[4]].states[device[5]] = state.val;
+					// clientDetails[deviceIP][device[4]].states[device[5]] = state.val;
 					await clientDetails[deviceIP].client.connection.climateCommandService({'key': device[4], 'stop': true});
 
-				} else if (this.deviceInfo[deviceIP][device[4]].type === `Light`) {
+				} else if (clientDetails[deviceIP][device[4]].type === `Light`) {
 					let writeValue = state.val;
 					// Add unit to temperature states
 					if (device[5] === `brightness`
@@ -1390,51 +1382,51 @@ class Esphome extends utils.Adapter {
 						writeValue = (writeValue / 100) / 2.55;
 
 						// Store value to memory
-						this.deviceInfo[deviceIP][device[4]].states[device[5]] = writeValue;
+						clientDetails[deviceIP][device[4]].states[device[5]] = writeValue;
 
 					} else if (device[5] === `colorHEX`) {
 
 						// Convert hex to rgb
 						const rgbConversion = this.hexToRgb(writeValue);
 						if (!rgbConversion) return;
-						this.deviceInfo[deviceIP][device[4]].states.red = (rgbConversion.red / 100) / 2.55;
-						this.deviceInfo[deviceIP][device[4]].states.blue = (rgbConversion.blue / 100) / 2.55;
-						this.deviceInfo[deviceIP][device[4]].states.green = (rgbConversion.green / 100) / 2.55;
+						clientDetails[deviceIP][device[4]].states.red = (rgbConversion.red / 100) / 2.55;
+						clientDetails[deviceIP][device[4]].states.blue = (rgbConversion.blue / 100) / 2.55;
+						clientDetails[deviceIP][device[4]].states.green = (rgbConversion.green / 100) / 2.55;
 
 					} else if (device[5] === `transitionLength`) {
 
-						this.deviceInfo[deviceIP][device[4]].states[device[5]] = writeValue;
+						clientDetails[deviceIP][device[4]].states[device[5]] = writeValue;
 
 					} else if (device[5] === 'effect') {
 
-						this.deviceInfo[deviceIP][device[4]].states.effect = writeValue;
+						clientDetails[deviceIP][device[4]].states.effect = writeValue;
 
 					} else if (device[5] === 'state') {
 
-						this.deviceInfo[deviceIP][device[4]].states.state = writeValue;
+						clientDetails[deviceIP][device[4]].states.state = writeValue;
 
 					}
 
 					const data = {
-						key: this.deviceInfo[deviceIP][device[4]].states.key,
-						state: this.deviceInfo[deviceIP][device[4]].states.state,
-						transitionLength: this.deviceInfo[deviceIP][device[4]].states.transitionLength
+						key: clientDetails[deviceIP][device[4]].states.key,
+						state: clientDetails[deviceIP][device[4]].states.state,
+						transitionLength: clientDetails[deviceIP][device[4]].states.transitionLength
 					};
-					if (this.deviceInfo[deviceIP][device[4]].config.legacySupportsBrightness === true) {
-						data.brightness = this.deviceInfo[deviceIP][device[4]].states.brightness;
+					if (clientDetails[deviceIP][device[4]].config.legacySupportsBrightness === true) {
+						data.brightness = clientDetails[deviceIP][device[4]].states.brightness;
 					}
-					if (this.deviceInfo[deviceIP][device[4]].config.legacySupportsRgb === true) {
-						data.red = this.deviceInfo[deviceIP][device[4]].states.red;
-						data.green = this.deviceInfo[deviceIP][device[4]].states.green;
-						data.blue = this.deviceInfo[deviceIP][device[4]].states.blue;
+					if (clientDetails[deviceIP][device[4]].config.legacySupportsRgb === true) {
+						data.red = clientDetails[deviceIP][device[4]].states.red;
+						data.green = clientDetails[deviceIP][device[4]].states.green;
+						data.blue = clientDetails[deviceIP][device[4]].states.blue;
 					}
-					if (this.deviceInfo[deviceIP][device[4]].config.legacySupportsWhiteValue === true) {
-						data.white = this.deviceInfo[deviceIP][device[4]].states.white;
+					if (clientDetails[deviceIP][device[4]].config.legacySupportsWhiteValue === true) {
+						data.white = clientDetails[deviceIP][device[4]].states.white;
 					}
-					if (this.deviceInfo[deviceIP][device[4]].config.legacySupportsColorTemperature === true) {
-						data.colorTemperature = this.deviceInfo[deviceIP][device[4]].states.colorTemperature;
+					if (clientDetails[deviceIP][device[4]].config.legacySupportsColorTemperature === true) {
+						data.colorTemperature = clientDetails[deviceIP][device[4]].states.colorTemperature;
 					}
-					const effect = this.deviceInfo[deviceIP][device[4]].states.effect;
+					const effect = clientDetails[deviceIP][device[4]].states.effect;
 					if (effect !== '' && effect !== null && effect !== undefined) {
 						data.effect = effect;
 					}
@@ -1453,9 +1445,9 @@ class Esphome extends utils.Adapter {
 	 * @returns {Promise<void>}
 	 */
 	async createNonStateDevices(host, entity) {
-		switch (this.deviceInfo[host][entity.id].type) {
+		switch (clientDetails[host][entity.id].type) {
 			case 'Button': {
-				await this.stateSetCreate(`${this.deviceInfo[host].deviceName}.${entity.type}.${entity.id}.SET`, `Button`, false, '', true);
+				await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.SET`, `Button`, false, '', true);
 				break;
 			}
 		}
@@ -1500,7 +1492,7 @@ class Esphome extends utils.Adapter {
 
 			// Set parameters for object view to only include objects within adapter namespace
 			const params = {
-				startkey : `${this.namespace}.${this.deviceInfo[ip].deviceName}.`,
+				startkey : `${this.namespace}.${clientDetails[ip].deviceName}.`,
 				endkey : `${this.namespace}.\u9999`,
 			};
 
@@ -1509,8 +1501,8 @@ class Esphome extends utils.Adapter {
 			// List all found channels & compare with memory, delete unneeded channels
 			for (const currDevice in _channels.rows) {
 				// @ts-ignore
-				if (!this.deviceInfo[ip].adapterObjects.channels.includes(_channels.rows[currDevice].id)
-					&& _channels.rows[currDevice].id.split('.')[2] === this.deviceInfo[ip].deviceName){
+				if (!clientDetails[ip].adapterObjects.channels.includes(_channels.rows[currDevice].id)
+					&& _channels.rows[currDevice].id.split('.')[2] === clientDetails[ip].deviceName){
 					this.log.debug(`[objectCleanup] Unknown Channel found, delete ${_channels.rows[currDevice].id}`);
 					await this.delObjectAsync(_channels.rows[currDevice].id, {recursive: true});
 				}
@@ -1521,7 +1513,7 @@ class Esphome extends utils.Adapter {
 			// List all found states & compare with memory, delete unneeded states
 			for (const currDevice in _states.rows) {
 				if (!this.createdStatesDetails[_states.rows[currDevice].id.replace(`esphome.0.`, ``)]
-					&& _states.rows[currDevice].id.split('.')[2] === this.deviceInfo[ip].deviceName){
+					&& _states.rows[currDevice].id.split('.')[2] === clientDetails[ip].deviceName){
 					this.log.debug(`[objectCleanup] Unknown State found, delete ${_states.rows[currDevice].id}`);
 					// await this.delObjectAsync(_states.rows[currDevice].id);
 				}
