@@ -168,6 +168,9 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
+### __WORK IN PROGRESS__
+* (SimonFischer04) Add pillow python package by default, resolves #188
+
 ### 0.5.0-beta.4 (2023-11-15)
 * (DutchmanNL) Refactor memory caching of device data, resolves #189
 
