@@ -111,7 +111,7 @@ class Esphome extends utils.Adapter {
 			const python = await getVenv({
 				name: 'esphome',
 				pythonVersion: '~3.11', // Use any Python 3.11.x version.
-				requirements: [{name: 'esphome', version: ''}], // Use latest esphome
+				requirements: [{name: 'esphome', version: ''}, {name: 'pillow', version: ''}], // Use latest esphome
 			});
 
 			// Define directory to store configuration files
