@@ -63,7 +63,7 @@ class Esphome extends utils.Adapter {
 			// Start MDNS discovery when enabled
 			if (autodiscovery) {
 				if (resetTimers['autodiscovery']) resetTimers['autodiscovery'] = clearTimeout(resetTimers['autodiscovery']);
-				this.log.info(`Adapter ready, automatic Device Discovery will be activated in 30 seconds.`);
+				// this.log.info(`Adapter ready, automatic Device Discovery will be activated in 30 seconds.`);
 				resetTimers['autodiscovery'] = setTimeout(async () => {
 					// Temporary disabled, will be available in 0.5.0 release
 					// Requires bugfix in ignore-list & creation of new device
@@ -593,7 +593,7 @@ class Esphome extends utils.Adapter {
 
 
 				} catch (e) {
-					this.log.error(`Connection issue for ${entity.name} ${e}`);
+					this.log.error(`Connection issue for ${entity.name} ${e} | ${e.stack}`);
 				}
 
 			});
