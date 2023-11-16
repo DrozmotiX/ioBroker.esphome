@@ -39,6 +39,17 @@ All our adapter documentation can be found at [The DrozmotiX Docu Page](https://
     * For admin tabs (optional)
         * ESPHome Dashboard IP is provided in instance settings
 
+## Using the built-in ESPHome Dashboard
+You can either use an external installation of ESPHome (like docker) or activate the ESPHome Dashboard process included in this adapter.  
+In any case, it is possible to integrate the dashboard into ioBroker Admin interface, for this purpose you must specify the ip where the Dashboard is running
+
+![Logo](admin/img/ESPhomeDashboardIP.png)
+
+> [!IMPORTANT]
+> is currently not possible to show the ESPHome DashBoard integrated in ioBroker when https is enabled, see [#159](https://github.com/DrozmotiX/ioBroker.esphome/issues/159)
+
+## How to use this adapter
+
 ### Activate API in YAML
 > [!IMPORTANT]
 > ioBroker ESPHome allows to integrate Devices by Encryption Key (recommended) or API-Password (legacy), 
@@ -85,7 +96,7 @@ Please enter IP-Address (if a device is already known, you can select it from th
   - Will send a message to the backend to remove this device
 
 > [!WARNING]
-> THis action will remove selected device and all its related states from ioBroker!
+> This action will remove a selected device and all its related states from ioBroker!
 
 > [!NOTE]
 > After a device has been added, a message will be indicated if successfully or error, 
