@@ -160,7 +160,7 @@
 				// Input fields to ADD / Modify devices
 				"deviceIP": {
 					"newLine": true,
-					"freesolo": true,
+					"freeSolo": true,
 //					"doNotSave": true,
 					"type": "autocompleteSendTo",
 					"command": "getDeviceIPs",
@@ -175,7 +175,7 @@
 				},
 				"encryptionKey": {
 					"type": "password",
-					"freesolo": true,
+					"freeSolo": true,
 					"label": "lblInputEncryptionKey",
 					"doNotSave": true,
 					"default": "",
@@ -188,7 +188,7 @@
 				},
 				"apiPassword": {
 					"type": "password",
-					"freesolo": true,
+					"freeSolo": true,
 					"label": "lblInputApiPassword",
 					"doNotSave": true,
 					"default": "",
@@ -379,7 +379,7 @@
 				},
 				"ESPHomeDashboardIP": {
 					"type": "autocompleteSendTo",
-					"freesolo": true,
+					"freeSolo": true,
 					"sm": 3,
 					"label": "lblESPHomeIP",
 					"command": "getHostIp",
