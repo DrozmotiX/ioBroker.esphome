@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "esphome",
-    "version": "0.5.0-beta.7",
+    "version": "0.5.0-beta.8",
     "news": {
+      "0.5.0-beta.8": {
+        "en": "Capability to automatically detect new devices added\nEnsures a compatible pillow version is used (10.0.1)\nAdd pillow python package by default, resolves #188",
+        "de": "Möglichkeit, neue Geräte automatisch zu erkennen\nSicherstellen das Pillow version (10.0.1) verwendet wird\nFügen Sie Kissen-Python-Paket standardmäßig hinzu, löst #188",
+        "ru": "Возможность автоматического обнаружения добавленных устройств\nОбеспечивает совместимую версию подушки используется (10.0.1)\nДобавьте пакет python подушки по умолчанию, решает #188",
+        "pt": "Capacidade de detectar automaticamente novos dispositivos adicionados\nGarante uma versão de travesseiro compatível é usada (10.0.1)\nAdicionar pacote python travesseiro por padrão, resolve #188",
+        "nl": "Funktionaliteit om automatisch nieuwe apparaten te detecteren\nZekerstellen dat Pillow versie 10.0.1 gebruikt wordt\nAdd kussen python pakket bij defect, resolutie 188",
+        "fr": "Capacité de détecter automatiquement de nouveaux appareils ajoutés\nAssure qu'une version d'oreiller compatible est utilisée (10.0.1)\nAjouter le paquet python d'oreiller par défaut, résout #188",
+        "it": "Capacità di rilevare automaticamente nuovi dispositivi aggiunti\nConsente di utilizzare una versione di cuscino compatibile (10.0.1)\nAggiungere il pacchetto del pitone del cuscino per impostazione predefinita, risolve #188",
+        "es": "Capacidad para detectar automáticamente nuevos dispositivos añadidos\nGarantiza que se utilice una versión de almohada compatible (10.0.1)\nAñadir paquete de pitón de almohada por defecto, resuelve #188",
+        "pl": "Umożliwość automatycznego wykrywania nowych urządzeń dodano do dyspozycji nowe urządzenia\nWykorzystywana wersja poduszki jest używana (10,0,1)\nAddd pillow python domyślnie rozwiązał pakiet #188",
+        "uk": "Можливість автоматично визначати нові пристрої\nЗабезпечує сумісну подушку версії (10.0.1)\nДодати подушку python пакет за замовчуванням, вирішує #188",
+        "zh-cn": "自动发现新装置的能力\n确保采用兼容的导游版本(10.0.1)\n第188号行动"
+      },
       "0.5.0-beta.4": {
         "en": "Refactor memory caching of device data, resolves #189",
         "de": "Refactor-Speicher Caching von Gerätedaten, löst #189",
@@ -80,19 +93,6 @@
         "pl": "Poprawiona obsługa błędów, jeśli urządzenia nie są dosyć dopasowalne i rozproszone\nBugfix: Allow kontrola jasności i koloru dla komponentów świetlnych naprawia numer #173",
         "uk": "Поліпшення обробки помилок, якщо пристрої не досягаються / відключені\nПомилки: Дозволяє контролювати яскравість і колір для легкого компонента, закріплює #173",
         "zh-cn": "如果装置无法达到/无联系,改进错误处理\nBugfix: 允许控制光明和颜色,确定第173号行动。"
-      },
-      "0.3.1": {
-        "en": "Bugfix: Show online state of ESP Device correctly, Fixes #106",
-        "de": "Bugfix: Online-Zustand von ESP Device korrekt anzeigen, Fixes #106",
-        "ru": "Bugfix: Показать онлайн состояние ESP Device правильно, Fixes #106",
-        "pt": "Bugfix: Mostrar estado on-line de ESP dispositivo corretamente, correções #106",
-        "nl": "Bugfix: Vertoon online staat van ESP Device correct, Fixes 106",
-        "fr": "Bugfix: Afficher l'état en ligne de l'appareil ESP correctement, Fixes #106",
-        "it": "Bugfix: Mostrare lo stato online del dispositivo ESP correttamente, Fisse #106",
-        "es": "Bugfix: Mostrar el estado online del dispositivo ESP correctamente, Fijaciones #106",
-        "pl": "Bugfix: Programy internetowe ESP Device poprawnie ↓, s. 106",
-        "uk": "Помилки: Показати онлайн стан ESP Пристрої правильно, Виправлення #106",
-        "zh-cn": "Bugfix: ESP Device在线状况,Fixes #106"
       }
     },
     "title": "Control ESPHome managed devices",

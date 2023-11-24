@@ -179,7 +179,7 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
-### __WORK IN PROGRESS__
+### 0.5.0-beta.8 (2023-11-24)
 * (DutchmanNL) Capability to automatically detect new devices added
 * (DutchmanNL) Ensures a compatible pillow version is used (10.0.1)
 * (SimonFischer04) Add pillow python package by default, resolves #188
@@ -204,11 +204,6 @@ If you like my work, please consider a personal donation
 * (DutchmanNL) Bugfix: Password / connection issues in previous beta resolves #179
 * (DutchmanNL) Bugfix: Allow individual API password or encryption keys for devices, resolves #174
 * (DutchmanNL) Support ESPHome device Encryption Key (you should migrate from API password to Encryption Key ! resolves #152)
-
-### 0.4.0 (2023-11-03)
-* (DutchmanNL) Added cleanup capability for unused channels & states after initialization of a device, resolves #39
-* (DutchmanNL) Added button to an info channel which allows to delete all offline devices from an adapter tree. resolves #39
-* (DutchmanNL) [Breaking] Backup strategy changed, requires [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) and activate option for ESPHome, fixes #129
 
 ## License
 MIT License

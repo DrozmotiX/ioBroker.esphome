@@ -1,4 +1,9 @@
 # Older changes
+## 0.4.0 (2023-11-03)
+* (DutchmanNL) Added cleanup capability for unused channels & states after initialization of a device, resolves #39
+* (DutchmanNL) Added button to an info channel which allows to delete all offline devices from an adapter tree. resolves #39
+* (DutchmanNL) [Breaking] Backup strategy changed, requires [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) and activate option for ESPHome, fixes #129
+
 ## 0.3.2 (2023-11-01)
 * (DutchmanNL) Improved error handling if devices are not reachable/disconnected
 * (DutchmanNL) Bugfix: Allow control of brightness and color for a light component, resolves #173
