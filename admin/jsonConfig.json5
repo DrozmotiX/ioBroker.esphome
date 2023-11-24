@@ -107,24 +107,23 @@
 				// Enable/disable autodiscovery and store setting in adapter config object
 				"autodiscovery": {
 					"newLine": true,
-					"disabled": "true",
 					"type": "checkbox",
-					"sm": 2,
-					"md": 2,
+					"sm": 4,
+					"md": 4,
 					"label": "lblAutoDiscovery"
 				},
 
-				"discoveryListeningAddress" : {
-					"type": "ip",
-					"disabled": "true",
-					"sm": 2,
-					"md": 2,
-					"default": "0.0.0.0",
-					"label": "lblDiscoveryListeningAddress",
-					"help": "hlpDiscoveryListeningAddress",
-					"listenOnAllPorts" : true,
-					"onlyIp4" : true
-				},
+//				"discoveryListeningAddress" : {
+//					"type": "ip",
+//					"disabled": "true",
+//					"sm": 2,
+//					"md": 2,
+//					"default": "0.0.0.0",
+//					"label": "lblDiscoveryListeningAddress",
+//					"help": "hlpDiscoveryListeningAddress",
+//					"listenOnAllPorts" : true,
+//					"onlyIp4" : true
+//				},
 
 				// Refresh table showing all devices
 				// Sends message to backend to get all current known devices, their configuration and connection status
@@ -478,18 +477,19 @@
 				}
 
 			}
-		}
+		},
 
 //		"sandBox": {
 //			"type": "panel",
 //			"label": "sandBox",
 //			"items": {
-//				"bindAddress" : {
-//					"type": "ip",
-//					"onlyIp4": true,
-//					"noInternal": true
-//				}
+//				"getDataFiles" : {
+//					"type": "fileSelector",
+//					"delete": true,
+//					"doNotSave": true
 //
+//
+//				}
 //			}
 //		}
 	}

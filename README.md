@@ -180,6 +180,7 @@ If you like my work, please consider a personal donation
     * (DutchmanNL) 
 -->
 ### __WORK IN PROGRESS__
+* (DutchmanNL) Capability to automatically detect new devices added
 * (DutchmanNL) Ensures a compatible pillow version is used (10.0.1)
 * (SimonFischer04) Add pillow python package by default, resolves #188
 

@@ -9,7 +9,7 @@
 const utils = require('@iobroker/adapter-core');
 const clientDevice = require('./lib/helpers.js');
 // @ts-ignore Client is just missing in index.d.ts file
-const {Client, Discovery} = require('@2colors/esphome-native-api');
+const {Client} = require('@2colors/esphome-native-api');
 const stateAttr = require(__dirname + '/lib/stateAttr.js'); // Load attribute library
 const disableSentry = false; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
@@ -18,6 +18,7 @@ const {clearTimeout} = require('timers');
 const resetTimers = {}; // Memory allocation for all running timers
 let autodiscovery, dashboardProcess, createConfigStates, discovery;
 const clientDetails = {}; // Memory cache of all devices and their connection status
+const {Bonjour} = require('bonjour-service'); // load Bonjour library
 
 class Esphome extends utils.Adapter {
 
@@ -65,9 +66,7 @@ class Esphome extends utils.Adapter {
 				if (resetTimers['autodiscovery']) resetTimers['autodiscovery'] = clearTimeout(resetTimers['autodiscovery']);
 				// this.log.info(`Adapter ready, automatic Device Discovery will be activated in 30 seconds.`);
 				resetTimers['autodiscovery'] = setTimeout(async () => {
-					// Temporary disabled, will be available in 0.5.0 release
-					// Requires bugfix in ignore-list & creation of new device
-					// this.deviceDiscovery(); // Start MDNS autodiscovery
+					this.deviceDiscovery(); // Start bonjour service autodiscovery
 				}, (5000));
 			} else {
 				this.log.warn(`Auto Discovery disabled, new devices (or IP changes) will NOT be detected automatically!`);
@@ -223,31 +222,24 @@ class Esphome extends utils.Adapter {
 				}
 			}
 
-			this.log.info(`Automatic device Discovery started, new devices (or IP changes) will be detected automatically`);
-			discovery = new Discovery(
-				// @ts-ignore Type definition of export is incorrect, according to documentation interface can be set https://github.com/twocolors/esphome-native-api#discovery-1
-				{
-					interface : this.config.discoveryListeningAddress ? this.config.discoveryListeningAddress: '0.0.0.0'
-				});
+			// Create instance of bonjour service
+			discovery = new Bonjour();
 
-			// Start device discovery (MDNS)
-			discovery.run();
+			this.log.info('Bonjour service started, new  devices  will  be detected automatically');
 
-			// Listener for discovered devices
-			discovery.on('info', async (message) => {
-				try {
-					this.log.debug(`Discovery message ${JSON.stringify(message)}`);
-					// Ensure discovery process triggers only if a device is unknown (by IP) and not part of the exclusion list
-					if (clientDetails[message.address] == null && !excludedIP.includes(message.address)) {
-						// Only run autodiscovery if a device is not yet connected or in progress to connect/deleting
-						this.log.info(`[AutoDiscovery] New ESPHome device found at IP ${message.address}, trying to initialize`);
-						this.connectDevices(`${message.address}`);
-
-					}
-				} catch (e) {
-					this.log.error(`[deviceDiscovery handler] ${e}`);
+			// Try to find esphome devices, newly connected devices will announce themselves
+			discovery.find({ type: 'esphomelib' },  (service) => {
+				// Cancel operation if incorrect information is received
+				if (!service || !service.addresses) return;
+				if (!clientDetails[service.addresses]) {
+					this.log.info('New ESPHome Device discovered:' + JSON.stringify(service.addresses[0]));
+					this.log.info('ClientDetails:' + JSON.stringify(service));
+					// this.connectDevices(`${service.referer.address},`);
+					clientDetails[service.addresses[0]] = new clientDevice();
+					clientDetails[service.addresses[0]].storeDiscoveredDevice(service.addresses[0], service.txt.mac.toUpperCase(), service.txt.mac.toUpperCase(), service.name);
 				}
 			});
+
 		} catch (error) {
 			this.errorHandler(`[deviceDiscovery]`, error);
 		}
@@ -1064,6 +1056,10 @@ class Esphome extends utils.Adapter {
 				if (clientDetails[device].mac != null) {
 					const deviceName = this.replaceAll(clientDetails[device].mac, `:`, ``);
 					this.setState(`${deviceName}.info._online`, {val: false, ack: true});
+				}
+
+				if (discovery) {
+					discovery.destroy();
 				}
 
 				try {
