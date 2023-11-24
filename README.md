@@ -102,7 +102,7 @@ Please enter IP-Address (if a device is already known, you can select it from th
 > After a device has been added, a message will be indicated if successfully or error, 
 > you can refresh the table to show current devices and their connection status
 
-![DevicesError](admin/img/connectionError.png)
+![DevicesError](admin/img/connectionIssue.png)
 ![DevicesOK](admin/img/connectionOK.png)
 
 If connection was successfully, the Device will be initiated and all related states created to control their attributes.  
