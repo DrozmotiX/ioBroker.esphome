@@ -125,24 +125,7 @@
 //					"onlyIp4" : true
 //				},
 
-				// Refresh table showing all devices
-				// Sends message to backend to get all current known devices, their configuration and connection status
-				"loadDevices": {
-					"newLine": true,
-					"type": "sendTo",
-					"hidden": "!_alive",
-					"command": "loadDevices",
-					"jsonData": "{ \"date\": \"${data}\"}",
-					"label": "lblLoadDevices",
-//					"tooltip": "restoreDefaultToolTip",
-					"useNative": true,
-					"variant": "outlined",
-					"showProcess" : true,
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12
-				},
+				
 
 				// Text to explain adapter must be running to load this table
 				"details-1": {
@@ -245,17 +228,117 @@
 						"type" : "warning"
 					}
 				},
+                "header": {
+                    "type": "header",
+                    "size": 1,
+                    "text": "Device List"
+                },
 
+                // Refresh table showing all devices
+				// Sends message to backend to get all current known devices, their configuration and connection status
+				"loadDevices": {
+					"newLine": true,
+					"type": "sendTo",
+                    "defaultSendTo": "loadDevices", // das hier scheint mit useNative nicht zu funktionieren, die anfrage geht raus, aber das ergebnis wird nicht verwertet.
+					"hidden": "!_alive",
+					"command": "loadDevices",
+					"jsonData": "{ \"date\": \"${data}\"}",
+					"label": "lblLoadDevices",
+					"useNative": true,
+					"variant": "outlined",
+					"showProcess" : true,
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12
+				},
+                "header2": {
+                    "type": "header",
+                    "size": 3,
+                    "hidden": "!data.newDevicesTable || data.newDevicesTable.length == 0",
+                    "text": "newDevicesHeader"
+                },
 				// Table (provided by backend) of all devices and their connection status
-				"templateTable": {
+				"newDevicesTable": {
 					"type": "table",
 					"noDelete": true,
 					"newLine": true,
 					"xs": 12,
 					"sm": 12,
-					"md": 5,
+					"md": 12,
 					"lg": 12,
-					"hidden": "data._templateTable[0].template == 'template.NewMessage'",
+                    "doNotSave": true,
+					"hidden": "!data.newDevicesTable || data.newDevicesTable.length == 0",
+					"label": "newDevicesTable",
+					"showSecondAddAt": 5,
+					"items": [
+						{
+							"type": "text",
+							"readOnly" : true,
+							"attr": "MACAddress",
+							"width": "15% ",
+							"title": "MAC-Address",
+							"tooltip": "templateKeyTip",
+							"filter": false,
+							"sort": false,
+							"default": "",
+							"validatorNoSaveOnError": true
+						},
+						{
+							"type": "text",
+							"readOnly" : true,
+							"attr": "deviceName",
+							"width": "15% ",
+							"title": "Device Name",
+							"tooltip": "templateKeyTip",
+							"filter": false,
+							"sort": false,
+							"default": "",
+							"validatorNoSaveOnError": true
+						},
+						{
+							"type": "text",
+							"attr": "ip",
+							"readOnly" : true,
+							"width": "15% ",
+							"title": "IP Address",
+							"tooltip": "templateKeyTip",
+							"filter": false,
+							"sort": false,
+							"default": "",
+							//ToDo add validation if IP-Address format
+							//"validator": "const x={};for (const c of globalData.templateTable) {if (x[c.templateKey]==='x') return false; x[c.templateKey]='x';}; return true;",
+							"validatorNoSaveOnError": true
+						},
+						{
+							"type": "text",
+							"readOnly" : true,
+							"attr": "connectState",
+							"width": "15% ",
+							"title": "Connection Status",
+							"tooltip": "templateKeyTip",
+							"filter": false,
+							"sort": false,
+							"default": "",
+                            "validator": "data.connectState == 'newly discovered'",
+							"validatorNoSaveOnError": true
+						}
+
+					]
+				},
+                "header3": {
+                    "type": "header",
+                    "size": 3,
+                    "text": "existDevicesHeader"      
+                },
+                "templateTable": {
+					"type": "table",
+					"noDelete": true,
+					"newLine": true,
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
 					"label": "lblDevicesTable",
 					"showSecondAddAt": 5,
 					"items": [
@@ -477,7 +560,7 @@
 				}
 
 			}
-		},
+		}
 
 //		"sandBox": {
 //			"type": "panel",
