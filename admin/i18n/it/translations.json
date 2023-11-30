@@ -1,6 +1,7 @@
 {
     "ESPHomeCommunityLink": "Per ulteriori informazioni su ESPHome, esempi di configurazione e collegamenti alle comunità, visitare:",
     "chkEnableESPHome": "Abilita la dashboard ESPHome",
+    "existDevicesHeader": "Tutti i dispositivi gestiti da questo adattatore e il relativo stato di connessione",
     "hlpDiscoveryListeningAddress": "Rileva solo i dispositivi su questa interfaccia",
     "hlpInputApiPassword": "Password API (legacy, utilizza la chiave di crittografia!)",
     "hlpInputDeviceIP": "Seleziona il dispositivo esistente o inserisci l'IP del nuovo dispositivo",
@@ -34,5 +35,6 @@
     "lblTxtNoButtonsIfNotActive": "La tabella dei dispositivi e il pulsante AGGIUNGI/Elimina sono disponibili solo se l'adattatore è in esecuzione",
     "lbl_addUpdateDevice": "AGGIUNGI/MODIFICA DISPOSITIVI",
     "maxRetry": "Numero massimo di tentativi di connessione prima di considerare il dispositivo offline",
+    "newDevicesHeader": "Dispositivi appena scoperti, fornisci le credenziali!",
     "reConInterval": "Impostazione tra i tentativi di ioBroker di riconnettere questo dispositivo"
 }

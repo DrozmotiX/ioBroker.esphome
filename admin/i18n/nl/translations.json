@@ -1,6 +1,7 @@
 {
     "ESPHomeCommunityLink": "Ga voor meer informatie over ESPHome, voorbeeldconfiguratie en links naar communities naar:",
     "chkEnableESPHome": "Schakel ESPHome-dashboard in",
+    "existDevicesHeader": "Alle apparaten die door deze adapter worden beheerd en hun verbindingsstatus",
     "hlpDiscoveryListeningAddress": "Ontdek alleen apparaten op deze interface",
     "hlpInputApiPassword": "API-wachtwoord (verouderd, gebruik een coderingssleutel!)",
     "hlpInputDeviceIP": "Selecteer bestaand apparaat of voer IP van nieuw apparaat in",
@@ -34,5 +35,6 @@
     "lblTxtNoButtonsIfNotActive": "Apparaattabel en knop TOEVOEGEN/verwijderen alleen beschikbaar als de adapter actief is",
     "lbl_addUpdateDevice": "Apparaten toevoegen/wijzigen",
     "maxRetry": "Maximale verbindingspoging voordat het apparaat als offline wordt beschouwd",
+    "newDevicesHeader": "Nieuw ontdekte apparaten, geef uw inloggegevens op!",
     "reConInterval": "Instelling tussen ioBroker-pogingen om dit apparaat opnieuw te verbinden"
 }
