@@ -1,6 +1,6 @@
 {
   "name": "iobroker.esphome",
-  "version": "0.5.0-beta.8",
+  "version": "0.5.0-beta.9",
   "description": "Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome",
   "author": {
     "name": "DutchmanNL",
@@ -23,11 +23,10 @@
     "url": "https://github.com/DrozmotiX/ioBroker.esphome"
   },
   "dependencies": {
-    "@2colors/esphome-native-api": "^1.2.4",
+    "@2colors/esphome-native-api": "^1.2.6",
     "@iobroker/adapter-core": "^3.0.4",
     "@sentry/node": "^7.70.0",
-    "autopy": "^1.1.1",
-    "bonjour-service": "^1.1.1"
+    "autopy": "^1.1.1"
   },
   "devDependencies": {
     "@alcalzone/release-script": "^3.6.0",

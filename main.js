@@ -9,7 +9,7 @@
 const utils = require('@iobroker/adapter-core');
 const clientDevice = require('./lib/helpers.js');
 // @ts-ignore Client is just missing in index.d.ts file
-const {Client} = require('@2colors/esphome-native-api');
+const {Client, Discovery} = require('@2colors/esphome-native-api');
 const stateAttr = require(__dirname + '/lib/stateAttr.js'); // Load attribute library
 const disableSentry = false; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
@@ -18,7 +18,6 @@ const {clearTimeout} = require('timers');
 const resetTimers = {}; // Memory allocation for all running timers
 let autodiscovery, dashboardProcess, createConfigStates, discovery;
 const clientDetails = {}; // Memory cache of all devices and their connection status
-const {Bonjour} = require('bonjour-service'); // load Bonjour library
 
 class Esphome extends utils.Adapter {
 
@@ -222,21 +221,17 @@ class Esphome extends utils.Adapter {
 				}
 			}
 
-			// Create instance of bonjour service
-			discovery = new Bonjour();
+			// Start device discovery
+			discovery = new Discovery();
+			discovery.run();
 
-			this.log.info('Bonjour service started, new  devices  will  be detected automatically');
-
-			// Try to find esphome devices, newly connected devices will announce themselves
-			discovery.find({ type: 'esphomelib' },  (service) => {
-				// Cancel operation if incorrect information is received
-				if (!service || !service.addresses) return;
-				if (!clientDetails[service.addresses]) {
-					this.log.info('New ESPHome Device discovered:' + JSON.stringify(service.addresses[0]));
-					this.log.info('ClientDetails:' + JSON.stringify(service));
-					// this.connectDevices(`${service.referer.address},`);
-					clientDetails[service.addresses[0]] = new clientDevice();
-					clientDetails[service.addresses[0]].storeDiscoveredDevice(service.addresses[0], service.txt.mac.toUpperCase(), service.txt.mac.toUpperCase(), service.name);
+			discovery.on('info', ( message ) => {
+				this.log.info(JSON.stringify(message));
+				if (!excludedIP.includes(message.address && !clientDetails[message.address])){
+					this.log.info(`New ESPHome Device discovered: ${message.friendly_name ? message.friendly_name : message.host} on ${message.address}`);
+					// Store device data into memory to allow adoption by admin interface
+					clientDetails[message.address] = new clientDevice();
+					clientDetails[message.address].storeDiscoveredDevice(message.address, message.mac.toUpperCase(), message.mac.toUpperCase(), message.friendly_name ? message.friendly_name : message.host);
 				}
 			});
 
