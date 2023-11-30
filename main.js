@@ -1137,21 +1137,23 @@ class Esphome extends utils.Adapter {
 						let data = {};
 
 						const tableEntry = [];
-
+						const tableNew = [];
 						for (const device in clientDetails) {
-							tableEntry.push({
+							let table = tableEntry;
+							if (clientDetails[device].connectStatus === 'newly discovered') table = tableNew;
+							table.push({
 								'MACAddress' : clientDetails[device].mac,
 								'deviceName' : clientDetails[device].deviceFriendlyName,
 								'ip' : clientDetails[device].ip,
 								'connectState' : clientDetails[device].connectStatus
 							});
 						}
-
-						data = {
+						data = tableNew.length > 0 || !obj.message.data ||  JSON.stringify(tableEntry) != JSON.stringify(obj.message.data) ? {
 							native: {
 								templateTable: tableEntry,
+								newDevicesTable: tableNew,
 							},
-						};
+						} : {};
 						this.sendTo(obj.from, obj.command, data, obj.callback);
 					}
 					break;

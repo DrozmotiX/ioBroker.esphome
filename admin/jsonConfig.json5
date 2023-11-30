@@ -242,7 +242,7 @@
                     "defaultSendTo": "loadDevices", // das hier scheint mit useNative nicht zu funktionieren, die anfrage geht raus, aber das ergebnis wird nicht verwertet.
 					"hidden": "!_alive",
 					"command": "loadDevices",
-					"jsonData": "{ \"date\": \"${data}\"}",
+					"jsonData": "{ \"date\": \"${data.templateTable}\"}",
 					"label": "lblLoadDevices",
 					"useNative": true,
 					"variant": "outlined",
