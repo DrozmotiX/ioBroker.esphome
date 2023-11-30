@@ -125,7 +125,7 @@
 //					"onlyIp4" : true
 //				},
 
-				
+
 
 				// Text to explain adapter must be running to load this table
 				"details-1": {
@@ -269,7 +269,6 @@
 					"lg": 12,
                     "doNotSave": true,
 					"hidden": "!data.newDevicesTable || data.newDevicesTable.length == 0",
-					"label": "newDevicesTable",
 					"showSecondAddAt": 5,
 					"items": [
 						{
@@ -329,9 +328,9 @@
                 "header3": {
                     "type": "header",
                     "size": 3,
-                    "text": "existDevicesHeader"      
+                    "text": "existDevicesHeader"
                 },
-                "templateTable": {
+                "existingDevicesTable": {
 					"type": "table",
 					"noDelete": true,
 					"newLine": true,
@@ -339,7 +338,6 @@
 					"sm": 12,
 					"md": 12,
 					"lg": 12,
-					"label": "lblDevicesTable",
 					"showSecondAddAt": 5,
 					"items": [
 						{
@@ -566,13 +564,22 @@
 //			"type": "panel",
 //			"label": "sandBox",
 //			"items": {
-//				"getDataFiles" : {
-//					"type": "fileSelector",
-//					"delete": true,
-//					"doNotSave": true
-//
-//
+//			"sandBox": {
+//				"type": "panel",
+//				"label": "sandBox",
+//				"items": {
+//					"getDataFiles" : {
+//						"newLine": true,
+//						"type": "fileSelector",
+//						"upload": "/",
+//						"label": "Upload g-code file",
+//						"help": "Here you can upload files, like g-code, to send to the printer",
+//						"sm": 3,
+//						"md": 3,
+//						"lg": 3
+//					}
 //				}
+//			}
 //			}
 //		}
 	}

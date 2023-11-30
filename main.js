@@ -1148,9 +1148,9 @@ class Esphome extends utils.Adapter {
 								'connectState' : clientDetails[device].connectStatus
 							});
 						}
-						data = tableNew.length > 0 || !obj.message.data ||  JSON.stringify(tableEntry) != JSON.stringify(obj.message.data) ? {
+						data = tableNew.length > 0 || !obj.message.data ||  JSON.stringify(tableEntry) !== JSON.stringify(obj.message.data) ? {
 							native: {
-								templateTable: tableEntry,
+								existingDevicesTable: tableEntry,
 								newDevicesTable: tableNew,
 							},
 						} : {};
