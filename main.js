@@ -223,7 +223,7 @@ class Esphome extends utils.Adapter {
 			}
 
 			// Start device discovery
-			discovery = new Discovery();
+			discovery = new Discovery({interface: this.config.discoveryListeningAddress ? this.config.discoveryListeningAddress : '0.0.0.0'});
 			discovery.run();
 
 			discovery.on('info', ( message ) => {
