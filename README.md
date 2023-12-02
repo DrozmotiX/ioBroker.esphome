@@ -180,7 +180,9 @@ If you like my work, please consider a personal donation
     * (DutchmanNL) 
 -->
 ### __WORK IN PROGRESS__
-* (DutchmanNL) 
+* (ticaki) Optimize admin configuration interface
+* (DutchmanNL) Optimize backend handling of device discovery
+
 ### 0.5.0-beta.8 (2023-11-24)
 * (DutchmanNL) Capability to automatically detect new devices added
 * (DutchmanNL) Ensures a compatible pillow version is used (10.0.1)
