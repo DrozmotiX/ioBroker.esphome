@@ -18,6 +18,7 @@ const {clearTimeout} = require('timers');
 const resetTimers = {}; // Memory allocation for all running timers
 let autodiscovery, dashboardProcess, createConfigStates, discovery;
 const clientDetails = {}; // Memory cache of all devices and their connection status
+const newlyDiscoveredClient = {}; // Memory cache of all newly discovered devices and their connection status
 
 class Esphome extends utils.Adapter {
 
@@ -226,12 +227,15 @@ class Esphome extends utils.Adapter {
 			discovery.run();
 
 			discovery.on('info', ( message ) => {
-				this.log.info(JSON.stringify(message));
-				if (!excludedIP.includes(message.address && !clientDetails[message.address])){
+				this.log.debug(`ESPHome Device found on ${message.address} | ${JSON.stringify(message)}`);
+				if (!excludedIP.includes(message.address) && !newlyDiscoveredClient[message.address] && !clientDetails[message.address]){
 					this.log.info(`New ESPHome Device discovered: ${message.friendly_name ? message.friendly_name : message.host} on ${message.address}`);
 					// Store device data into memory to allow adoption by admin interface
-					clientDetails[message.address] = new clientDevice();
-					clientDetails[message.address].storeDiscoveredDevice(message.address, message.mac.toUpperCase(), message.mac.toUpperCase(), message.friendly_name ? message.friendly_name : message.host);
+					newlyDiscoveredClient[message.address] = {
+						ip: message.address,
+						mac: message.mac.toUpperCase(),
+						deviceFriendlyName: message.friendly_name ? message.friendly_name : message.host
+					};
 				}
 			});
 
@@ -271,7 +275,7 @@ class Esphome extends utils.Adapter {
 
 			// Add an encryption key or apiPassword to the settings object
 			if (!clientDetails[host].encryptionKeyUsed) {
-				clientSettings.password = this.decrypt(clientDetails[host].apiPassword);
+				clientSettings.password = clientDetails[host].apiPassword ? this.decrypt(clientDetails[host].apiPassword) : '';
 			} else {
 				clientSettings.encryptionKey =  this.decrypt(clientDetails[host].encryptionKey);
 			}
@@ -1050,7 +1054,7 @@ class Esphome extends utils.Adapter {
 				// Ensure all known online states are set to false
 				if (clientDetails[device].mac != null) {
 					const deviceName = this.replaceAll(clientDetails[device].mac, `:`, ``);
-					this.setState(`${deviceName}.info._online`, {val: false, ack: true});
+					if (clientDetails[device].connectStatus !== 'newly discovered') this.setState(`${deviceName}.info._online`, {val: false, ack: true});
 				}
 
 				if (discovery) {
@@ -1112,7 +1116,7 @@ class Esphome extends utils.Adapter {
 					// eslint-disable-next-line no-case-declarations
 					const ipValid = this.validateIPAddress(obj.message['device-ip']);
 					if (!ipValid) {
-						this.log.warn(`You entered an incorrect IP-Address, cannot add device !`);
+						this.log.warn(`You entered an incorrect IP-Address ${obj.message['device-ip']}, cannot add device !`);
 
 						const massageObj = {
 							'type': 'error',
@@ -1131,24 +1135,35 @@ class Esphome extends utils.Adapter {
 					{
 						let data = {};
 
-						const tableEntry = [];
-						const tableNew = [];
+						const knownDeviceTable = [];
+						const discoveredDeviceTable = [];
+
+						//Create table for all known devices
 						for (const device in clientDetails) {
-							let table = tableEntry;
-							if (clientDetails[device].connectStatus === 'newly discovered') table = tableNew;
-							table.push({
+							knownDeviceTable.push({
 								'MACAddress' : clientDetails[device].mac,
 								'deviceName' : clientDetails[device].deviceFriendlyName,
 								'ip' : clientDetails[device].ip,
 								'connectState' : clientDetails[device].connectStatus
 							});
 						}
-						data = tableNew.length > 0 || !obj.message.data ||  JSON.stringify(tableEntry) !== JSON.stringify(obj.message.data) ? {
+
+						//Create table for newlyDiscovered Devices
+
+						for (const device in newlyDiscoveredClient) {
+							discoveredDeviceTable.push({
+								'MACAddress' : newlyDiscoveredClient[device].mac,
+								'deviceName' : newlyDiscoveredClient[device].deviceFriendlyName,
+								'ip' : newlyDiscoveredClient[device].ip,
+							});
+						}
+
+						data = {
 							native: {
-								existingDevicesTable: tableEntry,
-								newDevicesTable: tableNew,
+								existingDevicesTable: knownDeviceTable,
+								newDevicesTable: discoveredDeviceTable,
 							},
-						} : {};
+						};
 						this.sendTo(obj.from, obj.command, data, obj.callback);
 					}
 					break;
@@ -1160,6 +1175,11 @@ class Esphome extends utils.Adapter {
 						for (const device in clientDetails) {
 							dropDownEntry.push({label: device, value: clientDetails[device].ip});
 						}
+
+						for (const device in newlyDiscoveredClient) {
+							dropDownEntry.push({label: device, value: newlyDiscoveredClient[device].ip});
+						}
+
 						this.sendTo(obj.from, obj.command, dropDownEntry, obj.callback);
 					}
 					break;
@@ -1208,6 +1228,7 @@ class Esphome extends utils.Adapter {
 						clientDetails[obj.message.ip] = new clientDevice();
 						clientDetails[obj.message.ip].storeConnectDetails(obj.message.ip, encryptionKeyUsed, this.encrypt(obj.message.apiPassword), encryptionKeyUsed ? this.encrypt(obj.message.encryptionKey) : null);
 						this.messageResponse[obj.message.ip] = obj;
+						delete newlyDiscoveredClient[obj.message.ip];
 						this.connectDevices(obj.message.ip);
 					};
 
@@ -1557,6 +1578,9 @@ class Esphome extends utils.Adapter {
 			clientDetails[host].connecting = connecting;
 			clientDetails[host].connectionError = connectionError != null ? connectionError : clientDetails[host].connectionError;
 			clientDetails[host].connectStatus = connectionStatus != null ? connectionStatus : clientDetails[host].connectStatus;
+
+			// Only handle online state if a device was initialized
+			if (clientDetails[host].connectStatus === 'Initialisation needed') return;
 
 			// Update device connection indicator
 			if (!connected || connectionError || connecting) {

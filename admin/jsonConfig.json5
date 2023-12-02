@@ -275,7 +275,7 @@
 							"type": "text",
 							"readOnly" : true,
 							"attr": "MACAddress",
-							"width": "15% ",
+							"width": "33% ",
 							"title": "MAC-Address",
 							"tooltip": "templateKeyTip",
 							"filter": false,
@@ -287,7 +287,7 @@
 							"type": "text",
 							"readOnly" : true,
 							"attr": "deviceName",
-							"width": "15% ",
+							"width": "33% ",
 							"title": "Device Name",
 							"tooltip": "templateKeyTip",
 							"filter": false,
@@ -299,7 +299,7 @@
 							"type": "text",
 							"attr": "ip",
 							"readOnly" : true,
-							"width": "15% ",
+							"width": "33% ",
 							"title": "IP Address",
 							"tooltip": "templateKeyTip",
 							"filter": false,
@@ -308,21 +308,7 @@
 							//ToDo add validation if IP-Address format
 							//"validator": "const x={};for (const c of globalData.templateTable) {if (x[c.templateKey]==='x') return false; x[c.templateKey]='x';}; return true;",
 							"validatorNoSaveOnError": true
-						},
-						{
-							"type": "text",
-							"readOnly" : true,
-							"attr": "connectState",
-							"width": "15% ",
-							"title": "Connection Status",
-							"tooltip": "templateKeyTip",
-							"filter": false,
-							"sort": false,
-							"default": "",
-                            "validator": "data.connectState == 'newly discovered'",
-							"validatorNoSaveOnError": true
 						}
-
 					]
 				},
                 "header3": {
