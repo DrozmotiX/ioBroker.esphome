@@ -710,10 +710,17 @@ class Esphome extends utils.Adapter {
 							this.log.warn(optimisedError);
 							await this.updateConnectionStatus(host, false, false, 'unreachable', true);
 						}
-					}  else if (error.message.includes('ECONNREFUSED')) {
+					} else if (error.message.includes('ECONNREFUSED')) {
 						optimisedError = `Client ${host} not yet ready to connect, will try again!`;
 						await this.updateConnectionStatus(host, false, true, 'initializing', true);
 						this.log.warn(optimisedError);
+
+					} else if (error.message.includes('ENETUNREACH')) {
+						optimisedError = `Network not ready to connect to client ${host}`;
+						if (!clientDetails[host].connectionError) {
+							await this.updateConnectionStatus(host, false, true, 'No Network', true);
+							this.log.warn(optimisedError);
+						}
 
 					} else if (error.message.includes('write after end')) {
 						// Ignore error
