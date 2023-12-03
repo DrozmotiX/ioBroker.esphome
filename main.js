@@ -15,11 +15,12 @@ const disableSentry = false; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
 const fs = require('fs');
 const {clearTimeout} = require('timers');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const resetTimers = {}; // Memory allocation for all running timers
 let autodiscovery, dashboardProcess, createConfigStates, discovery;
 const clientDetails = {}; // Memory cache of all devices and their connection status
 const newlyDiscoveredClient = {}; // Memory cache of all newly discovered devices and their connection status
-
+const dashboardVersions = [];
 class Esphome extends utils.Adapter {
 
 	/**
@@ -61,6 +62,9 @@ class Esphome extends utils.Adapter {
 			// Try connecting to already known devices
 			await this.tryKnownDevices();
 
+			// Get current available versions and start ESPHome Dashboard process (if enabled)
+			await this.espHomeDashboard();
+
 			// Start MDNS discovery when enabled
 			if (autodiscovery) {
 				if (resetTimers['autodiscovery']) resetTimers['autodiscovery'] = clearTimeout(resetTimers['autodiscovery']);
@@ -70,14 +74,6 @@ class Esphome extends utils.Adapter {
 				}, (5000));
 			} else {
 				this.log.warn(`Auto Discovery disabled, new devices (or IP changes) will NOT be detected automatically!`);
-			}
-
-			// Start ESPHome Dashboard process
-			if (this.config.ESPHomeDashboardEnabled) {
-				this.log.info(`Native Integration of ESPHome Dashboard enabled `);
-				await this.espHomeDashboard();
-			} else {
-				this.log.info(`Native Integration of ESPHome Dashboard disabled `);
 			}
 
 			// Create & Subscribe to button handling offline Device cleanup
@@ -103,73 +99,162 @@ class Esphome extends utils.Adapter {
 	// ToDo: move to separate module
 	async espHomeDashboard() {
 		try {
-			// @ts-ignore
-			const {getVenv} = await import('autopy');
 
-			// Create a virtual environment with mitmproxy installed.
-			const python = await getVenv({
-				name: 'esphome',
-				pythonVersion: '~3.11', // Use any Python 3.11.x version.
-				requirements: [{name: 'esphome', version: ''}, {name: 'pillow', version: '==10.0.1'}], // Use latest esphome
+			// Create Channel to store ESPHomeDashboard related Data
+			await this.extendObjectAsync('_ESPHomeDashboard', {
+				type: 'channel',
+				common: {
+					name: 'ESPHome Dashboard details',
+				},
+				native: {},
 			});
 
-			// Define directory to store configuration files
-			const dataDir = utils.getAbsoluteDefaultDataDir();
+			// Get all current available ESPHome Dashboard versions
+			let content;
+			let lastUsed;
+			let useDashBoardVersion = '';
 
+			// Get data from state which version was used previous Time
 			try {
-				fs.mkdir(`${dataDir}esphome.${this.instance}`, (err) => {
-					if (err) {
-						return console.log(`ESPHome directory exists`);
-					}
-					console.log(`ESPHome directory created`);
-				});
-				// );
+				lastUsed = await this.getStateAsync(`_ESPHomeDashboard.selectedVersion`);
+				if (lastUsed && lastUsed.val) {
+					lastUsed = lastUsed.val;
+				}
 			} catch (e) {
-				// Directory has issues reading/writing data, iob fix should be executed
-				this.log.warn(`ESPHome DDashboard is unable to access directory to store YAML configuration data, please run ioBroker fix`);
+				// State does nto exist
 			}
 
-			const dashboardProcess = python('esphome', ['dashboard', `${dataDir}esphome.${this.instance}`]);
+			// Try to get all current available versions
+			try {
+				const response = await fetch('https://api.github.com/repos/esphome/esphome/releases');
+				content = await response.json();
+			} catch (error) {
+				this.errorHandler(`[espHomeDashboard-VersionCall]`, error);
+			}
 
-			this.log.debug(`espHomeDashboard_Process ${JSON.stringify(dashboardProcess)}`);
-
-			dashboardProcess.stdout?.on('data', (data) => {
-				this.log.info(`[dashboardProcess - Data] ${data}`);
-			});
-
-			dashboardProcess.stderr?.on('data', (data) => {
-				// this.log.warn(`[dashboardProcess ERROR] ${data}`);
-				if (data.includes('INFO')) {
-					if (data.includes('Starting')) {
-						this.log.info(`[ESPHome - Console] ${data}`);
-					} else {
-						this.log.debug(`[ESPHome - Console] ${data}`);
+			// If the response was successful, write versions names to a memory array
+			if (content) {
+				await this.stateSetCreate(`_ESPHomeDashboard.versionCache`, 'versionCache', JSON.stringify(content));
+				for (const version in content) {
+					dashboardVersions.push(content[version].name);
+				}
+				await this.stateSetCreate(`_ESPHomeDashboard.newestVersion`, 'newestVersion', content[0].name);
+			} else {
+				// Not possible to load latest versions, use fallback
+				this.log.warn(`Unable to retrieve current Dashboard release versions, using cached values. Check your internet connection`);
+				let cachedVersions = await this.getStateAsync(`_ESPHomeDashboard.versionCache`);
+				if (cachedVersions && cachedVersions.val){
+					cachedVersions = JSON.parse(cachedVersions.val);
+					for (const version in cachedVersions) {
+						dashboardVersions.push(cachedVersions[version].name);
 					}
-				} else {
-					// console.debug(`[espHomeDashboard] Unknown logging data : ${JSON.stringify(data)}`);
 				}
-			});
+			}
 
-			dashboardProcess.on('message', (code, signal) => {
-				this.log.info(`[dashboardProcess MESSAGE] Exit code is: ${code} | ${signal}`);
-			});
+			// Use latest available version
+			if (this.config.ESPHomeDashboardVersion
+				&& this.config.ESPHomeDashboardVersion !== ''
+				&& this.config.ESPHomeDashboardVersion !== 'Always last available') {
+				useDashBoardVersion = this.config.ESPHomeDashboardVersion;
+			} else if (this.config.ESPHomeDashboardVersion === 'Always last available'){
+				if (content) useDashBoardVersion = content[0].name;
+			}
 
-			// eslint-disable-next-line no-unused-vars
-			dashboardProcess.on('exit', (code, signal) => {
-				this.log.warn(`ESPHome Dashboard stopped`);
-			});
+			if (useDashBoardVersion !== '') {
+				await this.stateSetCreate(`_ESPHomeDashboard.selectedVersion`, 'selectedVersion', useDashBoardVersion);
+			} else if (lastUsed != null) {
+				// @ts-ignore
+				useDashBoardVersion = lastUsed;
+			}
 
-			dashboardProcess.on('error', (data) => {
-				if (data.message.includes('INFO')) {
-					this.log.info(`[dashboardProcess Info] ${data}`);
-				} else if (data.message.includes('ERROR')) {
-					this.log.error(`[dashboardProcess Warn] ${data}`);
-				} else {
-					this.log.error(`[dashboardProcess Error] ${data}`);
+			// Start Dashboard Process
+			if (this.config.ESPHomeDashboardEnabled) {
+				this.log.info(`Native Integration of ESPHome Dashboard enabled, making environment ready`);
+				try {
+
+					// @ts-ignore
+					const {getVenv} = await import('autopy');
+					let python;
+					try {
+						// Create a virtual environment with mitmproxy installed.
+						python = await getVenv({
+							name: 'esphome',
+							pythonVersion: '~3.11', // Use any Python 3.11.x version.
+							requirements: [{name: 'esphome', version: `==${useDashBoardVersion}`}, {name: 'pillow', version: '==10.0.1'}], // Use latest esphome
+						});
+					} catch (error) {
+						this.log.error(`Fatal error starting ESPHomeDashboard | ${error} | ${error.stack}`);
+						return;
+					}
+
+					// Define directory to store configuration files
+					const dataDir = utils.getAbsoluteDefaultDataDir();
+
+					try {
+						fs.mkdir(`${dataDir}esphome.${this.instance}`, (err) => {
+							if (err) {
+								return console.log(`ESPHome directory exists`);
+							}
+							console.log(`ESPHome directory created`);
+						});
+					// );
+					} catch (e) {
+					// Directory has issues reading/writing data, iob fix should be executed
+						this.log.warn(`ESPHome DDashboard is unable to access directory to store YAML configuration data, please run ioBroker fix`);
+					}
+
+					this.log.info(`Starting ESPHome Dashboard`);
+					const dashboardProcess = python('esphome', ['dashboard', `${dataDir}esphome.${this.instance}`]);
+
+					this.log.debug(`espHomeDashboard_Process ${JSON.stringify(dashboardProcess)}`);
+
+					dashboardProcess.stdout?.on('data', (data) => {
+						this.log.info(`[dashboardProcess - Data] ${data}`);
+					});
+
+					dashboardProcess.stderr?.on('data', (data) => {
+					// this.log.warn(`[dashboardProcess ERROR] ${data}`);
+						if (data.includes('INFO')) {
+							if (data.includes('Starting')) {
+								this.log.info(`[ESPHome - Console] ${data}`);
+							} else {
+								this.log.debug(`[ESPHome - Console] ${data}`);
+							}
+						} else {
+						// console.debug(`[espHomeDashboard] Unknown logging data : ${JSON.stringify(data)}`);
+						}
+					});
+
+					dashboardProcess.on('message', (code, signal) => {
+						this.log.info(`[dashboardProcess MESSAGE] Exit code is: ${code} | ${signal}`);
+					});
+
+					// eslint-disable-next-line no-unused-vars
+					dashboardProcess.on('exit', (code, signal) => {
+						this.log.warn(`ESPHome Dashboard stopped`);
+					});
+
+					dashboardProcess.on('error', (data) => {
+						if (data.message.includes('INFO')) {
+							this.log.info(`[dashboardProcess Info] ${data}`);
+						} else if (data.message.includes('ERROR')) {
+							this.log.error(`[dashboardProcess Warn] ${data}`);
+						} else {
+							this.log.error(`[dashboardProcess Error] ${data}`);
+						}
+					});
+
+				} catch (error) {
+					this.errorHandler(`[espHomeDashboard-Process]`, error);
 				}
-			});
+
+			} else {
+				this.log.info(`Native Integration of ESPHome Dashboard disabled `);
+			}
+
+
 		} catch (error) {
-			this.errorHandler(`[espHomeDashboard]`, error);
+			this.errorHandler(`[espHomeDashboard-Function]`, error);
 		}
 	}
 
@@ -1178,6 +1263,19 @@ class Esphome extends utils.Adapter {
 
 						for (const device in newlyDiscoveredClient) {
 							dropDownEntry.push({label: device, value: newlyDiscoveredClient[device].ip});
+						}
+
+						this.sendTo(obj.from, obj.command, dropDownEntry, obj.callback);
+					}
+					break;
+
+				// Front End message handler to load ESPHome Dashboard dropDown with all available versions
+				case 'getESPHomeDashboardVersion':
+					{
+						const dropDownEntry = [];
+						dropDownEntry.push('Always last available');
+						for (const versions in dashboardVersions) {
+							dropDownEntry.push({label: dashboardVersions[versions], value: dashboardVersions[versions]});
 						}
 
 						this.sendTo(obj.from, obj.command, dropDownEntry, obj.callback);
