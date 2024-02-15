@@ -180,7 +180,7 @@ class Esphome extends utils.Adapter {
 						python = await getVenv({
 							name: 'esphome',
 							pythonVersion: '~3.11', // Use any Python 3.11.x version.
-							requirements: [{name: 'esphome', version: `==${useDashBoardVersion}`}, {name: 'pillow', version: '==10.1.0'}], // Use latest esphome
+							requirements: [{name: 'esphome', version: `==${useDashBoardVersion}`}, {name: 'pillow', version: '==10.2.0'}], // Use latest esphome
 						});
 					} catch (error) {
 						this.log.error(`Fatal error starting ESPHomeDashboard | ${error} | ${error.stack}`);
