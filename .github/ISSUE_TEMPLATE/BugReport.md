@@ -61,7 +61,7 @@ A clear and concise description of what you expected to happen.
 
 **Logs (as screenshot and in text-form)** 
 
-ALL ioBroker logs of the esphome adapter (in a reasonable timeframe around when the issue happened). Not just the latest as this is often not helpful.:
+ALL ioBroker logs of the esphome adapter (in a reasonable timeframe around when the issue happened). Not just the latest log-message as this is often not helpful.:
 
 (insert screenshot here)
 ```txt
