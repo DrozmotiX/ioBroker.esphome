@@ -179,8 +179,8 @@ class Esphome extends utils.Adapter {
 						// Create a virtual environment with mitmproxy installed.
 						python = await getVenv({
 							name: 'esphome',
-							pythonVersion: '~3.11', // Use any Python 3.11.x version.
-							requirements: [{name: 'esphome', version: `==${useDashBoardVersion}`}, {name: 'pillow', version: '==10.0.1'}], // Use latest esphome
+							pythonVersion: '~3.13', // Use any Python 3.13.x version.
+							requirements: [{name: 'esphome', version: `==${useDashBoardVersion}`}, {name: 'pillow', version: '==10.4.0'}], // Use latest esphome
 						});
 					} catch (error) {
 						this.log.error(`Fatal error starting ESPHomeDashboard | ${error} | ${error.stack}`);
