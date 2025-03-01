@@ -176,7 +176,7 @@ class Esphome extends utils.Adapter {
 					const {getVenv} = await import('autopy');
 					let python;
 					try {
-						// Create a virtual environment with mitmproxy installed.
+						// Create a virtual environment with esphome installed.
 						python = await getVenv({
 							name: 'esphome',
 							pythonVersion: '~3.13', // Use any Python 3.13.x version.
