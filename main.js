@@ -315,6 +315,12 @@ class Esphome extends utils.Adapter {
 				this.log.debug(`ESPHome Device found on ${message.address} | ${JSON.stringify(message)}`);
 				if (!excludedIP.includes(message.address) && !newlyDiscoveredClient[message.address] && !clientDetails[message.address]){
 					this.log.info(`New ESPHome Device discovered: ${message.friendly_name ? message.friendly_name : message.host} on ${message.address}`);
+
+					if(message.mac == null){
+						this.log.warn(`Discovered device with undefined mac. ignoring: ${JSON.stringify(message)}`);
+						return;
+					}
+
 					// Store device data into memory to allow adoption by admin interface
 					newlyDiscoveredClient[message.address] = {
 						ip: message.address,
