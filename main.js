@@ -176,11 +176,11 @@ class Esphome extends utils.Adapter {
 					const {getVenv} = await import('autopy');
 					let python;
 					try {
-						// Create a virtual environment with mitmproxy installed.
+						// Create a virtual environment with esphome installed.
 						python = await getVenv({
 							name: 'esphome',
-							pythonVersion: '~3.11', // Use any Python 3.11.x version.
-							requirements: [{name: 'esphome', version: `==${useDashBoardVersion}`}, {name: 'pillow', version: '==10.0.1'}], // Use latest esphome
+							pythonVersion: '~3.13', // Use any Python 3.13.x version.
+							requirements: [{name: 'esphome', version: `==${useDashBoardVersion}`}, {name: 'pillow', version: '==10.4.0'}], // Use latest esphome
 						});
 					} catch (error) {
 						this.log.error(`Fatal error starting ESPHomeDashboard | ${error} | ${error.stack}`);
@@ -315,6 +315,12 @@ class Esphome extends utils.Adapter {
 				this.log.debug(`ESPHome Device found on ${message.address} | ${JSON.stringify(message)}`);
 				if (!excludedIP.includes(message.address) && !newlyDiscoveredClient[message.address] && !clientDetails[message.address]){
 					this.log.info(`New ESPHome Device discovered: ${message.friendly_name ? message.friendly_name : message.host} on ${message.address}`);
+
+					if(message.mac == null){
+						this.log.warn(`Discovered device with undefined mac. ignoring: ${JSON.stringify(message)}`);
+						return;
+					}
+
 					// Store device data into memory to allow adoption by admin interface
 					newlyDiscoveredClient[message.address] = {
 						ip: message.address,
