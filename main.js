@@ -204,7 +204,7 @@ class Esphome extends utils.Adapter {
 					}
 
 					this.log.info(`Starting ESPHome Dashboard`);
-					const dashboardProcess = python('esphome', ['dashboard', `${dataDir}esphome.${this.instance}`]);
+					const dashboardProcess = python('esphome', ['dashboard', '--port', this.config.ESPHomeDashboardPort, `${dataDir}esphome.${this.instance}`]);
 
 					this.log.debug(`espHomeDashboard_Process ${JSON.stringify(dashboardProcess)}`);
 

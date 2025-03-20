@@ -461,7 +461,6 @@
 					"type": "text",
 					"text": "",
 					"sm": 2,
-					"readOnly" : true,
 					"label": "lblESPHomePort"
 				},
 
