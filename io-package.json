@@ -153,9 +153,9 @@
                 "dsn": "https://52227cfa250b49e99b1f28408273402c@sentry.iobroker.net/122"
             }
         },
-        "localLink": "http://%ESPHomeDashboardIP%:%ESPHomeDashboardPort%",
+        "localLink": "%ESPHomeDashboardUrl%",
         "adminTab": {
-            "link": "http://%ESPHomeDashboardIP%:%ESPHomeDashboardPort%",
+            "link": "%ESPHomeDashboardUrl%",
             "fa-icon": "settings_input_composite"
         },
         "dependencies": [
@@ -184,6 +184,7 @@
         "ESPHomeDashboardEnabled": false,
         "ESPHomeDashboardPort": 6052,
         "ESPHomeDashboardIP": "localhost",
+        "ESPHomeDashboardUrl": "http://localhost:6052",
         "ignoredDevices": [
             {
                 "IP-Address": "192.168.0.1",
