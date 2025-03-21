@@ -862,14 +862,14 @@ class Esphome extends utils.Adapter {
 							if (transitionLength) {
 								clientDetails[host][entity.id].states.transitionLength = transitionLength.val;
 								// Run create state routine to ensure state is cached in memory
-								await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, transitionLength.val, `s`, writable);
+								await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, transitionLength.val, `ms`, writable);
 							} else { // Else create it
-								await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
+								await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `ms`, writable);
 								clientDetails[host][entity.id].states.transitionLength = 0;
 							}
 
 						} catch (e) { // Else create it
-							await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
+							await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `ms`, writable);
 							clientDetails[host][entity.id].states.transitionLength = 0;
 						}
 
