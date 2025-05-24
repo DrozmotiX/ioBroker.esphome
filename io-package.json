@@ -1,224 +1,224 @@
 {
-    "common": {
-        "name": "esphome",
-        "version": "0.5.0",
-        "news": {
-            "0.5.0-beta.8": {
-                "en": "Capability to automatically detect new devices added\nEnsures a compatible pillow version is used (10.0.1)\nAdd pillow python package by default, resolves #188",
-                "de": "Möglichkeit, neue Geräte automatisch zu erkennen\nSicherstellen das Pillow version (10.0.1) verwendet wird\nFügen Sie Kissen-Python-Paket standardmäßig hinzu, löst #188",
-                "ru": "Возможность автоматического обнаружения добавленных устройств\nОбеспечивает совместимую версию подушки используется (10.0.1)\nДобавьте пакет python подушки по умолчанию, решает #188",
-                "pt": "Capacidade de detectar automaticamente novos dispositivos adicionados\nGarante uma versão de travesseiro compatível é usada (10.0.1)\nAdicionar pacote python travesseiro por padrão, resolve #188",
-                "nl": "Funktionaliteit om automatisch nieuwe apparaten te detecteren\nZekerstellen dat Pillow versie 10.0.1 gebruikt wordt\nAdd kussen python pakket bij defect, resolutie 188",
-                "fr": "Capacité de détecter automatiquement de nouveaux appareils ajoutés\nAssure qu'une version d'oreiller compatible est utilisée (10.0.1)\nAjouter le paquet python d'oreiller par défaut, résout #188",
-                "it": "Capacità di rilevare automaticamente nuovi dispositivi aggiunti\nConsente di utilizzare una versione di cuscino compatibile (10.0.1)\nAggiungere il pacchetto del pitone del cuscino per impostazione predefinita, risolve #188",
-                "es": "Capacidad para detectar automáticamente nuevos dispositivos añadidos\nGarantiza que se utilice una versión de almohada compatible (10.0.1)\nAñadir paquete de pitón de almohada por defecto, resuelve #188",
-                "pl": "Umożliwość automatycznego wykrywania nowych urządzeń dodano do dyspozycji nowe urządzenia\nWykorzystywana wersja poduszki jest używana (10,0,1)\nAddd pillow python domyślnie rozwiązał pakiet #188",
-                "uk": "Можливість автоматично визначати нові пристрої\nЗабезпечує сумісну подушку версії (10.0.1)\nДодати подушку python пакет за замовчуванням, вирішує #188",
-                "zh-cn": "自动发现新装置的能力\n确保采用兼容的导游版本(10.0.1)\n第188号行动"
-            },
-            "0.5.0-beta.4": {
-                "en": "Refactor memory caching of device data, resolves #189",
-                "de": "Refactor-Speicher Caching von Gerätedaten, löst #189",
-                "ru": "Рефакторная память кэширования данных устройства, решает #189",
-                "pt": "Cache de memória refator dos dados do dispositivo, resolve #189",
-                "nl": "Refactor geheugen caching of apparatuur, resoluties 189",
-                "fr": "Rémunérer le cache mémoire des données de périphérique, résout #189",
-                "it": "Cache di memoria refactor dei dati del dispositivo, risolve #189",
-                "es": "Refactor memoria caching de datos del dispositivo, resuelve #189",
-                "pl": "Refactor memory cache of data (ang.)",
-                "uk": "Рефакторне кешування пам'яті даних пристрою, вирішує #189",
-                "zh-cn": "放映装置数据,解决第189号行动"
-            },
-            "0.5.0-beta.1": {
-                "en": "Only show error messages once for unreachable devices",
-                "de": "Fehlermeldungen nur einmal anzeigen für nicht erreichbare Geräte",
-                "ru": "Только покажите сообщения об ошибках один раз для недоступных устройств",
-                "pt": "Apenas mostre mensagens de erro uma vez por dispositivos não acessíveis",
-                "nl": "Laat maar één keer foutmeldingen zien voor onbereikbare apparaten",
-                "fr": "Seulement afficher des messages d'erreur une fois pour les périphériques inaccessibles",
-                "it": "Mostra solo messaggi di errore una volta per dispositivi non accessibili",
-                "es": "Sólo mostrar mensajes de error una vez para dispositivos no accesibles",
-                "pl": "Wykorzystuje tylko błędy po raz pierwszy dla nieodwracalnych urządzeń",
-                "uk": "Тільки показувати повідомлення про помилки після ненадійних пристроїв",
-                "zh-cn": "只有当不可行的装置发生错误信息时才显示错误信息。"
-            },
-            "0.5.0-beta.0": {
-                "en": "Admin interface redesigned to JSON-Config relates #171\nBackend massages implemented to Add/Modify/Delete devices\nDevice connection handling and visibility of devices improved\nAuto device discovery temporary disabled due to external bug, relates #175\nPossibility added to exclude IP-Addresses from device discovery, relates #175\nAllow Selection to listen on specific interface or all for device discovery resolves #67\nState implemented to show current connection status (unreachable/disconnected/connected) to improve management of devices\nSeveral bugfixes, resolves #181 resolves #",
-                "de": "Admin-Schnittstelle neu gestaltet JSON-Config bezieht #171\nBackend-Massagen in Add/Modify/Delete-Geräte implementiert\nGeräteanschlusshandling und Sichtbarkeit von Geräten verbessert\nAuto-Gerät Entdeckung vorübergehend behindert durch externe Fehler, bezieht #175\nMöglichkeit hinzugefügt, IP-Adressen von der Geräteentdeckung auszuschließen, bezieht #175\nErlauben Sie der Auswahl, auf einer bestimmten Schnittstelle zuzuhören oder alles für Geräteentdeckungen löst #67\nStaat implementiert, um den aktuellen Verbindungsstatus (nicht erreichbar/vernetzt/vernetzt/vernetzt) zu zeigen, um die Verwaltung von Geräten zu verbessern\nMehrere Bugfixes, löst #181 löst #",
-                "ru": "Админ интерфейс переработан JSON-Config относится #171\nМассажи Backend реализованы для Add/Modify/Delete устройств\nОбработка соединения устройства и видимость улучшенных устройств\nАвтоматическое устройство обнаруживает временные инвалиды из-за внешней баг, относится #175\nВозможность добавлена для исключения IP-адресов с открытия устройства, относится #175\nРазрешить выбор, чтобы прослушать конкретный интерфейс или все для обнаружения устройств решает #67\nГосударство реализовано для демонстрации текущего состояния соединения (недоступно/отключено/подключено) для улучшения управления устройствами\nНесколько исправлений, решает #181 решает #",
-                "pt": "Interface de administrador redesenhada para JSON-Config relaciona #171\nMassagens de backend implementadas para dispositivos Add/Modify/Delete\nO manuseio e a visibilidade de dispositivos melhorados\nAuto detecção de dispositivo desativado temporário devido a bug externo, relaciona #175\nPossibilidade adicionada para excluir endereços IP da descoberta do dispositivo, relaciona #175\nPermitir Seleção para ouvir em interface específica ou tudo para a descoberta de dispositivos resolve #67\nEstado implementado para mostrar o estado de conexão atual (não acessível/desconectado/conectado) para melhorar a gestão de dispositivos\nVárias correções de bugs, resolve #181 resolve #",
-                "nl": "Admin interface opnieuw toegewezen aan JSON-Config relaties #171\nSteun massages geïnformeerd tot Add/Modificatie/ Delete apparaten\nVertaling:\nAuto-apparaat ontdekking tijdelijk gehandicapt door externe insecten, betrekking tot 175\nMogelijkheden toegevoegd om IP-Adresses uit te sluiten van apparaat ontdekking, relaties van 175\nVertaling:\nDe staat toont de huidige connectiestatus (ontvankelijke/geconnecteerd/geconnecteerd om het management van apparaten te verbeteren\nVerschillende insecten, oplossingen #181 oplossingen",
-                "fr": "L'interface d'administration repensée à JSON-Config se rapporte à #171\nMassages de backend mis en œuvre pour Add/Modify/Delete appareils\nManipulation et visibilité des dispositifs améliorés\nDécouverte de périphérique automobile temporaire désactivé en raison de bug externe, relate #175\nPossibilité ajoutée pour exclure les adresses IP de la découverte de l'appareil, se rapporte #175\nPermettre à Sélection d'écouter sur une interface spécifique ou tout pour la découverte de périphériques résout #67\nÉtat mis en œuvre pour montrer l ' état actuel de la connexion (non disponible/déconnecté/connecté) afin d ' améliorer la gestion des dispositifs\nPlusieurs bugfixes, résout #181 résout #",
-                "it": "L'interfaccia di amministrazione ridisegnata a JSON-Config riguarda #171\nI massaggi backend implementati per aggiungere/modifica/selezionare i dispositivi\nMiglioramento della gestione della connessione e della visibilità dei dispositivi\nAuto dispositivo scoperta temporaneamente disabilitato a causa di bug esterno, si riferisce #175\nPossibilità aggiunta per escludere gli indirizzi IP dalla scoperta del dispositivo, si riferisce #175\nConsentire Selezione di ascoltare su interfaccia specifica o tutto per la scoperta del dispositivo risolve #67\nStato implementato per mostrare lo stato di connessione corrente (non raggiungibile/disconnesso/connesso) per migliorare la gestione dei dispositivi\nDiversi bugfixes, risolve #181 risolve #",
-                "es": "Interfaz de Admin rediseñado con JSON-Config se relaciona con #171\nMasajes de backend implementados para dispositivos Add/Modify/Delete\nMejora del manejo y visibilidad de los dispositivos\nBúsqueda de dispositivos automáticos desactivados temporalmente debido a fallo externo, se relaciona #175\nPosibilidad añadida para excluir IP-Addresses del descubrimiento del dispositivo, se relaciona con #175\nPermitir que la selección escuche en una interfaz específica o todo para el descubrimiento del dispositivo resuelve #67\nEstado implementado para mostrar el estado actual de conexión (no accesible/desconectado/conectado) para mejorar la gestión de dispositivos\nVarios bugfixes, resuelve #181 resuelve #",
-                "pl": "Interfejs Admin został przeprojektowany przez JSON-Config z numerem #171\nMassage backendowe realizowane są przez Addd/Modify/Delete\nPrzestrzenie połączenia i widoczność ulepszały urządzenia\nOdkrycie urządzenia automatycznego związane jest tymczasowo ze względu na zewnętrzny błęd\nPozytywność dodaje się do wykluczenia IP-Adddress z odkrycia urządzenia, dodając numer #175\nAllow Selection to listen on specific interface or all for device discoveries. „Allow Selection”\nState zaimplementowała aktualny status połączenia (niezwiązany/rozłączony) w celu poprawy zarządzania urządzeniami\nKilka błędów rozwiązało numer #181",
-                "uk": "Інтерфейс адміністратора, перероблений на JSON-Config, відноситься до #171\nЗакінчення масажів, реалізованих для пристроїв Додавання/Modify/Delete\nПристрій з'єднання та видимість пристроїв\nАвтопристрою виявлення тимчасово відключених через зовнішній баг, відноситься #175\nМожливість довести до виключення IP-додатків з пристрою, відноситься #175\nДозволяє вибрати для прослуховування певного інтерфейсу або всіх для виявлення пристроїв вирішує #67\nСтан, що реалізується для відображення поточного стану з'єднання (невід'ємний / відключений / підключений) для поліпшення управління пристроями\nКілька виправлень, вирішує #181 #",
-                "zh-cn": "重新设计给联索行动-阿菲格的专用接口涉及第171号行动。\n增购/装卸装置\n装置的连接和可见度有所改善\n自动装置发现因外部纤维而临时残疾,涉及第175号行动。\n排除在装置发现中的IP-反应之外的可添加的灵活性涉及第175号行动。\n允许选择听取具体接口或所有装置的辨认办法\n国家执行了目前联系状况(可核查/无联系/连接)以改进装置的管理\n数个小册子,第181号行动决心"
-            },
-            "0.4.1": {
-                "en": "Bugfix: Password / connection issues in previous beta resolves #179\nBugfix: Allow individual API password or encryption keys for devices, resolves #174\nSupport ESPHome device Encryption Key (you should migrate from API password to Encryption Key ! resolves #152)",
-                "de": "Bugfix: Passwort / Verbindungsprobleme in vorherigen beta löst #179\nBugfix: Lassen Sie individuelle API-Passwort oder Verschlüsselungsschlüssel für Geräte, löst #174\nSupport ESPHome Gerät Verschlüsselungsschlüssel (Sie sollten von API-Passwort zu Verschlüsselungsschlüssel migrieren! löst #152)",
-                "ru": "Bugfix: Пароль / проблемы соединения в предыдущей бета-версии решает #179\nBugfix: Разрешить индивидуальные API-пароль или ключи шифрования для устройств, решает #174\nПоддержка ESPHome устройства Encryption Key (вы должны migrate от API-пароль для Encryption Key! решает #152)",
-                "pt": "Bugfix: Problemas de senha / conexão no beta anterior resolve #179\nBugfix: Permitir senha API individual ou chaves de criptografia para dispositivos, resolve #174\nSuporte ESPHome dispositivo Encryption Key (você deve migrar da senha API para Encryption Key! resolve #152)",
-                "nl": "Vertaling:\nBugfix: Sta individuele API wachtwoord of encryptie sleutels voor apparatuur, vaststellen\nSteun ESPHome apparatuur encryption Key (je moet migreren van API wachtwoord naar Encryption Key! Vertaling:",
-                "fr": "Bugfix: Mot de passe / problèmes de connexion dans la bêta précédente résout #179\nBugfix: Permettre un mot de passe ou des clés de chiffrement de l'API pour les appareils, résout #174\nSupport ESPHome périphérique Clé de chiffrement (vous devriez migrer de l'API mot de passe à la clé de chiffrement ! résout #152)",
-                "it": "Bugfix: Password / problemi di connessione nella precedente beta risolve #179\nBugfix: Consentire singole password API o chiavi di crittografia per i dispositivi, risolve #174\nSupporto dispositivo ESPHome chiave di crittografia (si dovrebbe migrare da password API a chiave di crittografia! risolve #152)",
-                "es": "Bugfix: Problemas de contraseña / conexión en beta anterior resuelve #179\nBugfix: Permitir contraseña o claves de cifrado individuales de API para dispositivos, resuelve #174\nSoporte ESPHome dispositivo clave de cifrado (debe migrar desde contraseña de API a clave de cifrado! resuelve #152)",
-                "pl": "Bugfix: Password / Problemy połączenia w poprzednich beta rozwiązały numer #179\nBugfix: Allow indywidualny API password lub klucze szyfrujące dla urządzeń, rozwiązał numer #174\nWsparcie ESPHome: Encryption Key (you powinien wyemigrować z hasła API do Encryption Key ! Rozwiązanie #152",
-                "uk": "Помилки: Пароль / питання з'єднання у попередніх бета-рішеннях #179\nПомилки: Дозволити індивідуальний пароль API або ключі шифрування для пристроїв, вирішує #174\nПідтримка ESPHome пристрій шифрування ключа (Ви повинні мигратувати від API пароля до ключа шифрування ! розчини #152)",
-                "zh-cn": "Bugfix:在前几批被盗用词/联系问题\nBugfix: 允许个人的通用或加密装置的关键,第174号行动\n支持ESPHome装置的加密关键(you应从API密码移到恩加密的关键! 第152号决议)"
-            },
-            "0.4.0": {
-                "en": "Added cleanup capability for unused channels & states after initialisation of device, resolves #39\nAdded button to info channel which allows to delete all offline devices from adapter tree. resolves #39\n[Breaking] Backup strategy changed, requires [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) and activate option for ESPHome, fixes #129",
-                "de": "Zusätzliche Reinigungsfähigkeit für ungenutzte Kanäle & Zustände nach der Initialisierung des Geräts, löst #39\nZusätzlicher Button zum Info-Kanal, der alle Offline-Geräte aus dem Adapterbaum löschen kann. löst #39\n[Breaking] Backup-Strategie geändert, erfordert [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) und aktiviert Option für ESPHome, repariert #129",
-                "ru": "Добавлена возможность очистки неиспользуемых каналов и государств после инициализации устройства, решает #39\nДобавлена кнопка к информационному каналу, что позволяет удалить все оффлайн устройства из дерева адаптера. решает #39\n[Breaking] Стратегия резервного копирования изменена, требует [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) и активировать вариант для ESPHome, исправлений #129",
-                "pt": "Adicionado capacidade de limpeza para canais não utilizados & estados após a inicialização do dispositivo, resolve #39\nAdicionado botão para info canal que permite excluir todos os dispositivos off-line da árvore do adaptador. resolve #39\n[Breaking] Estratégia de backup alterada, requer [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) e opção ativa para ESPHome, correções #129",
-                "nl": "Vervoegde schoonmaak capaciteit voor onbruikbare kanalen apparaat na de initialisatie van 39\nKnop toegevoegd aan info kanaal dat alle offline apparaten van adapter boom laat verwijderen. 39\nOndersteuningsstrategie veranderde, vereist [Backitup v2.9.1, htps:com/simateioBroker, en tactiveer de optie van 12 uur",
-                "fr": "Ajout d'une capacité de nettoyage pour les canaux non utilisés & états après l'initialisation du dispositif, résout #39\nAjout du bouton sur le canal d'info qui permet de supprimer tous les périphériques hors ligne de l'arbre d'adaptateur. résolution #39\n[Breaking] La stratégie de sauvegarde a changé, nécessite [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) et l'option active pour ESPHome, corrige #129",
-                "it": "Aggiunta funzionalità di pulizia per canali e stati non utilizzati dopo l'inizializzazione del dispositivo, risolve #39\nPulsante aggiunto al canale info che consente di eliminare tutti i dispositivi offline dall'albero dell'adattatore. risolve #39\n[Breaking] La strategia di backup è cambiata, richiede [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) e attiva l'opzione per ESPHome, corregge #129",
-                "es": "Capacidad de limpieza agregada para canales no utilizados \" estados después de la inicialización del dispositivo, resuelve #39\nSe agregó botón a canal de información que permite eliminar todos los dispositivos fuera de línea del árbol del adaptador. resuelve #39\n[Breaking] La estrategia de respaldo cambió, requiere [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) y activar la opción para ESPHome, fija #129",
-                "pl": "Po zainicjowaniu możliwości usuwania nieużywanych kanałów i stanów po inicjalizacji urządzenia, rozwiązał #39\nNaciśnięty przycisk do kanału informacyjnego, który umożliwia usunięcie wszystkich urządzeń offline z drzewa adapterowego. Rozwiązanie #39\n(Po zmianie strategii Backupa, wymaga od BOATUTUp v2.9.1(https:/github.com/simatec/ioBroker.backitup) i aktywacji opcji dla ESPHome, naprawa #129",
-                "uk": "Додано можливість очищення каналів і станів після ініціалізації пристрою, вирішує #39\nДодано кнопку на інформаційний канал, який дозволяє видалити всі offline пристрої з дерева адаптера. розчини #39\n[Breaking] Стратегія резервного копіювання змінено, вимагає [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) і активувати варіант для ESPHome, фіксує #129",
-                "zh-cn": "在装置初始化后增加无用渠道和各州的清洁能力,第39号决定\n添加但道托顿以电器,使所有线装置能够从适应树中删除。 行动39\n[Breaking] Backup战略改变,要求[BackitUp v2.9.1](http://github.com/simatec/ioBroker.backitup)和“ESPHome”的主动选择,第129号行动。"
-            },
-            "0.3.2": {
-                "en": "Improved error handling if devices are not reachable/disconnected\nBugfix: Allow control of brightness and color for light component, fixes #173",
-                "de": "Verbesserte Fehlerbehandlung, wenn Geräte nicht erreichbar/vernetzt sind\nBugfix: Erlauben Sie die Kontrolle von Helligkeit und Farbe für die Lichtkomponente, fixiert #173",
-                "ru": "Улучшена обработка ошибок, если устройства не доступны / отключены\nBugfix: Разрешить контроль яркости и цвета для легкой составляющей, исправляет #173",
-                "pt": "Melhor manuseio de erros se os dispositivos não forem acessíveis/desconectados\nBugfix: Permitir controle de brilho e cor para componente de luz, correções #173",
-                "nl": "Improviserende fouten als de apparatuur niet bereikbaar is\nBugfix: Controle van helderheid en kleur voor lichtcomonent, reparatie #173",
-                "fr": "Amélioration de la manipulation des erreurs si les dispositifs ne sont pas accessibles/déconnectés\nBugfix: Permettre le contrôle de la luminosité et de la couleur pour le composant de lumière, corrige #173",
-                "it": "Miglioramento della gestione degli errori se i dispositivi non sono raggiungibili/disconnessi\nBugfix: Consentire il controllo di luminosità e colore per componenti leggeri, correzioni #173",
-                "es": "Mejor manejo de errores si los dispositivos no son accesibles/desconectados\nBugfix: Permitir el control del brillo y el color para el componente de luz, fija #173",
-                "pl": "Poprawiona obsługa błędów, jeśli urządzenia nie są dosyć dopasowalne i rozproszone\nBugfix: Allow kontrola jasności i koloru dla komponentów świetlnych naprawia numer #173",
-                "uk": "Поліпшення обробки помилок, якщо пристрої не досягаються / відключені\nПомилки: Дозволяє контролювати яскравість і колір для легкого компонента, закріплює #173",
-                "zh-cn": "如果装置无法达到/无联系,改进错误处理\nBugfix: 允许控制光明和颜色,确定第173号行动。"
-            }
-        },
-        "title": "Control ESPHome managed devices",
-        "titleLang": {
-            "en": "Control ESPHome managed devices",
-            "de": "Steuern Sie von ESPHome verwaltete Geräte",
-            "ru": "Управление устройствами ESPHome",
-            "pt": "Controlar dispositivos gerenciados ESPHome",
-            "nl": "Beheer door ESPHome beheerde apparaten",
-            "fr": "Contrôle des appareils gérés ESPHome",
-            "it": "Controlla i dispositivi gestiti da ESPHome",
-            "es": "Controle los dispositivos administrados por ESPHome",
-            "pl": "Kontroluj urządzenia zarządzane przez ESPHome",
-            "zh-cn": "控制ESPHome受管设备"
-        },
-        "desc": {
-            "en": "Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome",
-            "de": "Steuern Sie Ihren ESP8266 / ESP32 mit einfachen, aber leistungsstarken Konfigurationsdateien, die von ESPHome erstellt und verwaltet werden",
-            "ru": "Управляйте своим ESP8266 / ESP32 с помощью простых, но мощных файлов конфигурации, созданных и управляемых ESPHome",
-            "pt": "Controle seu ESP8266 / ESP32 com arquivos de configuração simples, mas poderosos, criados e gerenciados por ESPHome",
-            "nl": "Beheer uw ESP8266 / ESP32 met eenvoudige maar krachtige configuratiebestanden die zijn gemaakt en beheerd door ESPHome",
-            "fr": "Contrôlez votre ESP8266 / ESP32 avec des fichiers de configuration simples mais puissants créés et gérés par ESPHome",
-            "it": "Controlla il tuo ESP8266 / ESP32 con file di configurazione semplici ma potenti creati e gestiti da ESPHome",
-            "es": "Controle su ESP8266 / ESP32 con archivos de configuración simples pero potentes creados y administrados por ESPHome",
-            "pl": "Steruj ESP8266 / ESP32 za pomocą prostych, ale potężnych plików konfiguracyjnych utworzonych i zarządzanych przez ESPHome",
-            "zh-cn": "使用由ESPHome创建和管理的简单但功能强大的配置文件控制ESP8266 / ESP32"
-        },
-        "authors": [
-            "DutchmanNL <rdrozda86@gmail.com>"
-        ],
-        "keywords": [
-            "ESPHome",
-            "ESP",
-            "ESP32"
-        ],
-        "license": "MIT",
-        "platform": "Javascript/Node.js",
-        "main": "main.js",
-        "icon": "esphome.png",
-        "enabled": true,
-        "messagebox": true,
-        "subscribe": "messagebox",
-        "extIcon": "https://raw.githubusercontent.com/DrozmotiX/ioBroker.esphome/main/admin/esphome.png",
-        "readme": "https://github.com/DrozmotiX/ioBroker.esphome/blob/main/README.md",
-        "loglevel": "info",
-        "mode": "daemon",
-        "type": "hardware",
-        "compact": true,
-        "connectionType": "local",
-        "dataSource": "push",
-        "adminUI": {
-            "config": "json"
-        },
-        "materialize": true,
-        "tier": 2,
-        "plugins": {
-            "sentry": {
-                "dsn": "https://52227cfa250b49e99b1f28408273402c@sentry.iobroker.net/122"
-            }
-        },
-        "localLink": "%ESPHomeDashboardUrl%",
-        "adminTab": {
-            "link": "%ESPHomeDashboardUrl%",
-            "fa-icon": "settings_input_composite"
-        },
-        "dependencies": [
-            {
-                "js-controller": ">=3.3.22"
-            }
-        ],
-        "globalDependencies": [
-            {
-                "admin": ">=5.1.13"
-            }
-        ],
-        "licenseInformation": {
-            "type": "free",
-            "license": "MIT"
-        }
+  "common": {
+    "name": "esphome",
+    "version": "0.6.0",
+    "news": {
+      "0.6.0": {
+        "en": "Update esphome\nOptimize admin configuration interface\nOptimize backend handling of device discovery\nCapability to select ESPHome Dashboard version added, resolves #118",
+        "de": "Update esphome\nOptimieren der Admin-Konfigurationsschnittstelle\nOptimieren Sie das Backend-Handling der Geräteentdeckung\nMöglichkeit, ESPHome Dashboard-Version hinzugefügt zu wählen, löst #118",
+        "ru": "Обновление esphome\nОптимизируйте интерфейс конфигурации admin\nОптимизируйте обратную обработку обнаружения устройства\nВозможность выбора добавленной версии ESPHome Dashboard, решает #118",
+        "pt": "Atualizar esphome\nOtimizar a interface de configuração de administrador\nOtimizar o manuseio de backend da descoberta do dispositivo\nCapacidade de selecionar ESPHome Dashboard versão adicionada, resolve #118",
+        "nl": "Esphome bijwerken\nAdmin configuratie interface optimaliseren\nOptimaliseer backend behandeling van apparaatontdekking\nMogelijkheid om ESPHome Dashboard versie toegevoegd te selecteren, lost #118 op",
+        "fr": "Mettre à jour l'esphome\nOptimiser l'interface de configuration de l'administration\nOptimiser la gestion du moteur de la découverte de l'appareil\nCapacité de sélectionner la version ESPHome Dashboard ajoutée, résout #118",
+        "it": "Aggiornamento esphome\nOttimizzare l'interfaccia di configurazione di amministratore\nOttimizzare la gestione backend della scoperta del dispositivo\nCapacità di selezionare la versione di ESPHome Dashboard aggiunta, risolve #118",
+        "es": "Actualizar esphome\nOptimize admin configuración interface\nOptimize backend handling of device discovery\nCapacidad para seleccionar la versión ESPHome Dashboard añadido, resuelve #118",
+        "pl": "Uaktualnij esphome\nOptymalizacja interfejsu konfiguracyjnego administratora\nOptymalizacja obsługi urządzenia\nMożliwość wyboru wersji ESPHome Dashboard dodano, rozwiązuje # 118",
+        "uk": "Оновлення esphome\nОптимальний інтерфейс конфігурації адміністратора\nОптимізуйте зворотну обробку пристрою\nМожливість вибору ESPHome Dashboard додано, вирішує #118",
+        "zh-cn": "更新 esphome\n优化管理员配置接口\n优化设备发现的后端处理\n选择 ESPHome Dashboard 版本的能力已添加, 解决 # 118"
+      },
+      "0.5.0-beta.8": {
+        "en": "Capability to automatically detect new devices added\nEnsures a compatible pillow version is used (10.0.1)\nAdd pillow python package by default, resolves #188",
+        "de": "Möglichkeit, neue Geräte automatisch zu erkennen\nSicherstellen das Pillow version (10.0.1) verwendet wird\nFügen Sie Kissen-Python-Paket standardmäßig hinzu, löst #188",
+        "ru": "Возможность автоматического обнаружения добавленных устройств\nОбеспечивает совместимую версию подушки используется (10.0.1)\nДобавьте пакет python подушки по умолчанию, решает #188",
+        "pt": "Capacidade de detectar automaticamente novos dispositivos adicionados\nGarante uma versão de travesseiro compatível é usada (10.0.1)\nAdicionar pacote python travesseiro por padrão, resolve #188",
+        "nl": "Funktionaliteit om automatisch nieuwe apparaten te detecteren\nZekerstellen dat Pillow versie 10.0.1 gebruikt wordt\nAdd kussen python pakket bij defect, resolutie 188",
+        "fr": "Capacité de détecter automatiquement de nouveaux appareils ajoutés\nAssure qu'une version d'oreiller compatible est utilisée (10.0.1)\nAjouter le paquet python d'oreiller par défaut, résout #188",
+        "it": "Capacità di rilevare automaticamente nuovi dispositivi aggiunti\nConsente di utilizzare una versione di cuscino compatibile (10.0.1)\nAggiungere il pacchetto del pitone del cuscino per impostazione predefinita, risolve #188",
+        "es": "Capacidad para detectar automáticamente nuevos dispositivos añadidos\nGarantiza que se utilice una versión de almohada compatible (10.0.1)\nAñadir paquete de pitón de almohada por defecto, resuelve #188",
+        "pl": "Umożliwość automatycznego wykrywania nowych urządzeń dodano do dyspozycji nowe urządzenia\nWykorzystywana wersja poduszki jest używana (10,0,1)\nAddd pillow python domyślnie rozwiązał pakiet #188",
+        "uk": "Можливість автоматично визначати нові пристрої\nЗабезпечує сумісну подушку версії (10.0.1)\nДодати подушку python пакет за замовчуванням, вирішує #188",
+        "zh-cn": "自动发现新装置的能力\n确保采用兼容的导游版本(10.0.1)\n第188号行动"
+      },
+      "0.5.0-beta.4": {
+        "en": "Refactor memory caching of device data, resolves #189",
+        "de": "Refactor-Speicher Caching von Gerätedaten, löst #189",
+        "ru": "Рефакторная память кэширования данных устройства, решает #189",
+        "pt": "Cache de memória refator dos dados do dispositivo, resolve #189",
+        "nl": "Refactor geheugen caching of apparatuur, resoluties 189",
+        "fr": "Rémunérer le cache mémoire des données de périphérique, résout #189",
+        "it": "Cache di memoria refactor dei dati del dispositivo, risolve #189",
+        "es": "Refactor memoria caching de datos del dispositivo, resuelve #189",
+        "pl": "Refactor memory cache of data (ang.)",
+        "uk": "Рефакторне кешування пам'яті даних пристрою, вирішує #189",
+        "zh-cn": "放映装置数据,解决第189号行动"
+      },
+      "0.5.0-beta.1": {
+        "en": "Only show error messages once for unreachable devices",
+        "de": "Fehlermeldungen nur einmal anzeigen für nicht erreichbare Geräte",
+        "ru": "Только покажите сообщения об ошибках один раз для недоступных устройств",
+        "pt": "Apenas mostre mensagens de erro uma vez por dispositivos não acessíveis",
+        "nl": "Laat maar één keer foutmeldingen zien voor onbereikbare apparaten",
+        "fr": "Seulement afficher des messages d'erreur une fois pour les périphériques inaccessibles",
+        "it": "Mostra solo messaggi di errore una volta per dispositivi non accessibili",
+        "es": "Sólo mostrar mensajes de error una vez para dispositivos no accesibles",
+        "pl": "Wykorzystuje tylko błędy po raz pierwszy dla nieodwracalnych urządzeń",
+        "uk": "Тільки показувати повідомлення про помилки після ненадійних пристроїв",
+        "zh-cn": "只有当不可行的装置发生错误信息时才显示错误信息。"
+      },
+      "0.5.0-beta.0": {
+        "en": "Admin interface redesigned to JSON-Config relates #171\nBackend massages implemented to Add/Modify/Delete devices\nDevice connection handling and visibility of devices improved\nAuto device discovery temporary disabled due to external bug, relates #175\nPossibility added to exclude IP-Addresses from device discovery, relates #175\nAllow Selection to listen on specific interface or all for device discovery resolves #67\nState implemented to show current connection status (unreachable/disconnected/connected) to improve management of devices\nSeveral bugfixes, resolves #181 resolves #",
+        "de": "Admin-Schnittstelle neu gestaltet JSON-Config bezieht #171\nBackend-Massagen in Add/Modify/Delete-Geräte implementiert\nGeräteanschlusshandling und Sichtbarkeit von Geräten verbessert\nAuto-Gerät Entdeckung vorübergehend behindert durch externe Fehler, bezieht #175\nMöglichkeit hinzugefügt, IP-Adressen von der Geräteentdeckung auszuschließen, bezieht #175\nErlauben Sie der Auswahl, auf einer bestimmten Schnittstelle zuzuhören oder alles für Geräteentdeckungen löst #67\nStaat implementiert, um den aktuellen Verbindungsstatus (nicht erreichbar/vernetzt/vernetzt/vernetzt) zu zeigen, um die Verwaltung von Geräten zu verbessern\nMehrere Bugfixes, löst #181 löst #",
+        "ru": "Админ интерфейс переработан JSON-Config относится #171\nМассажи Backend реализованы для Add/Modify/Delete устройств\nОбработка соединения устройства и видимость улучшенных устройств\nАвтоматическое устройство обнаруживает временные инвалиды из-за внешней баг, относится #175\nВозможность добавлена для исключения IP-адресов с открытия устройства, относится #175\nРазрешить выбор, чтобы прослушать конкретный интерфейс или все для обнаружения устройств решает #67\nГосударство реализовано для демонстрации текущего состояния соединения (недоступно/отключено/подключено) для улучшения управления устройствами\nНесколько исправлений, решает #181 решает #",
+        "pt": "Interface de administrador redesenhada para JSON-Config relaciona #171\nMassagens de backend implementadas para dispositivos Add/Modify/Delete\nO manuseio e a visibilidade de dispositivos melhorados\nAuto detecção de dispositivo desativado temporário devido a bug externo, relaciona #175\nPossibilidade adicionada para excluir endereços IP da descoberta do dispositivo, relaciona #175\nPermitir Seleção para ouvir em interface específica ou tudo para a descoberta de dispositivos resolve #67\nEstado implementado para mostrar o estado de conexão atual (não acessível/desconectado/conectado) para melhorar a gestão de dispositivos\nVárias correções de bugs, resolve #181 resolve #",
+        "nl": "Admin interface opnieuw toegewezen aan JSON-Config relaties #171\nSteun massages geïnformeerd tot Add/Modificatie/ Delete apparaten\nVertaling:\nAuto-apparaat ontdekking tijdelijk gehandicapt door externe insecten, betrekking tot 175\nMogelijkheden toegevoegd om IP-Adresses uit te sluiten van apparaat ontdekking, relaties van 175\nVertaling:\nDe staat toont de huidige connectiestatus (ontvankelijke/geconnecteerd/geconnecteerd om het management van apparaten te verbeteren\nVerschillende insecten, oplossingen #181 oplossingen",
+        "fr": "L'interface d'administration repensée à JSON-Config se rapporte à #171\nMassages de backend mis en œuvre pour Add/Modify/Delete appareils\nManipulation et visibilité des dispositifs améliorés\nDécouverte de périphérique automobile temporaire désactivé en raison de bug externe, relate #175\nPossibilité ajoutée pour exclure les adresses IP de la découverte de l'appareil, se rapporte #175\nPermettre à Sélection d'écouter sur une interface spécifique ou tout pour la découverte de périphériques résout #67\nÉtat mis en œuvre pour montrer l ' état actuel de la connexion (non disponible/déconnecté/connecté) afin d ' améliorer la gestion des dispositifs\nPlusieurs bugfixes, résout #181 résout #",
+        "it": "L'interfaccia di amministrazione ridisegnata a JSON-Config riguarda #171\nI massaggi backend implementati per aggiungere/modifica/selezionare i dispositivi\nMiglioramento della gestione della connessione e della visibilità dei dispositivi\nAuto dispositivo scoperta temporaneamente disabilitato a causa di bug esterno, si riferisce #175\nPossibilità aggiunta per escludere gli indirizzi IP dalla scoperta del dispositivo, si riferisce #175\nConsentire Selezione di ascoltare su interfaccia specifica o tutto per la scoperta del dispositivo risolve #67\nStato implementato per mostrare lo stato di connessione corrente (non raggiungibile/disconnesso/connesso) per migliorare la gestione dei dispositivi\nDiversi bugfixes, risolve #181 risolve #",
+        "es": "Interfaz de Admin rediseñado con JSON-Config se relaciona con #171\nMasajes de backend implementados para dispositivos Add/Modify/Delete\nMejora del manejo y visibilidad de los dispositivos\nBúsqueda de dispositivos automáticos desactivados temporalmente debido a fallo externo, se relaciona #175\nPosibilidad añadida para excluir IP-Addresses del descubrimiento del dispositivo, se relaciona con #175\nPermitir que la selección escuche en una interfaz específica o todo para el descubrimiento del dispositivo resuelve #67\nEstado implementado para mostrar el estado actual de conexión (no accesible/desconectado/conectado) para mejorar la gestión de dispositivos\nVarios bugfixes, resuelve #181 resuelve #",
+        "pl": "Interfejs Admin został przeprojektowany przez JSON-Config z numerem #171\nMassage backendowe realizowane są przez Addd/Modify/Delete\nPrzestrzenie połączenia i widoczność ulepszały urządzenia\nOdkrycie urządzenia automatycznego związane jest tymczasowo ze względu na zewnętrzny błęd\nPozytywność dodaje się do wykluczenia IP-Adddress z odkrycia urządzenia, dodając numer #175\nAllow Selection to listen on specific interface or all for device discoveries. „Allow Selection”\nState zaimplementowała aktualny status połączenia (niezwiązany/rozłączony) w celu poprawy zarządzania urządzeniami\nKilka błędów rozwiązało numer #181",
+        "uk": "Інтерфейс адміністратора, перероблений на JSON-Config, відноситься до #171\nЗакінчення масажів, реалізованих для пристроїв Додавання/Modify/Delete\nПристрій з'єднання та видимість пристроїв\nАвтопристрою виявлення тимчасово відключених через зовнішній баг, відноситься #175\nМожливість довести до виключення IP-додатків з пристрою, відноситься #175\nДозволяє вибрати для прослуховування певного інтерфейсу або всіх для виявлення пристроїв вирішує #67\nСтан, що реалізується для відображення поточного стану з'єднання (невід'ємний / відключений / підключений) для поліпшення управління пристроями\nКілька виправлень, вирішує #181 #",
+        "zh-cn": "重新设计给联索行动-阿菲格的专用接口涉及第171号行动。\n增购/装卸装置\n装置的连接和可见度有所改善\n自动装置发现因外部纤维而临时残疾,涉及第175号行动。\n排除在装置发现中的IP-反应之外的可添加的灵活性涉及第175号行动。\n允许选择听取具体接口或所有装置的辨认办法\n国家执行了目前联系状况(可核查/无联系/连接)以改进装置的管理\n数个小册子,第181号行动决心"
+      },
+      "0.4.1": {
+        "en": "Bugfix: Password / connection issues in previous beta resolves #179\nBugfix: Allow individual API password or encryption keys for devices, resolves #174\nSupport ESPHome device Encryption Key (you should migrate from API password to Encryption Key ! resolves #152)",
+        "de": "Bugfix: Passwort / Verbindungsprobleme in vorherigen beta löst #179\nBugfix: Lassen Sie individuelle API-Passwort oder Verschlüsselungsschlüssel für Geräte, löst #174\nSupport ESPHome Gerät Verschlüsselungsschlüssel (Sie sollten von API-Passwort zu Verschlüsselungsschlüssel migrieren! löst #152)",
+        "ru": "Bugfix: Пароль / проблемы соединения в предыдущей бета-версии решает #179\nBugfix: Разрешить индивидуальные API-пароль или ключи шифрования для устройств, решает #174\nПоддержка ESPHome устройства Encryption Key (вы должны migrate от API-пароль для Encryption Key! решает #152)",
+        "pt": "Bugfix: Problemas de senha / conexão no beta anterior resolve #179\nBugfix: Permitir senha API individual ou chaves de criptografia para dispositivos, resolve #174\nSuporte ESPHome dispositivo Encryption Key (você deve migrar da senha API para Encryption Key! resolve #152)",
+        "nl": "Vertaling:\nBugfix: Sta individuele API wachtwoord of encryptie sleutels voor apparatuur, vaststellen\nSteun ESPHome apparatuur encryption Key (je moet migreren van API wachtwoord naar Encryption Key! Vertaling:",
+        "fr": "Bugfix: Mot de passe / problèmes de connexion dans la bêta précédente résout #179\nBugfix: Permettre un mot de passe ou des clés de chiffrement de l'API pour les appareils, résout #174\nSupport ESPHome périphérique Clé de chiffrement (vous devriez migrer de l'API mot de passe à la clé de chiffrement ! résout #152)",
+        "it": "Bugfix: Password / problemi di connessione nella precedente beta risolve #179\nBugfix: Consentire singole password API o chiavi di crittografia per i dispositivi, risolve #174\nSupporto dispositivo ESPHome chiave di crittografia (si dovrebbe migrare da password API a chiave di crittografia! risolve #152)",
+        "es": "Bugfix: Problemas de contraseña / conexión en beta anterior resuelve #179\nBugfix: Permitir contraseña o claves de cifrado individuales de API para dispositivos, resuelve #174\nSoporte ESPHome dispositivo clave de cifrado (debe migrar desde contraseña de API a clave de cifrado! resuelve #152)",
+        "pl": "Bugfix: Password / Problemy połączenia w poprzednich beta rozwiązały numer #179\nBugfix: Allow indywidualny API password lub klucze szyfrujące dla urządzeń, rozwiązał numer #174\nWsparcie ESPHome: Encryption Key (you powinien wyemigrować z hasła API do Encryption Key ! Rozwiązanie #152",
+        "uk": "Помилки: Пароль / питання з'єднання у попередніх бета-рішеннях #179\nПомилки: Дозволити індивідуальний пароль API або ключі шифрування для пристроїв, вирішує #174\nПідтримка ESPHome пристрій шифрування ключа (Ви повинні мигратувати від API пароля до ключа шифрування ! розчини #152)",
+        "zh-cn": "Bugfix:在前几批被盗用词/联系问题\nBugfix: 允许个人的通用或加密装置的关键,第174号行动\n支持ESPHome装置的加密关键(you应从API密码移到恩加密的关键! 第152号决议)"
+      },
+      "0.4.0": {
+        "en": "Added cleanup capability for unused channels & states after initialisation of device, resolves #39\nAdded button to info channel which allows to delete all offline devices from adapter tree. resolves #39\n[Breaking] Backup strategy changed, requires [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) and activate option for ESPHome, fixes #129",
+        "de": "Zusätzliche Reinigungsfähigkeit für ungenutzte Kanäle & Zustände nach der Initialisierung des Geräts, löst #39\nZusätzlicher Button zum Info-Kanal, der alle Offline-Geräte aus dem Adapterbaum löschen kann. löst #39\n[Breaking] Backup-Strategie geändert, erfordert [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) und aktiviert Option für ESPHome, repariert #129",
+        "ru": "Добавлена возможность очистки неиспользуемых каналов и государств после инициализации устройства, решает #39\nДобавлена кнопка к информационному каналу, что позволяет удалить все оффлайн устройства из дерева адаптера. решает #39\n[Breaking] Стратегия резервного копирования изменена, требует [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) и активировать вариант для ESPHome, исправлений #129",
+        "pt": "Adicionado capacidade de limpeza para canais não utilizados & estados após a inicialização do dispositivo, resolve #39\nAdicionado botão para info canal que permite excluir todos os dispositivos off-line da árvore do adaptador. resolve #39\n[Breaking] Estratégia de backup alterada, requer [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) e opção ativa para ESPHome, correções #129",
+        "nl": "Vervoegde schoonmaak capaciteit voor onbruikbare kanalen apparaat na de initialisatie van 39\nKnop toegevoegd aan info kanaal dat alle offline apparaten van adapter boom laat verwijderen. 39\nOndersteuningsstrategie veranderde, vereist [Backitup v2.9.1, htps:com/simateioBroker, en tactiveer de optie van 12 uur",
+        "fr": "Ajout d'une capacité de nettoyage pour les canaux non utilisés & états après l'initialisation du dispositif, résout #39\nAjout du bouton sur le canal d'info qui permet de supprimer tous les périphériques hors ligne de l'arbre d'adaptateur. résolution #39\n[Breaking] La stratégie de sauvegarde a changé, nécessite [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) et l'option active pour ESPHome, corrige #129",
+        "it": "Aggiunta funzionalità di pulizia per canali e stati non utilizzati dopo l'inizializzazione del dispositivo, risolve #39\nPulsante aggiunto al canale info che consente di eliminare tutti i dispositivi offline dall'albero dell'adattatore. risolve #39\n[Breaking] La strategia di backup è cambiata, richiede [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) e attiva l'opzione per ESPHome, corregge #129",
+        "es": "Capacidad de limpieza agregada para canales no utilizados \" estados después de la inicialización del dispositivo, resuelve #39\nSe agregó botón a canal de información que permite eliminar todos los dispositivos fuera de línea del árbol del adaptador. resuelve #39\n[Breaking] La estrategia de respaldo cambió, requiere [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) y activar la opción para ESPHome, fija #129",
+        "pl": "Po zainicjowaniu możliwości usuwania nieużywanych kanałów i stanów po inicjalizacji urządzenia, rozwiązał #39\nNaciśnięty przycisk do kanału informacyjnego, który umożliwia usunięcie wszystkich urządzeń offline z drzewa adapterowego. Rozwiązanie #39\n(Po zmianie strategii Backupa, wymaga od BOATUTUp v2.9.1(https:/github.com/simatec/ioBroker.backitup) i aktywacji opcji dla ESPHome, naprawa #129",
+        "uk": "Додано можливість очищення каналів і станів після ініціалізації пристрою, вирішує #39\nДодано кнопку на інформаційний канал, який дозволяє видалити всі offline пристрої з дерева адаптера. розчини #39\n[Breaking] Стратегія резервного копіювання змінено, вимагає [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) і активувати варіант для ESPHome, фіксує #129",
+        "zh-cn": "在装置初始化后增加无用渠道和各州的清洁能力,第39号决定\n添加但道托顿以电器,使所有线装置能够从适应树中删除。 行动39\n[Breaking] Backup战略改变,要求[BackitUp v2.9.1](http://github.com/simatec/ioBroker.backitup)和“ESPHome”的主动选择,第129号行动。"
+      }
     },
-    "encryptedNative": [
-        "apiPass",
-        "encryptionKey"
+    "title": "Control ESPHome managed devices",
+    "titleLang": {
+      "en": "Control ESPHome managed devices",
+      "de": "Steuern Sie von ESPHome verwaltete Geräte",
+      "ru": "Управление устройствами ESPHome",
+      "pt": "Controlar dispositivos gerenciados ESPHome",
+      "nl": "Beheer door ESPHome beheerde apparaten",
+      "fr": "Contrôle des appareils gérés ESPHome",
+      "it": "Controlla i dispositivi gestiti da ESPHome",
+      "es": "Controle los dispositivos administrados por ESPHome",
+      "pl": "Kontroluj urządzenia zarządzane przez ESPHome",
+      "zh-cn": "控制ESPHome受管设备"
+    },
+    "desc": {
+      "en": "Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome",
+      "de": "Steuern Sie Ihren ESP8266 / ESP32 mit einfachen, aber leistungsstarken Konfigurationsdateien, die von ESPHome erstellt und verwaltet werden",
+      "ru": "Управляйте своим ESP8266 / ESP32 с помощью простых, но мощных файлов конфигурации, созданных и управляемых ESPHome",
+      "pt": "Controle seu ESP8266 / ESP32 com arquivos de configuração simples, mas poderosos, criados e gerenciados por ESPHome",
+      "nl": "Beheer uw ESP8266 / ESP32 met eenvoudige maar krachtige configuratiebestanden die zijn gemaakt en beheerd door ESPHome",
+      "fr": "Contrôlez votre ESP8266 / ESP32 avec des fichiers de configuration simples mais puissants créés et gérés par ESPHome",
+      "it": "Controlla il tuo ESP8266 / ESP32 con file di configurazione semplici ma potenti creati e gestiti da ESPHome",
+      "es": "Controle su ESP8266 / ESP32 con archivos de configuración simples pero potentes creados y administrados por ESPHome",
+      "pl": "Steruj ESP8266 / ESP32 za pomocą prostych, ale potężnych plików konfiguracyjnych utworzonych i zarządzanych przez ESPHome",
+      "zh-cn": "使用由ESPHome创建和管理的简单但功能强大的配置文件控制ESP8266 / ESP32"
+    },
+    "authors": [
+      "DutchmanNL <rdrozda86@gmail.com>"
     ],
-    "native": {
-        "ESPHomeDashboardVersion": "Always last available",
-        "reconnectInterval": 30,
-        "apiPass": "",
-        "encryptionKey": "",
-        "autodiscovery": true,
-        "discoveryListeningAddress": "0.0.0.0",
-        "configStates": false,
-        "ESPHomeDashboardEnabled": false,
-        "ESPHomeDashboardPort": 6052,
-        "ESPHomeDashboardIP": "localhost",
-        "ESPHomeDashboardUrl": "http://localhost:6052",
-        "ignoredDevices": [
-            {
-                "IP-Address": "192.168.0.1",
-                "name": "Gateway",
-                "description": "*.*.*.1 are usually gateway addresses"
-            }
-        ]
+    "keywords": [
+      "ESPHome",
+      "ESP",
+      "ESP32"
+    ],
+    "license": "MIT",
+    "platform": "Javascript/Node.js",
+    "main": "main.js",
+    "icon": "esphome.png",
+    "enabled": true,
+    "messagebox": true,
+    "subscribe": "messagebox",
+    "extIcon": "https://raw.githubusercontent.com/DrozmotiX/ioBroker.esphome/main/admin/esphome.png",
+    "readme": "https://github.com/DrozmotiX/ioBroker.esphome/blob/main/README.md",
+    "loglevel": "info",
+    "mode": "daemon",
+    "type": "hardware",
+    "compact": true,
+    "connectionType": "local",
+    "dataSource": "push",
+    "adminUI": {
+      "config": "json"
     },
-    "objects": [],
-    "instanceObjects": [
-        {
-            "_id": "info",
-            "type": "channel",
-            "common": {
-                "name": "Information"
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.connection",
-            "type": "state",
-            "common": {
-                "role": "indicator.connected",
-                "name": "Device or service connected",
-                "type": "boolean",
-                "read": true,
-                "write": false,
-                "def": false
-            },
-            "native": {}
-        }
+    "materialize": true,
+    "tier": 2,
+    "plugins": {
+      "sentry": {
+        "dsn": "https://52227cfa250b49e99b1f28408273402c@sentry.iobroker.net/122"
+      }
+    },
+    "localLink": "%ESPHomeDashboardUrl%",
+    "adminTab": {
+      "link": "%ESPHomeDashboardUrl%",
+      "fa-icon": "settings_input_composite"
+    },
+    "dependencies": [
+      {
+        "js-controller": ">=3.3.22"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=5.1.13"
+      }
+    ],
+    "licenseInformation": {
+      "type": "free",
+      "license": "MIT"
+    }
+  },
+  "encryptedNative": [
+    "apiPass",
+    "encryptionKey"
+  ],
+  "native": {
+    "ESPHomeDashboardVersion": "Always last available",
+    "reconnectInterval": 30,
+    "apiPass": "",
+    "encryptionKey": "",
+    "autodiscovery": true,
+    "discoveryListeningAddress": "0.0.0.0",
+    "configStates": false,
+    "ESPHomeDashboardEnabled": false,
+    "ESPHomeDashboardPort": 6052,
+    "ESPHomeDashboardIP": "localhost",
+    "ESPHomeDashboardUrl": "http://localhost:6052",
+    "ignoredDevices": [
+      {
+        "IP-Address": "192.168.0.1",
+        "name": "Gateway",
+        "description": "*.*.*.1 are usually gateway addresses"
+      }
     ]
+  },
+  "objects": [],
+  "instanceObjects": [
+    {
+      "_id": "info",
+      "type": "channel",
+      "common": {
+        "name": "Information"
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.connection",
+      "type": "state",
+      "common": {
+        "role": "indicator.connected",
+        "name": "Device or service connected",
+        "type": "boolean",
+        "read": true,
+        "write": false,
+        "def": false
+      },
+      "native": {}
+    }
+  ]
 }

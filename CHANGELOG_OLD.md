@@ -1,4 +1,9 @@
 # Older changes
+## 0.4.1 (2023-11-05)
+* (DutchmanNL) Bugfix: Password / connection issues in previous beta resolves #179
+* (DutchmanNL) Bugfix: Allow individual API password or encryption keys for devices, resolves #174
+* (DutchmanNL) Support ESPHome device Encryption Key (you should migrate from API password to Encryption Key ! resolves #152)
+
 ## 0.4.0 (2023-11-03)
 * (DutchmanNL) Added cleanup capability for unused channels & states after initialization of a device, resolves #39
 * (DutchmanNL) Added button to an info channel which allows to delete all offline devices from an adapter tree. resolves #39

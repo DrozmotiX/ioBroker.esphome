@@ -198,7 +198,7 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
-### __WORK IN PROGRESS__
+### 0.6.0 (2025-05-24)
 * (@SimonFischer04) Update esphome
 * (@ticaki) Optimize admin configuration interface
 * (@DutchmanNL) Optimize backend handling of device discovery
@@ -224,11 +224,6 @@ If you like my work, please consider a personal donation
 * (DutchmanNL) Allow Selection to listen on specific interface or all for device discovery resolves #67
 * (DutchmanNL) State implemented to show current connection status (unreachable/disconnected/connected) to improve management of devices
 * (DutchmanNL) Several bugfixes, resolves #181 resolves #
-
-### 0.4.1 (2023-11-05)
-* (DutchmanNL) Bugfix: Password / connection issues in previous beta resolves #179
-* (DutchmanNL) Bugfix: Allow individual API password or encryption keys for devices, resolves #174
-* (DutchmanNL) Support ESPHome device Encryption Key (you should migrate from API password to Encryption Key ! resolves #152)
 
 ## License
 MIT License
