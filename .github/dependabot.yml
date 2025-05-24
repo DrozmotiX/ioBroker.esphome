@@ -1,8 +1,22 @@
 version: 2
 updates:
-- package-ecosystem: "npm"
-  directory: "/"
-  schedule:
-    interval: "weekly"
-  target-branch: "dependencyAutoUpdate"
-  open-pull-requests-limit: 30
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: monthly
+      time: '04:00'
+      timezone: Europe/Berlin
+
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: monthly
+      time: '04:00'
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 7
+    versioning-strategy: increase
+    ignore:
+      # Typescript should not be updated automatically, except patch updates
+      # it does not follow semver and minor updates are usually breaking
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-minor', 'version-update:semver-major']

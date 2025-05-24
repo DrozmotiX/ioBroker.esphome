@@ -199,9 +199,10 @@ If you like my work, please consider a personal donation
     * (DutchmanNL) 
 -->
 ### __WORK IN PROGRESS__
-* (ticaki) Optimize admin configuration interface
-* (DutchmanNL) Optimize backend handling of device discovery
-* (DutchmanNL) Capability to select ESPHome Dashboard version added, resolves #118
+* (@SimonFischer04) Update esphome
+* (@ticaki) Optimize admin configuration interface
+* (@DutchmanNL) Optimize backend handling of device discovery
+* (@DutchmanNL) Capability to select ESPHome Dashboard version added, resolves #118
 
 ### 0.5.0-beta.8 (2023-11-24)
 * (DutchmanNL) Capability to automatically detect new devices added
@@ -232,7 +233,7 @@ If you like my work, please consider a personal donation
 ## License
 MIT License
 
-Copyright (c) 2023 DutchmanNL <rdrozda86@gmail.com>
+Copyright (c) 2023-2025 DutchmanNL <rdrozda86@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
