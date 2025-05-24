@@ -1060,8 +1060,11 @@ class Esphome extends utils.Adapter {
 				this.log.info(`[Error caught and send to Sentry, thank you collaborating!] error: ${errorMsg}`);
 				if (this.supportsFeature && this.supportsFeature('PLUGINS')) {
 					const sentryInstance = this.getPluginInstance('sentry');
-					if (sentryInstance) {
-						if (sentryInstance && sentryInstance.getSentryObject) sentryInstance.getSentryObject().captureException(errorMsg);
+					if (sentryInstance && typeof sentryInstance.getSentryObject === 'function') {
+						const sentryObject = sentryInstance.getSentryObject();
+						if (sentryObject) {
+							sentryObject.captureException(errorMsg);
+						}
 					}
 				}
 			} else {
