@@ -176,10 +176,10 @@ class Esphome extends utils.Adapter {
 					const {getVenv} = await import('autopy');
 					let python;
 					try {
-						// Create a virtual environment with mitmproxy installed.
+						// Create a virtual environment with esphome installed.
 						python = await getVenv({
 							name: 'esphome',
-							pythonVersion: '~3.11', // Use any Python 3.11.x version.
+							pythonVersion: '~3.13', // Use any Python 3.13.x version.
 							requirements: [{name: 'esphome', version: `==${useDashBoardVersion}`}, {name: 'pillow', version: '==10.4.0'}], // Use latest esphome
 						});
 					} catch (error) {
@@ -204,7 +204,7 @@ class Esphome extends utils.Adapter {
 					}
 
 					this.log.info(`Starting ESPHome Dashboard`);
-					const dashboardProcess = python('esphome', ['dashboard', `${dataDir}esphome.${this.instance}`]);
+					const dashboardProcess = python('esphome', ['dashboard', '--port', this.config.ESPHomeDashboardPort, `${dataDir}esphome.${this.instance}`]);
 
 					this.log.debug(`espHomeDashboard_Process ${JSON.stringify(dashboardProcess)}`);
 
@@ -315,6 +315,12 @@ class Esphome extends utils.Adapter {
 				this.log.debug(`ESPHome Device found on ${message.address} | ${JSON.stringify(message)}`);
 				if (!excludedIP.includes(message.address) && !newlyDiscoveredClient[message.address] && !clientDetails[message.address]){
 					this.log.info(`New ESPHome Device discovered: ${message.friendly_name ? message.friendly_name : message.host} on ${message.address}`);
+
+					if(message.mac == null){
+						this.log.warn(`Discovered device with undefined mac. ignoring: ${JSON.stringify(message)}`);
+						return;
+					}
+
 					// Store device data into memory to allow adoption by admin interface
 					newlyDiscoveredClient[message.address] = {
 						ip: message.address,
@@ -856,14 +862,14 @@ class Esphome extends utils.Adapter {
 							if (transitionLength) {
 								clientDetails[host][entity.id].states.transitionLength = transitionLength.val;
 								// Run create state routine to ensure state is cached in memory
-								await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, transitionLength.val, `s`, writable);
+								await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, transitionLength.val, `ms`, writable);
 							} else { // Else create it
-								await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
+								await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `ms`, writable);
 								clientDetails[host][entity.id].states.transitionLength = 0;
 							}
 
 						} catch (e) { // Else create it
-							await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `s`, writable);
+							await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`, `${stateName} of ${entity.config.name}`, 0, `ms`, writable);
 							clientDetails[host][entity.id].states.transitionLength = 0;
 						}
 

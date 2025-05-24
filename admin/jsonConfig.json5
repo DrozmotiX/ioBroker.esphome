@@ -457,13 +457,6 @@
 					"command": "getHostIp",
 					"jsonData": "{ \"service\": \"${data.deviceInputIP}\" }"
 				},
-				"ESPHomeDashboardPort": {
-					"type": "text",
-					"text": "",
-					"sm": 2,
-					"readOnly" : true,
-					"label": "lblESPHomePort"
-				},
 
 				// Explanation usage of IP-Address input field
 				"headerESPHomeDashboard-details-5": {
@@ -487,7 +480,35 @@
 					"newLine": true,
 					"type": "staticText",
 					"text": ""
-				}
+				},
+
+				"advanced": {
+					"type": "panel",
+					"label": "Advanced",
+					"collapsable": true,
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12,
+					"items": {
+						"ESPHomeDashboardPort": {
+							"type": "text",
+							"text": "",
+							"sm": 2,
+							"label": "lblESPHomePort"
+						},
+						"ESPHomeDashboardUrl": {
+							"type": "text",
+							"label": "URL of ESPHome Dashboard",
+							onChange: {
+								"alsoDependsOn": ["ESPHomeDashboardIP", "ESPHomeDashboardPort"],
+								"calculateFunc": "`http://${data.ESPHomeDashboardIP}:${data.ESPHomeDashboardPort}`",
+								"ignoreOwnChanges": true
+							}
+						}
+					}
+				},
 			}
 		},
 

@@ -45,8 +45,27 @@ In any case, it is possible to integrate the dashboard into ioBroker Admin inter
 
 ![Logo](admin/img/ESPhomeDashboardIP.png)
 
-> [!IMPORTANT]
-> is currently not possible to show the ESPHome DashBoard integrated in ioBroker when https is enabled, see [#159](https://github.com/DrozmotiX/ioBroker.esphome/issues/159)
+### Using HTTPS
+
+One reason to use HTTPS is to be able to flash directly to devices plugged into you pc, because esphome will not allow this with http (probably browser limitation with WebSerial).
+
+![flashFromThisComputer.png](admin/img/flashFromThisComputer.png)
+
+Using the integrated dashboard when the iobroker is using https currently requires some more steps:
+
+1. install - if you don't have it already - web adapter and configure https. see web documentation for further information: [ioBroker.web](https://github.com/ioBroker/ioBroker.web)
+2. install [proxy](https://github.com/ioBroker/ioBroker.proxy) adapter
+3. configure the path in the proxy adapter settings:
+   1. context: `esphome/`
+   2. url: `http://localhost:6052`
+![proxy.png](admin/img/proxy.png)
+4. configure the full dashboard url in the advanced section of the esphome adapter settings - esphome dashboard:
+   1. like: `https://<iobrokerIP>:<webAdapterPort>/proxy.0/esphome/`
+   2. where `<iobrokerIP>` is the ip of the host where you iobroker is running (same as above)
+   3. and `<webAdapterPort>` is the port of the web adapter (default is 8082)
+   4. it should look something like this:
+   ![ESPHomeDashboardUrl.png](admin/img/ESPHomeDashboardUrl.png)
+   5. if you run the dashboard on an external host, you can also use the url to an external dashboard instance here
 
 ## How to use this adapter
 
