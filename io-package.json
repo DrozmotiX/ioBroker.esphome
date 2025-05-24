@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "esphome",
-    "version": "0.6.0",
+    "version": "0.6.1",
     "news": {
+      "0.6.1": {
+        "en": "Update esphome\nOptimize admin configuration interface\nOptimize backend handling of device discovery\nCapability to select ESPHome Dashboard version added, resolves #118",
+        "de": "Update esphome\nOptimieren der Admin-Konfigurationsschnittstelle\nOptimieren Sie das Backend-Handling der Geräteentdeckung\nMöglichkeit, ESPHome Dashboard-Version hinzugefügt zu wählen, löst #118",
+        "ru": "Обновление esphome\nОптимизируйте интерфейс конфигурации admin\nОптимизируйте обратную обработку обнаружения устройства\nВозможность выбора добавленной версии ESPHome Dashboard, решает #118",
+        "pt": "Atualizar esphome\nOtimizar a interface de configuração de administrador\nOtimizar o manuseio de backend da descoberta do dispositivo\nCapacidade de selecionar ESPHome Dashboard versão adicionada, resolve #118",
+        "nl": "Esphome bijwerken\nAdmin configuratie interface optimaliseren\nOptimaliseer backend behandeling van apparaatontdekking\nMogelijkheid om ESPHome Dashboard versie toegevoegd te selecteren, lost #118 op",
+        "fr": "Mettre à jour l'esphome\nOptimiser l'interface de configuration de l'administration\nOptimiser la gestion du moteur de la découverte de l'appareil\nCapacité de sélectionner la version ESPHome Dashboard ajoutée, résout #118",
+        "it": "Aggiornamento esphome\nOttimizzare l'interfaccia di configurazione di amministratore\nOttimizzare la gestione backend della scoperta del dispositivo\nCapacità di selezionare la versione di ESPHome Dashboard aggiunta, risolve #118",
+        "es": "Actualizar esphome\nOptimize admin configuración interface\nOptimize backend handling of device discovery\nCapacidad para seleccionar la versión ESPHome Dashboard añadido, resuelve #118",
+        "pl": "Uaktualnij esphome\nOptymalizacja interfejsu konfiguracyjnego administratora\nOptymalizacja obsługi urządzenia\nMożliwość wyboru wersji ESPHome Dashboard dodano, rozwiązuje # 118",
+        "uk": "Оновлення esphome\nОптимальний інтерфейс конфігурації адміністратора\nОптимізуйте зворотну обробку пристрою\nМожливість вибору ESPHome Dashboard додано, вирішує #118",
+        "zh-cn": "更新 esphome\n优化管理员配置接口\n优化设备发现的后端处理\n选择 ESPHome Dashboard 版本的能力已添加, 解决 # 118"
+      },
       "0.5.0-beta.8": {
         "en": "Capability to automatically detect new devices added\nEnsures a compatible pillow version is used (10.0.1)\nAdd pillow python package by default, resolves #188",
         "de": "Möglichkeit, neue Geräte automatisch zu erkennen\nSicherstellen das Pillow version (10.0.1) verwendet wird\nFügen Sie Kissen-Python-Paket standardmäßig hinzu, löst #188",
