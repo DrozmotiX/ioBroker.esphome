@@ -198,7 +198,7 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
-### 0.6.0 (2025-05-24)
+### __WORK IN PROGRESS__
 * (@SimonFischer04) Update esphome
 * (@ticaki) Optimize admin configuration interface
 * (@DutchmanNL) Optimize backend handling of device discovery
