@@ -641,6 +641,11 @@ class Esphome extends utils.Adapter {
 									await this.handleRegularState(`${host}`, entity, state, true);
 									break;
 
+								case 'Text': {
+									await this.handleRegularState(`${host}`, entity, state, true);
+									break;
+								}
+
 								case 'Select': {
 									await this.handleRegularState(`${host}`, entity, state, true);
 									break;
@@ -1474,6 +1479,10 @@ class Esphome extends utils.Adapter {
 					// Handle Number State
 				} else if (clientDetails[deviceIP][device[4]].type === `Number`) {
 					await clientDetails[deviceIP].client.connection.numberCommandService({key: device[4], state: state.val});
+
+					// Handle Text State
+				} else if (clientDetails[deviceIP][device[4]].type === `Text`) {
+					await clientDetails[deviceIP].client.connection.textCommandService({key: device[4], state: state.val});
 
 					// Handle Button State
 				} else if (clientDetails[deviceIP][device[4]].type === `Button`) {
