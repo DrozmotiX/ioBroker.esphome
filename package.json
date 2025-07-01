@@ -53,7 +53,7 @@
     "axios": "^1.10.0",
     "chai": "^4.5.0",
     "chai-as-promised": "^7.1.2",
-    "eslint": "^8.57.1",
+    "eslint": "^9.30.0",
     "gulp": "^4.0.2",
     "mocha": "^11.7.1",
     "promisify": "0.0.3",
