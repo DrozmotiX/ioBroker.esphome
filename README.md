@@ -198,6 +198,10 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
+### __WORK IN PROGRESS__
+* (@SimonFischer04) add support for text device type #141, displays #103
+* (@SimonFischer04) fix cover device type #156
+
 ### 0.6.1 (2025-05-24)
 * (@SimonFischer04) Update esphome
 * (@ticaki) Optimize admin configuration interface
