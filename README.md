@@ -198,6 +198,9 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
+### __WORK IN PROGRESS__
+* (@SimonFischer04) workaround: downgrade python for now. fixes #259
+
 ### 0.6.1 (2025-05-24)
 * (@SimonFischer04) Update esphome
 * (@ticaki) Optimize admin configuration interface
