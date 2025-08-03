@@ -179,7 +179,7 @@ class Esphome extends utils.Adapter {
 						// Create a virtual environment with esphome installed.
 						python = await getVenv({
 							name: 'esphome',
-							pythonVersion: '3.13.2', // Use any Python 3.13.x version.
+							pythonVersion: '3.12.9', // Use any Python 3.13.x version.
 							requirements: [{name: 'esphome', version: `==${useDashBoardVersion}`}, {name: 'pillow', version: '==10.4.0'}], // Use latest esphome
 						});
 					} catch (error) {
