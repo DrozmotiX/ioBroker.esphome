@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "esphome",
-    "version": "0.6.1",
+    "version": "0.6.2",
     "news": {
+      "0.6.2": {
+        "en": "add support for text device type #141, displays #103\nfix cover device type #156\nworkaround: downgrade python for now. fixes #259",
+        "de": "unterstützung für textgerät typ #141, anzeigen #103\nbefestigungsabdeckung typ #156\narbeitsbereich: abbauen python für jetzt. fixes #259",
+        "ru": "добавить поддержку текстового устройства типа #141, дисплеев #103\nфиксировать крышку типа #156\nобходной путь: понижай питон пока. обсуждение #259",
+        "pt": "adicionar suporte para o tipo de dispositivo de texto #141, exibe #103\ncorrigir tipo de dispositivo de cobertura #156\nsolução alternativa: píton degradante por enquanto. corrige # 259",
+        "nl": "ondersteuning toevoegen voor tekst apparaat type #141, displays #103\nfix cover apparaat type #156\nwerkoplossing: downgrade python voor nu. fixes #259",
+        "fr": "ajouter le support pour le type de périphérique texte #141, affiche #103\ndispositif de protection de type #156\nla solution de rechange: python de qualité inférieure pour l'instant. correctifs #259",
+        "it": "aggiungere il supporto per il tipo di dispositivo di testo #141, visualizza #103\ncorretto tipo di dispositivo di copertura #156\na tutto: pitone per ora. correzioni #259",
+        "es": "añadir soporte para el tipo de dispositivo de texto #141, pantallas #103\ntipo de dispositivo de tapa fija #156\ntodo el trabajo: por ahora. fijaciones #259",
+        "pl": "dodaj obsługę urządzenia tekstowego typu # 141, wyświetla # 103\nurządzenie mocujące typu # 156\npraca wokół: na razie pyton w dół. poprawki # 259",
+        "uk": "додавання підтримки типу текстового пристрою #141, відображення #103\nзафіксувати тип пристрою кришки #156\nробота: python тепер. застібки #259",
+        "zh-cn": "添加文本设备类型 # 141, 显示 # 103\n固定封面设备类型 # 156\n工作间距: 现在降级的蟒蛇。 修正 # 259"
+      },
       "0.6.1": {
         "en": "Update esphome\nOptimize admin configuration interface\nOptimize backend handling of device discovery\nCapability to select ESPHome Dashboard version added, resolves #118",
         "de": "Update esphome\nOptimieren der Admin-Konfigurationsschnittstelle\nOptimieren Sie das Backend-Handling der Geräteentdeckung\nMöglichkeit, ESPHome Dashboard-Version hinzugefügt zu wählen, löst #118",
@@ -80,19 +93,6 @@
         "pl": "Bugfix: Password / Problemy połączenia w poprzednich beta rozwiązały numer #179\nBugfix: Allow indywidualny API password lub klucze szyfrujące dla urządzeń, rozwiązał numer #174\nWsparcie ESPHome: Encryption Key (you powinien wyemigrować z hasła API do Encryption Key ! Rozwiązanie #152",
         "uk": "Помилки: Пароль / питання з'єднання у попередніх бета-рішеннях #179\nПомилки: Дозволити індивідуальний пароль API або ключі шифрування для пристроїв, вирішує #174\nПідтримка ESPHome пристрій шифрування ключа (Ви повинні мигратувати від API пароля до ключа шифрування ! розчини #152)",
         "zh-cn": "Bugfix:在前几批被盗用词/联系问题\nBugfix: 允许个人的通用或加密装置的关键,第174号行动\n支持ESPHome装置的加密关键(you应从API密码移到恩加密的关键! 第152号决议)"
-      },
-      "0.4.0": {
-        "en": "Added cleanup capability for unused channels & states after initialisation of device, resolves #39\nAdded button to info channel which allows to delete all offline devices from adapter tree. resolves #39\n[Breaking] Backup strategy changed, requires [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) and activate option for ESPHome, fixes #129",
-        "de": "Zusätzliche Reinigungsfähigkeit für ungenutzte Kanäle & Zustände nach der Initialisierung des Geräts, löst #39\nZusätzlicher Button zum Info-Kanal, der alle Offline-Geräte aus dem Adapterbaum löschen kann. löst #39\n[Breaking] Backup-Strategie geändert, erfordert [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) und aktiviert Option für ESPHome, repariert #129",
-        "ru": "Добавлена возможность очистки неиспользуемых каналов и государств после инициализации устройства, решает #39\nДобавлена кнопка к информационному каналу, что позволяет удалить все оффлайн устройства из дерева адаптера. решает #39\n[Breaking] Стратегия резервного копирования изменена, требует [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) и активировать вариант для ESPHome, исправлений #129",
-        "pt": "Adicionado capacidade de limpeza para canais não utilizados & estados após a inicialização do dispositivo, resolve #39\nAdicionado botão para info canal que permite excluir todos os dispositivos off-line da árvore do adaptador. resolve #39\n[Breaking] Estratégia de backup alterada, requer [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) e opção ativa para ESPHome, correções #129",
-        "nl": "Vervoegde schoonmaak capaciteit voor onbruikbare kanalen apparaat na de initialisatie van 39\nKnop toegevoegd aan info kanaal dat alle offline apparaten van adapter boom laat verwijderen. 39\nOndersteuningsstrategie veranderde, vereist [Backitup v2.9.1, htps:com/simateioBroker, en tactiveer de optie van 12 uur",
-        "fr": "Ajout d'une capacité de nettoyage pour les canaux non utilisés & états après l'initialisation du dispositif, résout #39\nAjout du bouton sur le canal d'info qui permet de supprimer tous les périphériques hors ligne de l'arbre d'adaptateur. résolution #39\n[Breaking] La stratégie de sauvegarde a changé, nécessite [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) et l'option active pour ESPHome, corrige #129",
-        "it": "Aggiunta funzionalità di pulizia per canali e stati non utilizzati dopo l'inizializzazione del dispositivo, risolve #39\nPulsante aggiunto al canale info che consente di eliminare tutti i dispositivi offline dall'albero dell'adattatore. risolve #39\n[Breaking] La strategia di backup è cambiata, richiede [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) e attiva l'opzione per ESPHome, corregge #129",
-        "es": "Capacidad de limpieza agregada para canales no utilizados \" estados después de la inicialización del dispositivo, resuelve #39\nSe agregó botón a canal de información que permite eliminar todos los dispositivos fuera de línea del árbol del adaptador. resuelve #39\n[Breaking] La estrategia de respaldo cambió, requiere [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) y activar la opción para ESPHome, fija #129",
-        "pl": "Po zainicjowaniu możliwości usuwania nieużywanych kanałów i stanów po inicjalizacji urządzenia, rozwiązał #39\nNaciśnięty przycisk do kanału informacyjnego, który umożliwia usunięcie wszystkich urządzeń offline z drzewa adapterowego. Rozwiązanie #39\n(Po zmianie strategii Backupa, wymaga od BOATUTUp v2.9.1(https:/github.com/simatec/ioBroker.backitup) i aktywacji opcji dla ESPHome, naprawa #129",
-        "uk": "Додано можливість очищення каналів і станів після ініціалізації пристрою, вирішує #39\nДодано кнопку на інформаційний канал, який дозволяє видалити всі offline пристрої з дерева адаптера. розчини #39\n[Breaking] Стратегія резервного копіювання змінено, вимагає [BackitUp v2.9.1](https://github.com/simatec/ioBroker.backitup) і активувати варіант для ESPHome, фіксує #129",
-        "zh-cn": "在装置初始化后增加无用渠道和各州的清洁能力,第39号决定\n添加但道托顿以电器,使所有线装置能够从适应树中删除。 行动39\n[Breaking] Backup战略改变,要求[BackitUp v2.9.1](http://github.com/simatec/ioBroker.backitup)和“ESPHome”的主动选择,第129号行动。"
       }
     },
     "title": "Control ESPHome managed devices",

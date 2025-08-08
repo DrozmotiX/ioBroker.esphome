@@ -1,4 +1,14 @@
 # Older changes
+## 0.5.0-beta.0 (2023-11-12) - Rebuild Admin Interface & Connection handler
+* (DutchmanNL) Admin interface redesigned to JSON-Config relates #171
+* (DutchmanNL) Backend massages implemented to Add/Modify/Delete devices
+* (DutchmanNL) Device connection handling and visibility of devices improved
+* (DutchmanNL) Auto device discovery temporary disabled due to external bug, relates #175
+* (DutchmanNL) Possibility added to exclude IP-Addresses from device discovery, relates #175
+* (DutchmanNL) Allow Selection to listen on specific interface or all for device discovery resolves #67
+* (DutchmanNL) State implemented to show current connection status (unreachable/disconnected/connected) to improve management of devices
+* (DutchmanNL) Several bugfixes, resolves #181 resolves #
+
 ## 0.4.1 (2023-11-05)
 * (DutchmanNL) Bugfix: Password / connection issues in previous beta resolves #179
 * (DutchmanNL) Bugfix: Allow individual API password or encryption keys for devices, resolves #174
