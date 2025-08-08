@@ -199,6 +199,8 @@ If you like my work, please consider a personal donation
     * (DutchmanNL) 
 -->
 ### __WORK IN PROGRESS__
+* (@SimonFischer04) add support for text device type #141, displays #103
+* (@SimonFischer04) fix cover device type #156
 * (@SimonFischer04) workaround: downgrade python for now. fixes #259
 
 ### 0.6.1 (2025-05-24)

@@ -611,8 +611,9 @@ class Esphome extends utils.Adapter {
 									break;
 
 								case 'Cover':
-									await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.position`, `Position`, 0, `%`, true);
-									await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.tilt`, `Tilt`, 0, `%`, true);
+									// esphome send position and tilt as 0-1 value
+									await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.position`, `Position`, state.position * 100, `%`, true);
+									await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.tilt`, `Tilt`, state.tilt * 100, `%`, true);
 									await this.stateSetCreate(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}.stop`, `Stop`, false, ``, true);
 									break;
 
@@ -1495,17 +1496,17 @@ class Esphome extends utils.Adapter {
 					// Handle Cover Position
 				} else if (device[5] === `position`) {
 					// clientDetails[deviceIP][device[4]].states[device[5]] = state.val;
-					await clientDetails[deviceIP].client.connection.climateCommandService({'key': device[4], 'position': state.val});
+					await clientDetails[deviceIP].client.connection.coverCommandService({'key': device[4], 'position': state.val});
 
 					// Handle Cover Tilt
 				} else if (device[5] === `tilt`) {
 					// clientDetails[deviceIP][device[4]].states[device[5]] = state.val;
-					await clientDetails[deviceIP].client.connection.climateCommandService({'key': device[4], 'tilt': state.val});
+					await clientDetails[deviceIP].client.connection.coverCommandService({'key': device[4], 'tilt': state.val});
 
 					// Handle Cover Stop
 				} else if (device[5] === `stop`) {
 					// clientDetails[deviceIP][device[4]].states[device[5]] = state.val;
-					await clientDetails[deviceIP].client.connection.climateCommandService({'key': device[4], 'stop': true});
+					await clientDetails[deviceIP].client.connection.coverCommandService({'key': device[4], 'stop': true});
 
 				} else if (clientDetails[deviceIP][device[4]].type === `Light`) {
 					let writeValue = state.val;
