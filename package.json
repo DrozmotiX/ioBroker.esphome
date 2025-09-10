@@ -17,6 +17,7 @@
   "homepage": "https://github.com/DrozmotiX/ioBroker.esphome",
   "license": "MIT",
   "keywords": [
+    "ioBroker",
     "ESPHome",
     "ESP",
     "ESP32"
@@ -26,7 +27,7 @@
     "url": "https://github.com/DrozmotiX/ioBroker.esphome"
   },
   "engines": {
-    "node": ">= 18"
+    "node": ">= 20"
   },
   "dependencies": {
     "@2colors/esphome-native-api": "^1.3.2",
@@ -47,7 +48,7 @@
     "axios": "^1.11.0",
     "eslint": "^8.57.1",
     "gulp": "^4.0.2",
-    "promisify": "0.0.3",
+    "promisify": "~0.0.3",
     "typescript": "~5.9.2"
   },
   "main": "main.js",

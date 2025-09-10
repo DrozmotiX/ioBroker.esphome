@@ -19,31 +19,56 @@
 				"headerHowToConnect-details-1": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "lblConnectDetails-Line-1"
+					"text": "lblConnectDetails-Line-1",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 
 				"headerHowToConnect-details-2": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "lblConnectDetails-Line-2"
+					"text": "lblConnectDetails-Line-2",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 				"headerHowToConnect-details-3": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "lblConnectDetails-Line-3"
+					"text": "lblConnectDetails-Line-3",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 
 				// Mention & link to api.proto project
 				"headerESPHomeDashboard-details-api.proto": {
 					"type": "staticLink",
 					"label": "api.proto",
-					"href" : "https://github.com/esphome/esphome/blob/dev/esphome/components/api/api.proto"
+					"href" : "https://github.com/esphome/esphome/blob/dev/esphome/components/api/api.proto",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 
 				"emptyLine-6": {
 					"newLine": true,
 					"type": "staticText",
-					"text": ""
+					"text": "",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 
 				// Text explaining ioBroker integration
@@ -88,11 +113,13 @@
 					"newLine": true,
 					"type": "password",
 					"label": "lblEncryptionKey",
+					"xs": 12,
 					"sm": 3
 				},
 				"apiPass": {
 					"type": "password",
 					"label": "lblApiPass",
+					"xs": 12,
 					"sm": 2
 				}
 			}
@@ -144,7 +171,7 @@
 					"type": "autocompleteSendTo",
 					"command": "getDeviceIPs",
 					"jsonData": "{ \"service\": \"${data.deviceInputIP}\" }",
-					"xs": 2,
+					"xs": 12,
 					"sm": 2,
 					"md": 2,
 					"lg": 2,
@@ -160,7 +187,7 @@
 					"default": "",
 					"tooltip": "hlpInputEncryptionKey",
 					"help": "hlpInputEncryptionKey",
-					"xs": 4,
+					"xs": 12,
 					"sm": 4,
 					"md": 4,
 					"lg": 4
@@ -173,7 +200,7 @@
 					"default": "",
 					"tooltip": "hlpInputApiPassword",
 					"help": "hlpInputApiPassword",
-					"xs": 2,
+					"xs": 12,
 					"sm": 2,
 					"md": 2,
 					"lg": 2
