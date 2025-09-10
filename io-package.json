@@ -95,7 +95,6 @@
                 "zh-cn": "Bugfix:在前几批被盗用词/联系问题\nBugfix: 允许个人的通用或加密装置的关键,第174号行动\n支持ESPHome装置的加密关键(you应从API密码移到恩加密的关键! 第152号决议)"
             }
         },
-        "title": "Control ESPHome managed devices",
         "titleLang": {
             "en": "Control ESPHome managed devices",
             "de": "Steuern Sie von ESPHome verwaltete Geräte",
@@ -106,6 +105,7 @@
             "it": "Controlla i dispositivi gestiti da ESPHome",
             "es": "Controle los dispositivos administrados por ESPHome",
             "pl": "Kontroluj urządzenia zarządzane przez ESPHome",
+            "uk": "Керування пристроями ESPHome",
             "zh-cn": "控制ESPHome受管设备"
         },
         "desc": {
@@ -118,6 +118,7 @@
             "it": "Controlla il tuo ESP8266 / ESP32 con file di configurazione semplici ma potenti creati e gestiti da ESPHome",
             "es": "Controle su ESP8266 / ESP32 con archivos de configuración simples pero potentes creados y administrados por ESPHome",
             "pl": "Steruj ESP8266 / ESP32 za pomocą prostych, ale potężnych plików konfiguracyjnych utworzonych i zarządzanych przez ESPHome",
+            "uk": "Керуйте своїм ESP8266/ESP32 за допомогою простих, але потужних файлів конфігурації, створених та керованих ESPHome",
             "zh-cn": "使用由ESPHome创建和管理的简单但功能强大的配置文件控制ESP8266 / ESP32"
         },
         "authors": [
@@ -129,11 +130,9 @@
             "ESP32"
         ],
         "platform": "Javascript/Node.js",
-        "main": "main.js",
         "icon": "esphome.png",
         "enabled": true,
         "messagebox": true,
-        "subscribe": "messagebox",
         "extIcon": "https://raw.githubusercontent.com/DrozmotiX/ioBroker.esphome/main/admin/esphome.png",
         "readme": "https://github.com/DrozmotiX/ioBroker.esphome/blob/main/README.md",
         "loglevel": "info",
@@ -145,26 +144,27 @@
         "adminUI": {
             "config": "json"
         },
-        "materialize": true,
         "tier": 2,
         "plugins": {
             "sentry": {
                 "dsn": "https://52227cfa250b49e99b1f28408273402c@sentry.iobroker.net/122"
             }
         },
-        "localLink": "%ESPHomeDashboardUrl%",
+        "localLinks": {
+            "_default": "%ESPHomeDashboardUrl%"
+        },
         "adminTab": {
             "link": "%ESPHomeDashboardUrl%",
             "fa-icon": "settings_input_composite"
         },
         "dependencies": [
             {
-                "js-controller": ">=3.3.22"
+                "js-controller": ">=5.0.19"
             }
         ],
         "globalDependencies": [
             {
-                "admin": ">=5.1.13"
+                "admin": ">=6.17.14"
             }
         ],
         "licenseInformation": {
@@ -173,6 +173,10 @@
         }
     },
     "encryptedNative": [
+        "apiPass",
+        "encryptionKey"
+    ],
+    "protectedNative": [
         "apiPass",
         "encryptionKey"
     ],
