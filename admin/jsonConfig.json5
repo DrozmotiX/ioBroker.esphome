@@ -75,18 +75,33 @@
 				"headerHowToConnect-details-4": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "lblConnectIobroker"
+					"text": "lblConnectIobroker",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 
 				"emptyLine-7": {
 					"newLine": true,
 					"type": "staticText",
-					"text": ""
+					"text": "",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 				"emptyLine-8": {
 					"newLine": true,
 					"type": "staticText",
-					"text": ""
+					"text": "",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 
 				// Header default credentials
@@ -100,12 +115,22 @@
 				"headerDefaultCredentials-details-1": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "lblDefaultCredentials-Line-1"
+					"text": "lblDefaultCredentials-Line-1",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 				"headerDefaultCredentials-details-2": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "lblDefaultCredentials-Line-2"
+					"text": "lblDefaultCredentials-Line-2",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 
 				// Credentials which will be stored (encrypted) in adapter config object
