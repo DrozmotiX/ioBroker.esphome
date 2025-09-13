@@ -1407,6 +1407,95 @@ class Esphome extends utils.Adapter {
 
 					// this.sendTo(obj.from, obj.command, 1, obj.callback);
 					break;
+
+				// Handle YAML file listing
+				case 'listYamlFiles':
+					{
+						const fs = require('fs');
+						const path = require('path');
+						const utils = require('@iobroker/adapter-core').utils;
+
+						const dataDir = utils.getAbsoluteDefaultDataDir();
+						const esphomeDir = path.join(dataDir, `esphome.${this.instance}`);
+
+						try {
+							// Ensure directory exists
+							if (!fs.existsSync(esphomeDir)) {
+								fs.mkdirSync(esphomeDir, { recursive: true });
+							}
+
+							// Read directory contents
+							const files = fs.readdirSync(esphomeDir);
+							const yamlFiles = files.filter(file => file.endsWith('.yaml') || file.endsWith('.yml'));
+
+							const fileList = [];
+							for (const filename of yamlFiles) {
+								const filePath = path.join(esphomeDir, filename);
+								const stats = fs.statSync(filePath);
+								fileList.push({
+									filename: filename,
+									size: this.formatFileSize(stats.size),
+									modified: stats.mtime.toLocaleString()
+								});
+							}
+
+							const data = {
+								native: {
+									yamlFilesTable: fileList
+								}
+							};
+
+							this.sendTo(obj.from, obj.command, data, obj.callback);
+
+						} catch (error) {
+							this.log.error(`Error listing YAML files: ${error.message}`);
+							this.sendTo(obj.from, obj.command, {error: `Failed to list files: ${error.message}`}, obj.callback);
+						}
+					}
+					break;
+
+				// Handle YAML file download
+				case 'downloadYamlFile':
+					{
+						const fs = require('fs');
+						const path = require('path');
+						const utils = require('@iobroker/adapter-core').utils;
+
+						const filename = obj.message.filename;
+						if (!filename) {
+							this.sendTo(obj.from, obj.command, {error: 'Filename is required'}, obj.callback);
+							return;
+						}
+
+						// Validate filename (security check)
+						if (path.basename(filename) !== filename || filename.includes('..')) {
+							this.sendTo(obj.from, obj.command, {error: 'Invalid filename'}, obj.callback);
+							return;
+						}
+
+						const dataDir = utils.getAbsoluteDefaultDataDir();
+						const esphomeDir = path.join(dataDir, `esphome.${this.instance}`);
+						const filePath = path.join(esphomeDir, filename);
+
+						try {
+							if (!fs.existsSync(filePath)) {
+								this.sendTo(obj.from, obj.command, {error: 'File not found'}, obj.callback);
+								return;
+							}
+
+							const content = fs.readFileSync(filePath, 'utf8');
+							this.sendTo(obj.from, obj.command, {
+								result: 'success',
+								filename: filename,
+								content: content
+							}, obj.callback);
+
+						} catch (error) {
+							this.log.error(`Error downloading YAML file ${filename}: ${error.message}`);
+							this.sendTo(obj.from, obj.command, {error: `Failed to read file: ${error.message}`}, obj.callback);
+						}
+					}
+					break;
 			}
 		} catch (error) {
 			this.errorHandler(`[onMessage]`, error);
@@ -1443,6 +1532,20 @@ class Esphome extends utils.Adapter {
 			return hex.length === 1 ? '0' + hex : hex;
 		}
 		return '#' + componentToHex(r) + componentToHex(g) + componentToHex(b);
+	}
+
+	/**
+	 * Format file size in human readable format
+	 * @param {number} bytes
+	 */
+	formatFileSize(bytes) {
+		if (bytes === 0) return '0 Bytes';
+
+		const k = 1024;
+		const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+		const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+		return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 	}
 
 	/**

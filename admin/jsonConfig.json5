@@ -621,6 +621,150 @@
 				}
 
 			}
+		},
+
+		"yamlFiles": {
+			"type": "panel",
+			"label": "YAML Files",
+			"items": {
+				
+				// Header for YAML file management
+				"yamlFilesHeader": {
+					"type": "header",
+					"text": "lblYamlFilesHeader",
+					"size": 1
+				},
+				
+				// Description
+				"yamlFilesDescription": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "lblYamlFilesDescription",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+
+				"emptyLineYaml1": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+
+				// File upload section
+				"yamlFileUpload": {
+					"newLine": true,
+					"type": "fileSelector",
+					"pattern": "*.yaml,*.yml",
+					"maxSize": "1MB",
+					"label": "lblYamlFileUpload",
+					"help": "Select a YAML file to upload to the ESPHome configuration directory",
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 3
+				},
+
+				// Button to refresh file list
+				"refreshYamlFiles": {
+					"newLine": true,
+					"type": "sendTo",
+					"label": "lblRefreshYamlFiles",
+					"variant": "outlined",
+					"showProcess": true,
+					"command": "listYamlFiles",
+					"jsonData": "{}",
+					"useNative": true,
+					"hidden": "!_alive",
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 3
+				},
+
+				"emptyLineYaml2": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+
+				// File list header
+				"yamlFilesListHeader": {
+					"newLine": true,
+					"type": "header",
+					"text": "lblYamlFilesListHeader",
+					"size": 3
+				},
+
+				// Table to show existing YAML files
+				"yamlFilesTable": {
+					"type": "table",
+					"noDelete": true,
+					"newLine": true,
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"doNotSave": true,
+					"showSecondAddAt": 5,
+					"items": [
+						{
+							"type": "text",
+							"readOnly": true,
+							"attr": "filename",
+							"width": "30%",
+							"title": "lblYamlFilename",
+							"filter": true,
+							"sort": true,
+							"default": ""
+						},
+						{
+							"type": "text",
+							"readOnly": true,
+							"attr": "size",
+							"width": "20%",
+							"title": "lblYamlFileSize",
+							"filter": false,
+							"sort": true,
+							"default": ""
+						},
+						{
+							"type": "text",
+							"readOnly": true,
+							"attr": "modified",
+							"width": "30%",
+							"title": "lblYamlFileModified",
+							"filter": false,
+							"sort": true,
+							"default": ""
+						},
+						{
+							"type": "sendTo",
+							"width": "20%",
+							"title": "lblYamlFileActions",
+							"button": true,
+							"variant": "outlined",
+							"color": "primary",
+							"label": "lblYamlFileDownload",
+							"command": "downloadYamlFile",
+							"jsonData": "{ \"filename\": \"${item.filename}\" }",
+							"showProcess": true
+						}
+					]
+				}
+			}
 		}
 
 //		"sandBox": {
