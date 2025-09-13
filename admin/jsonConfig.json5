@@ -213,6 +213,7 @@
 					"sm": 2,
 					"md": 2,
 					"lg": 2,
+					"xl": 2,
 					"label": "lblInputDeviceIP-content",
 					"tooltip": "hlpInputDeviceIP",
 					"help": "hlpInputDeviceIP"
@@ -227,7 +228,8 @@
 					"xs": 12,
 					"sm": 4,
 					"md": 4,
-					"lg": 4
+					"lg": 4,
+					"xl": 4
 				},
 				"apiPassword": {
 					"type": "password",
@@ -239,7 +241,8 @@
 					"xs": 12,
 					"sm": 2,
 					"md": 2,
-					"lg": 2
+					"lg": 2,
+					"xl": 2
 				},
 
 				// Button do ADD / Modify devices, sends
@@ -260,7 +263,8 @@
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
-					"lg": 12
+					"lg": 12,
+					"xl": 12
 				},
 
 				"deleteDevice": {
@@ -280,6 +284,7 @@
 					"sm": 12,
 					"md": 12,
 					"lg": 12,
+					"xl": 12,
 					"confirm" : {
 						"text" : "Are you sure to delete this device ? Alle states will be removed",
 						"title" : "Confirm device Deletion",
