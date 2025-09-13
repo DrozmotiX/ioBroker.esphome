@@ -206,7 +206,6 @@
 				},
 				"encryptionKey": {
 					"type": "password",
-					"freeSolo": true,
 					"label": "lblInputEncryptionKey",
 					"doNotSave": true,
 					"default": "",
@@ -219,7 +218,6 @@
 				},
 				"apiPassword": {
 					"type": "password",
-					"freeSolo": true,
 					"label": "lblInputApiPassword",
 					"doNotSave": true,
 					"default": "",
