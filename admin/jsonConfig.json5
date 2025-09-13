@@ -139,13 +139,19 @@
 					"type": "password",
 					"label": "lblEncryptionKey",
 					"xs": 12,
-					"sm": 3
+					"sm": 3,
+					"md": 3,
+					"lg": 3,
+					"xl": 3
 				},
 				"apiPass": {
 					"type": "password",
 					"label": "lblApiPass",
 					"xs": 12,
-					"sm": 2
+					"sm": 2,
+					"md": 2,
+					"lg": 2,
+					"xl": 2
 				}
 			}
 		},
@@ -160,15 +166,21 @@
 				"autodiscovery": {
 					"newLine": true,
 					"type": "checkbox",
+					"xs": 12,
 					"sm": 3,
 					"md": 3,
+					"lg": 3,
+					"xl": 3,
 					"label": "lblAutoDiscovery"
 				},
 
 				"discoveryListeningAddress" : {
 					"type": "ip",
+					"xs": 12,
 					"sm": 3,
 					"md": 3,
+					"lg": 3,
+					"xl": 3,
 					"default": "0.0.0.0",
 					"label": "lblDiscoveryListeningAddress",
 					"help": "hlpDiscoveryListeningAddress",
@@ -185,7 +197,8 @@
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
-					"lg": 12
+					"lg": 12,
+					"xl": 12
 				},
 
 				// Input fields to ADD / Modify devices
