@@ -21,3 +21,6 @@ admin/i18n/*/flat.txt
 
 # python venv
 env/
+
+# Exclude commitinfo file
+.commitinfo
