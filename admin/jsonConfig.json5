@@ -315,7 +315,8 @@
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
-					"lg": 12
+					"lg": 12,
+					"xl": 12
 				},
                 "header2": {
                     "type": "header",
@@ -332,6 +333,7 @@
 					"sm": 12,
 					"md": 12,
 					"lg": 12,
+					"xl": 12,
                     "doNotSave": true,
 					"hidden": "!data.newDevicesTable || data.newDevicesTable.length == 0",
 					"showSecondAddAt": 5,
@@ -389,6 +391,7 @@
 					"sm": 12,
 					"md": 12,
 					"lg": 12,
+					"xl": 12,
 					"showSecondAddAt": 5,
 					"items": [
 						{
@@ -461,12 +464,22 @@
 				// Introduction text
 				"introLine-1": {
 					"type": "staticText",
-					"text": "introLine-1"
+					"text": "introLine-1",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 				"introLine-2": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "introLine-2"
+					"text": "introLine-2",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 
 				"emptyLine-1": {
