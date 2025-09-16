@@ -1,8 +1,21 @@
 {
     "common": {
         "name": "esphome",
-        "version": "0.6.2",
+        "version": "0.6.3",
         "news": {
+            "0.6.3": {
+                "en": "add support for text device type #141, displays #103\nfix cover device type #156\nworkaround: downgrade python for now. fixes #259",
+                "de": "Fügen Sie Unterstützung für Text Geräte Typ #141 hinzu, Zeigt #103 an\nDeckungsvorrichtung Typ #156 beheben\nProblemumgehung: Downgrade Python vorerst. Fixes #259",
+                "ru": "Добавить поддержку для текста текстового устройства #141, отображает #103\nИсправить тип устройства на крышке #156\nОбходной путь: понизите Python на данный момент. Исправляет #259",
+                "pt": "Adicionar suporte para o tipo de dispositivo de texto #141, exibe #103\nCorrigir o tipo de dispositivo de capa #156\nSolução alternativa: Downgrade Python por enquanto. Correções #259",
+                "nl": "Ondersteuning toevoegen voor tekstapparaat Type #141, geeft #103 weer\nFix Cover Apparaat Type #156\nTijdelijke oplossing: voorlopig downgrade Python. oplossingen #259",
+                "fr": "Ajouter la prise en charge du type de périphérique de texte # 141, affiche # 103\nCorrection du type de périphérique de couverture # 156\nSolution: rétrograder Python pour l'instant. Correction # 259",
+                "it": "Aggiungi supporto per il tipo di dispositivo di testo #141, visualizza #103\nCorreggi il tipo di dispositivo di copertura #156\nSoluzione alternativa: downgrade Python per ora. Correzioni #259",
+                "es": "Agregar soporte para el tipo de dispositivo de texto Tipo #141, Muestra #103\nFIJO Tipo de dispositivo de cubierta #156\nSolución: de rebaja Python por ahora. Correcciones #259",
+                "pl": "Dodaj obsługę typu urządzenia tekstowego #141, wyświetla #103\nNaprawić okładkę typu #156\nObejście: Na razie obniż się Pythona. Poprawki #259",
+                "uk": "Додайте підтримку типу текстового пристрою № 141, дисплеї № 103\nВиправити тип пристрою покриття № 156\nВирішення: поки що Python знижується. Виправлення №259",
+                "zh-cn": "添加对文本设备类型＃141的支持，显示＃103\n修复封面设备类型＃156\n解决方法：暂时降级Python。修复＃259"
+            },
             "0.6.2": {
                 "en": "add support for text device type #141, displays #103\nfix cover device type #156\nworkaround: downgrade python for now. fixes #259",
                 "de": "unterstützung für textgerät typ #141, anzeigen #103\nbefestigungsabdeckung typ #156\narbeitsbereich: abbauen python für jetzt. fixes #259",
