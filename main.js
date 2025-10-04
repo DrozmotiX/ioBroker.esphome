@@ -15,7 +15,6 @@ const disableSentry = false; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
 const fs = require('fs');
 const {clearTimeout} = require('timers');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const resetTimers = {}; // Memory allocation for all running timers
 let autodiscovery, dashboardProcess, createConfigStates, discovery;
 const clientDetails = {}; // Memory cache of all devices and their connection status
