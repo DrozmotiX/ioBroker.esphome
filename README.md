@@ -287,6 +287,7 @@ If you like my work, please consider a personal donation
 ### __WORK IN PROGRESS__
 * (@SimonFischer04) fix readme link to lib
 * (@SimonFischer04) fix connection status #311
+* (@SimonFischer04) remove unneeded node-fetch dependency
 
 ### 0.6.3 (2025-09-16)
 * (@DutchmanNL) Fixed an admin error related to `jsonConfig` validation. #287
