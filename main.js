@@ -1717,7 +1717,7 @@ class Esphome extends utils.Adapter {
 				await this.stateSetCreate(`${clientDetails[host].deviceName}.info._online`, `Online state`, true);
 			}
 			// Write connection status to info channel
-			if (clientDetails[host].connected) await this.stateSetCreate(`${clientDetails[host].deviceName}.info._connectionStatus`, `Connection status`, connectionStatus);
+			await this.stateSetCreate(`${clientDetails[host].deviceName}.info._connectionStatus`, `Connection status`, connectionStatus);
 		} catch (error) {
 			this.errorHandler(`[updateConnectionStatus]`, error);
 		}
