@@ -1,79 +1,69 @@
 # ESPHome Dashboard Testing
 
-This directory contains automated tests for ESPHome Dashboard functionality to prevent recurring dashboard startup issues.
+⚠️ **Note**: These tests verify ESPHome dashboard functionality in **isolation**, not the adapter integration.  
+For testing the **adapter's dashboard integration** (as requested in [#227](https://github.com/DrozmotiX/ioBroker.esphome/issues/227)), see `test/integration-dashboard.js` and `test/DASHBOARD_INTEGRATION_TEST.md`.
+
+This directory contains automated tests for ESPHome Dashboard functionality that can be useful for debugging dashboard-specific issues.
 
 ## Test Files
 
 ### `test-dashboard-startup.js`
-Tests direct ESPHome dashboard startup using the same command-line approach as the adapter:
+Tests direct ESPHome dashboard startup using command-line invocation:
 - Creates temporary ESPHome configuration directory
-- Starts dashboard process on port 6052
+- Starts dashboard process on port 6052 directly (not through adapter)
 - Verifies HTTP accessibility
 - Includes proper cleanup and timeout handling
+- **Use case**: Debugging ESPHome dashboard issues independently of the adapter
 
 ### `test-adapter-dashboard.js`
-Tests the adapter's autopy virtual environment approach:
+Tests autopy virtual environment functionality:
 - Creates Python virtual environment via autopy
 - Installs ESPHome dependencies
-- Verifies integration works correctly
+- Verifies autopy integration works correctly
 - Handles network restrictions gracefully
+- **Use case**: Debugging Python environment and autopy-specific issues
 
 ### `../dashboard.test.js`
 Mocha test wrapper that:
 - Runs both dashboard tests with appropriate timeouts
 - Gracefully skips tests when dependencies are unavailable
 - Provides clear logging for debugging issues
+- **Note**: These tests are NOT run in the main CI workflow
 
-## GitHub Actions Integration
+## Adapter Integration Test (Recommended)
 
-### Dedicated Dashboard Workflow (`.github/workflows/test-dashboard.yml`)
-- Runs on all pushes and pull requests
-- Ubuntu environment with Python 3.13 and Node.js 20.x
-- Installs ESPHome and dependencies
-- Executes dashboard tests with timeouts
+For testing the **actual adapter dashboard integration** (enabling dashboard in adapter settings and verifying it works), use:
 
-### Main CI Integration
-- Enhanced existing workflow to include Python/ESPHome setup on Ubuntu
-- Dashboard tests run as part of standard test suite
-- No impact on Windows/macOS testing
+**File**: `../integration-dashboard.js`  
+**Script**: `npm run test:integration-dashboard`  
+**Documentation**: `../DASHBOARD_INTEGRATION_TEST.md`
 
-## Environment Handling
-
-The tests are designed to work in various environments:
-
-**Full Environment (with ESPHome installed):**
-- Tests run completely and verify dashboard functionality
-- HTTP accessibility is confirmed
-
-**Restricted Environment (CI/network limitations):**
-- Tests detect missing dependencies and skip gracefully
-- Network errors are handled without failing the build
-- Clear logging explains why tests were skipped
-
-**Development Environment:**
-- Tests can be run locally for debugging
-- Temporary files are properly cleaned up
-- Error messages provide actionable feedback
+This is what was requested in [issue #227](https://github.com/DrozmotiX/ioBroker.esphome/issues/227):
+> "Test should: enable dashboard in adapter settings, restart the adapter and check if the dashboard is reachable."
 
 ## Running Tests Locally
 
+### Isolation Tests (this directory)
 ```bash
-# Run all dashboard tests
+# Run dashboard isolation tests
 npx mocha test/dashboard.test.js --timeout 15000
 
-# Run specific test file
+# Run specific test file directly
 node test/dashboard/test-dashboard-startup.js
-
-# Run as part of full test suite
-npm test
 ```
 
-## Issues This Addresses
+### Adapter Integration Test (recommended)
+```bash
+# Test actual adapter dashboard integration
+npm run test:integration-dashboard
+```
 
-This testing framework addresses the recurring dashboard startup issues:
+## Issues These Address
+
+These isolation tests can help debug:
 - #220: Dashboard fails to start
 - #199: ESPHome Dashboard integration problems  
 - #209: Dashboard startup errors
 - #118: Version selection and management
 
-By automatically testing dashboard functionality in CI, these issues can be caught before release.
+However, for verifying the adapter correctly integrates the dashboard (the main issue), use the **adapter integration test**.
