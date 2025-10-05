@@ -70,7 +70,7 @@ tests.integration(path.join(__dirname, '..'), {
 					await harness.changeAdapterConfig('esphome', {
 						native: {
 							ESPHomeDashboardEnabled: true,
-							ESPHomeDashboardPort: 6052, // Use number
+							ESPHomeDashboardPort: 6052, // Numeric port value for dashboard server
 							ESPHomeDashboardVersion: '2024.12.0' // Use a specific stable version
 						}
 					});
