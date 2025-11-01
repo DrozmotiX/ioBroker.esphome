@@ -45,7 +45,7 @@
     "@iobroker/dev-server": "^0.8.0",
     "@iobroker/testing": "^5.1.1",
     "@types/gulp": "^4.0.17",
-    "@types/node": "^24.6.1",
+    "@types/node": "^24.9.2",
     "eslint": "^8.57.1",
     "gulp": "^4.0.2",
     "promisify": "~0.0.3",
