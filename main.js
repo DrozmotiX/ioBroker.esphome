@@ -15,7 +15,6 @@ const disableSentry = false; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
 const fs = require('fs');
 const {clearTimeout} = require('timers');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const resetTimers = {}; // Memory allocation for all running timers
 let autodiscovery, dashboardProcess, createConfigStates, discovery;
 const clientDetails = {}; // Memory cache of all devices and their connection status
@@ -1717,7 +1716,7 @@ class Esphome extends utils.Adapter {
 				await this.stateSetCreate(`${clientDetails[host].deviceName}.info._online`, `Online state`, true);
 			}
 			// Write connection status to info channel
-			if (clientDetails[host].connected) await this.stateSetCreate(`${clientDetails[host].deviceName}.info._connectionStatus`, `Connection status`, connectionStatus);
+			await this.stateSetCreate(`${clientDetails[host].deviceName}.info._connectionStatus`, `Connection status`, connectionStatus);
 		} catch (error) {
 			this.errorHandler(`[updateConnectionStatus]`, error);
 		}
