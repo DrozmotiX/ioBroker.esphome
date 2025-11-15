@@ -13,6 +13,15 @@ on:
             - "v[0-9]+.[0-9]+.[0-9]+-**"
     pull_request: {}
 
+# Cancel previous PR/branch runs when a new commit is pushed
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write  # Required for OIDC
+  contents: write
+
 jobs:
     # Performs quick checks before the expensive test runs
     check-and-lint:
@@ -112,17 +121,16 @@ jobs:
 
             - name: Publish package to npm
               run: |
-                  npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
-                  npm whoami
+                  npm install -g npm@latest
                   npm publish
 
             - name: Create Github Release
-              uses: actions/create-release@v1
+              uses: softprops/action-gh-release@v2
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   tag_name: ${{ github.ref }}
-                  release_name: Release v${{ steps.extract_release.outputs.VERSION }}
+                  name: Release v${{ steps.extract_release.outputs.VERSION }}
                   draft: false
                   # Prerelease versions create prereleases on Github
                   prerelease: ${{ contains(steps.extract_release.outputs.VERSION, '-') }}
