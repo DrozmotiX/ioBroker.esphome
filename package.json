@@ -45,7 +45,7 @@
     "@types/gulp": "^4.0.18",
     "@types/node": "^24.10.1",
     "axios": "^1.13.2",
-    "eslint": "^8.57.1",
+    "eslint": "^9.39.1",
     "gulp": "^4.0.2",
     "promisify": "~0.0.3",
     "typescript": "~5.9.3"
