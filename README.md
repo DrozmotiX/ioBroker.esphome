@@ -94,14 +94,14 @@ The adapter will establish a connection and create all necessary ioBroker object
 
 ### I configured a device in the ESPHome Dashboard, but it doesn't show up in the adapter
 
-**Important:** The adapter and dashboard are completely separate components with no automatic integration.
+**Important:** The adapter and dashboard are completely separate components with no automatic integration. The adapter can optionally install (and start) the dashboard for you, just for convenience. Again, this not mean there is any integration between them.
 
 - **Dashboard:** Used for creating/editing YAML configs, compiling firmware, and flashing devices
 - **Adapter:** Used for controlling devices and synchronizing their state with ioBroker
 
 **To make a dashboard-configured device work with the adapter:**
 1. Flash the device with the configuration from the dashboard (ensure ESPHome API is enabled in YAML)
-2. Manually add the device in the adapter's device tab (enter IP and credentials)
+2. Manually add the device in the adapter settings (device tab). Enter IP/hostname and encryption key (recommended) or password (legacy)
 3. The adapter will then connect to the device via ESPHome's native API
 
 **Note:** Future tighter integration between dashboard and adapter may be implemented (see issue #228), but currently they operate independently.
@@ -114,9 +114,14 @@ The adapter will establish a connection and create all necessary ioBroker object
 - The **dashboard** manages YAML configurations and firmware compilation
 
 **If you want the device in the dashboard:**
+
+**Option 1:**
 1. The ESPHome Dashboard can discover devices in the same network automatically
 2. In the dashboard, discovered devices will show with an "ADOPT" button
 3. Click "ADOPT" to add them to your dashboard for configuration management
+
+**Option 2:**
+- Create a new device in the dashboard and copy your existing yaml into there.
 
 **Note:** You don't need devices in the dashboard if you only want to control them via ioBroker. The dashboard is only needed for creating/modifying device configurations.
 
