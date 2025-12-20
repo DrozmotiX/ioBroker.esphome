@@ -39,7 +39,9 @@ async function isDashboardReachable(port, maxAttempts, delayMs) {
 			const accessible = await new Promise((resolve) => {
 				const req = http.get(`http://localhost:${port}/`, (res) => {
 					console.log(`Dashboard check attempt ${attempt}: HTTP ${res.statusCode}`);
-					// Dashboard is reachable if we get any response (200, 302, 404 are all OK)
+					// Dashboard is reachable if we get any HTTP response (2xx-4xx)
+					// This includes success (200), redirects (302), auth required (401), not found (404)
+					// All indicate the dashboard server is running and responding
 					resolve(res.statusCode >= 200 && res.statusCode < 500);
 				});
 
