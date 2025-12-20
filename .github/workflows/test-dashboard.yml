@@ -39,5 +39,5 @@ jobs:
         run: npm ci
 
       - name: Run dashboard integration test
-        run: npm run test:integration-dashboard
+        run: npm run test:integration
         timeout-minutes: 10
