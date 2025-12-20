@@ -51,7 +51,7 @@ The test uses well-named constants (addressing PR #318 review feedback):
 The test runs automatically via GitHub Actions:
 - **Workflow**: `.github/workflows/test-dashboard.yml`
 - **Trigger**: All pushes and pull requests
-- **Environment**: Ubuntu + Node.js 20.x + Python 3.13
+- **Environment**: Ubuntu + Node.js 20.x + Python 3.13.x
 - **Timeout**: 10 minutes (allows time for autopy setup)
 
 ## Why This Approach?
@@ -83,7 +83,7 @@ The test will take 1-5 minutes depending on:
 
 ### Test times out
 - Check if autopy can access `https://api.github.com/repos/indygreg/python-build-standalone/releases`
-- Verify Python 3.13 is available
+- Verify Python 3.13.x is available
 - Check firewall/proxy settings
 
 ### Dashboard not reachable but test passes
