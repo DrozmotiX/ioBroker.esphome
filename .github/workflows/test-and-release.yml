@@ -73,6 +73,10 @@ jobs:
             - name: Run tests
               run: npm run test
 
+            - name: Run Dashboard Integration Test (Ubuntu + Node 20.x only)
+              if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
+              run: npm run test:integration-dashboard
+
     # Deploys the final package to NPM
     deploy:
         needs: [adapter-tests]

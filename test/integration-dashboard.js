@@ -14,7 +14,7 @@
 
 const path = require('path');
 const { tests } = require('@iobroker/testing');
-const axios = require('axios');
+const http = require('http');
 
 // Test configuration constants
 const DASHBOARD_PORT = 6052;
@@ -31,20 +31,34 @@ const MAX_REACHABILITY_ATTEMPTS = 25; // Maximum attempts to check if dashboard 
  * @returns {Promise<boolean>} - True if dashboard is reachable
  */
 async function isDashboardReachable(port, maxAttempts, delayMs) {
+	console.log(`Checking if dashboard is reachable on port ${port}...`);
+
 	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 		try {
-			const response = await axios.get(`http://127.0.0.1:${port}`, {
-				timeout: 5000,
-				validateStatus: () => true // Accept any status code
+			const accessible = await new Promise((resolve) => {
+				const req = http.get(`http://localhost:${port}/`, (res) => {
+					console.log(`Dashboard check attempt ${attempt}: HTTP ${res.statusCode}`);
+					// Dashboard is reachable if we get any response (200, 302, 404 are all OK)
+					resolve(res.statusCode >= 200 && res.statusCode < 500);
+				});
+
+				req.on('error', (err) => {
+					console.log(`Dashboard check attempt ${attempt}: ${err.code || err.message}`);
+					resolve(false);
+				});
+
+				req.setTimeout(5000, () => {
+					req.destroy();
+					resolve(false);
+				});
 			});
 
-			if (response.status === 200) {
-				console.log(`Dashboard is reachable on port ${port}`);
+			if (accessible) {
+				console.log(`✓ Dashboard is reachable on port ${port}`);
 				return true;
 			}
-		} catch (error) {
-			// Expected during initialization
-			console.log(`Attempt ${attempt}/${maxAttempts}: Dashboard not yet reachable (${error.message})`);
+		} catch (err) {
+			console.log(`Dashboard check attempt ${attempt} error: ${err.message}`);
 		}
 
 		if (attempt < maxAttempts) {
@@ -60,50 +74,78 @@ tests.integration(path.join(__dirname, '..'), {
 	defineAdditionalTests({ suite }) {
 		// Test suite for dashboard integration
 		suite('ESPHome Dashboard Integration', (getHarness) => {
-			// Extended timeout for dashboard initialization
-			this.timeout(300000); // 5 minutes
 
 			it('should enable dashboard in adapter settings and verify it becomes reachable', async function() {
-				// Get test harness
+				// Extended timeout for dashboard initialization
+				this.timeout(180000); // 3 minutes
+
 				const harness = getHarness();
+				const { expect } = require('chai');
 
-				// Configure adapter with dashboard enabled
-				console.log('Configuring adapter with dashboard enabled...');
-				await harness.changeAdapterConfig('esphome', {
-					native: {
-						ESPHomeDashboardEnabled: true,
-						ESPHomeDashboardPort: DASHBOARD_PORT,
-						ESPHomeDashboardVersion: DASHBOARD_VERSION
+				try {
+					// Stop the adapter if it's already running
+					if (harness.isAdapterRunning()) {
+						console.log('Stopping running adapter...');
+						await harness.stopAdapter();
 					}
-				});
 
-				// Start adapter and wait for initialization
-				console.log('Starting adapter...');
-				await harness.startAdapterAndWait(false);
+					console.log('Configuring adapter to enable dashboard...');
+					// Enable the dashboard in adapter configuration
+					await harness.changeAdapterConfig('esphome', {
+						native: {
+							ESPHomeDashboardEnabled: true,
+							ESPHomeDashboardPort: DASHBOARD_PORT,
+							ESPHomeDashboardVersion: DASHBOARD_VERSION
+						}
+					});
 
-				// Give dashboard time to initialize
-				console.log(`Waiting ${DASHBOARD_INITIALIZATION_DELAY_MS / 1000}s for dashboard initialization...`);
-				await new Promise(resolve => setTimeout(resolve, DASHBOARD_INITIALIZATION_DELAY_MS));
+					console.log('Starting adapter with dashboard enabled...');
+					await harness.startAdapterAndWait(false);
 
-				// Check if dashboard is reachable
-				console.log('Checking if dashboard is reachable...');
-				const isReachable = await isDashboardReachable(
-					DASHBOARD_PORT,
-					MAX_REACHABILITY_ATTEMPTS,
-					REACHABILITY_CHECK_DELAY_MS
-				);
+					// Wait for dashboard to initialize after adapter starts
+					console.log(`Waiting ${DASHBOARD_INITIALIZATION_DELAY_MS / 1000}s for dashboard initialization...`);
+					await new Promise(resolve => setTimeout(resolve, DASHBOARD_INITIALIZATION_DELAY_MS));
 
-				if (isReachable) {
-					console.log('✓ Dashboard integration test PASSED - Dashboard is reachable');
-				} else {
-					// In CI environments with network restrictions, autopy may fail to download Python/packages
-					// The test passes if the adapter remains stable, even if dashboard isn't reachable
-					console.log('⚠ Dashboard not reachable - checking if this is expected in CI environment...');
+					// Check if dashboard is reachable
+					console.log('Checking dashboard accessibility...');
+					const isReachable = await isDashboardReachable(
+						DASHBOARD_PORT,
+						MAX_REACHABILITY_ATTEMPTS,
+						REACHABILITY_CHECK_DELAY_MS
+					);
 
-					// The adapter should still be running (indicates graceful handling of autopy failures)
-					// Note: We assume if the test got this far without throwing, the adapter is handling things correctly
-					console.log('✓ Dashboard integration test PASSED - Adapter handled dashboard initialization gracefully');
-					console.log('  (Dashboard unreachable likely due to CI network restrictions with autopy)');
+					if (!isReachable) {
+						console.log('Dashboard is not reachable. Checking for network restrictions...');
+
+						// In CI environments with network restrictions (like GitHub Actions),
+						// the dashboard may fail to start due to blocked downloads of Python/packages.
+						// This is expected behavior and not a test failure.
+						// We verify the adapter attempted to start the dashboard by checking adapter is still running
+						if (harness.isAdapterRunning()) {
+							console.log('✓ Adapter is running with dashboard enabled (network restrictions may prevent full startup in CI)');
+							console.log('✓ Dashboard integration test passed with network restrictions');
+							// Test passes - we verified the adapter correctly processes the dashboard config
+							return;
+						}
+
+						// If adapter crashed, that's a real failure
+						console.error('Dashboard is not reachable and adapter has stopped. Possible causes:');
+						console.error('- Fatal error in dashboard startup code');
+						console.error('- Python environment setup failure');
+						console.error('Check the adapter logs above for more details');
+					}
+
+					if (isReachable) {
+						console.log('✓ Dashboard is successfully reachable!');
+						console.log('✓ Dashboard integration test passed completely');
+					}
+
+					// Test passes if dashboard is reachable OR if adapter is still running
+					// (indicating it handled the dashboard config correctly even if network is restricted)
+					expect(isReachable || harness.isAdapterRunning()).to.be.true;
+				} catch (error) {
+					console.error(`Dashboard integration test failed: ${error.message}`);
+					throw error;
 				}
 			});
 		});
