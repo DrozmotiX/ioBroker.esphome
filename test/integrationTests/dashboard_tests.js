@@ -112,7 +112,7 @@ exports.runTests = function (suite) {
 				);
 
 				if (!isReachable) {
-					const errorMessage = 'Dashboard is not reachable and adapter has stopped.\nPossible causes:\n- Fatal error in dashboard startup code\n- Python environment setup failure\nCheck the adapter logs above for more details';
+					const errorMessage = 'Dashboard is not reachable.\nPossible causes:\n- Fatal error in dashboard startup code\n- Python environment setup failure\nCheck the adapter logs above for more details';
 					console.error(errorMessage);
 					throw new Error(errorMessage);
 				}
