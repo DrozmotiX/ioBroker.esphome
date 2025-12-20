@@ -14,8 +14,10 @@ concurrency:
 
 jobs:
   test-dashboard-integration:
-    # Only run if commit doesn't contain [skip ci]
-    if: contains(github.event.head_commit.message, '[skip ci]') == false
+    # Only run if commit/PR doesn't contain [skip ci]
+    if: |
+      !contains(github.event.head_commit.message || '', '[skip ci]') &&
+      !contains(github.event.pull_request.title || '', '[skip ci]')
 
     runs-on: ubuntu-latest
 
