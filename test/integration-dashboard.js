@@ -22,6 +22,7 @@ const DASHBOARD_VERSION = '2024.12.0';
 const DASHBOARD_INITIALIZATION_DELAY_MS = 30000; // 30 seconds for dashboard to initialize
 const REACHABILITY_CHECK_DELAY_MS = 3000; // 3 seconds between reachability checks
 const MAX_REACHABILITY_ATTEMPTS = 25; // Maximum attempts to check if dashboard is reachable
+const TEST_TIMEOUT_MS = 180000; // 3 minutes total test timeout
 
 /**
  * Checks if the dashboard is reachable via HTTP
@@ -77,7 +78,7 @@ tests.integration(path.join(__dirname, '..'), {
 
 			it('should enable dashboard in adapter settings and verify it becomes reachable', async function() {
 				// Extended timeout for dashboard initialization
-				this.timeout(180000); // 3 minutes
+				this.timeout(TEST_TIMEOUT_MS);
 
 				const harness = getHarness();
 				const { expect } = require('chai');
@@ -125,14 +126,14 @@ tests.integration(path.join(__dirname, '..'), {
 							console.log('✓ Adapter is running with dashboard enabled (network restrictions may prevent full startup in CI)');
 							console.log('✓ Dashboard integration test passed with network restrictions');
 							// Test passes - we verified the adapter correctly processes the dashboard config
+							expect(harness.isAdapterRunning()).to.be.true;
 							return;
 						}
 
 						// If adapter crashed, that's a real failure
-						console.error('Dashboard is not reachable and adapter has stopped. Possible causes:');
-						console.error('- Fatal error in dashboard startup code');
-						console.error('- Python environment setup failure');
-						console.error('Check the adapter logs above for more details');
+						const errorMessage = 'Dashboard is not reachable and adapter has stopped.\nPossible causes:\n- Fatal error in dashboard startup code\n- Python environment setup failure\nCheck the adapter logs above for more details';
+						console.error(errorMessage);
+						throw new Error(errorMessage);
 					}
 
 					if (isReachable) {
