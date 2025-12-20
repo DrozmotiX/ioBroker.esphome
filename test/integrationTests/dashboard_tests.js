@@ -112,21 +112,6 @@ exports.runTests = function (suite) {
 				);
 
 				if (!isReachable) {
-					console.log('Dashboard is not reachable. Checking for network restrictions...');
-
-					// In CI environments with network restrictions (like GitHub Actions),
-					// the dashboard may fail to start due to blocked downloads of Python/packages.
-					// This is expected behavior and not a test failure.
-					// We verify the adapter attempted to start the dashboard by checking adapter is still running
-					if (harness.isAdapterRunning()) {
-						console.log('✓ Adapter is running with dashboard enabled (network restrictions may prevent full startup in CI)');
-						console.log('✓ Dashboard integration test passed with network restrictions');
-						// Test passes - we verified the adapter correctly processes the dashboard config
-						expect(harness.isAdapterRunning()).to.be.true;
-						return;
-					}
-
-					// If adapter crashed, that's a real failure
 					const errorMessage = 'Dashboard is not reachable and adapter has stopped.\nPossible causes:\n- Fatal error in dashboard startup code\n- Python environment setup failure\nCheck the adapter logs above for more details';
 					console.error(errorMessage);
 					throw new Error(errorMessage);
