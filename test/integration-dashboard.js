@@ -136,14 +136,10 @@ tests.integration(path.join(__dirname, '..'), {
 						throw new Error(errorMessage);
 					}
 
-					if (isReachable) {
-						console.log('✓ Dashboard is successfully reachable!');
-						console.log('✓ Dashboard integration test passed completely');
-					}
-
-					// Test passes if dashboard is reachable OR if adapter is still running
-					// (indicating it handled the dashboard config correctly even if network is restricted)
-					expect(isReachable || harness.isAdapterRunning()).to.be.true;
+					// If we reach here, dashboard is reachable
+					console.log('✓ Dashboard is successfully reachable!');
+					console.log('✓ Dashboard integration test passed completely');
+					expect(isReachable).to.be.true;
 				} catch (error) {
 					console.error(`Dashboard integration test failed: ${error.message}`);
 					throw error;
