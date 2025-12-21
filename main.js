@@ -106,9 +106,7 @@ class Esphome extends utils.Adapter {
 		try {
 			// Check if migration is needed:
 			// ESPHomeDashboardIP is not empty AND ESPHomeDashboardUrl is empty
-			if (this.config.ESPHomeDashboardIP &&
-				this.config.ESPHomeDashboardIP !== '' &&
-				(!this.config.ESPHomeDashboardUrl || this.config.ESPHomeDashboardUrl === '')) {
+			if (this.config.ESPHomeDashboardIP && !this.config.ESPHomeDashboardUrl) {
 
 				// Calculate the URL from IP and Port
 				const port = this.config.ESPHomeDashboardPort || 6052;
@@ -141,7 +139,7 @@ class Esphome extends utils.Adapter {
 				this.log.info(`Configuration migrated successfully. ESPHomeDashboardUrl set to: ${calculatedUrl}`);
 			}
 		} catch (error) {
-			this.log.error(`Error during configuration migration from ESPHomeDashboardIP to ESPHomeDashboardUrl: ${error}`);
+			this.log.error(`Error during configuration migration from ESPHomeDashboardIP to ESPHomeDashboardUrl: ${error.message || error}`);
 		}
 	}
 
