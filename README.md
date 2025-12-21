@@ -285,6 +285,7 @@ If you like my work, please consider a personal donation
     * (DutchmanNL) 
 -->
 ### __WORK IN PROGRESS__
+* (@SimonFischer04) improve logging for #201
 * (@SimonFischer04) fix readme link to lib
 * (@SimonFischer04) fix connection status #311
 * (@SimonFischer04) remove unneeded node-fetch dependency
