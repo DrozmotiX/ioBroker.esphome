@@ -119,21 +119,29 @@ class Esphome extends utils.Adapter {
 				// Get the current adapter configuration object
 				const adapterObj = await this.getForeignObjectAsync(`system.adapter.${this.namespace}`);
 
-				if (adapterObj && adapterObj.native) {
-					// Update the ESPHomeDashboardUrl in native configuration
-					adapterObj.native.ESPHomeDashboardUrl = calculatedUrl;
-
-					// Save the updated configuration
-					await this.setForeignObjectAsync(`system.adapter.${this.namespace}`, adapterObj);
-
-					// Update the local config object for immediate use
-					this.config.ESPHomeDashboardUrl = calculatedUrl;
-
-					this.log.info(`Configuration migrated successfully. ESPHomeDashboardUrl set to: ${calculatedUrl}`);
+				if (!adapterObj) {
+					this.log.error(`Configuration migration failed: Could not retrieve adapter configuration object for ${this.namespace}`);
+					return;
 				}
+
+				if (!adapterObj.native) {
+					this.log.error(`Configuration migration failed: Adapter configuration object has no native property`);
+					return;
+				}
+
+				// Update the ESPHomeDashboardUrl in native configuration
+				adapterObj.native.ESPHomeDashboardUrl = calculatedUrl;
+
+				// Save the updated configuration
+				await this.setForeignObjectAsync(`system.adapter.${this.namespace}`, adapterObj);
+
+				// Update the local config object for immediate use
+				this.config.ESPHomeDashboardUrl = calculatedUrl;
+
+				this.log.info(`Configuration migrated successfully. ESPHomeDashboardUrl set to: ${calculatedUrl}`);
 			}
 		} catch (error) {
-			this.log.error(`Error during configuration migration: ${error}`);
+			this.log.error(`Error during configuration migration from ESPHomeDashboardIP to ESPHomeDashboardUrl: ${error}`);
 		}
 	}
 
