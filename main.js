@@ -107,36 +107,25 @@ class Esphome extends utils.Adapter {
 			// Check if migration is needed:
 			// ESPHomeDashboardIP is not empty AND ESPHomeDashboardUrl is empty
 			if (this.config.ESPHomeDashboardIP && !this.config.ESPHomeDashboardUrl) {
-
-				// Calculate the URL from IP and Port
-				const port = this.config.ESPHomeDashboardPort || 6052;
-				const calculatedUrl = `http://${this.config.ESPHomeDashboardIP}:${port}`;
+				const calculatedUrl = `http://${this.config.ESPHomeDashboardIP}:${this.config.ESPHomeDashboardPort}`;
 
 				this.log.info(`Migrating configuration: Setting ESPHomeDashboardUrl to ${calculatedUrl}`);
 
-				// Get the current adapter configuration object
 				const adapterObj = await this.getForeignObjectAsync(`system.adapter.${this.namespace}`);
-
 				if (!adapterObj) {
 					this.log.error(`Configuration migration failed: Could not retrieve adapter configuration object for ${this.namespace}`);
 					return;
 				}
-
 				if (!adapterObj.native) {
 					this.log.error(`Configuration migration failed: Adapter configuration object has no native property`);
 					return;
 				}
-
-				// Update the ESPHomeDashboardUrl in native configuration
 				adapterObj.native.ESPHomeDashboardUrl = calculatedUrl;
-
-				// Save the updated configuration
-				await this.setForeignObjectAsync(`system.adapter.${this.namespace}`, adapterObj);
-
-				// Update the local config object for immediate use
-				this.config.ESPHomeDashboardUrl = calculatedUrl;
+				await this.setForeignObject(adapterObj._id, adapterObj);
 
 				this.log.info(`Configuration migrated successfully. ESPHomeDashboardUrl set to: ${calculatedUrl}`);
+
+				// adapter will restart
 			}
 		} catch (error) {
 			this.log.error(`Error during configuration migration from ESPHomeDashboardIP to ESPHomeDashboardUrl: ${error.message || error}`);
