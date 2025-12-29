@@ -167,8 +167,7 @@
             "_default": "%ESPHomeDashboardUrl%"
         },
         "adminTab": {
-            "link": "%ESPHomeDashboardUrl%",
-            "fa-icon": "settings_input_composite"
+            "link": "%ESPHomeDashboardUrl%"
         },
         "dependencies": [
             {
