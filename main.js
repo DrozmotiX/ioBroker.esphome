@@ -48,6 +48,9 @@ class Esphome extends utils.Adapter {
 		await this.setStateAsync('info.connection', {val: true, ack: true});
 		try {
 
+			// Migrate from older adapter versions that only had ESPHomeDashboardIP
+			await this.migrateConfig();
+
 			//ToDo: store default data into clientDetails object instead of global variable
 			// Store settings in global variables
 			// defaultApiPass = this.config.apiPass;
@@ -92,6 +95,40 @@ class Esphome extends utils.Adapter {
 
 		} catch (e) {
 			this.log.error(`[Adapter start] Fatal error occurred ${e}`);
+		}
+	}
+
+	/**
+	 * Migrate configuration from older adapter versions
+	 * Automatically set ESPHomeDashboardUrl if ESPHomeDashboardIP is set but URL is empty
+	 */
+	async migrateConfig() {
+		try {
+			// Check if migration is needed:
+			// ESPHomeDashboardIP is not empty AND ESPHomeDashboardUrl is empty
+			if (this.config.ESPHomeDashboardIP && !this.config.ESPHomeDashboardUrl) {
+				const calculatedUrl = `http://${this.config.ESPHomeDashboardIP}:${this.config.ESPHomeDashboardPort}`;
+
+				this.log.info(`Migrating configuration: Setting ESPHomeDashboardUrl to ${calculatedUrl}`);
+
+				const adapterObj = await this.getForeignObjectAsync(`system.adapter.${this.namespace}`);
+				if (!adapterObj) {
+					this.log.error(`Configuration migration failed: Could not retrieve adapter configuration object for ${this.namespace}`);
+					return;
+				}
+				if (!adapterObj.native) {
+					this.log.error(`Configuration migration failed: Adapter configuration object has no native property`);
+					return;
+				}
+				adapterObj.native.ESPHomeDashboardUrl = calculatedUrl;
+				await this.setForeignObject(adapterObj._id, adapterObj);
+
+				this.log.info(`Configuration migrated successfully. ESPHomeDashboardUrl set to: ${calculatedUrl}`);
+
+				// adapter will restart
+			}
+		} catch (error) {
+			this.log.error(`Error during configuration migration from ESPHomeDashboardIP to ESPHomeDashboardUrl: ${error.message || error}`);
 		}
 	}
 

@@ -203,8 +203,8 @@
         "configStates": false,
         "ESPHomeDashboardEnabled": false,
         "ESPHomeDashboardPort": 6052,
-        "ESPHomeDashboardIP": "localhost",
-        "ESPHomeDashboardUrl": "http://localhost:6052",
+        "ESPHomeDashboardIP": "",
+        "ESPHomeDashboardUrl": "",
         "ignoredDevices": [
             {
                 "IP-Address": "192.168.0.1",
