@@ -43,7 +43,7 @@
     "@iobroker/dev-server": "^0.8.0",
     "@iobroker/testing": "^5.2.2",
     "@types/gulp": "^4.0.18",
-    "@types/node": "^24.10.1",
+    "@types/node": "^25.0.3",
     "axios": "^1.13.2",
     "eslint": "^8.57.1",
     "gulp": "^4.0.2",
