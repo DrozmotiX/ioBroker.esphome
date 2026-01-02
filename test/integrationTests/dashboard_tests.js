@@ -7,9 +7,6 @@
  * 2. Initialize the dashboard via autopy
  * 3. Make the dashboard accessible on the configured port
  *
- * The test handles network-restricted CI environments where autopy
- * cannot download Python/packages, ensuring the adapter remains stable
- * even when external dependencies fail.
  */
 
 const http = require('http');
