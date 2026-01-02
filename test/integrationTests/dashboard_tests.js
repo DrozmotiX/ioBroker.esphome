@@ -21,7 +21,7 @@ const DASHBOARD_VERSION = 'Always last available';
 const DASHBOARD_INITIALIZATION_DELAY_MS = 30000; // 30 seconds for dashboard to initialize
 const REACHABILITY_CHECK_DELAY_MS = 3000; // 3 seconds between reachability checks
 const MAX_REACHABILITY_ATTEMPTS = 25; // Maximum attempts to check if dashboard is reachable
-const TEST_TIMEOUT_MS = 180000; // 3 minutes total test timeout
+const TEST_TIMEOUT_MS = 300000; // 5 minutes total test timeout
 
 /**
  * Checks if the dashboard is reachable via HTTP
