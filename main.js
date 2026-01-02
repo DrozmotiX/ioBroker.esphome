@@ -125,7 +125,11 @@ class Esphome extends utils.Adapter {
 
 			// Try to get all current available versions
 			try {
-				const response = await fetch('https://api.github.com/repos/esphome/esphome/releases');
+				const response = await fetch('https://api.github.com/repos/esphome/esphome/releases', {
+					headers: {
+						Authorization: `Bearer ${process.env.GH_TOKEN}`
+					}
+				});
 				content = await response.json();
 			} catch (error) {
 				this.errorHandler(`[espHomeDashboard-VersionCall]`, error);
