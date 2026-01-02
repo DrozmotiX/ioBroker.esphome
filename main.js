@@ -125,9 +125,9 @@ class Esphome extends utils.Adapter {
 
 			// Try to get all current available versions
 			try {
-				const response = await fetch('https://api.github.com/repos/esphome/esphome/releases', process.env.GH_TOKEN ? {
+				const response = await fetch('https://api.github.com/repos/esphome/esphome/releases', process.env.GITHUB_TOKEN ? {
 					headers: {
-						Authorization: `Bearer ${process.env.GH_TOKEN}`
+						Authorization: `Bearer ${process.env.GITHUB_TOKEN}`
 					}
 				}: {});
 				content = await response.json();

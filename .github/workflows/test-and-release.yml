@@ -73,7 +73,7 @@ jobs:
             - name: Run tests
               # avoid github rate limit for shared runners:
               env:
-                GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: npm run test
 
     # Deploys the final package to NPM
