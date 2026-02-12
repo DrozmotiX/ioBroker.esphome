@@ -285,6 +285,7 @@ If you like my work, please consider a personal donation
     * (DutchmanNL) 
 -->
 ### __WORK IN PROGRESS__
+* (@SimonFischer04) automatic migration from versions prior to ESPHomeDashboardUrl introduction (pre v0.6.1)
 * (@SimonFischer04) update pillow
 * (@SimonFischer04) fix readme link to lib
 * (@SimonFischer04) fix connection status #311
