@@ -485,31 +485,56 @@
 				"emptyLine-1": {
 					"newLine": true,
 					"type": "staticText",
-					"text": ""
+					"text": "",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 
 				// Mentioning & link to ESPHome project
 				"headerESPHomeDashboard-details-3": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "ESPHomeCommunityLink"
+					"text": "ESPHomeCommunityLink",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 				"headerESPHomeDashboard-details-Link": {
 					"type": "staticLink",
 					"label": "esphome.io",
-					"href" : "https://esphome.io/"
+					"href" : "https://esphome.io/",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 				"emptyLine-2": {
 					"newLine": true,
 					"type": "staticText",
-					"text": ""
+					"text": "",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 
 				// ESPHome Dashboard Explanation
 				"headerESPHomeDashboard-details-4": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "lblEnableESPHome"
+					"text": "lblEnableESPHome",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 
 				// ESPHome Dashboard configuration
@@ -543,24 +568,44 @@
 				"headerESPHomeDashboard-details-5": {
 					"newLine": true,
 					"type": "staticText",
-					"text": "lblDashboardLink"
+					"text": "lblDashboardLink",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 
 				// Some empty lines to move next head a little down
 				"emptyLine-3": {
 					"newLine": true,
 					"type": "staticText",
-					"text": ""
+					"text": "",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 				"emptyLine-4": {
 					"newLine": true,
 					"type": "staticText",
-					"text": ""
+					"text": "",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 				"emptyLine-5": {
 					"newLine": true,
 					"type": "staticText",
-					"text": ""
+					"text": "",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 
 				"advanced": {
