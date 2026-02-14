@@ -647,6 +647,15 @@ class Esphome extends utils.Adapter {
             },
           });
 
+          // Create info channel explicitly with proper type
+          await this.extendObjectAsync(`${deviceName}.info`, {
+            type: "channel",
+            common: {
+              name: "Device Information",
+            },
+            native: {},
+          });
+
           // Read JSON and handle states
           await this.traverseJson(deviceInfo, `${deviceName}.info`);
 
