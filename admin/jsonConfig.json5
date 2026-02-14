@@ -541,14 +541,20 @@
 				"ESPHomeDashboardEnabled": {
 					"newLine": true,
 					"type": "checkbox",
+					"xs": 12,
 					"sm": 4,
 					"md": 4,
 					"lg": 4,
+					"xl": 4,
 					"label": "chkEnableESPHome"
 				},
 				"ESPHomeDashboardVersion": {
 					"type": "autocompleteSendTo",
+					"xs": 12,
 					"sm": 6,
+					"md": 6,
+					"lg": 6,
+					"xl": 6,
 					"label": "lblESPHomeDashboardVersion",
 					"help": "hlpESPHomeDashboardVersion",
 					"command": "getESPHomeDashboardVersion",
@@ -558,7 +564,11 @@
 					"type": "autocompleteSendTo",
 					"newLine": true,
 					"freeSolo": true,
+					"xs": 12,
 					"sm": 5,
+					"md": 5,
+					"lg": 5,
+					"xl": 5,
 					"label": "lblESPHomeIP",
 					"command": "getHostIp",
 					"jsonData": "{ \"service\": \"${data.deviceInputIP}\" }"
@@ -621,11 +631,20 @@
 						"ESPHomeDashboardPort": {
 							"type": "text",
 							"text": "",
+							"xs": 12,
 							"sm": 2,
+							"md": 2,
+							"lg": 2,
+							"xl": 2,
 							"label": "lblESPHomePort"
 						},
 						"ESPHomeDashboardUrl": {
 							"type": "text",
+							"xs": 12,
+							"sm": 12,
+							"md": 12,
+							"lg": 12,
+							"xl": 12,
 							"label": "URL of ESPHome Dashboard",
 							onChange: {
 								"alsoDependsOn": ["ESPHomeDashboardIP", "ESPHomeDashboardPort"],
