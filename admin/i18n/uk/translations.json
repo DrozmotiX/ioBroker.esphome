@@ -58,5 +58,5 @@
     "lbl_addUpdateDevice": "ADD / Modify devices",
     "maxRetry": "Maximum connection retry before considering device as offline",
     "newDevicesHeader": "Newly discovered devices, please provide credentials!",
-    "reConInterval": "Setting between ioBroker try's to reconnect this device"
+    "reConInterval": "Setting between ioBroker tries to reconnect this device"
 }
