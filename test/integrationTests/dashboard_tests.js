@@ -108,8 +108,11 @@ exports.runTests = function (suite) {
           },
         });
 
+        // Small delay to ensure configuration is persisted
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
         console.log("Starting adapter with dashboard enabled...");
-        await harness.startAdapterAndWait(false);
+        await harness.startAdapterAndWait();
 
         // Wait for dashboard to initialize after adapter starts
         console.log(
