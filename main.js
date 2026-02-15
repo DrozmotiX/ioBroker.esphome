@@ -923,6 +923,27 @@ class Esphome extends utils.Adapter {
                   break;
                 }
 
+                case "Lock": {
+                  const deviceName = clientDetails[host].deviceName;
+                  // Lock state: 0=NONE, 1=LOCKED, 2=UNLOCKED, 3=JAMMED, 4=LOCKING, 5=UNLOCKING
+                  await this.stateSetCreate(
+                    `${deviceName}.${entity.type}.${entity.id}.state`,
+                    `LockState`,
+                    state.state,
+                    ``,
+                    false,
+                  );
+                  // Lock command: 0=UNLOCK, 1=LOCK, 2=OPEN
+                  await this.stateSetCreate(
+                    `${deviceName}.${entity.type}.${entity.id}.command`,
+                    `LockCommand`,
+                    null, // No default to prevent accidental triggers
+                    ``,
+                    true,
+                  );
+                  break;
+                }
+
                 default:
                   if (!warnMessages[clientDetails[host][entity.id].type]) {
                     this.log.warn(
@@ -2102,6 +2123,16 @@ class Esphome extends utils.Adapter {
           await clientDetails[deviceIP].client.connection.selectCommandService({
             key: device[4],
             state: state.val,
+          });
+
+          // Handle Lock Command
+        } else if (
+          clientDetails[deviceIP][device[4]].type === `Lock` &&
+          device[5] === `command`
+        ) {
+          await clientDetails[deviceIP].client.connection.lockCommandService({
+            key: device[4],
+            command: state.val,
           });
 
           // Handle Cover Position
