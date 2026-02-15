@@ -38,5 +38,12 @@
     "lbl_addUpdateDevice": "ADD / Modify devices",
     "maxRetry": "Maximum connection retry before considering device as offline",
     "newDevicesHeader": "Newly discovered devices, please provide credentials!",
-    "reConInterval": "Setting between ioBroker try's to reconnect this device"
+    "reConInterval": "Setting between ioBroker try's to reconnect this device",
+    "lblHeaderYamlManagement": "YAML File Management",
+    "lblYamlManagementInfo": "Upload, download, and manage YAML configuration files for your ESPHome devices. Files are stored in the ESPHome directory and can be used by the ESPHome Dashboard.",
+    "lblUploadYamlHeader": "Upload YAML File",
+    "lblYamlFileUpload": "Upload YAML File",
+    "lblRefreshYamlFiles": "Refresh File List",
+    "lblYamlFilesHeader": "Available YAML Files",
+    "lblYamlFilesTable": "YAML files in ESPHome directory"
 }

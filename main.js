@@ -14,6 +14,13 @@ const stateAttr = require(`${__dirname}/lib/stateAttr.js`); // Load attribute li
 const disableSentry = false; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
 const fs = require("fs");
+const path = require("path");
+const { promisify } = require("util");
+const readdir = promisify(fs.readdir);
+const stat = promisify(fs.stat);
+const readFile = promisify(fs.readFile);
+const writeFile = promisify(fs.writeFile);
+const unlink = promisify(fs.unlink);
 const { clearTimeout } = require("timers");
 const resetTimers = {}; // Memory allocation for all running timers
 let autodiscovery, dashboardProcess, createConfigStates, discovery;
@@ -1638,6 +1645,188 @@ class Esphome extends utils.Adapter {
   }
 
   /**
+   * Get the ESPHome directory path
+   *
+   * @returns {string} - The absolute path to the ESPHome directory
+   */
+  getESPHomeDirectory() {
+    const dataDir = utils.getAbsoluteDefaultDataDir();
+    return `${dataDir}esphome.${this.instance}`;
+  }
+
+  /**
+   * List all YAML files in the ESPHome directory
+   *
+   * @returns {Promise<Array<{filename: string, size: string, modified: string}>>} - Array of file information objects
+   */
+  async listYamlFilesInDirectory() {
+    try {
+      const espHomeDir = this.getESPHomeDirectory();
+
+      // Check if directory exists
+      if (!fs.existsSync(espHomeDir)) {
+        this.log.warn(`ESPHome directory does not exist: ${espHomeDir}`);
+        return [];
+      }
+
+      const files = await readdir(espHomeDir);
+      const yamlFiles = files.filter(
+        (file) => file.endsWith(".yaml") || file.endsWith(".yml"),
+      );
+
+      const fileInfoPromises = yamlFiles.map(async (filename) => {
+        const filePath = path.join(espHomeDir, filename);
+        const stats = await stat(filePath);
+
+        return {
+          filename: filename,
+          size: this.formatFileSize(stats.size),
+          modified: stats.mtime.toLocaleString(),
+          path: filePath,
+        };
+      });
+
+      return await Promise.all(fileInfoPromises);
+    } catch (error) {
+      this.errorHandler("[listYamlFilesInDirectory]", error);
+      return [];
+    }
+  }
+
+  /**
+   * Format file size in human-readable format
+   *
+   * @param {number} bytes - File size in bytes
+   * @returns {string} - Formatted file size
+   */
+  formatFileSize(bytes) {
+    if (bytes === 0) {
+      return "0 Bytes";
+    }
+
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${sizes[i]}`;
+  }
+
+  /**
+   * Upload a YAML file to the ESPHome directory
+   *
+   * @param {string} filename - Name of the file
+   * @param {string} content - Content of the file
+   * @returns {Promise<{success: boolean, message?: string, error?: string}>} - Result of the operation
+   */
+  async uploadYamlFileToDirectory(filename, content) {
+    try {
+      const espHomeDir = this.getESPHomeDirectory();
+
+      // Validate filename
+      if (
+        !filename ||
+        (!filename.endsWith(".yaml") && !filename.endsWith(".yml"))
+      ) {
+        return {
+          success: false,
+          error: "Invalid filename. Only .yaml and .yml files are allowed.",
+        };
+      }
+
+      // Ensure directory exists
+      if (!fs.existsSync(espHomeDir)) {
+        fs.mkdirSync(espHomeDir, { recursive: true });
+        this.log.info(`Created ESPHome directory: ${espHomeDir}`);
+      }
+
+      const filePath = path.join(espHomeDir, filename);
+      await writeFile(filePath, content, "utf8");
+
+      this.log.info(`YAML file uploaded successfully: ${filename}`);
+      return {
+        success: true,
+        message: `File ${filename} uploaded successfully`,
+      };
+    } catch (error) {
+      this.errorHandler("[uploadYamlFileToDirectory]", error);
+      return {
+        success: false,
+        error: `Failed to upload file: ${error.message || error}`,
+      };
+    }
+  }
+
+  /**
+   * Download a YAML file from the ESPHome directory
+   *
+   * @param {string} filename - Name of the file
+   * @returns {Promise<{success: boolean, content?: string, error?: string}>} - Result of the operation
+   */
+  async downloadYamlFileFromDirectory(filename) {
+    try {
+      const espHomeDir = this.getESPHomeDirectory();
+      const filePath = path.join(espHomeDir, filename);
+
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        return {
+          success: false,
+          error: `File not found: ${filename}`,
+        };
+      }
+
+      const content = await readFile(filePath, "utf8");
+
+      return {
+        success: true,
+        content: content,
+        filename: filename,
+      };
+    } catch (error) {
+      this.errorHandler("[downloadYamlFileFromDirectory]", error);
+      return {
+        success: false,
+        error: `Failed to download file: ${error.message || error}`,
+      };
+    }
+  }
+
+  /**
+   * Delete a YAML file from the ESPHome directory
+   *
+   * @param {string} filename - Name of the file
+   * @returns {Promise<{success: boolean, message?: string, error?: string}>} - Result of the operation
+   */
+  async deleteYamlFileFromDirectory(filename) {
+    try {
+      const espHomeDir = this.getESPHomeDirectory();
+      const filePath = path.join(espHomeDir, filename);
+
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        return {
+          success: false,
+          error: `File not found: ${filename}`,
+        };
+      }
+
+      await unlink(filePath);
+
+      this.log.info(`YAML file deleted successfully: ${filename}`);
+      return {
+        success: true,
+        message: `File ${filename} deleted successfully`,
+      };
+    } catch (error) {
+      this.errorHandler("[deleteYamlFileFromDirectory]", error);
+      return {
+        success: false,
+        error: `Failed to delete file: ${error.message || error}`,
+      };
+    }
+  }
+
+  /**
    * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
    * Using this method requires "common.message" property to be set to true in io-package.json
    *
@@ -1887,6 +2076,81 @@ class Esphome extends utils.Adapter {
           }
 
           // this.sendTo(obj.from, obj.command, 1, obj.callback);
+          break;
+
+        // Handle YAML file upload
+        case "uploadYamlFile":
+          {
+            // In a real implementation with file upload from jsonConfig,
+            // the file data would come from obj.message
+            // For now, we'll provide instructions
+            this.sendTo(
+              obj.from,
+              obj.command,
+              {
+                error:
+                  "File upload requires integration with admin file selector. Please use the ESPHome Dashboard to upload YAML files for now.",
+              },
+              obj.callback,
+            );
+          }
+          break;
+
+        // Handle listing YAML files
+        case "listYamlFiles":
+          {
+            const files = await this.listYamlFilesInDirectory();
+            this.sendTo(
+              obj.from,
+              obj.command,
+              {
+                native: {
+                  yamlFilesTable: files,
+                },
+              },
+              obj.callback,
+            );
+          }
+          break;
+
+        // Handle YAML file download
+        case "downloadYamlFile":
+          {
+            if (!obj.message || !obj.message.filename) {
+              this.sendTo(
+                obj.from,
+                obj.command,
+                { error: "Filename is required" },
+                obj.callback,
+              );
+              return;
+            }
+
+            const result = await this.downloadYamlFileFromDirectory(
+              obj.message.filename,
+            );
+            this.sendTo(obj.from, obj.command, result, obj.callback);
+          }
+          break;
+
+        // Handle YAML file deletion
+        case "deleteYamlFile":
+          {
+            if (!obj.message || !obj.message.filename) {
+              this.sendTo(
+                obj.from,
+                obj.command,
+                { error: "Filename is required" },
+                obj.callback,
+              );
+              return;
+            }
+
+            const result = await this.deleteYamlFileFromDirectory(
+              obj.message.filename,
+            );
+            this.sendTo(obj.from, obj.command, result, obj.callback);
+          }
           break;
       }
     } catch (error) {

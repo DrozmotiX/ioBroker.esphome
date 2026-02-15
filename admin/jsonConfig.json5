@@ -717,6 +717,151 @@
 				}
 
 			}
+		},
+
+		// YAML File Management Tab
+		"yamlFiles": {
+			"type": "panel",
+			"label": "YAML Files",
+			"items": {
+
+				// Header for YAML file management
+				"headerYamlManagement": {
+					"type": "header",
+					"text": "lblHeaderYamlManagement",
+					"size": 1
+				},
+
+				// Information text
+				"yamlManagementInfo": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "lblYamlManagementInfo",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+
+				// File upload section
+				"uploadYamlHeader": {
+					"newLine": true,
+					"type": "header",
+					"text": "lblUploadYamlHeader",
+					"size": 2
+				},
+
+				// File upload input
+				"yamlFileUpload": {
+					"newLine": true,
+					"type": "sendTo",
+					"label": "lblYamlFileUpload",
+					"command": "uploadYamlFile",
+					"data": {},
+					"variant": "outlined",
+					"showProcess": true,
+					"hidden": "!_alive",
+					"xs": 12,
+					"sm": 12,
+					"md": 6,
+					"lg": 6,
+					"xl": 6
+				},
+
+				// Refresh file list button
+				"refreshYamlFiles": {
+					"newLine": false,
+					"type": "sendTo",
+					"label": "lblRefreshYamlFiles",
+					"command": "listYamlFiles",
+					"defaultSendTo": "listYamlFiles",
+					"data": "yamlFilesTable",
+					"variant": "outlined",
+					"showProcess": true,
+					"hidden": "!_alive",
+					"xs": 12,
+					"sm": 12,
+					"md": 6,
+					"lg": 6,
+					"xl": 6
+				},
+
+				// File list table
+				"yamlFilesHeader": {
+					"newLine": true,
+					"type": "header",
+					"text": "lblYamlFilesHeader",
+					"size": 2
+				},
+
+				"yamlFilesTable": {
+					"newLine": true,
+					"type": "table",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12,
+					"hidden": "!_alive",
+					"label": "lblYamlFilesTable",
+					"items": [
+						{
+							"type": "text",
+							"attr": "filename",
+							"width": "40%",
+							"title": "Filename",
+							"filter": false,
+							"sort": true,
+							"default": ""
+						},
+						{
+							"type": "text",
+							"attr": "size",
+							"width": "15%",
+							"title": "Size",
+							"filter": false,
+							"sort": true,
+							"default": ""
+						},
+						{
+							"type": "text",
+							"attr": "modified",
+							"width": "25%",
+							"title": "Modified",
+							"filter": false,
+							"sort": true,
+							"default": ""
+						},
+						{
+							"type": "sendTo",
+							"attr": "download",
+							"width": "10%",
+							"title": "Download",
+							"command": "downloadYamlFile",
+							"icon": "download",
+							"buttonTooltip": "Download file"
+						},
+						{
+							"type": "sendTo",
+							"attr": "delete",
+							"width": "10%",
+							"title": "Delete",
+							"command": "deleteYamlFile",
+							"icon": "delete",
+							"buttonTooltip": "Delete file",
+							"confirm": {
+								"text": "Are you sure to delete this file?",
+								"title": "Confirm file deletion",
+								"ok": "Delete",
+								"cancel": "Cancel",
+								"type": "warning"
+							}
+						}
+					]
+				}
+
+			}
 		}
 
 //		"sandBox": {
