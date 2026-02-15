@@ -7,6 +7,12 @@
  * 2. Initialize the dashboard via autopy
  * 3. Make the dashboard accessible on the configured port
  *
+ * Known Issue: This test may fail on GitHub Actions shared runners due to
+ * GitHub API rate limiting when the adapter fetches ESPHome version data.
+ * The test uses GITHUB_TOKEN env var to mitigate this, but shared runner
+ * IPs can still hit rate limits. This exposes an existing adapter bug where
+ * rate limit errors cause a crash instead of being handled gracefully.
+ *
  */
 
 const http = require("http");
