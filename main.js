@@ -179,26 +179,23 @@ class Esphome extends utils.Adapter {
         // State does not exist
       }
 
-      // Try to get all current available versions
-      // Skip API call in test mode to avoid rate limiting during CI runs
-      const isTestMode =
-        process.env.NODE_ENV === "test" ||
-        process.env.IOBROKER_TEST_MODE === "true";
-
-      if (!isTestMode) {
-        try {
-          const response = await fetch(
-            "https://api.github.com/repos/esphome/esphome/releases",
-          );
-          content = await response.json();
-        } catch (error) {
-          this.errorHandler(`[espHomeDashboard-VersionCall]`, error);
+      try {
+        const headers = {};
+        if (process.env.GITHUB_TOKEN) {
+          headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
         }
-      } else {
-        // In test mode, skip GitHub API call to avoid rate limiting
-        this.log.debug(
-          `Test mode detected - skipping GitHub API call for ESPHome versions`,
+        const response = await fetch(
+          "https://api.github.com/repos/esphome/esphome/releases",
+          { headers },
         );
+        if (!response.ok) {
+          throw new Error(
+            `GitHub releases request failed with status ${response.status}: ${response.statusText}`,
+          );
+        }
+        content = await response.json();
+      } catch (error) {
+        this.errorHandler(`[espHomeDashboard-VersionCall]`, error);
       }
 
       // If the response was successful, write versions names to a memory array
@@ -247,12 +244,6 @@ class Esphome extends utils.Adapter {
         } else if (dashboardVersions.length > 0) {
           // Use first cached version if available
           useDashBoardVersion = dashboardVersions[0];
-        } else if (isTestMode) {
-          // In test mode with no cache, use a stable default version
-          useDashBoardVersion = "2024.11.0";
-          this.log.info(
-            `Test mode: Using default ESPHome version ${useDashBoardVersion}`,
-          );
         }
       }
 
@@ -283,7 +274,7 @@ class Esphome extends utils.Adapter {
               pythonVersion: "3.13.2", // Use any Python 3.13.x version.
               requirements: [
                 { name: "esphome", version: `==${useDashBoardVersion}` },
-                { name: "pillow", version: "==10.4.0" },
+                { name: "pillow", version: "==11.3.0" },
               ], // Use latest esphome
             });
           } catch (error) {
