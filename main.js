@@ -560,6 +560,10 @@ class Esphome extends utils.Adapter {
         }
       });
 
+      clientDetails[host].client.on('reconnect', async () => 	{
+        this.log.debug(`Trying to reconnect to ESPHome client ${host}`);
+      });
+
       clientDetails[host].client.on("initialized", async () => {
         this.log.info(
           `ESPHome  client ${clientDetails[host].deviceFriendlyName} on ip ${host} initialized`,
