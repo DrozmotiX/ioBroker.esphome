@@ -936,7 +936,7 @@ class Esphome extends utils.Adapter {
                   await this.stateSetCreate(
                     `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.command`,
                     `LockCommand`,
-                    1, // Default to LOCK command
+                    null, // No default to prevent accidental triggers
                     ``,
                     true,
                   );
@@ -2125,7 +2125,10 @@ class Esphome extends utils.Adapter {
           });
 
           // Handle Lock Command
-        } else if (clientDetails[deviceIP][device[4]].type === `Lock`) {
+        } else if (
+          clientDetails[deviceIP][device[4]].type === `Lock` &&
+          device[5] === `command`
+        ) {
           await clientDetails[deviceIP].client.connection.lockCommandService({
             key: device[4],
             command: state.val,
