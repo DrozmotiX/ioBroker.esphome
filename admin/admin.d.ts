@@ -19,7 +19,7 @@ declare const adapter: string;
 /**
  * Translates text
  *
- * @param text
+ * @param text - The text to translate
  */
 declare function _(text: string): string;
 declare const socket: ioBrokerSocket;
