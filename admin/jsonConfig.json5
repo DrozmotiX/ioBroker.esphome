@@ -717,6 +717,238 @@
 				}
 
 			}
+		},
+
+		// YAML File Management Tab
+		"yamlFiles": {
+			"type": "panel",
+			"label": "YAML Files",
+			"items": {
+
+				// Header for YAML file management
+				"headerYamlManagement": {
+					"type": "header",
+					"text": "lblHeaderYamlManagement",
+					"size": 1
+				},
+
+				// Information text
+				"yamlManagementInfo": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "lblYamlManagementInfo",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+
+				// File upload section
+				"uploadYamlHeader": {
+					"newLine": true,
+					"type": "header",
+					"text": "lblUploadYamlHeader",
+					"size": 2
+				},
+
+				// Upload information
+				"uploadYamlInfo": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "lblUploadYamlInfo",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+
+				// Filename input
+				"uploadFilename": {
+					"newLine": true,
+					"type": "text",
+					"label": "lblUploadFilename",
+					"placeholder": "example.yaml",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 6,
+					"xl": 6
+				},
+
+				// YAML content input
+				"uploadContent": {
+					"newLine": true,
+					"type": "text",
+					"label": "lblUploadContent",
+					"multiline": true,
+					"rows": 10,
+					"placeholder": "esphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+
+				// Upload button
+				"uploadYamlButton": {
+					"newLine": true,
+					"type": "sendTo",
+					"label": "lblUploadYamlButton",
+					"command": "uploadYamlFile",
+					"jsonData": "{\"filename\": \"${data.uploadFilename}\", \"content\": \"${data.uploadContent}\"}",
+					"variant": "contained",
+					"showProcess": true,
+					"hidden": "!_alive",
+					"disabled": "!data.uploadFilename || !data.uploadContent",
+					"xs": 12,
+					"sm": 12,
+					"md": 6,
+					"lg": 6,
+					"xl": 6
+				},
+
+				// Refresh file list button
+				"refreshYamlFiles": {
+					"newLine": false,
+					"type": "sendTo",
+					"label": "lblRefreshYamlFiles",
+					"command": "listYamlFiles",
+					"defaultSendTo": "listYamlFiles",
+					"data": "yamlFilesTable",
+					"variant": "outlined",
+					"showProcess": true,
+					"hidden": "!_alive",
+					"xs": 12,
+					"sm": 12,
+					"md": 6,
+					"lg": 6,
+					"xl": 6
+				},
+
+				// File list table
+				"yamlFilesHeader": {
+					"newLine": true,
+					"type": "header",
+					"text": "lblYamlFilesHeader",
+					"size": 2
+				},
+
+				"yamlFilesTable": {
+					"newLine": true,
+					"type": "table",
+					"noDelete": true,
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12,
+					"hidden": "!_alive",
+					"label": "lblYamlFilesTable",
+					"doNotSave": true,
+					"items": [
+						{
+							"type": "text",
+							"readOnly": true,
+							"attr": "filename",
+							"width": "40%",
+							"title": "Filename",
+							"filter": false,
+							"sort": true,
+							"default": ""
+						},
+						{
+							"type": "text",
+							"readOnly": true,
+							"attr": "size",
+							"width": "20%",
+							"title": "Size",
+							"filter": false,
+							"sort": true,
+							"default": ""
+						},
+						{
+							"type": "text",
+							"readOnly": true,
+							"attr": "modified",
+							"width": "40%",
+							"title": "Modified",
+							"filter": false,
+							"sort": true,
+							"default": ""
+						}
+					]
+				},
+
+				// File actions section
+				"fileActionsHeader": {
+					"newLine": true,
+					"type": "header",
+					"text": "lblFileActionsHeader",
+					"size": 2
+				},
+
+				// Select filename for actions
+				"selectedFilename": {
+					"newLine": true,
+					"type": "text",
+					"label": "lblSelectedFilename",
+					"placeholder": "example.yaml",
+					"help": "hlpSelectedFilename",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+
+				// Download button
+				"downloadYamlButton": {
+					"newLine": true,
+					"type": "sendTo",
+					"label": "lblDownloadYamlButton",
+					"command": "downloadYamlFile",
+					"jsonData": "{\"filename\": \"${data.selectedFilename}\"}",
+					"variant": "outlined",
+					"showProcess": true,
+					"hidden": "!_alive",
+					"disabled": "!data.selectedFilename",
+					"xs": 12,
+					"sm": 12,
+					"md": 6,
+					"lg": 6,
+					"xl": 6
+				},
+
+				// Delete button
+				"deleteYamlButton": {
+					"newLine": false,
+					"type": "sendTo",
+					"label": "lblDeleteYamlButton",
+					"command": "deleteYamlFile",
+					"jsonData": "{\"filename\": \"${data.selectedFilename}\"}",
+					"variant": "outlined",
+					"color": "error",
+					"showProcess": true,
+					"hidden": "!_alive",
+					"disabled": "!data.selectedFilename",
+					"xs": 12,
+					"sm": 12,
+					"md": 6,
+					"lg": 6,
+					"xl": 6,
+					"confirm": {
+						"text": "cnfDeleteYamlText",
+						"title": "cnfDeleteYamlTitle",
+						"ok": "cnfDeleteYamlOk",
+						"cancel": "cnfDeleteYamlCancel",
+						"type": "warning"
+					}
+				}
+
+			}
 		}
 
 //		"sandBox": {

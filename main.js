@@ -8,6 +8,7 @@
 // you need to create an adapter
 const utils = require("@iobroker/adapter-core");
 const clientDevice = require("./lib/helpers.js");
+const YamlFileManager = require("./lib/yamlFileManager.js");
 // @ts-expect-error Client is just missing in index.d.ts file
 const { Client, Discovery } = require("@2colors/esphome-native-api");
 const stateAttr = require(`${__dirname}/lib/stateAttr.js`); // Load attribute library
@@ -38,6 +39,9 @@ class Esphome extends utils.Adapter {
     this.deviceStateRelation = {}; // Memory array of an initiated device by Device Identifier (name) and IP
     this.createdStatesDetails = {}; // Array to store information of created states
     this.messageResponse = {}; // Array to store messages from admin and provide proper message to add/remove devices
+
+    // Initialize YAML file manager
+    this.yamlFileManager = new YamlFileManager(this);
   }
 
   /**
@@ -1887,6 +1891,97 @@ class Esphome extends utils.Adapter {
           }
 
           // this.sendTo(obj.from, obj.command, 1, obj.callback);
+          break;
+
+        // Handle YAML file upload
+        case "uploadYamlFile":
+          {
+            if (!obj.message || !obj.message.filename || !obj.message.content) {
+              this.sendTo(
+                obj.from,
+                obj.command,
+                { error: "Filename and content are required" },
+                obj.callback,
+              );
+              return;
+            }
+
+            const result = await this.yamlFileManager.uploadYamlFile(
+              obj.message.filename,
+              obj.message.content,
+            );
+            this.sendTo(obj.from, obj.command, result, obj.callback);
+          }
+          break;
+
+        // Handle listing YAML files
+        case "listYamlFiles":
+          {
+            const files = await this.yamlFileManager.listYamlFiles();
+            this.sendTo(
+              obj.from,
+              obj.command,
+              {
+                native: {
+                  yamlFilesTable: files,
+                },
+              },
+              obj.callback,
+            );
+          }
+          break;
+
+        // Handle YAML file download
+        case "downloadYamlFile":
+          {
+            if (!obj.message || !obj.message.filename) {
+              this.sendTo(
+                obj.from,
+                obj.command,
+                { error: "Filename is required" },
+                obj.callback,
+              );
+              return;
+            }
+
+            const result = await this.yamlFileManager.downloadYamlFile(
+              obj.message.filename,
+            );
+
+            // Format the response to show file content in a user-friendly way
+            if (result.success) {
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  result: `File content (copy to use):\n\n${result.content}`,
+                },
+                obj.callback,
+              );
+            } else {
+              this.sendTo(obj.from, obj.command, result, obj.callback);
+            }
+          }
+          break;
+
+        // Handle YAML file deletion
+        case "deleteYamlFile":
+          {
+            if (!obj.message || !obj.message.filename) {
+              this.sendTo(
+                obj.from,
+                obj.command,
+                { error: "Filename is required" },
+                obj.callback,
+              );
+              return;
+            }
+
+            const result = await this.yamlFileManager.deleteYamlFile(
+              obj.message.filename,
+            );
+            this.sendTo(obj.from, obj.command, result, obj.callback);
+          }
           break;
       }
     } catch (error) {
