@@ -279,7 +279,7 @@ class Esphome extends utils.Adapter {
               pythonVersion: "3.13.2", // Use any Python 3.13.x version.
               requirements: [
                 { name: "esphome", version: `==${useDashBoardVersion}` },
-                { name: "pillow", version: "==11.3.0" },
+                { name: "pillow", version: "==10.4.0" },
               ], // Use latest esphome
             });
           } catch (error) {
