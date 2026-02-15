@@ -1,7 +1,8 @@
 .DS_Store
 .git
 .idea
-.vscode
+.vscode/*
+!.vscode/settings.json
 *.code-workspace
 node_modules
 nbproject
