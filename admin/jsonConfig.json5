@@ -839,6 +839,7 @@
 				"yamlFilesTable": {
 					"newLine": true,
 					"type": "table",
+					"noDelete": true,
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
@@ -846,9 +847,11 @@
 					"xl": 12,
 					"hidden": "!_alive",
 					"label": "lblYamlFilesTable",
+					"doNotSave": true,
 					"items": [
 						{
 							"type": "text",
+							"readOnly": true,
 							"attr": "filename",
 							"width": "40%",
 							"title": "Filename",
@@ -858,8 +861,9 @@
 						},
 						{
 							"type": "text",
+							"readOnly": true,
 							"attr": "size",
-							"width": "15%",
+							"width": "20%",
 							"title": "Size",
 							"filter": false,
 							"sort": true,
@@ -867,39 +871,81 @@
 						},
 						{
 							"type": "text",
+							"readOnly": true,
 							"attr": "modified",
-							"width": "25%",
+							"width": "40%",
 							"title": "Modified",
 							"filter": false,
 							"sort": true,
 							"default": ""
-						},
-						{
-							"type": "sendTo",
-							"attr": "download",
-							"width": "10%",
-							"title": "Download",
-							"command": "downloadYamlFile",
-							"icon": "download",
-							"buttonTooltip": "Download file"
-						},
-						{
-							"type": "sendTo",
-							"attr": "delete",
-							"width": "10%",
-							"title": "Delete",
-							"command": "deleteYamlFile",
-							"icon": "delete",
-							"buttonTooltip": "Delete file",
-							"confirm": {
-								"text": "Are you sure to delete this file?",
-								"title": "Confirm file deletion",
-								"ok": "Delete",
-								"cancel": "Cancel",
-								"type": "warning"
-							}
 						}
 					]
+				},
+
+				// File actions section
+				"fileActionsHeader": {
+					"newLine": true,
+					"type": "header",
+					"text": "lblFileActionsHeader",
+					"size": 2
+				},
+
+				// Select filename for actions
+				"selectedFilename": {
+					"newLine": true,
+					"type": "text",
+					"label": "lblSelectedFilename",
+					"placeholder": "example.yaml",
+					"help": "hlpSelectedFilename",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+
+				// Download button
+				"downloadYamlButton": {
+					"newLine": true,
+					"type": "sendTo",
+					"label": "lblDownloadYamlButton",
+					"command": "downloadYamlFile",
+					"jsonData": "{\"filename\": \"${data.selectedFilename}\"}",
+					"variant": "outlined",
+					"showProcess": true,
+					"hidden": "!_alive",
+					"disabled": "!data.selectedFilename",
+					"xs": 12,
+					"sm": 12,
+					"md": 6,
+					"lg": 6,
+					"xl": 6
+				},
+
+				// Delete button
+				"deleteYamlButton": {
+					"newLine": false,
+					"type": "sendTo",
+					"label": "lblDeleteYamlButton",
+					"command": "deleteYamlFile",
+					"jsonData": "{\"filename\": \"${data.selectedFilename}\"}",
+					"variant": "outlined",
+					"color": "error",
+					"showProcess": true,
+					"hidden": "!_alive",
+					"disabled": "!data.selectedFilename",
+					"xs": 12,
+					"sm": 12,
+					"md": 6,
+					"lg": 6,
+					"xl": 6,
+					"confirm": {
+						"text": "Are you sure you want to delete this file?",
+						"title": "Confirm file deletion",
+						"ok": "Delete",
+						"cancel": "Cancel",
+						"type": "warning"
+					}
 				}
 
 			}

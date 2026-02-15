@@ -49,5 +49,10 @@
     "lblYamlFileUpload": "Upload YAML File",
     "lblRefreshYamlFiles": "Refresh File List",
     "lblYamlFilesHeader": "Available YAML Files",
-    "lblYamlFilesTable": "YAML files in ESPHome directory"
+    "lblYamlFilesTable": "YAML files in ESPHome directory",
+    "lblFileActionsHeader": "File Actions",
+    "lblSelectedFilename": "Select file for download/delete",
+    "hlpSelectedFilename": "Enter the filename from the table above to download or delete it",
+    "lblDownloadYamlButton": "Download File",
+    "lblDeleteYamlButton": "Delete File"
 }

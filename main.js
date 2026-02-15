@@ -2132,7 +2132,20 @@ class Esphome extends utils.Adapter {
             const result = await this.downloadYamlFileFromDirectory(
               obj.message.filename,
             );
-            this.sendTo(obj.from, obj.command, result, obj.callback);
+
+            // Format the response to show file content in a user-friendly way
+            if (result.success) {
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  result: `File content (copy to use):\n\n${result.content}`,
+                },
+                obj.callback,
+              );
+            } else {
+              this.sendTo(obj.from, obj.command, result, obj.callback);
+            }
           }
           break;
 
