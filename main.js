@@ -22,7 +22,7 @@ const newlyDiscoveredClient = {}; // Memory cache of all newly discovered device
 const dashboardVersions = [];
 class Esphome extends utils.Adapter {
   /**
-   * @param {Partial<utils.AdapterOptions>} [options]
+   * @param {Partial<utils.AdapterOptions>} [options] - Adapter configuration options
    */
   constructor(options) {
     super({
@@ -560,7 +560,7 @@ class Esphome extends utils.Adapter {
         }
       });
 
-      clientDetails[host].client.on('reconnect', async () => 	{
+      clientDetails[host].client.on("reconnect", async () => {
         this.log.debug(`Trying to reconnect to ESPHome client ${host}`);
       });
 
@@ -1567,7 +1567,7 @@ class Esphome extends utils.Adapter {
   /**
    * Is called when adapter shuts down - callback has to be called under any circumstances!
    *
-   * @param {() => void} callback
+   * @param {() => void} callback - Callback function to call when unload is complete
    */
   onUnload(callback) {
     try {
@@ -1641,7 +1641,7 @@ class Esphome extends utils.Adapter {
    * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
    * Using this method requires "common.message" property to be set to true in io-package.json
    *
-   * @param {ioBroker.Message} obj
+   * @param {ioBroker.Message} obj - The message object
    */
   async onMessage(obj) {
     this.log.debug(`Data from configuration received : ${JSON.stringify(obj)}`);
@@ -1897,8 +1897,8 @@ class Esphome extends utils.Adapter {
   /**
    * responds to the adapter that sent the original message
    *
-   * @param {string} response
-   * @param {object} obj
+   * @param {string} response - The response message
+   * @param {object} obj - The original message object
    */
   respond(response, obj) {
     if (obj.callback) {
@@ -1933,8 +1933,8 @@ class Esphome extends utils.Adapter {
   /**
    * Is called if a subscribed state changes
    *
-   * @param {string} id
-   * @param {ioBroker.State | null | undefined} state
+   * @param {string} id - The state ID that changed
+   * @param {ioBroker.State | null | undefined} state - The new state value
    */
   async onStateChange(id, state) {
     try {
@@ -2108,8 +2108,8 @@ class Esphome extends utils.Adapter {
   /**
    * Some types (like Button) don't have a state. So standard method of creating iobroker objects when receiving state event via api doesn't work here
    *
-   * @param host
-   * @param entity
+   * @param host - The ESPHome device hostname or IP
+   * @param entity - The entity object from ESPHome API
    * @returns {Promise<void>}
    */
   async createNonStateDevices(host, entity) {
@@ -2333,7 +2333,7 @@ class Esphome extends utils.Adapter {
 if (require.main !== module) {
   // Export the constructor in compact mode
   /**
-   * @param {Partial<utils.AdapterOptions>} [options]
+   * @param {Partial<utils.AdapterOptions>} [options] - Adapter configuration options
    */
   module.exports = (options) => new Esphome(options);
 } else {
