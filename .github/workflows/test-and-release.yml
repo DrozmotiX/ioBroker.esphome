@@ -95,7 +95,6 @@ jobs:
               # avoid github rate limit for shared runners:
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                IOBROKER_TEST_MODE: true
               run: npm run test
 
     # Deploys the final package to NPM
