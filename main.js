@@ -240,6 +240,15 @@ class Esphome extends utils.Adapter {
       ) {
         if (content) {
           useDashBoardVersion = content[0].name;
+        } else if (dashboardVersions.length > 0) {
+          // Use first cached version if available
+          useDashBoardVersion = dashboardVersions[0];
+        } else if (isTestMode) {
+          // In test mode with no cache, use a stable default version
+          useDashBoardVersion = "2024.11.0";
+          this.log.info(
+            `Test mode: Using default ESPHome version ${useDashBoardVersion}`,
+          );
         }
       }
 
