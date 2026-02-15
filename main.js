@@ -2108,8 +2108,8 @@ class Esphome extends utils.Adapter {
   /**
    * Some types (like Button) don't have a state. So standard method of creating iobroker objects when receiving state event via api doesn't work here
    *
-   * @param host - The ESPHome device hostname or IP
-   * @param entity - The entity object from ESPHome API
+   * @param {string} host - The ESPHome device hostname or IP
+   * @param {object} entity - The entity object from ESPHome API
    * @returns {Promise<void>}
    */
   async createNonStateDevices(host, entity) {
