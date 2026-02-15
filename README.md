@@ -355,7 +355,7 @@ If you like my work, please consider a personal donation
     * (DutchmanNL) 
 -->
 ### __WORK IN PROGRESS__
-* (@copilot) **NEW**: Add support for Lock entity type - Lock devices now properly display state and control options
+* (@copilot) **NEW**: Add support for Lock entity type - Lock devices now properly display state and control options #353
 
 ### 0.7.0-beta.1 (2026-02-15)
 * (@SimonFischer04) improve dashboard testing
