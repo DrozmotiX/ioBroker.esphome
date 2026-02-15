@@ -134,6 +134,18 @@ exports.runTests = function (suite) {
       } catch (error) {
         console.error(`Dashboard integration test failed: ${error.message}`);
         throw error;
+      } finally {
+        // Ensure the adapter (and thus the dashboard process) is always stopped
+        try {
+          if (harness && harness.isAdapterRunning()) {
+            console.log("Stopping adapter in cleanup (finally)...");
+            await harness.stopAdapter();
+          }
+        } catch (cleanupError) {
+          console.error(
+            `Failed to stop adapter during dashboard test cleanup: ${cleanupError.message}`,
+          );
+        }
       }
     });
   });
