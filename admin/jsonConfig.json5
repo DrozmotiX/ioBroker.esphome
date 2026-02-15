@@ -940,10 +940,10 @@
 					"lg": 6,
 					"xl": 6,
 					"confirm": {
-						"text": "Are you sure you want to delete this file?",
-						"title": "Confirm file deletion",
-						"ok": "Delete",
-						"cancel": "Cancel",
+						"text": "cnfDeleteYamlText",
+						"title": "cnfDeleteYamlTitle",
+						"ok": "cnfDeleteYamlOk",
+						"cancel": "cnfDeleteYamlCancel",
 						"type": "warning"
 					}
 				}

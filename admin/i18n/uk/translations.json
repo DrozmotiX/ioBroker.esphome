@@ -1,6 +1,10 @@
 {
     "ESPHomeCommunityLink": "Для отримання додаткової інформації про ESPHome, приклади конфігурації та посилання на спільноти відвідайте:",
     "chkEnableESPHome": "Увімкнути ESPHome Dashboard",
+    "cnfDeleteYamlCancel": "Cancel",
+    "cnfDeleteYamlOk": "Delete",
+    "cnfDeleteYamlText": "Are you sure you want to delete this file?",
+    "cnfDeleteYamlTitle": "Confirm file deletion",
     "existDevicesHeader": "Усі пристрої, якими керує цей адаптер, та їхній стан підключення",
     "hlpDiscoveryListeningAddress": "Виявляти пристрої тільки на цьому інтерфейсі",
     "hlpESPHomeDashboardVersion": "Виберіть версію ESPHome Dashboard для використання",

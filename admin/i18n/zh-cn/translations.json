@@ -1,6 +1,10 @@
 {
     "ESPHomeCommunityLink": "有关 ESPHome、示例配置和社区链接的更多信息，请访问：",
     "chkEnableESPHome": "启用 ESPHome 仪表板",
+    "cnfDeleteYamlCancel": "Cancel",
+    "cnfDeleteYamlOk": "Delete",
+    "cnfDeleteYamlText": "Are you sure you want to delete this file?",
+    "cnfDeleteYamlTitle": "Confirm file deletion",
     "existDevicesHeader": "该适配器管理的所有设备及其连接状态",
     "hlpDiscoveryListeningAddress": "只发现该接口上的设备",
     "hlpESPHomeDashboardVersion": "选择必须使用哪个版本的 ESPHome Dashboard",

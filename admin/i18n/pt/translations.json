@@ -1,6 +1,10 @@
 {
     "ESPHomeCommunityLink": "Para obter mais informações sobre ESPHome, exemplos de configuração e links para comunidades, visite:",
     "chkEnableESPHome": "Habilitar painel ESPHome",
+    "cnfDeleteYamlCancel": "Cancel",
+    "cnfDeleteYamlOk": "Delete",
+    "cnfDeleteYamlText": "Are you sure you want to delete this file?",
+    "cnfDeleteYamlTitle": "Confirm file deletion",
     "existDevicesHeader": "Todos os dispositivos gerenciados por este adaptador e seu estado de conexão",
     "hlpDiscoveryListeningAddress": "Descubra apenas dispositivos nesta interface",
     "hlpESPHomeDashboardVersion": "Escolha qual versão do ESPHome Dashboard deve ser usada",

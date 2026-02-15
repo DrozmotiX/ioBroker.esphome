@@ -54,5 +54,9 @@
     "lblSelectedFilename": "Select file for download/delete",
     "hlpSelectedFilename": "Enter the filename from the table above to download or delete it",
     "lblDownloadYamlButton": "Download File",
-    "lblDeleteYamlButton": "Delete File"
+    "lblDeleteYamlButton": "Delete File",
+    "cnfDeleteYamlText": "Are you sure you want to delete this file?",
+    "cnfDeleteYamlTitle": "Confirm file deletion",
+    "cnfDeleteYamlOk": "Delete",
+    "cnfDeleteYamlCancel": "Cancel"
 }

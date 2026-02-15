@@ -1,6 +1,10 @@
 {
     "ESPHomeCommunityLink": "Więcej informacji o ESPHome, przykładową konfigurację i linki do społeczności można znaleźć na stronie:",
     "chkEnableESPHome": "Włącz panel ESPHome",
+    "cnfDeleteYamlCancel": "Cancel",
+    "cnfDeleteYamlOk": "Delete",
+    "cnfDeleteYamlText": "Are you sure you want to delete this file?",
+    "cnfDeleteYamlTitle": "Confirm file deletion",
     "existDevicesHeader": "Wszystkie urządzenia zarządzane przez tę kartę i ich stan połączenia",
     "hlpDiscoveryListeningAddress": "Odkrywaj tylko urządzenia na tym interfejsie",
     "hlpESPHomeDashboardVersion": "Wybierz, która wersja panelu ESPHome ma być używana",

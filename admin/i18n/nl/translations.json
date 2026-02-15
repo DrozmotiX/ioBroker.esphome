@@ -1,6 +1,10 @@
 {
     "ESPHomeCommunityLink": "Ga voor meer informatie over ESPHome, voorbeeldconfiguratie en links naar communities naar:",
     "chkEnableESPHome": "Schakel ESPHome-dashboard in",
+    "cnfDeleteYamlCancel": "Cancel",
+    "cnfDeleteYamlOk": "Delete",
+    "cnfDeleteYamlText": "Are you sure you want to delete this file?",
+    "cnfDeleteYamlTitle": "Confirm file deletion",
     "existDevicesHeader": "Alle apparaten die door deze adapter worden beheerd en hun verbindingsstatus",
     "hlpDiscoveryListeningAddress": "Ontdek alleen apparaten op deze interface",
     "hlpESPHomeDashboardVersion": "Kies welke versie van ESPHome Dashboard gebruikt moet worden",
