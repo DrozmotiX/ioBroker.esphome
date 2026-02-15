@@ -924,9 +924,10 @@ class Esphome extends utils.Adapter {
                 }
 
                 case "Lock": {
+                  const deviceName = clientDetails[host].deviceName;
                   // Lock state: 0=NONE, 1=LOCKED, 2=UNLOCKED, 3=JAMMED, 4=LOCKING, 5=UNLOCKING
                   await this.stateSetCreate(
-                    `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.state`,
+                    `${deviceName}.${entity.type}.${entity.id}.state`,
                     `LockState`,
                     state.state,
                     ``,
@@ -934,7 +935,7 @@ class Esphome extends utils.Adapter {
                   );
                   // Lock command: 0=UNLOCK, 1=LOCK, 2=OPEN
                   await this.stateSetCreate(
-                    `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.command`,
+                    `${deviceName}.${entity.type}.${entity.id}.command`,
                     `LockCommand`,
                     null, // No default to prevent accidental triggers
                     ``,
