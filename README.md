@@ -320,6 +320,7 @@ If you like my work, please consider a personal donation
     * (DutchmanNL) 
 -->
 ### __WORK IN PROGRESS__
+* (@copilot) **FIXED**: Invalid jsonConfig schema - removed unsupported `doNotSave` property from table elements
 * (@copilot) **NEW**: YAML file management interface in admin UI for upload/download/delete operations (#369)
 * (@SimonFischer04) improve logging for #201
 * (@SimonFischer04) automatic migration from versions prior to ESPHomeDashboardUrl introduction (pre v0.6.1)
