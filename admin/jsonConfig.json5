@@ -334,7 +334,6 @@
 					"md": 12,
 					"lg": 12,
 					"xl": 12,
-                    "doNotSave": true,
 					"hidden": "!data.newDevicesTable || data.newDevicesTable.length == 0",
 					"showSecondAddAt": 5,
 					"items": [
@@ -847,7 +846,6 @@
 					"xl": 12,
 					"hidden": "!_alive",
 					"label": "lblYamlFilesTable",
-					"doNotSave": true,
 					"items": [
 						{
 							"type": "text",
