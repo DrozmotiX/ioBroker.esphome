@@ -93,19 +93,6 @@
                 "pl": "Interfejs Admin został przeprojektowany przez JSON-Config z numerem #171\nMassage backendowe realizowane są przez Addd/Modify/Delete\nPrzestrzenie połączenia i widoczność ulepszały urządzenia\nOdkrycie urządzenia automatycznego związane jest tymczasowo ze względu na zewnętrzny błęd\nPozytywność dodaje się do wykluczenia IP-Adddress z odkrycia urządzenia, dodając numer #175\nAllow Selection to listen on specific interface or all for device discoveries. „Allow Selection”\nState zaimplementowała aktualny status połączenia (niezwiązany/rozłączony) w celu poprawy zarządzania urządzeniami\nKilka błędów rozwiązało numer #181",
                 "uk": "Інтерфейс адміністратора, перероблений на JSON-Config, відноситься до #171\nЗакінчення масажів, реалізованих для пристроїв Додавання/Modify/Delete\nПристрій з'єднання та видимість пристроїв\nАвтопристрою виявлення тимчасово відключених через зовнішній баг, відноситься #175\nМожливість довести до виключення IP-додатків з пристрою, відноситься #175\nДозволяє вибрати для прослуховування певного інтерфейсу або всіх для виявлення пристроїв вирішує #67\nСтан, що реалізується для відображення поточного стану з'єднання (невід'ємний / відключений / підключений) для поліпшення управління пристроями\nКілька виправлень, вирішує #181 #",
                 "zh-cn": "重新设计给联索行动-阿菲格的专用接口涉及第171号行动。\n增购/装卸装置\n装置的连接和可见度有所改善\n自动装置发现因外部纤维而临时残疾,涉及第175号行动。\n排除在装置发现中的IP-反应之外的可添加的灵活性涉及第175号行动。\n允许选择听取具体接口或所有装置的辨认办法\n国家执行了目前联系状况(可核查/无联系/连接)以改进装置的管理\n数个小册子,第181号行动决心"
-            },
-            "0.4.1": {
-                "en": "Bugfix: Password / connection issues in previous beta resolves #179\nBugfix: Allow individual API password or encryption keys for devices, resolves #174\nSupport ESPHome device Encryption Key (you should migrate from API password to Encryption Key ! resolves #152)",
-                "de": "Bugfix: Passwort / Verbindungsprobleme in vorherigen beta löst #179\nBugfix: Lassen Sie individuelle API-Passwort oder Verschlüsselungsschlüssel für Geräte, löst #174\nSupport ESPHome Gerät Verschlüsselungsschlüssel (Sie sollten von API-Passwort zu Verschlüsselungsschlüssel migrieren! löst #152)",
-                "ru": "Bugfix: Пароль / проблемы соединения в предыдущей бета-версии решает #179\nBugfix: Разрешить индивидуальные API-пароль или ключи шифрования для устройств, решает #174\nПоддержка ESPHome устройства Encryption Key (вы должны migrate от API-пароль для Encryption Key! решает #152)",
-                "pt": "Bugfix: Problemas de senha / conexão no beta anterior resolve #179\nBugfix: Permitir senha API individual ou chaves de criptografia para dispositivos, resolve #174\nSuporte ESPHome dispositivo Encryption Key (você deve migrar da senha API para Encryption Key! resolve #152)",
-                "nl": "Vertaling:\nBugfix: Sta individuele API wachtwoord of encryptie sleutels voor apparatuur, vaststellen\nSteun ESPHome apparatuur encryption Key (je moet migreren van API wachtwoord naar Encryption Key! Vertaling:",
-                "fr": "Bugfix: Mot de passe / problèmes de connexion dans la bêta précédente résout #179\nBugfix: Permettre un mot de passe ou des clés de chiffrement de l'API pour les appareils, résout #174\nSupport ESPHome périphérique Clé de chiffrement (vous devriez migrer de l'API mot de passe à la clé de chiffrement ! résout #152)",
-                "it": "Bugfix: Password / problemi di connessione nella precedente beta risolve #179\nBugfix: Consentire singole password API o chiavi di crittografia per i dispositivi, risolve #174\nSupporto dispositivo ESPHome chiave di crittografia (si dovrebbe migrare da password API a chiave di crittografia! risolve #152)",
-                "es": "Bugfix: Problemas de contraseña / conexión en beta anterior resuelve #179\nBugfix: Permitir contraseña o claves de cifrado individuales de API para dispositivos, resuelve #174\nSoporte ESPHome dispositivo clave de cifrado (debe migrar desde contraseña de API a clave de cifrado! resuelve #152)",
-                "pl": "Bugfix: Password / Problemy połączenia w poprzednich beta rozwiązały numer #179\nBugfix: Allow indywidualny API password lub klucze szyfrujące dla urządzeń, rozwiązał numer #174\nWsparcie ESPHome: Encryption Key (you powinien wyemigrować z hasła API do Encryption Key ! Rozwiązanie #152",
-                "uk": "Помилки: Пароль / питання з'єднання у попередніх бета-рішеннях #179\nПомилки: Дозволити індивідуальний пароль API або ключі шифрування для пристроїв, вирішує #174\nПідтримка ESPHome пристрій шифрування ключа (Ви повинні мигратувати від API пароля до ключа шифрування ! розчини #152)",
-                "zh-cn": "Bugfix:在前几批被盗用词/联系问题\nBugfix: 允许个人的通用或加密装置的关键,第174号行动\n支持ESPHome装置的加密关键(you应从API密码移到恩加密的关键! 第152号决议)"
             }
         },
         "titleLang": {
@@ -167,8 +154,7 @@
             "_default": "%ESPHomeDashboardUrl%"
         },
         "adminTab": {
-            "link": "%ESPHomeDashboardUrl%",
-            "fa-icon": "settings_input_composite"
+            "link": "%ESPHomeDashboardUrl%"
         },
         "dependencies": [
             {
@@ -203,8 +189,8 @@
         "configStates": false,
         "ESPHomeDashboardEnabled": false,
         "ESPHomeDashboardPort": 6052,
-        "ESPHomeDashboardIP": "localhost",
-        "ESPHomeDashboardUrl": "http://localhost:6052",
+        "ESPHomeDashboardIP": "",
+        "ESPHomeDashboardUrl": "",
         "ignoredDevices": [
             {
                 "IP-Address": "192.168.0.1",
