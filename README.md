@@ -58,7 +58,7 @@ The Dashboard IP setting in the adapter configuration serves different purposes:
 **For Integrated Dashboard Tab in ioBroker Admin:**
 1. Enter the IP address and port where your ESPHome Dashboard is running
 2. **Built-in Dashboard:** Use the IP address of your ioBroker host (e.g., `192.168.1.10:6052`)
-   - **Important:** Do NOT use `127.0.0.1:6052` if you access ioBroker from other devices - the iframe will try to reach 127.0.0.1 from the client's browser, not the ioBroker server
+   - **Important:** Do NOT use `127.0.0.1:6052` if you access ioBroker from other devices - the embedded iframe will try to reach 127.0.0.1 from the client's browser, not the ioBroker server
    - Only use `127.0.0.1:6052` if you ONLY access ioBroker admin from the same machine where ioBroker is running
 3. **External Dashboard:** Use the IP:port of your external ESPHome installation (e.g., `192.168.1.100:6052`)
 4. **HTTPS Setup:** For HTTPS environments, see the detailed HTTPS configuration section below
@@ -94,7 +94,7 @@ The adapter will establish a connection and create all necessary ioBroker object
 
 ### I configured a device in the ESPHome Dashboard, but it doesn't show up in the adapter
 
-**Important:** The adapter and dashboard are completely separate components with no automatic integration. The adapter can optionally install (and start) the dashboard for you, just for convenience. Again, this not mean there is any integration between them.
+**Important:** The adapter and dashboard are completely separate components with no automatic integration. The adapter can optionally install (and start) the dashboard for you, just for convenience. Again, this does not mean there is any integration between them.
 
 - **Dashboard:** Used for creating/editing YAML configs, compiling firmware, and flashing devices
 - **Adapter:** Used for controlling devices and synchronizing their state with ioBroker

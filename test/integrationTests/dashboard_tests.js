@@ -15,10 +15,14 @@ const { expect } = require("chai");
 // Test configuration constants
 const DASHBOARD_PORT = 6052;
 const DASHBOARD_VERSION = "Always last available";
-const DASHBOARD_INITIALIZATION_DELAY_MS = 60000; // 60 seconds for dashboard to initialize
+const DASHBOARD_INITIALIZATION_DELAY_MS = 10000; // 10 seconds initial delay for dashboard to start initializing
 const REACHABILITY_CHECK_DELAY_MS = 3000; // 3 seconds between reachability checks
-const MAX_REACHABILITY_ATTEMPTS = 42; // Maximum attempts to check if dashboard is reachable
-const TEST_TIMEOUT_MS = 300000; // 5 minutes total test timeout
+const TOTAL_TIMEOUT_MS = 300000; // 5 minutes total test timeout
+const MAX_REACHABILITY_ATTEMPTS = Math.floor(
+  (TOTAL_TIMEOUT_MS - DASHBOARD_INITIALIZATION_DELAY_MS) /
+    REACHABILITY_CHECK_DELAY_MS,
+); // Calculate max attempts based on timeout
+const TEST_TIMEOUT_MS = TOTAL_TIMEOUT_MS;
 
 /**
  * Checks if the dashboard is reachable via HTTP
