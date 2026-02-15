@@ -57,14 +57,16 @@ The Dashboard IP setting in the adapter configuration serves different purposes:
 
 **For Integrated Dashboard Tab in ioBroker Admin:**
 1. Enter the IP address and port where your ESPHome Dashboard is running
-2. **Built-in Dashboard:** Use `127.0.0.1:6052` (default for integrated dashboard)
-3. **External Dashboard:** Use the IP:port of your external ESPHome installation (e.g., Docker container)
+2. **Built-in Dashboard:** Use the IP address of your ioBroker host (e.g., `192.168.1.10:6052`)
+   - **Important:** Do NOT use `127.0.0.1:6052` if you access ioBroker from other devices - the embedded iframe will try to reach 127.0.0.1 from the client's browser, not the ioBroker server
+   - Only use `127.0.0.1:6052` if you ONLY access ioBroker admin from the same machine where ioBroker is running
+3. **External Dashboard:** Use the IP:port of your external ESPHome installation (e.g., `192.168.1.100:6052`)
 4. **HTTPS Setup:** For HTTPS environments, see the detailed HTTPS configuration section below
 
 **Dashboard IP Examples:**
-- Built-in: `127.0.0.1:6052`
-- External Docker: `192.168.1.100:6052`
-- External Host: `esphome.local:6052`
+- Built-in (accessed from network): `192.168.1.10:6052` (replace with your ioBroker host IP)
+- Built-in (local only): `127.0.0.1:6052` (only if admin accessed on same machine)
+- External Host: `esphome.local:6052` or `192.168.1.100:6052`
 - HTTPS Proxy: `https://192.168.1.50:8082/proxy.0/esphome/`
 
 ![ESPHome Dashboard IP Configuration](admin/img/ESPhomeDashboardIP.png)
@@ -86,9 +88,42 @@ The adapter works independently and only requires devices with ESPHome API enabl
 1. **Ensure ESPHome API is enabled** in your device's YAML configuration (see Prerequisites section)
 2. **Open the adapter's device tab** in ioBroker Admin (adapter must be running)
 3. **Add devices manually:** Enter device IP address and authentication credentials
-4. **Automatic discovery:** Currently disabled (see issue #175)
+4. **Automatic discovery:** Use the autodiscovery feature if enabled in adapter settings
 
 The adapter will establish a connection and create all necessary ioBroker objects for device control.
+
+### I configured a device in the ESPHome Dashboard, but it doesn't show up in the adapter
+
+**Important:** The adapter and dashboard are completely separate components with no automatic integration. The adapter can optionally install (and start) the dashboard for you, just for convenience. Again, this does not mean there is any integration between them.
+
+- **Dashboard:** Used for creating/editing YAML configs, compiling firmware, and flashing devices
+- **Adapter:** Used for controlling devices and synchronizing their state with ioBroker
+
+**To make a dashboard-configured device work with the adapter:**
+1. Flash the device with the configuration from the dashboard (ensure ESPHome API is enabled in YAML)
+2. Manually add the device in the adapter settings (device tab). Enter IP/hostname and encryption key (recommended) or password (legacy)
+3. The adapter will then connect to the device via ESPHome's native API
+
+**Note:** Future tighter integration between dashboard and adapter may be implemented (see issue #228), but currently they operate independently.
+
+### I configured a device in the adapter, but it doesn't show up in the dashboard
+
+**This is expected behavior** - the adapter and dashboard do not automatically sync device configurations.
+
+- The **adapter** connects to devices via ESPHome's native API for control/monitoring
+- The **dashboard** manages YAML configurations and firmware compilation
+
+**If you want the device in the dashboard:**
+
+**Option 1:**
+1. The ESPHome Dashboard can discover devices in the same network automatically
+2. In the dashboard, discovered devices will show with an "ADOPT" button
+3. Click "ADOPT" to add them to your dashboard for configuration management
+
+**Option 2:**
+- Create a new device in the dashboard and copy your existing yaml into there.
+
+**Note:** You don't need devices in the dashboard if you only want to control them via ioBroker. The dashboard is only needed for creating/modifying device configurations.
 
 <!--
 ## [Documentation](https://DrozmotiX.github.io/languages/en/Adapter/ESPHome/)

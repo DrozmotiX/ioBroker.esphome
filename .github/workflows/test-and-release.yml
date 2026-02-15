@@ -70,19 +70,32 @@ jobs:
             - name: Install Dependencies
               run: npm ci
 
-            - name: Set up Python for Dashboard Testing (Ubuntu only)
-              if: matrix.os == 'ubuntu-latest'
-              uses: actions/setup-python@v6
-              with:
-                python-version: '3.13'
-
-            - name: Install ESPHome for Dashboard Testing (Ubuntu only)
-              if: matrix.os == 'ubuntu-latest'
+            - name: Add staggered delay to reduce concurrent API calls
+              # Add a small delay based on matrix position to avoid all tests hitting APIs simultaneously
               run: |
-                python -m pip install --upgrade pip
-                pip install esphome pillow || echo "ESPHome installation failed - dashboard tests will be skipped"
+                # Calculate delay based on Node version and OS (0-8 seconds spread across 9 matrix combinations)
+                NODE_INDEX=0
+                OS_INDEX=0
+                case "${{ matrix.node-version }}" in
+                  20.x) NODE_INDEX=0 ;;
+                  22.x) NODE_INDEX=1 ;;
+                  24.x) NODE_INDEX=2 ;;
+                esac
+                case "${{ matrix.os }}" in
+                  ubuntu-latest) OS_INDEX=0 ;;
+                  windows-latest) OS_INDEX=1 ;;
+                  macos-latest) OS_INDEX=2 ;;
+                esac
+                DELAY=$((NODE_INDEX * 3 + OS_INDEX))
+                echo "Waiting ${DELAY} seconds before starting tests..."
+                sleep $DELAY
+              shell: bash
 
             - name: Run tests
+              # avoid github rate limit for shared runners:
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                IOBROKER_TEST_MODE: true
               run: npm run test
 
     # Deploys the final package to NPM
