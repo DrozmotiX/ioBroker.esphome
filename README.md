@@ -216,6 +216,41 @@ During this process, states not part anymore of YAML configuration will be autom
 
 ![DevicesOK](admin/img/deviceTree.png)
 
+### YAML File Management
+
+The adapter provides a convenient interface for managing YAML configuration files directly from the admin UI. This feature allows you to upload, download, and manage YAML files that are stored in the ESPHome directory and can be used by the ESPHome Dashboard.
+
+#### Features
+
+- **Upload YAML Files**: Paste your YAML configuration content directly into the admin interface and upload it to the ESPHome directory
+- **View File List**: See all YAML files currently stored in the ESPHome directory with file size and modification date
+- **Download Files**: Retrieve the content of any YAML file for editing or backup
+- **Delete Files**: Remove YAML files that are no longer needed
+
+#### How to Use
+
+1. **Navigate to the "YAML Files" tab** in the adapter configuration
+2. **Upload a new file**:
+   - Enter a filename (must end with .yaml or .yml)
+   - Paste your YAML configuration content
+   - Click "Upload File"
+3. **Refresh the file list** to see all available YAML files
+4. **Download or delete files**:
+   - Enter the filename in the "Select file" field
+   - Click "Download File" to view the content or "Delete File" to remove it
+
+> [!NOTE]
+> Files are stored in the ESPHome directory: `/opt/iobroker/iobroker-data/esphome.<instance>/`
+> 
+> This is the same directory used by the ESPHome Dashboard, so files uploaded through the adapter
+> are immediately available in the Dashboard and vice versa.
+
+> [!TIP]
+> This feature is particularly useful when:
+> - You want to quickly edit configurations without accessing the server file system
+> - You need to backup or share device configurations
+> - You want to manage YAML files without running the full ESPHome Dashboard
+
 ### Example config
 Example config, for more examples see [The DrozmotiX Docu Page](https://DrozmotiX.github.io) or [ESPHome Documentation](https://esphome.io/index.html)
 
@@ -285,6 +320,7 @@ If you like my work, please consider a personal donation
     * (DutchmanNL) 
 -->
 ### __WORK IN PROGRESS__
+* (@copilot) **NEW**: YAML file management interface in admin UI for upload/download/delete operations (#369)
 * (@SimonFischer04) improve logging for #201
 * (@SimonFischer04) automatic migration from versions prior to ESPHomeDashboardUrl introduction (pre v0.6.1)
 * (@SimonFischer04) update pillow
