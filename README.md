@@ -286,6 +286,7 @@ If you like my work, please consider a personal donation
 -->
 ### __WORK IN PROGRESS__
 * (@SimonFischer04) improve logging for #201
+* (@SimonFischer04) automatic migration from versions prior to ESPHomeDashboardUrl introduction (pre v0.6.1)
 * (@SimonFischer04) update pillow
 * (@SimonFischer04) fix readme link to lib
 * (@SimonFischer04) fix connection status #311
@@ -321,7 +322,7 @@ If you like my work, please consider a personal donation
 ## License
 MIT License
 
-Copyright (c) 2023-2025 DutchmanNL <rdrozda86@gmail.com>
+Copyright (c) 2023-2026 DutchmanNL <rdrozda86@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
