@@ -43,10 +43,8 @@
     "@iobroker/dev-server": "^0.8.0",
     "@iobroker/eslint-config": "^2.2.0",
     "@iobroker/testing": "^5.2.2",
-    "@types/gulp": "^4.0.18",
     "@types/node": "^25.0.3",
     "eslint": "^9.39.2",
-    "gulp": "^4.0.2",
     "promisify": "~0.0.3",
     "typescript": "~5.9.3"
   },

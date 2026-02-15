@@ -58,7 +58,6 @@ ls -la [repo-root]:
 .github/                -- GitHub workflows and templates
 .gitignore
 admin/                  -- Admin UI files (HTML, CSS, translations)
-gulpfile.js            -- Gulp build tasks (translation management)
 io-package.json        -- ioBroker adapter configuration
 lib/                   -- Helper modules
   helpers.js           -- Device client management (113 lines)
