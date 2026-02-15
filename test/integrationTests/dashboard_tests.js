@@ -30,7 +30,8 @@ const TEST_TIMEOUT_MS = TOTAL_TIMEOUT_MS;
  * @param {number} port - Port number to check
  * @param {number} maxAttempts - Maximum number of attempts
  * @param {number} delayMs - Delay between attempts in milliseconds
- * @returns {Promise<boolean>} - True if dashboard is reachable
+ * @returns {Promise<boolean>} Promise that resolves to true if the dashboard becomes reachable within the allowed
+ * attempts; otherwise resolves to false after all attempts (including timeouts and connection errors) fail.
  */
 async function isDashboardReachable(port, maxAttempts, delayMs) {
   console.log(`Checking if dashboard is reachable on port ${port}...`);
