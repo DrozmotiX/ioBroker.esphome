@@ -752,16 +752,57 @@
 					"size": 2
 				},
 
-				// File upload input
-				"yamlFileUpload": {
+				// Upload information
+				"uploadYamlInfo": {
+					"newLine": true,
+					"type": "staticText",
+					"text": "lblUploadYamlInfo",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+
+				// Filename input
+				"uploadFilename": {
+					"newLine": true,
+					"type": "text",
+					"label": "lblUploadFilename",
+					"placeholder": "example.yaml",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 6,
+					"xl": 6
+				},
+
+				// YAML content input
+				"uploadContent": {
+					"newLine": true,
+					"type": "text",
+					"label": "lblUploadContent",
+					"multiline": true,
+					"rows": 10,
+					"placeholder": "esphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+
+				// Upload button
+				"uploadYamlButton": {
 					"newLine": true,
 					"type": "sendTo",
-					"label": "lblYamlFileUpload",
+					"label": "lblUploadYamlButton",
 					"command": "uploadYamlFile",
-					"data": {},
-					"variant": "outlined",
+					"jsonData": "{\"filename\": \"${data.uploadFilename}\", \"content\": \"${data.uploadContent}\"}",
+					"variant": "contained",
 					"showProcess": true,
 					"hidden": "!_alive",
+					"disabled": "!data.uploadFilename || !data.uploadContent",
 					"xs": 12,
 					"sm": 12,
 					"md": 6,

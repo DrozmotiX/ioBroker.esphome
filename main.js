@@ -2081,18 +2081,21 @@ class Esphome extends utils.Adapter {
         // Handle YAML file upload
         case "uploadYamlFile":
           {
-            // In a real implementation with file upload from jsonConfig,
-            // the file data would come from obj.message
-            // For now, we'll provide instructions
-            this.sendTo(
-              obj.from,
-              obj.command,
-              {
-                error:
-                  "File upload requires integration with admin file selector. Please use the ESPHome Dashboard to upload YAML files for now.",
-              },
-              obj.callback,
+            if (!obj.message || !obj.message.filename || !obj.message.content) {
+              this.sendTo(
+                obj.from,
+                obj.command,
+                { error: "Filename and content are required" },
+                obj.callback,
+              );
+              return;
+            }
+
+            const result = await this.uploadYamlFileToDirectory(
+              obj.message.filename,
+              obj.message.content,
             );
+            this.sendTo(obj.from, obj.command, result, obj.callback);
           }
           break;
 
