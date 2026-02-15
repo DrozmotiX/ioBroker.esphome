@@ -354,7 +354,7 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
-### __WORK IN PROGRESS__
+### 0.7.0-beta.0 (2026-02-15) - Improve Dashboard & allow file upload
 * (@copilot) **FIXED**: Invalid jsonConfig schema - removed unsupported `doNotSave` property from table elements
 * (@copilot) **NEW**: YAML file management interface in admin UI for upload/download/delete operations (#369)
 * (@SimonFischer04) improve logging for #201
@@ -387,9 +387,6 @@ If you like my work, please consider a personal donation
 * (DutchmanNL) Capability to automatically detect new devices added
 * (DutchmanNL) Ensures a compatible pillow version is used (10.0.1)
 * (SimonFischer04) Add pillow python package by default, resolves #188
-
-### 0.5.0-beta.4 (2023-11-15)
-* (DutchmanNL) Refactor memory caching of device data, resolves #189
 
 ## License
 MIT License

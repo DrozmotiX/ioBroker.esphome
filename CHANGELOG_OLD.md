@@ -1,4 +1,7 @@
 # Older changes
+## 0.5.0-beta.4 (2023-11-15)
+* (DutchmanNL) Refactor memory caching of device data, resolves #189
+
 ## 0.5.0-beta.1 (2023-11-12)
 * (DutchmanNL) Only show error messages once for unreachable devices
 
