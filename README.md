@@ -354,6 +354,9 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
+### 0.7.0-beta.1 (2026-02-15)
+* (@SimonFischer04) improve dashboard testing
+
 ### 0.7.0-beta.0 (2026-02-15) - Improve Dashboard & allow file upload
 * (@copilot) **FIXED**: Invalid jsonConfig schema - removed unsupported `doNotSave` property from table elements
 * (@copilot) **NEW**: YAML file management interface in admin UI for upload/download/delete operations (#369)
@@ -382,11 +385,6 @@ If you like my work, please consider a personal donation
 * (@ticaki) Optimize admin configuration interface
 * (@DutchmanNL) Optimize backend handling of device discovery
 * (@DutchmanNL) Capability to select ESPHome Dashboard version added, resolves #118
-
-### 0.5.0-beta.8 (2023-11-24)
-* (DutchmanNL) Capability to automatically detect new devices added
-* (DutchmanNL) Ensures a compatible pillow version is used (10.0.1)
-* (SimonFischer04) Add pillow python package by default, resolves #188
 
 ## License
 MIT License

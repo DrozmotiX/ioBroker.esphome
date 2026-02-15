@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "esphome",
-    "version": "0.7.0-beta.0",
+    "version": "0.7.0-beta.1",
     "news": {
+      "0.7.0-beta.1": {
+        "en": "improve dashboard testing",
+        "de": "dashboard testen",
+        "ru": "улучшить тестирование приборной панели",
+        "pt": "melhorar o teste do painel",
+        "nl": "verbeteren van dashboard testen",
+        "fr": "améliorer les essais de tableau de bord",
+        "it": "migliorare il test del cruscotto",
+        "es": "mejorar las pruebas de dashboard",
+        "pl": "poprawić testowanie płyt rozdzielczych",
+        "uk": "поліпшити тестування панелі приладів",
+        "zh-cn": "改进仪表板测试"
+      },
       "0.7.0-beta.0": {
         "en": "**FIXED**: Invalid jsonConfig schema - removed unsupported `doNotSave` property from table elements\n**NEW**: YAML file management interface in admin UI for upload/download/delete operations (#369)\nimprove logging for #201\nautomatic migration from versions prior to ESPHomeDashboardUrl introduction (pre v0.6.1)\nupdate pillow\nfix readme link to lib\nfix connection status #311\nremove unneeded node-fetch dependency",
         "de": "**FIXED**: Invalid jsonConfig Schema - entfernte nicht unterstützte `doNotSave` Eigenschaft von Tabellenelementen\n**NEW**: YAML-Dateiverwaltungsschnittstelle in admin UI für Upload/Download/Auslöschung (#369)\nverbesserung der protokollierung für #201\nautomatische Migration von Versionen vor der Einführung von ESPHomeDashboardUrl (pre v0.6.1)\nupdate kissen\nreadme link zu lib reparieren\nfix-verbindungsstatus #311\nnicht benötigte knoten-fetch-abhängigkeit entfernen",
@@ -80,19 +93,6 @@
         "pl": "Refactor memory cache of data (ang.)",
         "uk": "Рефакторне кешування пам'яті даних пристрою, вирішує #189",
         "zh-cn": "放映装置数据,解决第189号行动"
-      },
-      "0.5.0-beta.1": {
-        "en": "Only show error messages once for unreachable devices",
-        "de": "Fehlermeldungen nur einmal anzeigen für nicht erreichbare Geräte",
-        "ru": "Только покажите сообщения об ошибках один раз для недоступных устройств",
-        "pt": "Apenas mostre mensagens de erro uma vez por dispositivos não acessíveis",
-        "nl": "Laat maar één keer foutmeldingen zien voor onbereikbare apparaten",
-        "fr": "Seulement afficher des messages d'erreur une fois pour les périphériques inaccessibles",
-        "it": "Mostra solo messaggi di errore una volta per dispositivi non accessibili",
-        "es": "Sólo mostrar mensajes de error una vez para dispositivos no accesibles",
-        "pl": "Wykorzystuje tylko błędy po raz pierwszy dla nieodwracalnych urządzeń",
-        "uk": "Тільки показувати повідомлення про помилки після ненадійних пристроїв",
-        "zh-cn": "只有当不可行的装置发生错误信息时才显示错误信息。"
       }
     },
     "titleLang": {
