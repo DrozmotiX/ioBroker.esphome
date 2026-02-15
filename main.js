@@ -176,13 +176,25 @@ class Esphome extends utils.Adapter {
       }
 
       // Try to get all current available versions
-      try {
-        const response = await fetch(
-          "https://api.github.com/repos/esphome/esphome/releases",
+      // Skip API call in test mode to avoid rate limiting during CI runs
+      const isTestMode =
+        process.env.NODE_ENV === "test" ||
+        process.env.IOBROKER_TEST_MODE === "true";
+
+      if (!isTestMode) {
+        try {
+          const response = await fetch(
+            "https://api.github.com/repos/esphome/esphome/releases",
+          );
+          content = await response.json();
+        } catch (error) {
+          this.errorHandler(`[espHomeDashboard-VersionCall]`, error);
+        }
+      } else {
+        // In test mode, skip GitHub API call to avoid rate limiting
+        this.log.debug(
+          `Test mode detected - skipping GitHub API call for ESPHome versions`,
         );
-        content = await response.json();
-      } catch (error) {
-        this.errorHandler(`[espHomeDashboard-VersionCall]`, error);
       }
 
       // If the response was successful, write versions names to a memory array
