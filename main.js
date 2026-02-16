@@ -1876,11 +1876,23 @@ class Esphome extends utils.Adapter {
                   })
                   .slice(0, 20); // Limit to 20 most recent versions
 
-                for (const version of versions) {
-                  dropDownEntry.push({
-                    label: version,
-                    value: version,
-                  });
+                if (versions.length === 0) {
+                  this.log.warn(
+                    "No stable Pillow versions found on PyPI, using fallback versions",
+                  );
+                  for (const version of fallbackVersions) {
+                    dropDownEntry.push({
+                      label: version,
+                      value: version,
+                    });
+                  }
+                } else {
+                  for (const version of versions) {
+                    dropDownEntry.push({
+                      label: version,
+                      value: version,
+                    });
+                  }
                 }
               } else {
                 this.log.warn(
