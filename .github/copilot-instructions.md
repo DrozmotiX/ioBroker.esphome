@@ -128,10 +128,14 @@ tsconfig.json          -- TypeScript configuration
 - Optional ESPHome Dashboard integration via iframe
 
 ##### CI/CD Pipeline (.github/workflows/test-and-release.yml)
-- Runs on Node.js 18.x, 20.x, 22.x, 24.x
-- Tests on Ubuntu, Windows, macOS
-- Requires passing lint, package tests, and integration tests
-- Automated release to npm on version tags
+- Uses ioBroker official testing actions for consistency and best practices
+- Runs on Node.js 20.x, 22.x, 24.x
+- Tests on Ubuntu (ubuntu-latest)
+- Uses `ioBroker/testing-action-check@v1` for lint and package validation
+- Uses `ioBroker/testing-action-adapter@v1` for adapter tests
+- Uses `ioBroker/testing-action-deploy@v1` for automated releases with Trusted Publishing (OIDC)
+- Automated release to npm on version tags (requires NPM Trusted Publishing setup)
+- Includes Sentry release tracking
 
 ## Testing
 
@@ -772,6 +776,61 @@ onUnload(callback) {
 - Include proper JSDoc comments for public methods
 
 ## CI/CD and Testing Integration
+
+### ioBroker Official Testing Actions
+The repository uses ioBroker's official GitHub Actions for standardized CI/CD workflows:
+
+#### Testing Actions Overview
+- **ioBroker/testing-action-check@v1**: Performs lint checks and package validation
+- **ioBroker/testing-action-adapter@v1**: Runs adapter tests on multiple Node.js versions
+- **ioBroker/testing-action-deploy@v1**: Handles deployment to npm using Trusted Publishing (OIDC)
+
+#### Benefits of Official Actions
+- Consistent workflow structure across all ioBroker adapters
+- Built-in support for npm Trusted Publishing (no NPM_TOKEN needed)
+- Automated GitHub release creation
+- Integrated Sentry release tracking
+- Maintained by the ioBroker team
+
+#### Example Workflow Structure
+```yaml
+jobs:
+  check-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ioBroker/testing-action-check@v1
+        with:
+          node-version: '20.x'
+          lint: true
+
+  adapter-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x, 24.x]
+        os: [ubuntu-latest]
+    steps:
+      - uses: ioBroker/testing-action-adapter@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+          os: ${{ matrix.os }}
+
+  deploy:
+    needs: [check-and-lint, adapter-tests]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: ioBroker/testing-action-deploy@v1
+        with:
+          node-version: '20.x'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          sentry: true
+          sentry-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          sentry-project: "iobroker-esphome"
+          sentry-version-prefix: "iobroker.esphome"
+```
 
 ### GitHub Actions for API Testing
 For adapters with external API dependencies, implement separate CI/CD jobs:
