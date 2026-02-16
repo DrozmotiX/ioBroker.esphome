@@ -58,5 +58,11 @@
     "lbl_addUpdateDevice": "ADICIONAR/Modificar Dispositivos",
     "maxRetry": "Tentativa máxima de conexão antes de considerar o dispositivo como off-line",
     "newDevicesHeader": "Dispositivos recém-descobertos, forneça credenciais!",
-    "reConInterval": "Configuração entre tentativas do ioBroker para reconectar este dispositivo"
+    "reConInterval": "Configuração entre tentativas do ioBroker para reconectar este dispositivo",
+    "lblClearAutopyCache": "Clear Autopy Cache",
+    "hlpClearAutopyCache": "Clear the autopy cache directory. This can help resolve issues with the ESPHome Dashboard not loading properly.",
+    "cnfClearCacheText": "Are you sure you want to clear the autopy cache? This will remove all cached Python environments and ESPHome installations.",
+    "cnfClearCacheTitle": "Confirm cache clearing",
+    "cnfClearCacheOk": "Clear Cache",
+    "cnfClearCacheCancel": "Cancel"
 }

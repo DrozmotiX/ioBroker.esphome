@@ -354,7 +354,8 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
-### __WORK IN PROGRESS__
+### __WORK IN PROGRESS__ - add capability for fans & clean cache
+* (@copilot) **NEW**: Add "Clear Autopy Cache" button in ESPHome Dashboard configuration tab to resolve dashboard loading issues (#209)
 * (DutchmanNL) **FIXED**: Fan component not working #205
 
 ### 0.7.0 (2026-02-16) - Add support for Lock entity & improve dashboard testing

@@ -15,6 +15,8 @@ const stateAttr = require(`${__dirname}/lib/stateAttr.js`); // Load attribute li
 const disableSentry = false; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
 const fs = require("fs");
+const path = require("path");
+const os = require("os");
 const { clearTimeout } = require("timers");
 const resetTimers = {}; // Memory allocation for all running timers
 let autodiscovery, dashboardProcess, createConfigStates, discovery;
@@ -87,7 +89,7 @@ class Esphome extends utils.Adapter {
       }
 
       // Create & Subscribe to button handling offline Device cleanup
-      this.extendObject("esphome.0.info.deviceCleanup", {
+      this.extendObject("info.deviceCleanup", {
         type: "state",
         common: {
           role: "button",
@@ -98,7 +100,21 @@ class Esphome extends utils.Adapter {
           def: false,
         },
       });
-      this.subscribeStates("esphome.0.info.deviceCleanup");
+      this.subscribeStates("info.deviceCleanup");
+
+      // Create & Subscribe to button for clearing autopy cache
+      this.extendObject("info.clearAutopyCache", {
+        type: "state",
+        common: {
+          role: "button",
+          name: "Clear Autopy Cache",
+          type: "boolean",
+          read: false,
+          write: true,
+          def: false,
+        },
+      });
+      this.subscribeStates("info.clearAutopyCache");
     } catch (e) {
       this.log.error(`[Adapter start] Fatal error occurred ${e}`);
     }
@@ -2036,9 +2052,46 @@ class Esphome extends utils.Adapter {
             this.sendTo(obj.from, obj.command, result, obj.callback);
           }
           break;
+
+        // Handle clearing autopy cache
+        case "clearAutopyCache":
+          {
+            await this.clearAutopyCache();
+            this.sendTo(
+              obj.from,
+              obj.command,
+              { success: true, message: "Cache clearing triggered" },
+              obj.callback,
+            );
+          }
+          break;
       }
     } catch (error) {
       this.errorHandler(`[onMessage]`, error);
+    }
+  }
+
+  /**
+   * Clear the autopy cache directory
+   */
+  async clearAutopyCache() {
+    try {
+      const homeDir = os.homedir();
+      const autopyCache = path.join(homeDir, ".cache", "autopy");
+
+      this.log.info(`Attempting to clear autopy cache at: ${autopyCache}`);
+
+      // Check if directory exists
+      if (fs.existsSync(autopyCache)) {
+        // Use recursive removal
+        fs.rmSync(autopyCache, { recursive: true, force: true });
+        this.log.info("Autopy cache cleared successfully");
+      } else {
+        this.log.info("Autopy cache directory does not exist");
+      }
+    } catch (error) {
+      this.log.error(`Error clearing autopy cache: ${error.message}`);
+      throw error;
     }
   }
 
@@ -2093,6 +2146,13 @@ class Esphome extends utils.Adapter {
           // Verify if trigger is related to device-cleanup
           if (id.split(".")[3] === "deviceCleanup") {
             await this.offlineDeviceCleanup();
+            return;
+          }
+
+          // Verify if trigger is related to clearing autopy cache
+          if (id.split(".")[3] === "clearAutopyCache") {
+            await this.clearAutopyCache();
+            this.setState(id, { val: false, ack: true });
             return;
           }
         } catch {

@@ -58,5 +58,11 @@
     "lbl_addUpdateDevice": "添加/修改设备",
     "maxRetry": "将设备视为离线之前的最大连接重试次数",
     "newDevicesHeader": "新发现的设备，请提供凭据！",
-    "reConInterval": "ioBroker 尝试重新连接此设备之间的设置"
+    "reConInterval": "ioBroker 尝试重新连接此设备之间的设置",
+    "lblClearAutopyCache": "Clear Autopy Cache",
+    "hlpClearAutopyCache": "Clear the autopy cache directory. This can help resolve issues with the ESPHome Dashboard not loading properly.",
+    "cnfClearCacheText": "Are you sure you want to clear the autopy cache? This will remove all cached Python environments and ESPHome installations.",
+    "cnfClearCacheTitle": "Confirm cache clearing",
+    "cnfClearCacheOk": "Clear Cache",
+    "cnfClearCacheCancel": "Cancel"
 }

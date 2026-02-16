@@ -58,5 +58,11 @@
     "cnfDeleteYamlText": "Are you sure you want to delete this file?",
     "cnfDeleteYamlTitle": "Confirm file deletion",
     "cnfDeleteYamlOk": "Delete",
-    "cnfDeleteYamlCancel": "Cancel"
+    "cnfDeleteYamlCancel": "Cancel",
+    "lblClearAutopyCache": "Clear Autopy Cache",
+    "hlpClearAutopyCache": "Clear the autopy cache directory. This can help resolve issues with the ESPHome Dashboard not loading properly.",
+    "cnfClearCacheText": "Are you sure you want to clear the autopy cache? This will remove all cached Python environments and ESPHome installations.",
+    "cnfClearCacheTitle": "Confirm cache clearing",
+    "cnfClearCacheOk": "Clear Cache",
+    "cnfClearCacheCancel": "Cancel"
 }
