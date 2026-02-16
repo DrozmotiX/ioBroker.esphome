@@ -2079,9 +2079,7 @@ class Esphome extends utils.Adapter {
       const homeDir = os.homedir();
       const autopyCache = path.join(homeDir, ".cache", "autopy");
 
-      this.log.info(
-        `Attempting to clear autopy cache at: ${autopyCache}`,
-      );
+      this.log.info(`Attempting to clear autopy cache at: ${autopyCache}`);
 
       // Check if directory exists
       if (fs.existsSync(autopyCache)) {
