@@ -181,6 +181,7 @@
   ],
   "native": {
     "ESPHomeDashboardVersion": "Always last available",
+    "PillowVersion": "Always last available",
     "reconnectInterval": 30,
     "apiPass": "",
     "encryptionKey": "",

@@ -274,6 +274,21 @@ class Esphome extends utils.Adapter {
         useDashBoardVersion = lastUsed;
       }
 
+      // Determine Pillow version to use
+      let usePillowVersion = "11.3.0"; // Default version
+
+      // Check if user has configured a specific pillow version
+      if (
+        this.config.PillowVersion &&
+        this.config.PillowVersion !== "" &&
+        this.config.PillowVersion !== "Always last available"
+      ) {
+        usePillowVersion = this.config.PillowVersion;
+      }
+      // If "Always last available" is selected, keep the default latest version
+
+      this.log.debug(`Using Pillow version: ${usePillowVersion}`);
+
       // Start Dashboard Process
       if (this.config.ESPHomeDashboardEnabled) {
         this.log.info(
@@ -290,7 +305,7 @@ class Esphome extends utils.Adapter {
               pythonVersion: "3.13.2", // Use any Python 3.13.x version.
               requirements: [
                 { name: "esphome", version: `==${useDashBoardVersion}` },
-                { name: "pillow", version: "==11.3.0" },
+                { name: "pillow", version: `==${usePillowVersion}` },
               ], // Use latest esphome
             });
           } catch (error) {
@@ -1810,6 +1825,92 @@ class Esphome extends utils.Adapter {
                 label: dashboardVersions[versions],
                 value: dashboardVersions[versions],
               });
+            }
+
+            this.sendTo(obj.from, obj.command, dropDownEntry, obj.callback);
+          }
+          break;
+
+        // Front End message handler to load Pillow version dropdown with available versions
+        case "getPillowVersion":
+          {
+            const dropDownEntry = [];
+            dropDownEntry.push("Always last available");
+
+            // Fetch available Pillow versions from PyPI
+            try {
+              const response = await fetch("https://pypi.org/pypi/pillow/json");
+              if (response.ok) {
+                const data = await response.json();
+                const versions = Object.keys(data.releases)
+                  .filter(
+                    (v) =>
+                      !v.includes("a") && !v.includes("b") && !v.includes("rc"),
+                  ) // Filter out alpha/beta/rc versions
+                  .sort((a, b) => {
+                    // Sort versions in descending order (newest first)
+                    const aParts = a.split(".").map(Number);
+                    const bParts = b.split(".").map(Number);
+                    for (
+                      let i = 0;
+                      i < Math.max(aParts.length, bParts.length);
+                      i++
+                    ) {
+                      const aVal = aParts[i] || 0;
+                      const bVal = bParts[i] || 0;
+                      if (aVal !== bVal) {
+                        return bVal - aVal;
+                      }
+                    }
+                    return 0;
+                  })
+                  .slice(0, 20); // Limit to 20 most recent versions
+
+                for (const version of versions) {
+                  dropDownEntry.push({
+                    label: version,
+                    value: version,
+                  });
+                }
+              } else {
+                this.log.warn(
+                  `Unable to fetch Pillow versions from PyPI: ${response.status}`,
+                );
+                // Add some common fallback versions
+                const fallbackVersions = [
+                  "11.3.0",
+                  "11.2.0",
+                  "11.1.0",
+                  "11.0.0",
+                  "10.4.0",
+                  "10.3.0",
+                ];
+                for (const version of fallbackVersions) {
+                  dropDownEntry.push({
+                    label: version,
+                    value: version,
+                  });
+                }
+              }
+            } catch (error) {
+              this.log.error(
+                `Error fetching Pillow versions: ${error.message}`,
+              );
+              // Add fallback versions
+              const fallbackVersions = [
+                "11.3.0",
+                "11.2.0",
+                "11.1.0",
+                "11.0.0",
+                "10.4.0",
+                "10.3.0",
+              ];
+              for (const version of fallbackVersions) {
+                dropDownEntry.push({
+                  label: version,
+                  value: version,
+                });
+              }
             }
 
             this.sendTo(obj.from, obj.command, dropDownEntry, obj.callback);

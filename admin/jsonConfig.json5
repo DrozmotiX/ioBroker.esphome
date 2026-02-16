@@ -559,6 +559,18 @@
 					"command": "getESPHomeDashboardVersion",
 					"jsonData": "{ \"service\": \"${data.deviceInputIP}\" }"
 				},
+				"PillowVersion": {
+					"type": "autocompleteSendTo",
+					"xs": 12,
+					"sm": 6,
+					"md": 6,
+					"lg": 6,
+					"xl": 6,
+					"label": "lblPillowVersion",
+					"help": "hlpPillowVersion",
+					"command": "getPillowVersion",
+					"jsonData": "{ \"service\": \"${data.deviceInputIP}\" }"
+				},
 				"ESPHomeDashboardIP": {
 					"type": "autocompleteSendTo",
 					"newLine": true,
