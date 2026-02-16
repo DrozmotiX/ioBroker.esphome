@@ -31,7 +31,7 @@
     "lblDiscoveryListeningAddress": "Anhörungsadresse",
     "lblDownloadYamlButton": "Download File",
     "lblESPHomeDashboardVersion": "ESPHome Dashboard-Version",
-    "lblPillowVersion": "Pillow version",
+    "lblPillowVersion": "Pillow-Version",
     "lblESPHomeIP": "IP-Adresse, unter der ESPHome Dashboard zur Integration in ioBroker Admin ausgeführt wird",
     "lblESPHomePort": "Port des ESPHome-Dashboards",
     "lblEnableESPHome": "Sie können ESPHome Dashboard entweder separat ausführen oder die Option unten aktivieren, um es nativ in ioBroker auszuführen",
