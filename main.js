@@ -276,116 +276,9 @@ class Esphome extends utils.Adapter {
       }
 
       // Fetch Pillow versions from PyPI and cache them
-      try {
-        const response = await fetch("https://pypi.org/pypi/pillow/json");
-        if (response.ok) {
-          const data = await response.json();
-          const versions = Object.keys(data.releases)
-            .filter(
-              (v) => !v.includes("a") && !v.includes("b") && !v.includes("rc"),
-            ) // Filter out alpha/beta/rc versions
-            .sort((a, b) => {
-              // Sort versions in descending order (newest first)
-              const aParts = a.split(".").map(Number);
-              const bParts = b.split(".").map(Number);
-              for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
-                const aVal = aParts[i] || 0;
-                const bVal = bParts[i] || 0;
-                if (aVal !== bVal) {
-                  return bVal - aVal;
-                }
-              }
-              return 0;
-            })
-            .slice(0, 20); // Limit to 20 most recent versions
-
-          // Cache the versions
-          await this.stateSetCreate(
-            `_ESPHomeDashboard.pillowVersionCache`,
-            "pillowVersionCache",
-            JSON.stringify(versions),
-          );
-
-          // Store in memory array
-          pillowVersions.length = 0; // Clear array
-          pillowVersions.push(...versions);
-
-          if (versions.length > 0) {
-            await this.stateSetCreate(
-              `_ESPHomeDashboard.newestPillowVersion`,
-              "newestPillowVersion",
-              versions[0],
-            );
-            this.log.debug(
-              `Fetched ${versions.length} Pillow versions from PyPI, newest: ${versions[0]}`,
-            );
-          }
-        } else {
-          this.log.warn(
-            `Unable to fetch Pillow versions from PyPI: ${response.status}, using cached values`,
-          );
-          // Try to load from cache
-          const cachedPillowVersions = await this.getStateAsync(
-            `_ESPHomeDashboard.pillowVersionCache`,
-          );
-          if (cachedPillowVersions && cachedPillowVersions.val) {
-            const versions = JSON.parse(cachedPillowVersions.val);
-            pillowVersions.length = 0;
-            pillowVersions.push(...versions);
-            this.log.info(
-              `Loaded ${pillowVersions.length} Pillow versions from cache`,
-            );
-          }
-        }
-      } catch (error) {
-        this.log.warn(
-          `Error fetching Pillow versions from PyPI: ${error.message}, using cached or fallback versions`,
-        );
-        // Try to load from cache
-        try {
-          const cachedPillowVersions = await this.getStateAsync(
-            `_ESPHomeDashboard.pillowVersionCache`,
-          );
-          if (cachedPillowVersions && cachedPillowVersions.val) {
-            const versions = JSON.parse(cachedPillowVersions.val);
-            pillowVersions.length = 0;
-            pillowVersions.push(...versions);
-            this.log.info(
-              `Loaded ${pillowVersions.length} Pillow versions from cache`,
-            );
-          } else {
-            // Use fallback versions if cache is also not available
-            const fallbackVersions = [
-              "11.3.0",
-              "11.2.0",
-              "11.1.0",
-              "11.0.0",
-              "10.4.0",
-              "10.3.0",
-            ];
-            pillowVersions.length = 0;
-            pillowVersions.push(...fallbackVersions);
-            this.log.info(
-              `Using ${fallbackVersions.length} fallback Pillow versions`,
-            );
-          }
-        } catch {
-          // If cache read fails, use fallback
-          const fallbackVersions = [
-            "11.3.0",
-            "11.2.0",
-            "11.1.0",
-            "11.0.0",
-            "10.4.0",
-            "10.3.0",
-          ];
-          pillowVersions.length = 0;
-          pillowVersions.push(...fallbackVersions);
-          this.log.info(
-            `Using ${fallbackVersions.length} fallback Pillow versions`,
-          );
-        }
-      }
+      const versions = await this.fetchAndCachePillowVersions();
+      pillowVersions.length = 0; // Clear array
+      pillowVersions.push(...versions);
 
       // Determine Pillow version to use
       let usePillowVersion = "11.3.0"; // Default version
@@ -2236,6 +2129,94 @@ class Esphome extends utils.Adapter {
     } catch (error) {
       this.errorHandler(`[onMessage]`, error);
     }
+  }
+
+  /**
+   * Fetch Pillow versions from PyPI and cache them
+   *
+   * @returns {Promise<string[]>} Array of available Pillow versions
+   */
+  async fetchAndCachePillowVersions() {
+    const fallbackVersions = [
+      "11.3.0",
+      "11.2.0",
+      "11.1.0",
+      "11.0.0",
+      "10.4.0",
+      "10.3.0",
+    ];
+
+    try {
+      const response = await fetch("https://pypi.org/pypi/pillow/json");
+      if (response.ok) {
+        const data = await response.json();
+        const versions = Object.keys(data.releases)
+          .filter(
+            (v) => !v.includes("a") && !v.includes("b") && !v.includes("rc"),
+          ) // Filter out alpha/beta/rc versions
+          .sort((a, b) => {
+            // Sort versions in descending order (newest first)
+            const aParts = a.split(".").map(Number);
+            const bParts = b.split(".").map(Number);
+            for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+              const aVal = aParts[i] || 0;
+              const bVal = bParts[i] || 0;
+              if (aVal !== bVal) {
+                return bVal - aVal;
+              }
+            }
+            return 0;
+          })
+          .slice(0, 20); // Limit to 20 most recent versions
+
+        if (versions.length > 0) {
+          // Cache the versions
+          await this.stateSetCreate(
+            `_ESPHomeDashboard.pillowVersionCache`,
+            "pillowVersionCache",
+            JSON.stringify(versions),
+          );
+          await this.stateSetCreate(
+            `_ESPHomeDashboard.newestPillowVersion`,
+            "newestPillowVersion",
+            versions[0],
+          );
+          this.log.debug(
+            `Fetched ${versions.length} Pillow versions from PyPI, newest: ${versions[0]}`,
+          );
+          return versions;
+        }
+        this.log.warn(
+          "No stable Pillow versions found on PyPI, using cached or fallback versions",
+        );
+      } else {
+        this.log.warn(
+          `Unable to fetch Pillow versions from PyPI: ${response.status}, using cached values`,
+        );
+      }
+    } catch (error) {
+      this.log.warn(
+        `Error fetching Pillow versions from PyPI: ${error.message}, using cached or fallback versions`,
+      );
+    }
+
+    // Try to load from cache
+    try {
+      const cachedPillowVersions = await this.getStateAsync(
+        `_ESPHomeDashboard.pillowVersionCache`,
+      );
+      if (cachedPillowVersions && cachedPillowVersions.val) {
+        const versions = JSON.parse(cachedPillowVersions.val);
+        this.log.info(`Loaded ${versions.length} Pillow versions from cache`);
+        return versions;
+      }
+    } catch {
+      // Cache read failed, will use fallback
+    }
+
+    // Use fallback versions
+    this.log.info(`Using ${fallbackVersions.length} fallback Pillow versions`);
+    return fallbackVersions;
   }
 
   /**
