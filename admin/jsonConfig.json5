@@ -626,6 +626,7 @@
 					"variant": "outlined",
 					"color": "primary",
 					"showProcess": true,
+					"hidden": "!_alive",
 					"command": "clearAutopyCache",
 					"jsonData": "{}",
 					"xs": 12,
