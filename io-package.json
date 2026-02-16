@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "esphome",
-    "version": "0.7.0-beta.1",
+    "version": "0.7.0",
     "news": {
+      "0.7.0": {
+        "en": "**NEW**: Add support for Lock entity type - Lock devices now properly display state and control options #353\n**NEW**: YAML file management interface in admin UI for upload/download/delete operations (#369)\nimprove dashboard testing\nimprove logging for #201\nupdate pillow\nfix readme link to lib\nfix connection status #311\nremove unneeded node-fetch dependency\nautomatic migration from versions prior to ESPHomeDashboardUrl introduction (pre v0.6.1)\n**FIXED**: Invalid jsonConfig schema - removed unsupported `doNotSave` property from table elements",
+        "de": "**NEW**: Unterstützung für Lock-Entity-Typ hinzufügen - Lock-Geräte jetzt richtig anzeigen Zustand und Steueroptionen #353\n**NEW**: YAML-Dateiverwaltungsschnittstelle in admin UI für Upload/Download/Auslöschung (#369)\ndashboard testen\nverbesserung der protokollierung für #201\nupdate kissen\nreadme link zu lib reparieren\nfix-verbindungsstatus #311\nnicht benötigte knoten-fetch-abhängigkeit entfernen\nautomatische Migration von Versionen vor der Einführung von ESPHomeDashboardUrl (pre v0.6.1)\n**FIXED**: Invalid jsonConfig Schema - entfernte nicht unterstützte `doNotSave` Eigenschaft von Tabellenelementen",
+        "ru": "**NEW**: Добавить поддержку типа объекта блокировки - устройства блокировки теперь должным образом отображают параметры состояния и управления #353\n**NEW**: интерфейс управления файлами YAML в интерфейсе администратора для операций загрузки/загрузки/удаления (#369)\nулучшить тестирование приборной панели\nулучшение регистрации для #201\nобновление подушки\nобсуждение readme link to lib\nстатус подключения #311\nустранение ненужной зависимости от узла\nавтоматическая миграция с версий до внедрения ESPHomeDashboardUrl (pre v0.6.1)\n** FIXED**: Недействительная схема jsonConfig - удалено неподдерживаемое свойство \"doNotSave\" из элементов таблицы",
+        "pt": "**NOVO**: Adicionar suporte para o tipo de entidade Lock - Dispositivos Lock agora exibem corretamente as opções de estado e controle #353\n**NOVO**: Interface de gerenciamento de arquivos YAML na interface de administração UI para operações de upload/download/delete (#369)\nmelhorar o teste do painel\nmelhorar o registro para #201\natualizar almofada\ncorrigir o link readme para a lib\ncorrigir o estado da ligação # 311\nremover a dependência de busca de nó desnecessária\nmigração automática de versões anteriores à introdução ESPHomeDashboardUrl (pré v0.6.1)\n**FIXED**: Esquema inválido do jsonConfig - propriedade `doNotSave` não suportada",
+        "nl": "**NEW**: Voeg ondersteuning toe voor het type Lock-entiteit - Vergrendel apparaten nu correct de status en controle opties #353\n**NIEUW**: YAML file management interface in admin UI voor upload/download/delete operaties (#369)\nverbeteren van dashboard testen\nverbeteren logging voor #201\nupdate kussen\nrepareren readme link naar lib\nfix verbindingsstatus #311\nverwijder ongewenste node-fetch afhankelijkheid\nautomatische migratie van versies voorafgaand aan ESPHomeDashboardUrl introductie (pre v0.6.1)\n** VAST**: Ongeldig jsonConfig schema - verwijderde niet-ondersteunde eigenschap van tabelelementen",
+        "fr": "**NOUVEAU**: Ajout de la prise en charge du type d'entité de verrouillage - Verrouiller les appareils maintenant correctement afficher l'état et les options de contrôle #353\n**NOUVEAU**: Interface de gestion de fichiers YAML dans l'interface utilisateur admin pour les opérations de téléchargement/téléchargement/effacement (#369)\naméliorer les essais de tableau de bord\naméliorer l'enregistrement pour #201\nmettre à jour l'oreiller\ncorriger le lien readme vers lib\nfixer l'état de connexion #311\nsupprimer la dépendance inutile des nœuds\nmigration automatique des versions avant l'introduction de ESPHomeDashboardUrl (pre v0.6.1)\n**FIXED**: Schéma jsonConfig non valide - supprimé la propriété `doNotSave` non supportée des éléments de table",
+        "it": "**NEW**: Aggiungi supporto per tipo di entità Lock - Dispositivi di blocco ora correttamente visualizzano le opzioni di stato e controllo #353\n**NEW**: interfaccia di gestione dei file YAML nell'interfaccia di amministrazione UI per operazioni di upload/download/delete (#369)\nmigliorare il test del cruscotto\nmigliorare logging per #201\naggiornamento cuscino\ncorrezione link di lettura per lib\nstato di connessione di correzione #311\nrimuovere la dipendenza da nodo-fetch non necessaria\nmigrazione automatica dalle versioni precedenti l'introduzione di ESPHomeDashboardUrl (pre v0.6.1)\n**FIXED**: Invalid jsonConfig schema - rimosso `doNotSave` immobili da elementi da tavolo",
+        "es": "**NEW**: Añadir soporte para el tipo de entidad de bloqueo - Los dispositivos de bloqueo ahora muestran correctamente las opciones de estado y control #353\n**NEW**: Interfaz de gestión de archivos YAML en admin UI para operaciones de carga/descarga/delete (#369)\nmejorar las pruebas de dashboard\nmejorar el registro para #201\nactualización almohada\narreglar el vínculo readme con la lib\nestado de conexión de fijación #311\neliminar la dependencia sin necesidad\nmigración automática desde versiones anteriores a ESPHomeDashboardIntroducción del usuario (pre v0.6.1)\n**FIXED**: Invalid jsonConfig schema - eliminó propiedad no apoyada `doNotSave` de elementos de mesa",
+        "pl": "* *NOWOŚĆ* *: Dodaj wsparcie dla typu podmiotu blokującego - Urządzenia blokujące teraz poprawnie wyświetlają stan i opcje sterowania # 353 \n* *NOWOŚĆ* *: Interfejs do zarządzania plikami YAML w UI administratora do wysyłania / pobierania / usuwania operacji (# 369) \npoprawić testowanie płyt rozdzielczych\npoprawić logowanie dla # 201\naktualizacji poduszki\nfix readme link do lib\nustaw status połączenia # 311\nusuń niepotrzebną zależność node-get\nautomatyczna migracja z wersji przed wprowadzeniem ESPHOmeDashboardUrl (pre v0.6.1)\n* *FIXED* *: Nieprawidłowy schemat jsonConfig - usunięte nieobsługiwane właściwości 'doNotSave' z elementów tabeli ",
+        "uk": "**NEW**: Додати підтримку типу Lock - Lock devices тепер правильно відображати стан та параметри контролю #353\n**NEW**: Інтерфейс керування файлами YAML в адмін UI для завантаження / завантаження / видалення операцій (#369)\nполіпшити тестування панелі приладів\nпокращити залогів на #201\nоновлення подушки\nвиправити посилання для читання\nстатус на сервери\nвидалити невидиму залежність від вузла\nавтоматична міграція з версій до ESPHomeDashboardUrl введення (pre v0.6.1)\n**FIXED**: Invalid jsonConfig schema - вилучено непідтримуваний `doNotSave` майно з елементів таблиці",
+        "zh-cn": "** NEW**: 添加对 Lock 实体类型的支持 - 锁定设备现在正确显示状态和控制选项 # 353\n**NEW**:用于上传/下载/删除操作的管理员UI中的YAML文件管理接口(# 369)\n改进仪表板测试\n改进201号记录\n更新枕头\n固定读取链接到 lib\n固定连接状态 # 311\n删除不需要的节点依赖\n从ESPHomeDashboardUrl引入前的版本自动迁移(pre v0.6.1)\n** FIXED**: 无效的jsonConfig schema - 从表格元素中删除未支持的“不拯救”属性"
+      },
       "0.7.0-beta.1": {
         "en": "improve dashboard testing",
         "de": "dashboard testen",
@@ -80,19 +93,6 @@
         "pl": "Umożliwość automatycznego wykrywania nowych urządzeń dodano do dyspozycji nowe urządzenia\nWykorzystywana wersja poduszki jest używana (10,0,1)\nAddd pillow python domyślnie rozwiązał pakiet #188",
         "uk": "Можливість автоматично визначати нові пристрої\nЗабезпечує сумісну подушку версії (10.0.1)\nДодати подушку python пакет за замовчуванням, вирішує #188",
         "zh-cn": "自动发现新装置的能力\n确保采用兼容的导游版本(10.0.1)\n第188号行动"
-      },
-      "0.5.0-beta.4": {
-        "en": "Refactor memory caching of device data, resolves #189",
-        "de": "Refactor-Speicher Caching von Gerätedaten, löst #189",
-        "ru": "Рефакторная память кэширования данных устройства, решает #189",
-        "pt": "Cache de memória refator dos dados do dispositivo, resolve #189",
-        "nl": "Refactor geheugen caching of apparatuur, resoluties 189",
-        "fr": "Rémunérer le cache mémoire des données de périphérique, résout #189",
-        "it": "Cache di memoria refactor dei dati del dispositivo, risolve #189",
-        "es": "Refactor memoria caching de datos del dispositivo, resuelve #189",
-        "pl": "Refactor memory cache of data (ang.)",
-        "uk": "Рефакторне кешування пам'яті даних пристрою, вирішує #189",
-        "zh-cn": "放映装置数据,解决第189号行动"
       }
     },
     "titleLang": {

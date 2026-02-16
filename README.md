@@ -354,21 +354,17 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
-### __WORK IN PROGRESS__
+### 0.7.0 (2026-02-16) - Add support for Lock entity & improve dashboard testing
 * (@copilot) **NEW**: Add support for Lock entity type - Lock devices now properly display state and control options #353
-
-### 0.7.0-beta.1 (2026-02-15)
-* (@SimonFischer04) improve dashboard testing
-
-### 0.7.0-beta.0 (2026-02-15) - Improve Dashboard & allow file upload
-* (@copilot) **FIXED**: Invalid jsonConfig schema - removed unsupported `doNotSave` property from table elements
 * (@copilot) **NEW**: YAML file management interface in admin UI for upload/download/delete operations (#369)
+* (@SimonFischer04) improve dashboard testing
 * (@SimonFischer04) improve logging for #201
-* (@SimonFischer04) automatic migration from versions prior to ESPHomeDashboardUrl introduction (pre v0.6.1)
 * (@SimonFischer04) update pillow
 * (@SimonFischer04) fix readme link to lib
 * (@SimonFischer04) fix connection status #311
 * (@SimonFischer04) remove unneeded node-fetch dependency
+* (@SimonFischer04) automatic migration from versions prior to ESPHomeDashboardUrl introduction (pre v0.6.1)
+* (@copilot) **FIXED**: Invalid jsonConfig schema - removed unsupported `doNotSave` property from table elements
 
 ### 0.6.3 (2025-09-16)
 * (@DutchmanNL) Fixed an admin error related to `jsonConfig` validation. #287
@@ -388,6 +384,11 @@ If you like my work, please consider a personal donation
 * (@ticaki) Optimize admin configuration interface
 * (@DutchmanNL) Optimize backend handling of device discovery
 * (@DutchmanNL) Capability to select ESPHome Dashboard version added, resolves #118
+
+### 0.5.0-beta.8 (2023-11-24)
+* (DutchmanNL) Capability to automatically detect new devices added
+* (DutchmanNL) Ensures a compatible pillow version is used (10.0.1)
+* (SimonFischer04) Add pillow python package by default, resolves #188
 
 ## License
 MIT License
