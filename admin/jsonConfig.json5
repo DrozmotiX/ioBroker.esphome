@@ -556,8 +556,18 @@
 					"xl": 6,
 					"label": "lblESPHomeDashboardVersion",
 					"help": "hlpESPHomeDashboardVersion",
-					"command": "getESPHomeDashboardVersion",
-					"jsonData": "{ \"service\": \"${data.deviceInputIP}\" }"
+					"command": "getESPHomeDashboardVersion"
+				},
+				"PillowVersion": {
+					"type": "autocompleteSendTo",
+					"xs": 12,
+					"sm": 6,
+					"md": 6,
+					"lg": 6,
+					"xl": 6,
+					"label": "lblPillowVersion",
+					"help": "hlpPillowVersion",
+					"command": "getPillowVersion"
 				},
 				"ESPHomeDashboardIP": {
 					"type": "autocompleteSendTo",

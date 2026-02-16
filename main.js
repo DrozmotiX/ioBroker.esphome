@@ -23,6 +23,7 @@ let autodiscovery, dashboardProcess, createConfigStates, discovery;
 const clientDetails = {}; // Memory cache of all devices and their connection status
 const newlyDiscoveredClient = {}; // Memory cache of all newly discovered devices and their connection status
 const dashboardVersions = [];
+const pillowVersions = []; // Memory cache for available Pillow versions
 class Esphome extends utils.Adapter {
   /**
    * @param {Partial<utils.AdapterOptions>} [options] - Adapter configuration options
@@ -274,6 +275,26 @@ class Esphome extends utils.Adapter {
         useDashBoardVersion = lastUsed;
       }
 
+      // Fetch Pillow versions from PyPI and cache them
+      const versions = await this.fetchAndCachePillowVersions();
+      pillowVersions.length = 0; // Clear array
+      pillowVersions.push(...versions);
+
+      // Determine Pillow version to use
+      let usePillowVersion = "11.3.0"; // Default version
+
+      // Check if user has configured a specific pillow version
+      if (
+        this.config.PillowVersion &&
+        this.config.PillowVersion !== "" &&
+        this.config.PillowVersion !== "Always last available"
+      ) {
+        usePillowVersion = this.config.PillowVersion;
+      }
+      // If "Always last available" is selected, keep the default latest version
+
+      this.log.debug(`Using Pillow version: ${usePillowVersion}`);
+
       // Start Dashboard Process
       if (this.config.ESPHomeDashboardEnabled) {
         this.log.info(
@@ -290,7 +311,7 @@ class Esphome extends utils.Adapter {
               pythonVersion: "3.13.2", // Use any Python 3.13.x version.
               requirements: [
                 { name: "esphome", version: `==${useDashBoardVersion}` },
-                { name: "pillow", version: "==11.3.0" },
+                { name: "pillow", version: `==${usePillowVersion}` },
               ], // Use latest esphome
             });
           } catch (error) {
@@ -1816,6 +1837,45 @@ class Esphome extends utils.Adapter {
           }
           break;
 
+        // Front End message handler to load Pillow version dropdown with available versions
+        case "getPillowVersion":
+          {
+            const dropDownEntry = [];
+            dropDownEntry.push("Always last available");
+
+            // Use cached versions from memory
+            if (pillowVersions.length > 0) {
+              for (const version of pillowVersions) {
+                dropDownEntry.push({
+                  label: version,
+                  value: version,
+                });
+              }
+            } else {
+              // Fallback versions if cache is empty
+              this.log.info(
+                "No cached Pillow versions available, using fallback versions",
+              );
+              const fallbackVersions = [
+                "11.3.0",
+                "11.2.0",
+                "11.1.0",
+                "11.0.0",
+                "10.4.0",
+                "10.3.0",
+              ];
+              for (const version of fallbackVersions) {
+                dropDownEntry.push({
+                  label: version,
+                  value: version,
+                });
+              }
+            }
+
+            this.sendTo(obj.from, obj.command, dropDownEntry, obj.callback);
+          }
+          break;
+
         // Front End message handler to host IP-Address(es)
         case "getHostIp":
           {
@@ -2069,6 +2129,94 @@ class Esphome extends utils.Adapter {
     } catch (error) {
       this.errorHandler(`[onMessage]`, error);
     }
+  }
+
+  /**
+   * Fetch Pillow versions from PyPI and cache them
+   *
+   * @returns {Promise<string[]>} Array of available Pillow versions
+   */
+  async fetchAndCachePillowVersions() {
+    const fallbackVersions = [
+      "11.3.0",
+      "11.2.0",
+      "11.1.0",
+      "11.0.0",
+      "10.4.0",
+      "10.3.0",
+    ];
+
+    try {
+      const response = await fetch("https://pypi.org/pypi/pillow/json");
+      if (response.ok) {
+        const data = await response.json();
+        const versions = Object.keys(data.releases)
+          .filter(
+            (v) => !v.includes("a") && !v.includes("b") && !v.includes("rc"),
+          ) // Filter out alpha/beta/rc versions
+          .sort((a, b) => {
+            // Sort versions in descending order (newest first)
+            const aParts = a.split(".").map(Number);
+            const bParts = b.split(".").map(Number);
+            for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+              const aVal = aParts[i] || 0;
+              const bVal = bParts[i] || 0;
+              if (aVal !== bVal) {
+                return bVal - aVal;
+              }
+            }
+            return 0;
+          })
+          .slice(0, 20); // Limit to 20 most recent versions
+
+        if (versions.length > 0) {
+          // Cache the versions
+          await this.stateSetCreate(
+            `_ESPHomeDashboard.pillowVersionCache`,
+            "pillowVersionCache",
+            JSON.stringify(versions),
+          );
+          await this.stateSetCreate(
+            `_ESPHomeDashboard.newestPillowVersion`,
+            "newestPillowVersion",
+            versions[0],
+          );
+          this.log.debug(
+            `Fetched ${versions.length} Pillow versions from PyPI, newest: ${versions[0]}`,
+          );
+          return versions;
+        }
+        this.log.warn(
+          "No stable Pillow versions found on PyPI, using cached or fallback versions",
+        );
+      } else {
+        this.log.warn(
+          `Unable to fetch Pillow versions from PyPI: ${response.status}, using cached values`,
+        );
+      }
+    } catch (error) {
+      this.log.warn(
+        `Error fetching Pillow versions from PyPI: ${error.message}, using cached or fallback versions`,
+      );
+    }
+
+    // Try to load from cache
+    try {
+      const cachedPillowVersions = await this.getStateAsync(
+        `_ESPHomeDashboard.pillowVersionCache`,
+      );
+      if (cachedPillowVersions && cachedPillowVersions.val) {
+        const versions = JSON.parse(cachedPillowVersions.val);
+        this.log.info(`Loaded ${versions.length} Pillow versions from cache`);
+        return versions;
+      }
+    } catch {
+      // Cache read failed, will use fallback
+    }
+
+    // Use fallback versions
+    this.log.info(`Using ${fallbackVersions.length} fallback Pillow versions`);
+    return fallbackVersions;
   }
 
   /**

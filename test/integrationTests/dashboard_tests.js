@@ -21,6 +21,7 @@ const { expect } = require("chai");
 // Test configuration constants
 const DASHBOARD_PORT = 6052;
 const DASHBOARD_VERSION = "Always last available";
+const PILLOW_VERSION = "Always last available";
 const DASHBOARD_INITIALIZATION_DELAY_MS = 10000; // 10 seconds initial delay for dashboard to start initializing
 const REACHABILITY_CHECK_DELAY_MS = 3000; // 3 seconds between reachability checks
 const TOTAL_TIMEOUT_MS = 300000; // 5 minutes total test timeout
@@ -105,6 +106,7 @@ exports.runTests = function (suite) {
             ESPHomeDashboardEnabled: true,
             ESPHomeDashboardPort: DASHBOARD_PORT,
             ESPHomeDashboardVersion: DASHBOARD_VERSION,
+            PillowVersion: PILLOW_VERSION,
           },
         });
 
