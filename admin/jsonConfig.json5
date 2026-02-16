@@ -556,8 +556,7 @@
 					"xl": 6,
 					"label": "lblESPHomeDashboardVersion",
 					"help": "hlpESPHomeDashboardVersion",
-					"command": "getESPHomeDashboardVersion",
-					"jsonData": "{ \"service\": \"${data.deviceInputIP}\" }"
+					"command": "getESPHomeDashboardVersion"
 				},
 				"PillowVersion": {
 					"type": "autocompleteSendTo",
@@ -568,8 +567,7 @@
 					"xl": 6,
 					"label": "lblPillowVersion",
 					"help": "hlpPillowVersion",
-					"command": "getPillowVersion",
-					"jsonData": "{ \"service\": \"${data.deviceInputIP}\" }"
+					"command": "getPillowVersion"
 				},
 				"ESPHomeDashboardIP": {
 					"type": "autocompleteSendTo",
