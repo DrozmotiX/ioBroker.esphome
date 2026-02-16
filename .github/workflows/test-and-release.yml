@@ -3,160 +3,92 @@ name: Test and Release
 # Run this job on all pushes and pull requests
 # as well as tags with a semantic version
 on:
-    push:
-        branches:
-            - "*"
-        tags:
-            # normal versions
-            - "v[0-9]+.[0-9]+.[0-9]+"
-            # pre-releases
-            - "v[0-9]+.[0-9]+.[0-9]+-**"
-    pull_request: {}
+  push:
+    branches:
+      - "*"
+    tags:
+      # normal versions
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      # pre-releases
+      - "v[0-9]+.[0-9]+.[0-9]+-**"
+  pull_request: {}
 
 # Cancel previous PR/branch runs when a new commit is pushed
 concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  id-token: write  # Required for OIDC
-  contents: write
-
 jobs:
-    # Performs quick checks before the expensive test runs
-    check-and-lint:
-        if: contains(github.event.head_commit.message, '[skip ci]') == false
+  # Performs quick checks before the expensive test runs
+  check-and-lint:
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
 
-        runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v6
+    steps:
+      - uses: ioBroker/testing-action-check@v1
+        with:
+          node-version: '20.x'
+          # Uncomment the following line if your adapter cannot be installed using 'npm ci'
+          # install-command: 'npm install'
+          lint: true
 
-            - name: Use Node.js 22.x
-              uses: actions/setup-node@v6
-              with:
-                node-version: 22.x
+  # Runs adapter tests on all supported node versions and OSes
+  adapter-tests:
+    needs: [check-and-lint]
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
 
-            - name: Install Dependencies
-              run: npm ci
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x, 24.x]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
-            - name: Lint source code
-              run: npm run lint
-            - name: Test package files
-              run: npm run test:package
+    steps:
+      - uses: ioBroker/testing-action-adapter@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+          os: ${{ matrix.os }}
+          # Uncomment the following line if your adapter cannot be installed using 'npm ci'
+          # install-command: 'npm install'
 
-    # Runs adapter tests on all supported node versions and OSes
-    adapter-tests:
-        if: contains(github.event.head_commit.message, '[skip ci]') == false
+  # NOTE: Automatic npm releases are configured via npm Trusted Publishing (OIDC)
+  # using ioBroker/testing-action-deploy@v1 and the id-token permission below.
+  # Ensure your npm package is set up for GitHub OIDC; no NPM_TOKEN secret is required.
 
-        needs: [check-and-lint]
+  # Deploys the final package to NPM
+  deploy:
+    needs: [check-and-lint, adapter-tests]
 
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                node-version: [20.x, 22.x, 24.x]
-                os: [ubuntu-latest, windows-latest, macos-latest]
+    # Trigger this step only when a commit on any branch is tagged with a version number
+    if: |
+      contains(github.event.head_commit.message, '[skip ci]') == false &&
+      github.event_name == 'push' &&
+      startsWith(github.ref, 'refs/tags/v')
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v6
+    runs-on: ubuntu-latest
 
-            - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v6
-              with:
-                  node-version: ${{ matrix.node-version }}
+    # Write permissions are required to create Github releases
+    permissions:
+      contents: write
+      id-token: write
 
-            - name: Install Dependencies
-              run: npm ci
+    steps:
+      - uses: ioBroker/testing-action-deploy@v1
+        with:
+          node-version: '20.x'
+          # Uncomment the following line if your adapter cannot be installed using 'npm ci'
+          # install-command: 'npm install'
+          # npm-token: ${{ secrets.NPM_TOKEN }}  # Commented out for migration to Trusted Publishing
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Add staggered delay to reduce concurrent API calls
-              # Add a small delay based on matrix position to avoid all tests hitting APIs simultaneously
-              run: |
-                # Calculate delay based on Node version and OS (0-8 seconds spread across 9 matrix combinations)
-                NODE_INDEX=0
-                OS_INDEX=0
-                case "${{ matrix.node-version }}" in
-                  20.x) NODE_INDEX=0 ;;
-                  22.x) NODE_INDEX=1 ;;
-                  24.x) NODE_INDEX=2 ;;
-                esac
-                case "${{ matrix.os }}" in
-                  ubuntu-latest) OS_INDEX=0 ;;
-                  windows-latest) OS_INDEX=1 ;;
-                  macos-latest) OS_INDEX=2 ;;
-                esac
-                DELAY=$((NODE_INDEX * 3 + OS_INDEX))
-                echo "Waiting ${DELAY} seconds before starting tests..."
-                sleep $DELAY
-              shell: bash
-
-            - name: Run tests
-              # avoid github rate limit for shared runners:
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: npm run test
-
-    # Deploys the final package to NPM
-    deploy:
-        needs: [adapter-tests]
-
-        # Trigger this step only when a commit on any branch is tagged with a version number
-        if: |
-            contains(github.event.head_commit.message, '[skip ci]') == false &&
-            github.event_name == 'push' &&
-            startsWith(github.ref, 'refs/tags/v')
-
-        runs-on: ubuntu-latest
-
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v6
-
-            - name: Use Node.js 20.x
-              uses: actions/setup-node@v6
-              with:
-                node-version: 20.x
-
-            - name: Extract the version and commit body from the tag
-              id: extract_release
-              # The body may be multiline, therefore newlines and % need to be escaped
-              run: |
-                  VERSION="${{ github.ref }}"
-                  VERSION=${VERSION##*/v}
-                  echo "::set-output name=VERSION::$VERSION"
-                  BODY=$(git show -s --format=%b)
-                  BODY="${BODY//'%'/'%25'}"
-                  BODY="${BODY//$'\n'/'%0A'}"
-                  BODY="${BODY//$'\r'/'%0D'}"
-                  echo "::set-output name=BODY::$BODY"
-
-            - name: Publish package to npm
-              run: |
-                  npm install -g npm@latest
-                  npm publish
-
-            - name: Create Github Release
-              uses: softprops/action-gh-release@v2
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  tag_name: ${{ github.ref }}
-                  name: Release v${{ steps.extract_release.outputs.VERSION }}
-                  draft: false
-                  # Prerelease versions create prereleases on Github
-                  prerelease: ${{ contains(steps.extract_release.outputs.VERSION, '-') }}
-                  body: ${{ steps.extract_release.outputs.BODY }}
-
-            - name: Notify Sentry.io about the release
-              run: |
-                npm i -g @sentry/cli
-                export SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
-                export SENTRY_URL=https://sentry.iobroker.net
-                export SENTRY_ORG=iobroker
-                export SENTRY_PROJECT=iobroker-esphome
-                export SENTRY_VERSION=iobroker.esphome@${{ steps.extract_release.outputs.VERSION }}
-                sentry-cli releases new $SENTRY_VERSION
-                sentry-cli releases finalize $SENTRY_VERSION
-                # Add the following line BEFORE finalize if repositories are connected in Sentry
-                # sentry-cli releases set-commits $SENTRY_VERSION --auto
+          # When using Sentry for error reporting, Sentry can be informed about new releases
+          # To enable create a API-Token in Sentry (User settings, API keys)
+          # Enter this token as a GitHub secret (with name SENTRY_AUTH_TOKEN) in the repository options
+          # Then uncomment and customize the following block:
+          sentry: true
+          sentry-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          sentry-project: "iobroker-esphome"
+          sentry-version-prefix: "iobroker.esphome"
+          # If your sentry project is linked to a GitHub repository, you can enable the following option
+          # sentry-github-integration: true
