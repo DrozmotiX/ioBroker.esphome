@@ -52,9 +52,9 @@ jobs:
           # Uncomment the following line if your adapter cannot be installed using 'npm ci'
           # install-command: 'npm install'
 
-  # TODO: To enable automatic npm releases, create a token on npmjs.org
-  # Enter this token as a GitHub secret (with name NPM_TOKEN) in the repository options
-  # Then uncomment the following block:
+  # NOTE: Automatic npm releases are configured via npm Trusted Publishing (OIDC)
+  # using ioBroker/testing-action-deploy@v1 and the id-token permission below.
+  # Ensure your npm package is set up for GitHub OIDC; no NPM_TOKEN secret is required.
 
   # Deploys the final package to NPM
   deploy:
