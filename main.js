@@ -1837,6 +1837,16 @@ class Esphome extends utils.Adapter {
             const dropDownEntry = [];
             dropDownEntry.push("Always last available");
 
+            // Fallback versions in case PyPI is unavailable
+            const fallbackVersions = [
+              "11.3.0",
+              "11.2.0",
+              "11.1.0",
+              "11.0.0",
+              "10.4.0",
+              "10.3.0",
+            ];
+
             // Fetch available Pillow versions from PyPI
             try {
               const response = await fetch("https://pypi.org/pypi/pillow/json");
@@ -1876,15 +1886,7 @@ class Esphome extends utils.Adapter {
                 this.log.warn(
                   `Unable to fetch Pillow versions from PyPI: ${response.status}`,
                 );
-                // Add some common fallback versions
-                const fallbackVersions = [
-                  "11.3.0",
-                  "11.2.0",
-                  "11.1.0",
-                  "11.0.0",
-                  "10.4.0",
-                  "10.3.0",
-                ];
+                // Add fallback versions
                 for (const version of fallbackVersions) {
                   dropDownEntry.push({
                     label: version,
@@ -1897,14 +1899,6 @@ class Esphome extends utils.Adapter {
                 `Error fetching Pillow versions: ${error.message}`,
               );
               // Add fallback versions
-              const fallbackVersions = [
-                "11.3.0",
-                "11.2.0",
-                "11.1.0",
-                "11.0.0",
-                "10.4.0",
-                "10.3.0",
-              ];
               for (const version of fallbackVersions) {
                 dropDownEntry.push({
                   label: version,
