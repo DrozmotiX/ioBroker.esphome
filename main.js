@@ -880,12 +880,7 @@ class Esphome extends utils.Adapter {
                   break;
 
                 case "Fan":
-                  await this.handleRegularState(
-                    `${host}`,
-                    entity,
-                    state,
-                    false,
-                  );
+                  await this.handleStateArrays(`${host}`, entity, state);
                   break;
 
                 case "Light":
@@ -1176,12 +1171,37 @@ class Esphome extends utils.Adapter {
               this.modify("round(2)", state[stateName]);
             break;
 
-          case "oscillating": // Sensor type = Fan, write not supported
+          case "oscillating": // Sensor type = Fan
+            // Check if entity supports oscillation
+            if (!clientDetails[host][entity.id].config.supportsOscillation) {
+              writable = false;
+            }
+            break;
+
+          case "speed": // Sensor type = Fan, deprecated - read only
             writable = false;
             break;
 
-          case "speed": // Sensor type = Fan, write not supported
-            writable = false;
+          case "speedLevel": {
+            // Sensor type = Fan
+            // Check if entity supports speed levels
+            const supportedSpeedLevels =
+              clientDetails[host][entity.id].config.supportedSpeedLevels;
+            if (
+              supportedSpeedLevels === null ||
+              supportedSpeedLevels === undefined ||
+              supportedSpeedLevels === 0
+            ) {
+              writable = false;
+            }
+            break;
+          }
+
+          case "direction": // Sensor type = Fan
+            // Check if entity supports direction
+            if (!clientDetails[host][entity.id].config.supportsDirection) {
+              writable = false;
+            }
             break;
         }
 
@@ -2082,14 +2102,34 @@ class Esphome extends utils.Adapter {
         const deviceIP = this.deviceStateRelation[device[2]].ip;
 
         // Handle Switch State
-        if (
-          clientDetails[deviceIP][device[4]].type === `Switch` ||
-          clientDetails[deviceIP][device[4]].type === `Fan`
-        ) {
+        if (clientDetails[deviceIP][device[4]].type === `Switch`) {
           await clientDetails[deviceIP].client.connection.switchCommandService({
             key: device[4],
             state: state.val,
           });
+
+          // Handle Fan State
+        } else if (clientDetails[deviceIP][device[4]].type === `Fan`) {
+          // Validate that the state key exists before updating
+          const validFanStates = [
+            "state",
+            "speed",
+            "speedLevel",
+            "direction",
+            "oscillating",
+          ];
+          if (validFanStates.includes(device[5])) {
+            // Update the state in memory
+            clientDetails[deviceIP][device[4]].states[device[5]] = state.val;
+            // Call fan command service with all current states
+            await clientDetails[deviceIP].client.connection.fanCommandService(
+              clientDetails[deviceIP][device[4]].states,
+            );
+          } else {
+            this.log.warn(
+              `Invalid fan state key "${device[5]}" for device ${device[2]}`,
+            );
+          }
 
           // Handle Climate State
         } else if (clientDetails[deviceIP][device[4]].type === `Climate`) {
