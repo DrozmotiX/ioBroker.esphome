@@ -15,6 +15,8 @@ const stateAttr = require(`${__dirname}/lib/stateAttr.js`); // Load attribute li
 const disableSentry = false; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
 const fs = require("fs");
+const path = require("path");
+const os = require("os");
 const { clearTimeout } = require("timers");
 const resetTimers = {}; // Memory allocation for all running timers
 let autodiscovery, dashboardProcess, createConfigStates, discovery;
@@ -2014,6 +2016,59 @@ class Esphome extends utils.Adapter {
               obj.message.filename,
             );
             this.sendTo(obj.from, obj.command, result, obj.callback);
+          }
+          break;
+
+        // Handle clearing autopy cache
+        case "clearAutopyCache":
+          {
+            try {
+              const homeDir = os.homedir();
+              const autopyCache = path.join(homeDir, ".cache", "autopy");
+
+              this.log.info(
+                `Attempting to clear autopy cache at: ${autopyCache}`,
+              );
+
+              // Check if directory exists
+              if (fs.existsSync(autopyCache)) {
+                // Use recursive removal
+                fs.rmSync(autopyCache, { recursive: true, force: true });
+                this.log.info("Autopy cache cleared successfully");
+                this.sendTo(
+                  obj.from,
+                  obj.command,
+                  {
+                    success: true,
+                    message: "Autopy cache cleared successfully",
+                  },
+                  obj.callback,
+                );
+              } else {
+                this.log.info("Autopy cache directory does not exist");
+                this.sendTo(
+                  obj.from,
+                  obj.command,
+                  {
+                    success: true,
+                    message:
+                      "Autopy cache directory does not exist (already cleared)",
+                  },
+                  obj.callback,
+                );
+              }
+            } catch (error) {
+              this.log.error(`Error clearing autopy cache: ${error.message}`);
+              this.sendTo(
+                obj.from,
+                obj.command,
+                {
+                  success: false,
+                  error: `Failed to clear cache: ${error.message}`,
+                },
+                obj.callback,
+              );
+            }
           }
           break;
       }

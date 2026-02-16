@@ -617,6 +617,31 @@
 					"xl": 12
 				},
 
+				// Clear Autopy Cache Button
+				"clearAutopyCacheButton": {
+					"newLine": true,
+					"type": "sendTo",
+					"label": "lblClearAutopyCache",
+					"help": "hlpClearAutopyCache",
+					"variant": "outlined",
+					"color": "primary",
+					"showProcess": true,
+					"command": "clearAutopyCache",
+					"jsonData": "{}",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 6,
+					"xl": 6,
+					"confirm": {
+						"text": "cnfClearCacheText",
+						"title": "cnfClearCacheTitle",
+						"ok": "cnfClearCacheOk",
+						"cancel": "cnfClearCacheCancel",
+						"type": "warning"
+					}
+				},
+
 				"advanced": {
 					"type": "panel",
 					"label": "Advanced",
