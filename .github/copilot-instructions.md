@@ -133,6 +133,7 @@ tsconfig.json          -- TypeScript configuration
 - Tests on Ubuntu (ubuntu-latest)
 - Uses `ioBroker/testing-action-check@v1` for lint and package validation
 - Uses `ioBroker/testing-action-adapter@v1` for adapter tests
+- **CRITICAL**: Includes `GITHUB_TOKEN` environment variable in adapter-tests job to prevent API rate limiting
 - Uses `ioBroker/testing-action-deploy@v1` for automated releases with Trusted Publishing (OIDC)
 - Automated release to npm on version tags (requires NPM Trusted Publishing setup)
 - Includes Sentry release tracking
@@ -792,6 +793,23 @@ The repository uses ioBroker's official GitHub Actions for standardized CI/CD wo
 - Integrated Sentry release tracking
 - Maintained by the ioBroker team
 
+#### Critical Configuration Requirements
+
+**IMPORTANT: GitHub Token for Rate Limiting**
+
+When using ioBroker official testing actions, **ALWAYS** include the `GITHUB_TOKEN` environment variable in the `adapter-tests` job to prevent GitHub API rate limiting issues during test execution.
+
+**Why This Matters:**
+- Tests that make API calls to GitHub (e.g., fetching version information from PyPI or other package registries) can hit rate limits on shared runners
+- Without authentication, GitHub limits API calls to 60 requests per hour per IP address
+- With authentication via GITHUB_TOKEN, the limit increases to 5000 requests per hour
+- Multiple concurrent test runs (across different Node versions and OS platforms) can quickly exhaust the unauthenticated rate limit
+
+**Common Pitfall:**
+- When migrating from custom workflows to ioBroker testing actions, developers often remove the `GITHUB_TOKEN` environment variable, thinking it's no longer needed
+- This leads to intermittent test failures with rate limiting errors
+- **NEVER** remove the `GITHUB_TOKEN` from adapter-tests job even when using official actions
+
 #### Example Workflow Structure
 ```yaml
 jobs:
@@ -809,6 +827,11 @@ jobs:
       matrix:
         node-version: [20.x, 22.x, 24.x]
         os: [ubuntu-latest]
+    
+    # CRITICAL: Include GITHUB_TOKEN to avoid rate limiting issues
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
     steps:
       - uses: ioBroker/testing-action-adapter@v1
         with:
@@ -831,6 +854,30 @@ jobs:
           sentry-project: "iobroker-esphome"
           sentry-version-prefix: "iobroker.esphome"
 ```
+
+#### Best Practices for Workflow Modifications
+
+When modifying GitHub Actions workflows, especially when migrating to or updating ioBroker official testing actions:
+
+1. **Preserve Critical Environment Variables**
+   - **NEVER** remove `GITHUB_TOKEN` from the adapter-tests job
+   - Even when using official actions that handle authentication internally, tests may still need this token for external API calls
+   - Removing it causes hard-to-debug intermittent rate limiting failures
+
+2. **Test After Migration**
+   - After migrating workflows, run the full test suite multiple times to catch rate limiting issues
+   - Monitor for API rate limit errors in test logs
+   - Verify tests pass consistently across all matrix configurations
+
+3. **Document Token Requirements**
+   - When adding new API integrations that call external services, document token requirements
+   - Consider rate limits when designing tests that make external API calls
+   - Use caching strategies to minimize repeated API calls during testing
+
+4. **Reference Past Issues**
+   - Before removing any authentication tokens, check git history for why they were added
+   - Common mistake: assuming official actions handle all authentication needs
+   - Lesson from PR #388 → PR #391: Token was removed during migration, causing rate limit failures
 
 ### GitHub Actions for API Testing
 For adapters with external API dependencies, implement separate CI/CD jobs:
