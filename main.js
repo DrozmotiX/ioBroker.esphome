@@ -665,14 +665,6 @@ class Esphome extends utils.Adapter {
           clientDetails[host].deviceName = deviceName;
           clientDetails[host].deviceFriendlyName = deviceInfo.name;
 
-          await this.updateConnectionStatus(
-            host,
-            true,
-            false,
-            "Initializing",
-            false,
-          );
-
           clientDetails[host].deviceInfo = deviceInfo;
 
           this.deviceStateRelation[deviceName] = { ip: host };
@@ -712,6 +704,15 @@ class Esphome extends utils.Adapter {
             },
             native: {},
           });
+
+          // Update connection status after parent objects are created to avoid "no existing object" warnings
+          await this.updateConnectionStatus(
+            host,
+            true,
+            false,
+            "Initializing",
+            false,
+          );
 
           // Read JSON and handle states
           await this.traverseJson(deviceInfo, `${deviceName}.info`);
@@ -2540,7 +2541,7 @@ class Esphome extends utils.Adapter {
 
         // Set online state to false, will be set to true at successfully connected
         await this.stateSetCreate(
-          `${_devices.rows[currDevice].id}.info._online`,
+          `${_devices.rows[currDevice].id.replace(`${this.namespace}.`, ``)}.info._online`,
           `Online state`,
           false,
         );
@@ -2683,8 +2684,11 @@ class Esphome extends utils.Adapter {
           ? connectionStatus
           : clientDetails[host].connectStatus;
 
-      // Only handle online state if a device was initialized
-      if (clientDetails[host].connectStatus === "Initialisation needed") {
+      // Only handle online state if a device name is available (device has been seen before)
+      if (
+        !clientDetails[host].deviceName ||
+        clientDetails[host].deviceName === "Initialisation needed"
+      ) {
         return;
       }
 
