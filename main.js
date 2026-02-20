@@ -1268,7 +1268,10 @@ class Esphome extends utils.Adapter {
           stateName === `green` ||
           stateName === `red` ||
           stateName === `white` ||
-          stateName === `colorTemperature`
+          stateName === `colorTemperature` ||
+          stateName === `colorBrightness` ||
+          stateName === `coldWhite` ||
+          stateName === `warmWhite`
         ) {
           writeValue = Math.round(state[stateName] * 100 * 2.55);
 
@@ -2429,13 +2432,18 @@ class Esphome extends utils.Adapter {
             device[5] === `green` ||
             device[5] === `red` ||
             device[5] === `white` ||
-            device[5] === `colorTemperature`
+            device[5] === `colorTemperature` ||
+            device[5] === `colorBrightness` ||
+            device[5] === `coldWhite` ||
+            device[5] === `warmWhite`
           ) {
             // Convert value to 255 range
             writeValue = writeValue / 100 / 2.55;
 
             // Store value to memory
             clientDetails[deviceIP][device[4]].states[device[5]] = writeValue;
+          } else if (device[5] === `colorMode`) {
+            clientDetails[deviceIP][device[4]].states.colorMode = writeValue;
           } else if (device[5] === `colorHEX`) {
             // Convert hex to rgb
             const rgbConversion = this.hexToRgb(writeValue);
@@ -2462,32 +2470,75 @@ class Esphome extends utils.Adapter {
             transitionLength:
               clientDetails[deviceIP][device[4]].states.transitionLength,
           };
-          if (
-            clientDetails[deviceIP][device[4]].config
-              .legacySupportsBrightness === true
-          ) {
+
+          const lightConfig = clientDetails[deviceIP][device[4]].config;
+          const colorModesList = lightConfig.supportedColorModesList || [];
+          // ColorMode constants: Unknown=0, OnOff=1, Brightness=2, White=3, ColorTemperature=4,
+          // ColdWarmWhite=5, RGB=6, RGBWhite=7, RGBColorTemperature=8, RGBColdWarmWhite=9
+          const supportsRgb =
+            lightConfig.legacySupportsRgb === true ||
+            colorModesList.some((m) => [6, 7, 8, 9].includes(m));
+          const supportsBrightness =
+            lightConfig.legacySupportsBrightness === true ||
+            colorModesList.some((m) => m >= 2 && m <= 9);
+          const supportsWhite =
+            lightConfig.legacySupportsWhiteValue === true ||
+            colorModesList.some((m) => [3, 7].includes(m));
+          const supportsColorTemp =
+            lightConfig.legacySupportsColorTemperature === true ||
+            colorModesList.some((m) => [4, 8].includes(m));
+          const supportsColdWarmWhite = colorModesList.some((m) =>
+            [5, 9].includes(m),
+          );
+
+          if (supportsBrightness) {
             data.brightness =
               clientDetails[deviceIP][device[4]].states.brightness;
           }
-          if (
-            clientDetails[deviceIP][device[4]].config.legacySupportsRgb === true
-          ) {
+          if (supportsRgb) {
             data.red = clientDetails[deviceIP][device[4]].states.red;
             data.green = clientDetails[deviceIP][device[4]].states.green;
             data.blue = clientDetails[deviceIP][device[4]].states.blue;
           }
-          if (
-            clientDetails[deviceIP][device[4]].config
-              .legacySupportsWhiteValue === true
-          ) {
+          if (supportsWhite) {
             data.white = clientDetails[deviceIP][device[4]].states.white;
           }
-          if (
-            clientDetails[deviceIP][device[4]].config
-              .legacySupportsColorTemperature === true
-          ) {
+          if (supportsColorTemp) {
             data.colorTemperature =
               clientDetails[deviceIP][device[4]].states.colorTemperature;
+          }
+          // Include new color fields for non-legacy devices using supportedColorModesList
+          if (colorModesList.length > 0) {
+            if (
+              clientDetails[deviceIP][device[4]].states.colorMode !== undefined
+            ) {
+              data.colorMode =
+                clientDetails[deviceIP][device[4]].states.colorMode;
+            }
+            if (
+              supportsRgb &&
+              clientDetails[deviceIP][device[4]].states.colorBrightness !==
+                undefined
+            ) {
+              data.colorBrightness =
+                clientDetails[deviceIP][device[4]].states.colorBrightness;
+            }
+            if (supportsColdWarmWhite) {
+              if (
+                clientDetails[deviceIP][device[4]].states.coldWhite !==
+                undefined
+              ) {
+                data.coldWhite =
+                  clientDetails[deviceIP][device[4]].states.coldWhite;
+              }
+              if (
+                clientDetails[deviceIP][device[4]].states.warmWhite !==
+                undefined
+              ) {
+                data.warmWhite =
+                  clientDetails[deviceIP][device[4]].states.warmWhite;
+              }
+            }
           }
           const effect = clientDetails[deviceIP][device[4]].states.effect;
           if (effect !== "" && effect !== null && effect !== undefined) {
