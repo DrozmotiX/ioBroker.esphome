@@ -360,9 +360,9 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
-### __WORK IN PROGRESS__
-* (@copilot) **FIXED**: RGB light control (brightness, color, white, colorTemperature) not working with newer ESPHome firmware that uses `supportedColorModesList` instead of deprecated legacy flags (#396)
+### 0.7.0-beta.3 (2026-02-20)
 * (@copilot) **NEW**: Added support for `colorBrightness`, `coldWhite`, `warmWhite`, and `colorMode` states for lights using the new ESPHome color mode API
+* (@copilot) **FIXED**: RGB light control (brightness, color, white, colorTemperature) not working with newer ESPHome firmware that uses `supportedColorModesList` instead of deprecated legacy flags (#338)
 
 ### 0.7.0-beta.2 (2026-02-20) - add capability for fans & Lock entity
 * (@SimonFischer04) improve README
@@ -395,12 +395,6 @@ If you like my work, please consider a personal donation
 * (@SimonFischer04) add support for text device type #141, displays #103
 * (@SimonFischer04) fix cover device type #156
 * (@SimonFischer04) workaround: downgrade python for now. fixes #259
-
-### 0.6.1 (2025-05-24)
-* (@SimonFischer04) Update esphome
-* (@ticaki) Optimize admin configuration interface
-* (@DutchmanNL) Optimize backend handling of device discovery
-* (@DutchmanNL) Capability to select ESPHome Dashboard version added, resolves #118
 
 ## License
 MIT License
