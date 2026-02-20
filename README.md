@@ -360,14 +360,14 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
-### __WORK IN PROGRESS__ - add capability for fans & clean cache
+### 0.7.0-beta.2 (2026-02-20) - add capability for fans & Lock entity
 * (@SimonFischer04) improve README
+* (@SimonFischer04) fix #394, actually fix #340, #356
+* (DutchmanNL) **FIXED**: Fan component not working #205
 * (@copilot) **NEW**: Allow customization of Pillow version used by ESPHome Dashboard, similar to ESPHome version selector
 * (@copilot) **NEW**: Add "Clear Autopy Cache" button in ESPHome Dashboard configuration tab to resolve dashboard loading issues (#209)
-* (DutchmanNL) **FIXED**: Fan component not working #205
-* (@SimonFischer04) fix #394, actually fix #340, #356
 
-### 0.7.0 (2026-02-16) - Add support for Lock entity & improve dashboard testing
+### 0.7.0-beta.1 (2026-02-16) - Add support for Lock entity & improve dashboard testing
 * (@copilot) **NEW**: Add support for Lock entity type - Lock devices now properly display state and control options #353
 * (@copilot) **NEW**: YAML file management interface in admin UI for upload/download/delete operations (#369)
 * (@SimonFischer04) improve dashboard testing
@@ -397,11 +397,6 @@ If you like my work, please consider a personal donation
 * (@ticaki) Optimize admin configuration interface
 * (@DutchmanNL) Optimize backend handling of device discovery
 * (@DutchmanNL) Capability to select ESPHome Dashboard version added, resolves #118
-
-### 0.5.0-beta.8 (2023-11-24)
-* (DutchmanNL) Capability to automatically detect new devices added
-* (DutchmanNL) Ensures a compatible pillow version is used (10.0.1)
-* (SimonFischer04) Add pillow python package by default, resolves #188
 
 ## License
 MIT License

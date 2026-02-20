@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "esphome",
-    "version": "0.7.0",
+    "version": "0.7.0-beta.2",
     "news": {
+      "0.7.0-beta.2": {
+        "en": "improve README\nfix #394, actually fix #340, #356\n**FIXED**: Fan component not working #205\n**NEW**: Allow customization of Pillow version used by ESPHome Dashboard, similar to ESPHome version selector\n**NEW**: Add \"Clear Autopy Cache\" button in ESPHome Dashboard configuration tab to resolve dashboard loading issues (#209)",
+        "de": "rEADME\nfix #394, eigentlich fix #340, #356\n**FIXED**: Fan-Komponente nicht funktioniert #205\n**NEW**: Erlauben Anpassung der Pillow-Version, die von ESPHome Dashboard verwendet wird, ähnlich wie ESPHome-Versionsauswahl\n**NEW**: Fügen Sie die Schaltfläche \"Klar Autopy Cache\" in ESPHome Dashboard Konfigurationstabelle hinzu, um dashboard Ladeprobleme zu lösen (#209)",
+        "ru": "улучшить чтение\nисправить #394, фактически исправить #340, #356\n** FIXED**: Фан-компонент не работает #205\n**NEW**: позволяет настраивать версию Pillow, используемую ESPHome Dashboard, аналогично селектору версии ESPHome\n**NEW**: Добавить кнопку «Clear Autopy Cache» во вкладку конфигурации ESPHome Dashboard для решения проблем загрузки панели управления (#209)",
+        "pt": "melhorar o README\ncorrigir #394, realmente corrigir #340, #356\n**FIXED**: Componente do ventilador não funcionando #205\n**NOVA**: Permitir a personalização da versão Pillow usada pelo ESPHome Dashboard, semelhante ao seletor de versão ESPHome\n**NOVO**: Adicione o botão \"Limpar Cache Autopy\" na guia de configuração do painel ESPHome para resolver problemas de carregamento do painel (#209)",
+        "nl": "rEADME verbeteren\nfix #394, fix eigenlijk #340, #356\n** VAST**: Fan-component werkt niet #205\n**NIEUW**: Laat aanpassing van Pillow-versie gebruikt door ESPHome Dashboard, vergelijkbaar met ESPHome versie-selector\n**NIEUW**: Voeg \"Clear Autopy Cache\" knop in ESPHome Dashboard configuratie tabblad om dashboard laden problemen op te lossen (#209)",
+        "fr": "améliorer le README\ncorrection #394, en fait correction #340, #356\n**FIXED**: Composant de ventilateur ne fonctionnant pas #205\n**NEW**: Autoriser la personnalisation de la version d'oreiller utilisée par ESPHome Dashboard, similaire au sélecteur de version ESPHome\n**NOUVEAU**: Ajouter \"Cache automatique claire\" bouton dans l'onglet de configuration du tableau de bord ESPHome pour résoudre les problèmes de chargement du tableau de bord (#209)",
+        "it": "migliorare README\nfix #394, realtã fix #340, #356\n**FIXED**: Componente ventilatore che non funziona #205\n**NEW**: Consentire la personalizzazione della versione Pillow utilizzata da ESPHome Dashboard, simile al selettore della versione ESPHome\n**NEW**: Aggiungi il pulsante \"Clear Autopy Cache\" nella scheda di configurazione di ESPHome Dashboard per risolvere i problemi di caricamento del cruscotto (#209)",
+        "es": "mejorar README\n#394, en realidad arreglar #340, #356\n**FIXED**: Componente de ventilador que no funciona #205\n**NEW**: Permitir la personalización de la versión de Pillow utilizada por ESPHome Dashboard, similar al selector de la versión ESPHome\n**NEW**: Agregue el botón \"Clear Autopy Cache\" en la pestaña de configuración de ESPHome Dashboard para resolver problemas de carga de panel (#209)",
+        "pl": "ulepszenie README\nfix # 394, actually fix # 340, # 356\n* *FIXED* *: Element wentylatora nie działa # 205 \n* *NOWOŚĆ* *: Zezwalaj na personalizację wersji Poduszki używanej przez ESPHome Dashboard, podobną do wyboru wersji ESPHome \n* *NOWOŚĆ* *: Dodaj przycisk \"Clear Autopy Cache\" w zakładce Konfiguracja tablicy rozdzielczej ESPHome, aby rozwiązać problemy z załadowaniem tablicy rozdzielczej (# 209) ",
+        "uk": "покращити резюме\nвиправити #394, насправді виправити #340, #356\n**FIXED***: Компонент вентилятора не працює #205\n**NEW**: Дозволяє налаштування версії Pillow, що використовується ESPHome Dashboard, схожим на ESPHome версія selector\n**NEW**: Додати кнопку \"Зареєструвати Autopy Cache\" у вкладці конфігурації ESPHome Dashboard для вирішення проблем завантаження панелі (#209)",
+        "zh-cn": "改进读取\n修复394号,实际修复340号,356号\n** FIXED**:粉丝组件不工作#205\n**NEW**:允许定制ESPHome Dashboard使用的Pillow版本,类似于ESPHome版本选择器\n**NEW**:在ESPHome Dashboard配置标签中添加\"清除自动缓存\"按钮以解决仪表板加载问题(# 209)"
+      },
       "0.7.0": {
         "en": "**NEW**: Add support for Lock entity type - Lock devices now properly display state and control options #353\n**NEW**: YAML file management interface in admin UI for upload/download/delete operations (#369)\nimprove dashboard testing\nimprove logging for #201\nupdate pillow\nfix readme link to lib\nfix connection status #311\nremove unneeded node-fetch dependency\nautomatic migration from versions prior to ESPHomeDashboardUrl introduction (pre v0.6.1)\n**FIXED**: Invalid jsonConfig schema - removed unsupported `doNotSave` property from table elements",
         "de": "**NEW**: Unterstützung für Lock-Entity-Typ hinzufügen - Lock-Geräte jetzt richtig anzeigen Zustand und Steueroptionen #353\n**NEW**: YAML-Dateiverwaltungsschnittstelle in admin UI für Upload/Download/Auslöschung (#369)\ndashboard testen\nverbesserung der protokollierung für #201\nupdate kissen\nreadme link zu lib reparieren\nfix-verbindungsstatus #311\nnicht benötigte knoten-fetch-abhängigkeit entfernen\nautomatische Migration von Versionen vor der Einführung von ESPHomeDashboardUrl (pre v0.6.1)\n**FIXED**: Invalid jsonConfig Schema - entfernte nicht unterstützte `doNotSave` Eigenschaft von Tabellenelementen",
@@ -80,19 +93,6 @@
         "pl": "Uaktualnij esphome\nOptymalizacja interfejsu konfiguracyjnego administratora\nOptymalizacja obsługi urządzenia\nMożliwość wyboru wersji ESPHome Dashboard dodano, rozwiązuje # 118",
         "uk": "Оновлення esphome\nОптимальний інтерфейс конфігурації адміністратора\nОптимізуйте зворотну обробку пристрою\nМожливість вибору ESPHome Dashboard додано, вирішує #118",
         "zh-cn": "更新 esphome\n优化管理员配置接口\n优化设备发现的后端处理\n选择 ESPHome Dashboard 版本的能力已添加, 解决 # 118"
-      },
-      "0.5.0-beta.8": {
-        "en": "Capability to automatically detect new devices added\nEnsures a compatible pillow version is used (10.0.1)\nAdd pillow python package by default, resolves #188",
-        "de": "Möglichkeit, neue Geräte automatisch zu erkennen\nSicherstellen das Pillow version (10.0.1) verwendet wird\nFügen Sie Kissen-Python-Paket standardmäßig hinzu, löst #188",
-        "ru": "Возможность автоматического обнаружения добавленных устройств\nОбеспечивает совместимую версию подушки используется (10.0.1)\nДобавьте пакет python подушки по умолчанию, решает #188",
-        "pt": "Capacidade de detectar automaticamente novos dispositivos adicionados\nGarante uma versão de travesseiro compatível é usada (10.0.1)\nAdicionar pacote python travesseiro por padrão, resolve #188",
-        "nl": "Funktionaliteit om automatisch nieuwe apparaten te detecteren\nZekerstellen dat Pillow versie 10.0.1 gebruikt wordt\nAdd kussen python pakket bij defect, resolutie 188",
-        "fr": "Capacité de détecter automatiquement de nouveaux appareils ajoutés\nAssure qu'une version d'oreiller compatible est utilisée (10.0.1)\nAjouter le paquet python d'oreiller par défaut, résout #188",
-        "it": "Capacità di rilevare automaticamente nuovi dispositivi aggiunti\nConsente di utilizzare una versione di cuscino compatibile (10.0.1)\nAggiungere il pacchetto del pitone del cuscino per impostazione predefinita, risolve #188",
-        "es": "Capacidad para detectar automáticamente nuevos dispositivos añadidos\nGarantiza que se utilice una versión de almohada compatible (10.0.1)\nAñadir paquete de pitón de almohada por defecto, resuelve #188",
-        "pl": "Umożliwość automatycznego wykrywania nowych urządzeń dodano do dyspozycji nowe urządzenia\nWykorzystywana wersja poduszki jest używana (10,0,1)\nAddd pillow python domyślnie rozwiązał pakiet #188",
-        "uk": "Можливість автоматично визначати нові пристрої\nЗабезпечує сумісну подушку версії (10.0.1)\nДодати подушку python пакет за замовчуванням, вирішує #188",
-        "zh-cn": "自动发现新装置的能力\n确保采用兼容的导游版本(10.0.1)\n第188号行动"
       }
     },
     "titleLang": {
