@@ -664,15 +664,6 @@ class Esphome extends utils.Adapter {
           clientDetails[host].mac = deviceInfo.macAddress;
           clientDetails[host].deviceName = deviceName;
           clientDetails[host].deviceFriendlyName = deviceInfo.name;
-
-          await this.updateConnectionStatus(
-            host,
-            true,
-            false,
-            "Initializing",
-            false,
-          );
-
           clientDetails[host].deviceInfo = deviceInfo;
 
           this.deviceStateRelation[deviceName] = { ip: host };
@@ -712,6 +703,25 @@ class Esphome extends utils.Adapter {
             },
             native: {},
           });
+
+          // Store channel in device memory
+          if (
+              !clientDetails[host].adapterObjects.channels.includes(
+                `${this.namespace}.${clientDetails[host].deviceName}.info`,
+              )
+          ) {
+            clientDetails[host].adapterObjects.channels.push(
+                `${this.namespace}.${clientDetails[host].deviceName}.info`,
+            );
+          }
+
+          await this.updateConnectionStatus(
+            host,
+            true,
+            false,
+            "Initializing",
+            false,
+          );
 
           // Read JSON and handle states
           await this.traverseJson(deviceInfo, `${deviceName}.info`);
@@ -1481,7 +1491,11 @@ class Esphome extends utils.Adapter {
       }
       common.name =
         stateAttr[name] !== undefined ? stateAttr[name].name || name : name;
-      common.type = typeof value;
+
+      // default to type string if value is null to avoid errors like:
+      //   Object 004B1296140C.info.area is invalid: obj.common.type has an invalid value (undefined) but has to be one of number, string, boolean, array, object, mixed, json This will throw an error up from js-controller version 7.0.0!
+      common.type = value == null ? 'string' : typeof value;
+
       common.role =
         stateAttr[name] !== undefined
           ? stateAttr[name].role || "state"
