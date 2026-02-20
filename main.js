@@ -61,7 +61,7 @@ class Esphome extends utils.Adapter {
       // defaultApiPass = this.config.apiPass;
       autodiscovery = this.config.autodiscovery;
       // reconnectInterval = this.config.reconnectInterval * 1000;
-      createConfigStates = this.config.configStates || true; // TODO: config option missing
+      createConfigStates = this.config.configStates;
 
       // Ensure all online states are set to false during adapter start
       await this.resetOnlineStates();
@@ -741,7 +741,7 @@ class Esphome extends utils.Adapter {
           this.errorHandler(`[deviceInfo]`, error);
         }
       });
-      //collapse fia advanced dashboard options ...
+
       // Initialise data for states
       clientDetails[host].client.on("newEntity", async (entity) => {
         this.log.debug(`EntityData: ${JSON.stringify(entity.config)}`);
