@@ -66,5 +66,7 @@
     "cnfClearCacheText": "Are you sure you want to clear the autopy cache? This will remove all cached Python environments and ESPHome installations.",
     "cnfClearCacheTitle": "Confirm cache clearing",
     "cnfClearCacheOk": "Clear Cache",
-    "cnfClearCacheCancel": "Cancel"
+    "cnfClearCacheCancel": "Cancel",
+    "lblConfigStates": "Show configuration states",
+    "hlpConfigStates": "Create configuration states for each entity to show device configuration details"
 }
