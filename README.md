@@ -58,7 +58,7 @@ The Dashboard IP setting in the adapter configuration serves different purposes:
 **For Integrated Dashboard Tab in ioBroker Admin:**
 1. Enter the IP address and port where your ESPHome Dashboard is running
 2. **Built-in Dashboard:** Use the IP address of your ioBroker host (e.g., `192.168.1.10:6052`)
-   - **Important:** Do NOT use `127.0.0.1:6052` if you access ioBroker from other devices - the embedded iframe will try to reach 127.0.0.1 from the client's browser, not the ioBroker server
+    - **Important:** Do NOT use `127.0.0.1:6052` (nor `localhost:6052`) if you access ioBroker from other devices - the iframe will try to reach 127.0.0.1 from the client's browser, not the ioBroker server
    - Only use `127.0.0.1:6052` if you ONLY access ioBroker admin from the same machine where ioBroker is running
 3. **External Dashboard:** Use the IP:port of your external ESPHome installation (e.g., `192.168.1.100:6052`)
 4. **HTTPS Setup:** For HTTPS environments, see the detailed HTTPS configuration section below
@@ -125,6 +125,12 @@ The adapter will establish a connection and create all necessary ioBroker object
 
 **Note:** You don't need devices in the dashboard if you only want to control them via ioBroker. The dashboard is only needed for creating/modifying device configurations.
 
+### How do I install / update Python
+
+TLDR: You don't!
+
+The adapter does not care about your system's python installation. It will install and create its own python environment with the correct versions anyway. So please don't mess around with python commands on your system if you don't know what you are doing.
+
 <!--
 ## [Documentation](https://DrozmotiX.github.io/languages/en/Adapter/ESPHome/)
 
@@ -133,7 +139,7 @@ All our adapter documentation can be found at [The DrozmotiX Docu Page](https://
 
 ## Prerequisites
 
-    * NodeJS >= 18.x
+    * NodeJS >= 20.x
     * API is activated in YAML
     * For admin tabs (optional)
         * ESPHome Dashboard IP is provided in instance settings
@@ -355,6 +361,7 @@ If you like my work, please consider a personal donation
     * (DutchmanNL) 
 -->
 ### __WORK IN PROGRESS__ - add capability for fans & clean cache
+* (@SimonFischer04) improve README
 * (@copilot) **NEW**: Allow customization of Pillow version used by ESPHome Dashboard, similar to ESPHome version selector
 * (@copilot) **NEW**: Add "Clear Autopy Cache" button in ESPHome Dashboard configuration tab to resolve dashboard loading issues (#209)
 * (DutchmanNL) **FIXED**: Fan component not working #205
