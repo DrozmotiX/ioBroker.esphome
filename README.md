@@ -358,6 +358,7 @@ If you like my work, please consider a personal donation
 * (@copilot) **NEW**: Allow customization of Pillow version used by ESPHome Dashboard, similar to ESPHome version selector
 * (@copilot) **NEW**: Add "Clear Autopy Cache" button in ESPHome Dashboard configuration tab to resolve dashboard loading issues (#209)
 * (DutchmanNL) **FIXED**: Fan component not working #205
+* (@SimonFischer04) fix #394, actually fix #340, #356
 
 ### 0.7.0 (2026-02-16) - Add support for Lock entity & improve dashboard testing
 * (@copilot) **NEW**: Add support for Lock entity type - Lock devices now properly display state and control options #353
