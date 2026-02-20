@@ -6,7 +6,12 @@ export default [
 
   {
     // Ignore patterns (from .eslintignore)
-    ignores: ["gulpfile.js", "admin/words.js"],
+    ignores: [
+      "gulpfile.js",
+      "admin/words.js",
+      ".dev-server/**",
+      ".devcontainer/**",
+    ],
   },
 
   // Add mocha globals for test files
