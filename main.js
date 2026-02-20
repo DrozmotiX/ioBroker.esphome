@@ -61,7 +61,7 @@ class Esphome extends utils.Adapter {
       // defaultApiPass = this.config.apiPass;
       autodiscovery = this.config.autodiscovery;
       // reconnectInterval = this.config.reconnectInterval * 1000;
-      createConfigStates = this.config.configStates;
+      createConfigStates = this.config.configStates || true; // TODO: config option missing
 
       // Ensure all online states are set to false during adapter start
       await this.resetOnlineStates();
@@ -706,12 +706,12 @@ class Esphome extends utils.Adapter {
 
           // Store channel in device memory
           if (
-              !clientDetails[host].adapterObjects.channels.includes(
-                `${this.namespace}.${clientDetails[host].deviceName}.info`,
-              )
+            !clientDetails[host].adapterObjects.channels.includes(
+              `${this.namespace}.${clientDetails[host].deviceName}.info`,
+            )
           ) {
             clientDetails[host].adapterObjects.channels.push(
-                `${this.namespace}.${clientDetails[host].deviceName}.info`,
+              `${this.namespace}.${clientDetails[host].deviceName}.info`,
             );
           }
 
@@ -741,7 +741,7 @@ class Esphome extends utils.Adapter {
           this.errorHandler(`[deviceInfo]`, error);
         }
       });
-
+      //collapse fia advanced dashboard options ...
       // Initialise data for states
       clientDetails[host].client.on("newEntity", async (entity) => {
         this.log.debug(`EntityData: ${JSON.stringify(entity.config)}`);
@@ -1494,7 +1494,7 @@ class Esphome extends utils.Adapter {
 
       // default to type string if value is null to avoid errors like:
       //   Object 004B1296140C.info.area is invalid: obj.common.type has an invalid value (undefined) but has to be one of number, string, boolean, array, object, mixed, json This will throw an error up from js-controller version 7.0.0!
-      common.type = value == null ? 'string' : typeof value;
+      common.type = value == null ? "string" : typeof value;
 
       common.role =
         stateAttr[name] !== undefined
