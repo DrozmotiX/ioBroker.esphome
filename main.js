@@ -2513,18 +2513,32 @@ class Esphome extends utils.Adapter {
      * @returns {Array<any>} Parsed array or empty array on failure
      */
     parseServiceArrayArg(argVal) {
+        // If it's already an array, use it as-is
         if (Array.isArray(argVal)) {
             return argVal;
         }
+
+        // If it's a string, try to parse JSON, but handle empty strings gracefully
         if (typeof argVal === 'string') {
+            const trimmed = argVal.trim();
+            if (!trimmed) {
+                // Empty string means "no values"
+                return [];
+            }
+
             try {
-                const parsed = JSON.parse(argVal);
+                const parsed = JSON.parse(trimmed);
                 return Array.isArray(parsed) ? parsed : [];
             } catch {
                 this.log.warn(`Failed to parse service array argument "${argVal}", using empty array`);
                 return [];
             }
         }
+
+        // Any other type is unexpected; log and fall back to empty array
+        this.log.warn(
+            `Received unsupported service array argument type "${typeof argVal}", using empty array`,
+        );
         return [];
     }
 
