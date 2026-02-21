@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "esphome",
-    "version": "0.7.0-beta.2",
+    "version": "0.7.0-beta.3",
     "news": {
+      "0.7.0-beta.3": {
+        "en": "**NEW**: Added support for `colorBrightness`, `coldWhite`, `warmWhite`, and `colorMode` states for lights using the new ESPHome color mode API\n**FIXED**: RGB light control (brightness, color, white, colorTemperature) not working with newer ESPHome firmware that uses `supportedColorModesList` instead of deprecated legacy flags (#338)",
+        "de": "**NEW**: Unterstützung für `colorBrightness`, `coldWhite`, `warmWhite` und `colorMode` Zustände für Lichter mit der neuen ESPHome Farbmodus API\n**FIXED**: RGB Lichtsteuerung (Brightness, Farbe, weiß, FarbeTemperature) nicht mit neuerer ESPHome Firmware, die `supportedColorModesList` anstelle von deprecated Legacy Fahnen verwendet (#338)",
+        "ru": "**NEW**: Добавлена поддержка состояний «colorBrightness», «coldWhite», «warmWhite» и «colorMode» для огней с использованием нового API цветового режима ESPHome\n** FIXED**: Управление светом RGB (яркость, цвет, белый, цветовая температура) не работает с новой прошивкой ESPHome, которая использует «поддерживаемый ColorModesList» вместо устаревших флагов (#338)",
+        "pt": "**NOVO**: Adicionado suporte para `colorBrightness`, `coldWhite`, `warmWhite`, e `colorMode` estados para luzes usando o novo modo de cores ESPHome API\n**FIXED**: Controle de luz RGB (brilho, cor, branco, corTemperatura) não trabalhando com firmware ESPHome mais recente que usa `supportedColorModesList` em vez de bandeiras legadas deprecadas (#338)",
+        "nl": "**NIEUW**: Toegevoegde ondersteuning voor kleurBrightness, \n**FIXED**: RGB lichtcontrole (helderheid, kleur, wit, kleurTemperatuur) werkt niet met nieuwere ESPHome firmware die gebruik maakt van de ondersteundeColorModesListIn plaats van verouderde legacy vlaggen (#338)",
+        "fr": "**NOUVEAU**: Ajout du support pour les états `colorBrightness`, `coldWhite`, `warmWhite` et `colorMode` pour les lumières en utilisant la nouvelle API en mode couleur ESPHome\n**FIXED**: RGB contrôle de la lumière (brightness, color, white, colorTemperature) ne fonctionne pas avec le nouveau firmware ESPHome qui utilise `supportedColorModesList` au lieu de drapeaux hérités dépréciés (#338)",
+        "it": "**NEW**: Aggiunto il supporto per `colorBrightness`, `coldWhite`, `warmWhite`, e `colorMode` stati per le luci utilizzando il nuovo ESPHome colore modalità API\n**FIXED**: RGB light control (luce, colore, bianco, coloreTemperatura) non funziona con il nuovo firmware ESPHome che utilizza `supportedColorModesList` invece di bandiere legacy deprecate (#338)",
+        "es": "**NEW**: Añadido soporte para `colorBrightness`, `coldWhite`, `warmWhite`, and `colorMode` states for lights using the new ESPHome color mode API\n**FIXED**: Control de luz RGB (brightness, color, blanco, colorTemperatura) no trabaja con el firmware ESPHome más nuevo que utiliza 'ColorModesList` compatible en lugar de banderas heredadas deprecatadas (#338)",
+        "pl": "* *NOWOŚĆ* *: Dodano wsparcie dla 'colorBrighty', 'coldWhite', 'colorWhite' i 'colorMode' dla świateł przy użyciu nowego trybu kolorów ESPHome API \n* *FIXED* *: Sterowanie światłem RGB (jasność, kolor, biel, barwa) niepracujące z nowszymi firmware ESPHome, które używa 'supportedColorModesList' zamiast zdeprecjonowanych flag (# 338) ",
+        "uk": "**NEW**: Додана підтримка `colorBrightness`, `coldWhite`, `warmWhite`, `colorMode` станів для вогнів, використовуючи новий ESPHome колірний режим API\n**FIXED**: RGB легкий контроль (яскравість, колір, білий, колірTemperature) не працює з новою прошивкою ESPHome, яка використовує `supportedColorModesList` замість відхилених прапорів спадщини (#338)",
+        "zh-cn": "**NEW**: 添加支持使用新的ESPHome颜色模式API的“彩色亮度”、“冷白”、“暖白”和“彩色模式”照明装置\n** FIXED**:RGB灯光控制(亮度,颜色,白色,色质)不与使用`支持的ColorModesList ' 而不是被磨损的遗留旗帜的更新ESPHome固件合作(# 338)"
+      },
       "0.7.0-beta.2": {
         "en": "improve README\nfix #394, actually fix #340, #356\n**FIXED**: Fan component not working #205\n**NEW**: Allow customization of Pillow version used by ESPHome Dashboard, similar to ESPHome version selector\n**NEW**: Add \"Clear Autopy Cache\" button in ESPHome Dashboard configuration tab to resolve dashboard loading issues (#209)",
         "de": "rEADME\nfix #394, eigentlich fix #340, #356\n**FIXED**: Fan-Komponente nicht funktioniert #205\n**NEW**: Erlauben Anpassung der Pillow-Version, die von ESPHome Dashboard verwendet wird, ähnlich wie ESPHome-Versionsauswahl\n**NEW**: Fügen Sie die Schaltfläche \"Klar Autopy Cache\" in ESPHome Dashboard Konfigurationstabelle hinzu, um dashboard Ladeprobleme zu lösen (#209)",
@@ -80,19 +93,6 @@
         "pl": "dodaj obsługę urządzenia tekstowego typu # 141, wyświetla # 103\nurządzenie mocujące typu # 156\npraca wokół: na razie pyton w dół. poprawki # 259",
         "uk": "додавання підтримки типу текстового пристрою #141, відображення #103\nзафіксувати тип пристрою кришки #156\nробота: python тепер. застібки #259",
         "zh-cn": "添加文本设备类型 # 141, 显示 # 103\n固定封面设备类型 # 156\n工作间距: 现在降级的蟒蛇。 修正 # 259"
-      },
-      "0.6.1": {
-        "en": "Update esphome\nOptimize admin configuration interface\nOptimize backend handling of device discovery\nCapability to select ESPHome Dashboard version added, resolves #118",
-        "de": "Update esphome\nOptimieren der Admin-Konfigurationsschnittstelle\nOptimieren Sie das Backend-Handling der Geräteentdeckung\nMöglichkeit, ESPHome Dashboard-Version hinzugefügt zu wählen, löst #118",
-        "ru": "Обновление esphome\nОптимизируйте интерфейс конфигурации admin\nОптимизируйте обратную обработку обнаружения устройства\nВозможность выбора добавленной версии ESPHome Dashboard, решает #118",
-        "pt": "Atualizar esphome\nOtimizar a interface de configuração de administrador\nOtimizar o manuseio de backend da descoberta do dispositivo\nCapacidade de selecionar ESPHome Dashboard versão adicionada, resolve #118",
-        "nl": "Esphome bijwerken\nAdmin configuratie interface optimaliseren\nOptimaliseer backend behandeling van apparaatontdekking\nMogelijkheid om ESPHome Dashboard versie toegevoegd te selecteren, lost #118 op",
-        "fr": "Mettre à jour l'esphome\nOptimiser l'interface de configuration de l'administration\nOptimiser la gestion du moteur de la découverte de l'appareil\nCapacité de sélectionner la version ESPHome Dashboard ajoutée, résout #118",
-        "it": "Aggiornamento esphome\nOttimizzare l'interfaccia di configurazione di amministratore\nOttimizzare la gestione backend della scoperta del dispositivo\nCapacità di selezionare la versione di ESPHome Dashboard aggiunta, risolve #118",
-        "es": "Actualizar esphome\nOptimize admin configuración interface\nOptimize backend handling of device discovery\nCapacidad para seleccionar la versión ESPHome Dashboard añadido, resuelve #118",
-        "pl": "Uaktualnij esphome\nOptymalizacja interfejsu konfiguracyjnego administratora\nOptymalizacja obsługi urządzenia\nMożliwość wyboru wersji ESPHome Dashboard dodano, rozwiązuje # 118",
-        "uk": "Оновлення esphome\nОптимальний інтерфейс конфігурації адміністратора\nОптимізуйте зворотну обробку пристрою\nМожливість вибору ESPHome Dashboard додано, вирішує #118",
-        "zh-cn": "更新 esphome\n优化管理员配置接口\n优化设备发现的后端处理\n选择 ESPHome Dashboard 版本的能力已添加, 解决 # 118"
       }
     },
     "titleLang": {

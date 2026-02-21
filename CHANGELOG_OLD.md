@@ -1,4 +1,10 @@
 # Older changes
+## 0.6.1 (2025-05-24)
+* (@SimonFischer04) Update esphome
+* (@ticaki) Optimize admin configuration interface
+* (@DutchmanNL) Optimize backend handling of device discovery
+* (@DutchmanNL) Capability to select ESPHome Dashboard version added, resolves #118
+
 ## 0.5.0-beta.8 (2023-11-24)
 * (DutchmanNL) Capability to automatically detect new devices added
 * (DutchmanNL) Ensures a compatible pillow version is used (10.0.1)
