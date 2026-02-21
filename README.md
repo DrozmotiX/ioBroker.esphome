@@ -361,7 +361,7 @@ If you like my work, please consider a personal donation
     * (DutchmanNL) 
 -->
 ### __WORK IN PROGRESS__
-* (@copilot) **NEW**: Support user-defined ESPHome services - devices with `api: services:` YAML now expose a `UserDefinedServices` channel in ioBroker with writable argument states and a `run` button to trigger each service (fixes #251)
+* (@copilot) **NEW**: Support user-defined ESPHome services - devices with `api: services:` YAML now expose a `UserDefinedServices` channel in ioBroker with writable argument states and a `run` button to trigger each service (fixes #117, fixes #251)
 
 ### 0.7.0-beta.4 (2026-02-21)
 * (DutchmanNL) **FIXED**: ESLint errors by code refactoring

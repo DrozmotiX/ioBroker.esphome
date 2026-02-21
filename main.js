@@ -515,12 +515,8 @@ class Esphome extends utils.Adapter {
                             host
                         ].adapterObjects.channels.filter(ch => !ch.startsWith(prefix));
                     }
-                    // Also clear service entries from memory so stale services don't persist
-                    for (const key of Object.keys(clientDetails[host])) {
-                        if (clientDetails[host][key] && clientDetails[host][key].type === 'UserDefinedService') {
-                            delete clientDetails[host][key];
-                        }
-                    }
+                    // Reset the service registry so stale service entries don't persist
+                    clientDetails[host].userDefinedServices = {};
 
                     // Check if device connection is caused by adding  device from admin, if yes send OK message
                     if (this.messageResponse[host]) {
@@ -541,6 +537,12 @@ class Esphome extends utils.Adapter {
 
             clientDetails[host].client.on('disconnected', async () => {
                 try {
+                    // Remove the service announcement listener to prevent accumulation on reconnect
+                    clientDetails[host].client.connection.off(
+                        'message.ListEntitiesServicesResponse',
+                        onServiceAnnouncement,
+                    );
+
                     if (clientDetails[host].deviceName != null) {
                         await this.updateConnectionStatus(host, false, false, 'disconnected', false);
                         delete clientDetails[host].deviceInfo;
@@ -592,8 +594,8 @@ class Esphome extends utils.Adapter {
                 this.log.debug(`[ESPHome Device Data] ${host} client data ${data}`);
             });
 
-            // Listen for user-defined service announcements
-            clientDetails[host].client.connection.on('message.ListEntitiesServicesResponse', async serviceConfig => {
+            // Listen for user-defined service announcements; store reference for cleanup on disconnect
+            const onServiceAnnouncement = async serviceConfig => {
                 try {
                     this.log.info(
                         `${clientDetails[host].deviceFriendlyName} announced user-defined service "${serviceConfig.name}"`,
@@ -602,7 +604,8 @@ class Esphome extends utils.Adapter {
                 } catch (e) {
                     this.errorHandler(`[handleUserDefinedService]`, e);
                 }
-            });
+            };
+            clientDetails[host].client.connection.on('message.ListEntitiesServicesResponse', onServiceAnnouncement);
 
             // Handle device information when connected or information updated
             clientDetails[host].client.on('deviceInfo', async deviceInfo => {
@@ -2289,8 +2292,9 @@ class Esphome extends utils.Adapter {
                     this.log.debug(`Send Light values ${JSON.stringify(data)}`);
                     await clientDetails[deviceIP].client.connection.lightCommandService(data);
                 } else if (
-                    clientDetails[deviceIP][device[4]] &&
-                    clientDetails[deviceIP][device[4]].type === 'UserDefinedService'
+                    device.length >= 6 &&
+                    clientDetails[deviceIP].userDefinedServices &&
+                    clientDetails[deviceIP].userDefinedServices[device[4]]
                 ) {
                     if (device[5] === 'run') {
                         // Execute the service and reset the button
@@ -2401,8 +2405,8 @@ class Esphome extends utils.Adapter {
         const serviceKey = serviceConfig.key;
         const serviceName = serviceConfig.name;
 
-        // Store service config in memory (keyed by integer serviceKey)
-        clientDetails[host][serviceKey] = {
+        // Store service config in a dedicated sub-object to avoid collisions with entity keys
+        clientDetails[host].userDefinedServices[serviceKey] = {
             type: 'UserDefinedService',
             name: serviceName,
             config: serviceConfig,
@@ -2459,7 +2463,7 @@ class Esphome extends utils.Adapter {
             return;
         }
 
-        const serviceEntry = deviceDetails[serviceKey];
+        const serviceEntry = deviceDetails.userDefinedServices && deviceDetails.userDefinedServices[serviceKey];
         if (!serviceEntry || !serviceEntry.config) {
             this.log.error(
                 `Cannot execute user-defined service: no service configuration found for device IP ${deviceIP} (${deviceName}), serviceKey=${serviceKey}`,
