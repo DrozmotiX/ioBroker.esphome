@@ -11,6 +11,7 @@ const clientDevice = require('./lib/helpers.js');
 const YamlFileManager = require('./lib/yamlFileManager.js');
 // @ts-expect-error Client is just missing in index.d.ts file
 const { Client, Discovery } = require('@2colors/esphome-native-api');
+const { pb } = require('@2colors/esphome-native-api/lib/utils/messages');
 const stateAttr = require(`${__dirname}/lib/stateAttr.js`); // Load attribute library
 const disableSentry = false; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
@@ -574,6 +575,18 @@ class Esphome extends utils.Adapter {
 
             clientDetails[host].client.connection.on('data', data => {
                 this.log.debug(`[ESPHome Device Data] ${host} client data ${data}`);
+            });
+
+            // Listen for user-defined service announcements
+            clientDetails[host].client.connection.on('message.ListEntitiesServicesResponse', async serviceConfig => {
+                try {
+                    this.log.info(
+                        `${clientDetails[host].deviceFriendlyName} announced user-defined service "${serviceConfig.name}"`,
+                    );
+                    await this.handleUserDefinedService(host, serviceConfig);
+                } catch (e) {
+                    this.errorHandler(`[handleUserDefinedService]`, e);
+                }
             });
 
             // Handle device information when connected or information updated
@@ -2260,6 +2273,18 @@ class Esphome extends utils.Adapter {
 
                     this.log.debug(`Send Light values ${JSON.stringify(data)}`);
                     await clientDetails[deviceIP].client.connection.lightCommandService(data);
+                } else if (
+                    clientDetails[deviceIP][device[4]] &&
+                    clientDetails[deviceIP][device[4]].type === 'UserDefinedService'
+                ) {
+                    if (device[5] === 'run') {
+                        // Execute the service and reset the button
+                        await this.executeUserDefinedService(deviceIP, device[2], device[4]);
+                        await this.setStateAsync(id, { val: false, ack: true });
+                    } else {
+                        // Argument value updated - just acknowledge the state
+                        await this.setStateAsync(id, { val: state.val, ack: true });
+                    }
                 }
             }
         } catch (e) {
@@ -2287,6 +2312,154 @@ class Esphome extends utils.Adapter {
                 break;
             }
         }
+    }
+
+    /**
+     * Handle user-defined service announcement from ESPHome device.
+     * Creates ioBroker state tree for each service and its arguments.
+     *
+     * @param {string} host IP-Address of client
+     * @param {object} serviceConfig Service configuration from ListEntitiesServicesResponse
+     */
+    async handleUserDefinedService(host, serviceConfig) {
+        const deviceName = clientDetails[host].deviceName;
+        if (!deviceName) {
+            return;
+        }
+
+        const serviceKey = serviceConfig.key;
+        const serviceName = serviceConfig.name;
+
+        // Store service config in memory (keyed by integer serviceKey)
+        clientDetails[host][serviceKey] = {
+            type: 'UserDefinedService',
+            name: serviceName,
+            config: serviceConfig,
+        };
+
+        // Create parent channel for all user-defined services
+        const servicesChannel = `${deviceName}.UserDefinedServices`;
+        await this.extendObjectAsync(servicesChannel, {
+            type: 'channel',
+            common: { name: 'User-Defined Services' },
+            native: {},
+        });
+        if (!clientDetails[host].adapterObjects.channels.includes(`${this.namespace}.${servicesChannel}`)) {
+            clientDetails[host].adapterObjects.channels.push(`${this.namespace}.${servicesChannel}`);
+        }
+
+        // Create channel for this specific service
+        const serviceChannel = `${deviceName}.UserDefinedServices.${serviceKey}`;
+        await this.extendObjectAsync(serviceChannel, {
+            type: 'channel',
+            common: { name: serviceName },
+            native: { key: serviceKey, name: serviceName },
+        });
+        if (!clientDetails[host].adapterObjects.channels.includes(`${this.namespace}.${serviceChannel}`)) {
+            clientDetails[host].adapterObjects.channels.push(`${this.namespace}.${serviceChannel}`);
+        }
+
+        // ServiceArgType → ioBroker default values (bool=0, int=1, float=2, string=3, arrays=4-7)
+        const argDefaults = { 0: false, 1: 0, 2: 0.0, 3: '', 4: '[]', 5: '[]', 6: '[]', 7: '[]' };
+
+        // Create writable argument states
+        for (const arg of serviceConfig.argsList || []) {
+            const defaultVal = argDefaults[arg.type] !== undefined ? argDefaults[arg.type] : '';
+            await this.stateSetCreate(`${serviceChannel}.${arg.name}`, arg.name, defaultVal, '', true);
+        }
+
+        // Create run-button to trigger the service
+        await this.stateSetCreate(`${serviceChannel}.run`, `Button`, false, '', true);
+    }
+
+    /**
+     * Execute a user-defined ESPHome service by sending ExecuteServiceRequest.
+     *
+     * @param {string} deviceIP IP-Address of device
+     * @param {string} deviceName ioBroker device name (MAC without colons)
+     * @param {string|number} serviceKey Integer service key
+     */
+    async executeUserDefinedService(deviceIP, deviceName, serviceKey) {
+        const serviceEntry = clientDetails[deviceIP][serviceKey];
+        const serviceConfig = serviceEntry.config;
+
+        const request = new pb.ExecuteServiceRequest();
+        request.setKey(Number(serviceKey));
+
+        const args = [];
+        for (const arg of serviceConfig.argsList || []) {
+            const argState = await this.getStateAsync(`${deviceName}.UserDefinedServices.${serviceKey}.${arg.name}`);
+            const argVal = argState ? argState.val : null;
+            const argument = new pb.ExecuteServiceArgument();
+
+            switch (arg.type) {
+                case 0: // BOOL
+                    argument.setBool(argVal === true || argVal === 'true');
+                    break;
+                case 1: // INT
+                    argument.setInt(parseInt(argVal) || 0);
+                    break;
+                case 2: // FLOAT
+                    argument.setFloat(parseFloat(argVal) || 0);
+                    break;
+                case 3: // STRING
+                    argument.setString(String(argVal !== null && argVal !== undefined ? argVal : ''));
+                    break;
+                case 4: {
+                    // BOOL_ARRAY
+                    const arr = this.parseServiceArrayArg(argVal);
+                    argument.setBoolArrayList(arr.map(v => v === true || v === 'true'));
+                    break;
+                }
+                case 5: {
+                    // INT_ARRAY
+                    const arr = this.parseServiceArrayArg(argVal);
+                    argument.setIntArrayList(arr.map(v => parseInt(v) || 0));
+                    break;
+                }
+                case 6: {
+                    // FLOAT_ARRAY
+                    const arr = this.parseServiceArrayArg(argVal);
+                    argument.setFloatArrayList(arr.map(v => parseFloat(v) || 0));
+                    break;
+                }
+                case 7: {
+                    // STRING_ARRAY
+                    const arr = this.parseServiceArrayArg(argVal);
+                    argument.setStringArrayList(arr.map(v => String(v)));
+                    break;
+                }
+                default:
+                    this.log.warn(`Unknown service arg type ${arg.type} for argument "${arg.name}"`);
+            }
+            args.push(argument);
+        }
+
+        request.setArgsList(args);
+        clientDetails[deviceIP].client.connection.sendCommandMessage(request);
+        this.log.info(`Executed user-defined service "${serviceConfig.name}" on ${deviceName}`);
+    }
+
+    /**
+     * Safely parse a JSON string array argument value, falling back to empty array on error.
+     *
+     * @param {any} argVal State value (JSON string or already an array)
+     * @returns {Array<any>} Parsed array or empty array on failure
+     */
+    parseServiceArrayArg(argVal) {
+        if (Array.isArray(argVal)) {
+            return argVal;
+        }
+        if (typeof argVal === 'string') {
+            try {
+                const parsed = JSON.parse(argVal);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch {
+                this.log.warn(`Failed to parse service array argument "${argVal}", using empty array`);
+                return [];
+            }
+        }
+        return [];
     }
 
     async resetOnlineStates() {
