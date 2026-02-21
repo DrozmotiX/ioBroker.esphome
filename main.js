@@ -2380,7 +2380,17 @@ class Esphome extends utils.Adapter {
      * @param {string|number} serviceKey Integer service key
      */
     async executeUserDefinedService(deviceIP, deviceName, serviceKey) {
-        const serviceEntry = clientDetails[deviceIP][serviceKey];
+        const deviceDetails = clientDetails[deviceIP];
+        if (!deviceDetails) {
+            this.log.error(`Cannot execute user-defined service: no client details found for device IP ${deviceIP} (${deviceName}), serviceKey=${serviceKey}`);
+            return;
+        }
+
+        const serviceEntry = deviceDetails[serviceKey];
+        if (!serviceEntry || !serviceEntry.config) {
+            this.log.error(`Cannot execute user-defined service: no service configuration found for device IP ${deviceIP} (${deviceName}), serviceKey=${serviceKey}`);
+            return;
+        }
         const serviceConfig = serviceEntry.config;
 
         const request = new pb.ExecuteServiceRequest();
