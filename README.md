@@ -393,6 +393,9 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
+### __WORK IN PROGRESS__
+* (@copilot) **NEW**: Support user-defined ESPHome services - devices with `api: services:` YAML now expose a `UserDefinedServices` channel in ioBroker with writable argument states and a `run` button to trigger each service (fixes #117, fixes #251)
+
 ### 0.7.0-beta.4 (2026-02-21)
 * (DutchmanNL) **FIXED**: ESLint errors by code refactoring
 * (@copilot) **FIXED**: Restore missing `configStates` option in admin UI to allow configuring whether configuration states are shown per entity
