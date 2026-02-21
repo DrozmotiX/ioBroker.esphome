@@ -31,6 +31,7 @@ Always reference these instructions first and fallback to search or bash command
 #### Validation
 - Always run the full test suite after making changes: `npm test`
 - ALWAYS run `npm run lint` before you are done or the CI (.github/workflows/test-and-release.yml) will fail.
+- **ESLint warnings are treated as errors in CI** (`--max-warnings 0`). Always run `./node_modules/.bin/eslint --max-warnings 0 .` to catch warnings that would be ignored by `npm run lint` locally but fail in CI. Fix ALL warnings — not just errors — before finishing a PR.
 - The TypeScript check (`npm run check`) may show errors but they are non-blocking and do not prevent the adapter from functioning.
 - Always test actual ESPHome device integration scenarios when making changes to device communication or API handling.
 - Test the admin UI configuration when making changes to adapter settings or device management.
@@ -88,12 +89,12 @@ tsconfig.json          -- TypeScript configuration
 
 ##### Development workflow
 1. Make code changes to main.js or lib/ files
-2. `npm run lint` -- verify code style (<5 seconds)
+2. `./node_modules/.bin/eslint --max-warnings 0 .` -- verify code style with zero-warning tolerance, matching CI (<5 seconds)
 3. `npm run check` -- TypeScript check (<5 seconds, may show non-blocking errors)
 4. `npm test` -- run full test suite (30 seconds)
 5. For local testing: `npm run dev-server run default` (after initial setup) - opens admin UI on http://127.0.0.1:8081/
 6. For translation updates: `npm run translate` (<1 second)
-7. Always lint before committing or CI will fail
+7. Always fix all ESLint warnings and errors before committing — CI treats warnings as errors (`--max-warnings 0`)
 
 ##### Manual Testing Scenarios
 - **Admin UI Testing**: Use `npm run dev-server run default` and navigate to http://127.0.0.1:8081/ to test configuration interface
