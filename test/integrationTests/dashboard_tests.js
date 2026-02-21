@@ -15,19 +15,18 @@
  *
  */
 
-const http = require("http");
-const { expect } = require("chai");
+const http = require('http');
+const { expect } = require('chai');
 
 // Test configuration constants
 const DASHBOARD_PORT = 6052;
-const DASHBOARD_VERSION = "Always last available";
-const PILLOW_VERSION = "Always last available";
+const DASHBOARD_VERSION = 'Always last available';
+const PILLOW_VERSION = 'Always last available';
 const DASHBOARD_INITIALIZATION_DELAY_MS = 10000; // 10 seconds initial delay for dashboard to start initializing
 const REACHABILITY_CHECK_DELAY_MS = 3000; // 3 seconds between reachability checks
 const TOTAL_TIMEOUT_MS = 300000; // 5 minutes total test timeout
 const MAX_REACHABILITY_ATTEMPTS = Math.floor(
-  (TOTAL_TIMEOUT_MS - DASHBOARD_INITIALIZATION_DELAY_MS) /
-    REACHABILITY_CHECK_DELAY_MS,
+    (TOTAL_TIMEOUT_MS - DASHBOARD_INITIALIZATION_DELAY_MS) / REACHABILITY_CHECK_DELAY_MS,
 ); // Calculate max attempts based on timeout
 const TEST_TIMEOUT_MS = TOTAL_TIMEOUT_MS;
 
@@ -41,127 +40,117 @@ const TEST_TIMEOUT_MS = TOTAL_TIMEOUT_MS;
  * attempts; otherwise resolves to false after all attempts (including timeouts and connection errors) fail.
  */
 async function isDashboardReachable(port, maxAttempts, delayMs) {
-  console.log(`Checking if dashboard is reachable on port ${port}...`);
+    console.log(`Checking if dashboard is reachable on port ${port}...`);
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      const accessible = await new Promise((resolve) => {
-        const req = http.get(`http://localhost:${port}/`, (res) => {
-          console.log(
-            `Dashboard check attempt ${attempt}: HTTP ${res.statusCode}`,
-          );
-          // Dashboard is reachable if we get a successful response (2xx) or redirect (3xx)
-          // This indicates the dashboard server is running and responding properly
-          resolve(res.statusCode >= 200 && res.statusCode < 400);
-        });
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            const accessible = await new Promise(resolve => {
+                const req = http.get(`http://localhost:${port}/`, res => {
+                    console.log(`Dashboard check attempt ${attempt}: HTTP ${res.statusCode}`);
+                    // Dashboard is reachable if we get a successful response (2xx) or redirect (3xx)
+                    // This indicates the dashboard server is running and responding properly
+                    resolve(res.statusCode >= 200 && res.statusCode < 400);
+                });
 
-        req.on("error", (err) => {
-          console.log(
-            `Dashboard check attempt ${attempt}: ${err.code || err.message}`,
-          );
-          resolve(false);
-        });
+                req.on('error', err => {
+                    console.log(`Dashboard check attempt ${attempt}: ${err.code || err.message}`);
+                    resolve(false);
+                });
 
-        req.setTimeout(5000, () => {
-          req.destroy();
-          resolve(false);
-        });
-      });
+                req.setTimeout(5000, () => {
+                    req.destroy();
+                    resolve(false);
+                });
+            });
 
-      if (accessible) {
-        console.log(`✓ Dashboard is reachable on port ${port}`);
-        return true;
-      }
-    } catch (err) {
-      console.log(`Dashboard check attempt ${attempt} error: ${err.message}`);
+            if (accessible) {
+                console.log(`✓ Dashboard is reachable on port ${port}`);
+                return true;
+            }
+        } catch (err) {
+            console.log(`Dashboard check attempt ${attempt} error: ${err.message}`);
+        }
+
+        if (attempt < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
     }
 
-    if (attempt < maxAttempts) {
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-    }
-  }
-
-  return false;
+    return false;
 }
 
 exports.runTests = function (suite) {
-  suite("ESPHome Dashboard Integration", (getHarness) => {
-    it("should enable dashboard in adapter settings and verify it becomes reachable", async function () {
-      // Extended timeout for dashboard initialization
-      this.timeout(TEST_TIMEOUT_MS);
+    suite('ESPHome Dashboard Integration', getHarness => {
+        it('should enable dashboard in adapter settings and verify it becomes reachable', async function () {
+            // Extended timeout for dashboard initialization
+            this.timeout(TEST_TIMEOUT_MS);
 
-      const harness = getHarness();
+            const harness = getHarness();
 
-      try {
-        // Stop the adapter if it's already running
-        if (harness.isAdapterRunning()) {
-          console.log("Stopping running adapter...");
-          await harness.stopAdapter();
-        }
+            try {
+                // Stop the adapter if it's already running
+                if (harness.isAdapterRunning()) {
+                    console.log('Stopping running adapter...');
+                    await harness.stopAdapter();
+                }
 
-        console.log("Configuring adapter to enable dashboard...");
-        // Enable the dashboard in adapter configuration
-        await harness.changeAdapterConfig("esphome", {
-          native: {
-            ESPHomeDashboardEnabled: true,
-            ESPHomeDashboardPort: DASHBOARD_PORT,
-            ESPHomeDashboardVersion: DASHBOARD_VERSION,
-            PillowVersion: PILLOW_VERSION,
-          },
-        });
+                console.log('Configuring adapter to enable dashboard...');
+                // Enable the dashboard in adapter configuration
+                await harness.changeAdapterConfig('esphome', {
+                    native: {
+                        ESPHomeDashboardEnabled: true,
+                        ESPHomeDashboardPort: DASHBOARD_PORT,
+                        ESPHomeDashboardVersion: DASHBOARD_VERSION,
+                        PillowVersion: PILLOW_VERSION,
+                    },
+                });
 
-        // Small delay to ensure configuration is persisted
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+                // Small delay to ensure configuration is persisted
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
-        console.log("Starting adapter with dashboard enabled...");
-        await harness.startAdapterAndWait();
+                console.log('Starting adapter with dashboard enabled...');
+                await harness.startAdapterAndWait();
 
-        // Wait for dashboard to initialize after adapter starts
-        console.log(
-          `Waiting ${DASHBOARD_INITIALIZATION_DELAY_MS / 1000}s for dashboard initialization...`,
-        );
-        await new Promise((resolve) =>
-          setTimeout(resolve, DASHBOARD_INITIALIZATION_DELAY_MS),
-        );
+                // Wait for dashboard to initialize after adapter starts
+                console.log(`Waiting ${DASHBOARD_INITIALIZATION_DELAY_MS / 1000}s for dashboard initialization...`);
+                await new Promise(resolve => setTimeout(resolve, DASHBOARD_INITIALIZATION_DELAY_MS));
 
-        // Check if dashboard is reachable
-        console.log("Checking dashboard accessibility...");
-        const isReachable = await isDashboardReachable(
-          DASHBOARD_PORT,
-          MAX_REACHABILITY_ATTEMPTS,
-          REACHABILITY_CHECK_DELAY_MS,
-        );
+                // Check if dashboard is reachable
+                console.log('Checking dashboard accessibility...');
+                const isReachable = await isDashboardReachable(
+                    DASHBOARD_PORT,
+                    MAX_REACHABILITY_ATTEMPTS,
+                    REACHABILITY_CHECK_DELAY_MS,
+                );
 
-        if (!isReachable) {
-          const errorMessage = `Dashboard is not reachable.
+                if (!isReachable) {
+                    const errorMessage = `Dashboard is not reachable.
 Possible causes:
 - Fatal error in dashboard startup code
 - Python environment setup failure
 Check the adapter logs above for more details`;
-          console.error(errorMessage);
-          throw new Error(errorMessage);
-        }
+                    console.error(errorMessage);
+                    throw new Error(errorMessage);
+                }
 
-        // If we reach here, dashboard is reachable
-        console.log("✓ Dashboard is successfully reachable!");
-        console.log("✓ Dashboard integration test passed completely");
-        expect(isReachable).to.be.true;
-      } catch (error) {
-        console.error(`Dashboard integration test failed: ${error.message}`);
-        throw error;
-      } finally {
-        // Ensure the adapter (and thus the dashboard process) is always stopped
-        try {
-          if (harness && harness.isAdapterRunning()) {
-            console.log("Stopping adapter in cleanup (finally)...");
-            await harness.stopAdapter();
-          }
-        } catch (cleanupError) {
-          console.error(
-            `Failed to stop adapter during dashboard test cleanup: ${cleanupError.message}`,
-          );
-        }
-      }
+                // If we reach here, dashboard is reachable
+                console.log('✓ Dashboard is successfully reachable!');
+                console.log('✓ Dashboard integration test passed completely');
+                expect(isReachable).to.be.true;
+            } catch (error) {
+                console.error(`Dashboard integration test failed: ${error.message}`);
+                throw error;
+            } finally {
+                // Ensure the adapter (and thus the dashboard process) is always stopped
+                try {
+                    if (harness && harness.isAdapterRunning()) {
+                        console.log('Stopping adapter in cleanup (finally)...');
+                        await harness.stopAdapter();
+                    }
+                } catch (cleanupError) {
+                    console.error(`Failed to stop adapter during dashboard test cleanup: ${cleanupError.message}`);
+                }
+            }
+        });
     });
-  });
 };
