@@ -507,6 +507,21 @@ class Esphome extends utils.Adapter {
                     // Clear possible present warning messages for devices from previous connection
                     delete warnMessages[host];
 
+                    // Remove UserDefinedServices channels from tracking on reconnect so objectCleanup
+                    // can delete channels for services no longer present in the ESPHome device config
+                    if (clientDetails[host].deviceName) {
+                        const prefix = `${this.namespace}.${clientDetails[host].deviceName}.UserDefinedServices`;
+                        clientDetails[host].adapterObjects.channels = clientDetails[
+                            host
+                        ].adapterObjects.channels.filter(ch => !ch.startsWith(prefix));
+                    }
+                    // Also clear service entries from memory so stale services don't persist
+                    for (const key of Object.keys(clientDetails[host])) {
+                        if (clientDetails[host][key] && clientDetails[host][key].type === 'UserDefinedService') {
+                            delete clientDetails[host][key];
+                        }
+                    }
+
                     // Check if device connection is caused by adding  device from admin, if yes send OK message
                     if (this.messageResponse[host]) {
                         this.sendTo(
