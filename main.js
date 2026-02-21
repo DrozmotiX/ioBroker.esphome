@@ -1166,11 +1166,11 @@ class Esphome extends utils.Adapter {
                     }
 
                     // Create rgbAutoWhite state only once for lights with a dedicated white channel
-                    if (stateName === 'white' && clientDetails[host][entity.id].states.rgbAutoWhite === undefined) {
+                    if (stateName === 'white' && clientDetails[host][entity.id].rgbAutoWhite === undefined) {
                         let rgbAutoWhiteVal = false;
                         try {
                             const existing = await this.getStateAsync(
-                                `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.rgbAutoWhite`,
+                                `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config.rgbAutoWhite`,
                             );
                             if (existing != null) {
                                 rgbAutoWhiteVal = !!existing.val;
@@ -1178,9 +1178,18 @@ class Esphome extends utils.Adapter {
                         } catch (e) {
                             this.log.debug(`[handleStateArrays] Could not read rgbAutoWhite state: ${e}`);
                         }
-                        clientDetails[host][entity.id].states.rgbAutoWhite = rgbAutoWhiteVal;
+                        clientDetails[host][entity.id].rgbAutoWhite = rgbAutoWhiteVal;
+                        // Ensure config channel exists before creating the state inside it
+                        await this.extendObjectAsync(
+                            `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config`,
+                            {
+                                type: 'channel',
+                                common: { name: 'Configuration data' },
+                                native: {},
+                            },
+                        );
                         await this.stateSetCreate(
-                            `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.rgbAutoWhite`,
+                            `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config.rgbAutoWhite`,
                             'rgbAutoWhite',
                             rgbAutoWhiteVal,
                             '',
@@ -2222,9 +2231,11 @@ class Esphome extends utils.Adapter {
                         clientDetails[deviceIP][device[4]].states.effect = writeValue;
                     } else if (device[5] === 'state') {
                         clientDetails[deviceIP][device[4]].states.state = writeValue;
-                    } else if (device[5] === 'rgbAutoWhite') {
+                    } else if (device[5] === 'config' && device[6] === 'rgbAutoWhite') {
                         // Store device-specific preference; no light command needed
-                        clientDetails[deviceIP][device[4]].states.rgbAutoWhite = writeValue;
+                        clientDetails[deviceIP][device[4]].rgbAutoWhite = writeValue;
+                        // Acknowledge the preference update so the state does not stay with ack=false
+                        this.setState(id, !!writeValue, true);
                         return;
                     }
 
@@ -2251,15 +2262,8 @@ class Esphome extends utils.Adapter {
 
                     // Auto white channel: when colorHEX is set to white (#ffffff) on RGBW lights,
                     // automatically switch to white channel; otherwise switch to RGB mode
-                    if (
-                        clientDetails[deviceIP][device[4]].states.rgbAutoWhite &&
-                        supportsWhite &&
-                        device[5] === 'colorHEX'
-                    ) {
-                        const r = clientDetails[deviceIP][device[4]].states.red;
-                        const g = clientDetails[deviceIP][device[4]].states.green;
-                        const b = clientDetails[deviceIP][device[4]].states.blue;
-                        if (r === 1 && g === 1 && b === 1) {
+                    if (clientDetails[deviceIP][device[4]].rgbAutoWhite && supportsWhite && device[5] === 'colorHEX') {
+                        if (writeValue.replace(/^#/, '').toLowerCase() === 'ffffff') {
                             // White color detected: redirect to dedicated white channel
                             clientDetails[deviceIP][device[4]].states.red = 0;
                             clientDetails[deviceIP][device[4]].states.green = 0;

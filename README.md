@@ -340,6 +340,39 @@ Example config, for more examples see [The DrozmotiX Docu Page](https://Drozmoti
         output: 'gpio_12'
 </details>
 
+## Controlling RGBW Lights
+
+### RGB vs RGBW — What's the Difference?
+
+**RGB lights** use three channels (red, green, blue) to produce colours, including white by mixing all three at maximum. **RGBW lights** add a dedicated fourth white channel (`white`) that provides a cleaner, brighter white than mixing RGB.
+
+### Available states for a light entity
+
+| State | Description |
+|---|---|
+| `colorHEX` | Writable hex colour string, e.g. `#ff6600`. Writing here updates red/green/blue and sends the command. |
+| `red` / `green` / `blue` | Individual colour channels (0 – 255). |
+| `white` | Dedicated white channel (0 – 255). Only present on RGBW-capable lights. |
+| `brightness` | Overall brightness (0 – 255). |
+| `config.rgbAutoWhite` | **RGBW only** — when set to `true`, writing `#ffffff` to `colorHEX` automatically activates the white channel and sets RGB to zero. Writing any other colour disables the white channel and uses RGB. |
+
+### Auto white-channel switching (`rgbAutoWhite`)
+
+When an RGBW-capable light is detected (i.e. it exposes a `white` state), the adapter automatically creates a writable `config.rgbAutoWhite` toggle state for that entity. It defaults to `false` (disabled).
+
+**To enable:**
+1. Open the ioBroker **Objects** view and navigate to your light entity, e.g. `esphome.0.MyLight.Light.1.config.rgbAutoWhite`.
+2. Set the value to `true`.
+
+**Behaviour when enabled:**
+
+| `colorHEX` input | Result |
+|---|---|
+| `#ffffff` | `white` → 1 (full), `red` / `green` / `blue` → 0 |
+| Any other colour | `white` → 0, RGB channels set to the colour values |
+
+**Behaviour when disabled (default):** the `white` channel is never touched automatically; users control it independently.
+
 ## Tasmota / ESPEasy migration
 
 Migrating from previous Sonoff Tasmota or ESPEasy setups is very easy. You just need to have ESPHome create a binary for you and then upload that in the web interface.  
@@ -363,7 +396,7 @@ If you like my work, please consider a personal donation
 ### 0.7.0-beta.4 (2026-02-21)
 * (DutchmanNL) **FIXED**: ESLint errors by code refactoring
 * (@copilot) **FIXED**: Restore missing `configStates` option in admin UI to allow configuring whether configuration states are shown per entity
-* (@copilot) **NEW**: Auto white channel for RGBW lights - a per-device `rgbAutoWhite` state is created for each light that has a white channel. When enabled, setting `colorHEX` to `#ffffff` automatically activates the dedicated white channel and sets RGB channels to zero; any other color disables the white channel.
+* (@copilot) **NEW**: Per-device `rgbAutoWhite` toggle in the light config channel for automatic white-channel routing on RGBW lights (see [Controlling RGBW Lights](#controlling-rgbw-lights))
 
 ### 0.7.0-beta.3 (2026-02-20)
 * (@copilot) **NEW**: Added support for `colorBrightness`, `coldWhite`, `warmWhite`, and `colorMode` states for lights using the new ESPHome color mode API
