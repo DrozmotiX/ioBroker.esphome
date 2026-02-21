@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "esphome",
-    "version": "0.7.0-beta.3",
+    "version": "0.7.0-beta.4",
     "news": {
+      "0.7.0-beta.4": {
+        "en": "**FIXED**: ESLint errors by code refactoring\n**FIXED**: Restore missing `configStates` option in admin UI to allow configuring whether configuration states are shown per entity",
+        "de": "**FIXED**: ESLint-Fehler durch Code-Refactoring\n**FIXED**: Wiederherstellen fehlender `configStates` Option im Admin UI, um die Konfiguration zu ermöglichen, ob Konfigurationszustände pro Einheit angezeigt werden",
+        "ru": "**FIXED**: ошибки ESLint при рефакторинге кода\n**FIXED**: Восстановление отсутствующей опции «configStates» в пользовательском интерфейсе администратора, чтобы позволить настроить, отображаются ли состояния конфигурации на единицу",
+        "pt": "**FIXED**: ESLint errors by code refatoring\n**FIXED**: Restaurar a opção 'configStates' faltando na interface de administração para permitir configurar se os estados de configuração são mostrados por entidade",
+        "nl": "** VAST**: ESLint fouten door code refactoring\n**FIXED**: Herstellen van ontbrekende optie \"configStates\" in admin UI om het configureren van configuratietoestanden per entiteit mogelijk te maken",
+        "fr": "**FIXED**: erreurs ESLint par refactoring de code\n**FIXED**: Restaurer l'option `configStates` manquante dans l'interface utilisateur admin pour permettre de configurer si les états de configuration sont affichés par entité",
+        "it": "**FIXED**: Errori ESLint per refactoring del codice\n**FIXED**: Ripristina l'opzione `configStates` mancante nell'interfaccia utente di amministrazione per consentire la configurazione se gli stati di configurazione vengono visualizzati per entità",
+        "es": "**FIXED**: errores ESLint por refactorización de código\n**FIXED**: Restaurar la opción 'configStates' desaparecida en admin UI para permitir configurar si los estados de configuración se muestran por entidad",
+        "pl": "* *FIXED* *: Błędy związane z plikiem ESLint przy pomocy refaktoringu kodu \n* *FIXED* *: Przywracanie brakującej opcji 'configStates' w systemie UI administratora, aby umożliwić konfigurację tego, czy stany konfiguracji są wyświetlane na jednostkę ",
+        "uk": "**FIXED***: помилки ESLint від рефакторингу коду\n**FIXED***: Відновити варіант `configStates` в admin UI, щоб дозволити налаштування станів конфігурації відображається на суб’єкті",
+        "zh-cn": "**FIXED**:通过代码重构的ESLint错误\n** FIXED**:在管理UI中恢复缺失的“配置状态”选项,以便配置是否显示每个实体的配置状态"
+      },
       "0.7.0-beta.3": {
         "en": "**NEW**: Added support for `colorBrightness`, `coldWhite`, `warmWhite`, and `colorMode` states for lights using the new ESPHome color mode API\n**FIXED**: RGB light control (brightness, color, white, colorTemperature) not working with newer ESPHome firmware that uses `supportedColorModesList` instead of deprecated legacy flags (#338)",
         "de": "**NEW**: Unterstützung für `colorBrightness`, `coldWhite`, `warmWhite` und `colorMode` Zustände für Lichter mit der neuen ESPHome Farbmodus API\n**FIXED**: RGB Lichtsteuerung (Brightness, Farbe, weiß, FarbeTemperature) nicht mit neuerer ESPHome Firmware, die `supportedColorModesList` anstelle von deprecated Legacy Fahnen verwendet (#338)",
@@ -80,19 +93,6 @@
         "pl": "Dodaj obsługę typu urządzenia tekstowego #141, wyświetla #103\nNaprawić okładkę typu #156\nObejście: Na razie obniż się Pythona. Poprawki #259",
         "uk": "Додайте підтримку типу текстового пристрою № 141, дисплеї № 103\nВиправити тип пристрою покриття № 156\nВирішення: поки що Python знижується. Виправлення №259",
         "zh-cn": "添加对文本设备类型＃141的支持，显示＃103\n修复封面设备类型＃156\n解决方法：暂时降级Python。修复＃259"
-      },
-      "0.6.2": {
-        "en": "add support for text device type #141, displays #103\nfix cover device type #156\nworkaround: downgrade python for now. fixes #259",
-        "de": "unterstützung für textgerät typ #141, anzeigen #103\nbefestigungsabdeckung typ #156\narbeitsbereich: abbauen python für jetzt. fixes #259",
-        "ru": "добавить поддержку текстового устройства типа #141, дисплеев #103\nфиксировать крышку типа #156\nобходной путь: понижай питон пока. обсуждение #259",
-        "pt": "adicionar suporte para o tipo de dispositivo de texto #141, exibe #103\ncorrigir tipo de dispositivo de cobertura #156\nsolução alternativa: píton degradante por enquanto. corrige # 259",
-        "nl": "ondersteuning toevoegen voor tekst apparaat type #141, displays #103\nfix cover apparaat type #156\nwerkoplossing: downgrade python voor nu. fixes #259",
-        "fr": "ajouter le support pour le type de périphérique texte #141, affiche #103\ndispositif de protection de type #156\nla solution de rechange: python de qualité inférieure pour l'instant. correctifs #259",
-        "it": "aggiungere il supporto per il tipo di dispositivo di testo #141, visualizza #103\ncorretto tipo di dispositivo di copertura #156\na tutto: pitone per ora. correzioni #259",
-        "es": "añadir soporte para el tipo de dispositivo de texto #141, pantallas #103\ntipo de dispositivo de tapa fija #156\ntodo el trabajo: por ahora. fijaciones #259",
-        "pl": "dodaj obsługę urządzenia tekstowego typu # 141, wyświetla # 103\nurządzenie mocujące typu # 156\npraca wokół: na razie pyton w dół. poprawki # 259",
-        "uk": "додавання підтримки типу текстового пристрою #141, відображення #103\nзафіксувати тип пристрою кришки #156\nробота: python тепер. застібки #259",
-        "zh-cn": "添加文本设备类型 # 141, 显示 # 103\n固定封面设备类型 # 156\n工作间距: 现在降级的蟒蛇。 修正 # 259"
       }
     },
     "titleLang": {

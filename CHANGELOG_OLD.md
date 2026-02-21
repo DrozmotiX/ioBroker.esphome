@@ -1,4 +1,9 @@
 # Older changes
+## 0.6.2 (2025-08-08)
+* (@SimonFischer04) add support for text device type #141, displays #103
+* (@SimonFischer04) fix cover device type #156
+* (@SimonFischer04) workaround: downgrade python for now. fixes #259
+
 ## 0.6.1 (2025-05-24)
 * (@SimonFischer04) Update esphome
 * (@ticaki) Optimize admin configuration interface

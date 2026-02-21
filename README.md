@@ -360,7 +360,8 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
-### __WORK IN PROGRESS__
+### 0.7.0-beta.4 (2026-02-21)
+* (DutchmanNL) **FIXED**: ESLint errors by code refactoring
 * (@copilot) **FIXED**: Restore missing `configStates` option in admin UI to allow configuring whether configuration states are shown per entity
 
 ### 0.7.0-beta.3 (2026-02-20)
@@ -393,11 +394,6 @@ If you like my work, please consider a personal donation
 * (@DutchmanNL) Introduced GitHub Actions to automatically verify the ESPHome Dashboard. #290
 * (@DutchmanNL) Added a comprehensive FAQ section to the README to help users with common questions. #286
 * (@DutchmanNL) Updated the `esphome-native-api` library to V1.3.3, which may resolve connection issues. #201
-
-### 0.6.2 (2025-08-08)
-* (@SimonFischer04) add support for text device type #141, displays #103
-* (@SimonFischer04) fix cover device type #156
-* (@SimonFischer04) workaround: downgrade python for now. fixes #259
 
 ## License
 MIT License
