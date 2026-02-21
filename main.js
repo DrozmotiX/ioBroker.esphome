@@ -19,7 +19,7 @@ const path = require('path');
 const os = require('os');
 const { clearTimeout } = require('timers');
 const resetTimers = {}; // Memory allocation for all running timers
-let autodiscovery, dashboardProcess, createConfigStates, discovery;
+let autodiscovery, dashboardProcess, createConfigStates, rgbAutoWhite, discovery;
 const clientDetails = {}; // Memory cache of all devices and their connection status
 const newlyDiscoveredClient = {}; // Memory cache of all newly discovered devices and their connection status
 const dashboardVersions = [];
@@ -62,6 +62,7 @@ class Esphome extends utils.Adapter {
             autodiscovery = this.config.autodiscovery;
             // reconnectInterval = this.config.reconnectInterval * 1000;
             createConfigStates = this.config.configStates;
+            rgbAutoWhite = this.config.rgbAutoWhite;
 
             // Ensure all online states are set to false during adapter start
             await this.resetOnlineStates();
@@ -2221,6 +2222,24 @@ class Esphome extends utils.Adapter {
                         lightConfig.legacySupportsColorTemperature === true ||
                         colorModesList.some(m => [4, 8].includes(m));
                     const supportsColdWarmWhite = colorModesList.some(m => [5, 9].includes(m));
+
+                    // Auto white channel: when colorHEX is set to white (#ffffff) on RGBW lights,
+                    // automatically switch to white channel; otherwise switch to RGB mode
+                    if (rgbAutoWhite && supportsWhite && device[5] === 'colorHEX') {
+                        const r = clientDetails[deviceIP][device[4]].states.red;
+                        const g = clientDetails[deviceIP][device[4]].states.green;
+                        const b = clientDetails[deviceIP][device[4]].states.blue;
+                        if (r === 1 && g === 1 && b === 1) {
+                            // White color detected: redirect to dedicated white channel
+                            clientDetails[deviceIP][device[4]].states.red = 0;
+                            clientDetails[deviceIP][device[4]].states.green = 0;
+                            clientDetails[deviceIP][device[4]].states.blue = 0;
+                            clientDetails[deviceIP][device[4]].states.white = 1;
+                        } else {
+                            // Non-white color: disable white channel
+                            clientDetails[deviceIP][device[4]].states.white = 0;
+                        }
+                    }
 
                     if (supportsBrightness) {
                         data.brightness = clientDetails[deviceIP][device[4]].states.brightness;
