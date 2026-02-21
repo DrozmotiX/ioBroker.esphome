@@ -2438,13 +2438,17 @@ class Esphome extends utils.Adapter {
     async executeUserDefinedService(deviceIP, deviceName, serviceKey) {
         const deviceDetails = clientDetails[deviceIP];
         if (!deviceDetails) {
-            this.log.error(`Cannot execute user-defined service: no client details found for device IP ${deviceIP} (${deviceName}), serviceKey=${serviceKey}`);
+            this.log.error(
+                `Cannot execute user-defined service: no client details found for device IP ${deviceIP} (${deviceName}), serviceKey=${serviceKey}`,
+            );
             return;
         }
 
         const serviceEntry = deviceDetails[serviceKey];
         if (!serviceEntry || !serviceEntry.config) {
-            this.log.error(`Cannot execute user-defined service: no service configuration found for device IP ${deviceIP} (${deviceName}), serviceKey=${serviceKey}`);
+            this.log.error(
+                `Cannot execute user-defined service: no service configuration found for device IP ${deviceIP} (${deviceName}), serviceKey=${serviceKey}`,
+            );
             return;
         }
         const serviceConfig = serviceEntry.config;
@@ -2536,9 +2540,7 @@ class Esphome extends utils.Adapter {
         }
 
         // Any other type is unexpected; log and fall back to empty array
-        this.log.warn(
-            `Received unsupported service array argument type "${typeof argVal}", using empty array`,
-        );
+        this.log.warn(`Received unsupported service array argument type "${typeof argVal}", using empty array`);
         return [];
     }
 
