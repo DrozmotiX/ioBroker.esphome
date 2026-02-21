@@ -66,5 +66,7 @@
     "cnfClearCacheText": "Sind Sie sicher, dass Sie den autopy-Cache leeren möchten? Dies entfernt alle zwischengespeicherten Python-Umgebungen und ESPHome-Installationen.",
     "cnfClearCacheTitle": "Cache-Leerung bestätigen",
     "cnfClearCacheOk": "Cache leeren",
-    "cnfClearCacheCancel": "Abbrechen"
+    "cnfClearCacheCancel": "Abbrechen",
+    "lblConfigStates": "Konfigurationszustände anzeigen",
+    "hlpConfigStates": "Konfigurationszustände für jede Entität erstellen, um Gerätekonfigurationsdetails anzuzeigen"
 }
