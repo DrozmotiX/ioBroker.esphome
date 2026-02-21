@@ -2282,8 +2282,64 @@ class Esphome extends utils.Adapter {
                         await this.executeUserDefinedService(deviceIP, device[2], device[4]);
                         await this.setStateAsync(id, { val: false, ack: true });
                     } else {
-                        // Argument value updated - just acknowledge the state
-                        await this.setStateAsync(id, { val: state.val, ack: true });
+                        // Argument value updated - validate & convert based on object type before acknowledging
+                        const obj = await this.getObjectAsync(id);
+                        let newVal = state.val;
+
+                        if (obj && obj.common && obj.common.type) {
+                            switch (obj.common.type) {
+                                case 'number': {
+                                    if (typeof newVal === 'string') {
+                                        const parsed = parseFloat(newVal);
+                                        if (!Number.isNaN(parsed)) {
+                                            newVal = parsed;
+                                        } else {
+                                            this.log.warn(
+                                                `Invalid numeric value "${newVal}" for state "${id}" (UserDefinedService argument)`,
+                                            );
+                                            return;
+                                        }
+                                    } else if (typeof newVal !== 'number' || Number.isNaN(newVal)) {
+                                        this.log.warn(
+                                            `Received non-numeric value for numeric state "${id}" (UserDefinedService argument)`,
+                                        );
+                                        return;
+                                    }
+                                    break;
+                                }
+                                case 'boolean': {
+                                    if (typeof newVal === 'string') {
+                                        const v = newVal.toLowerCase().trim();
+                                        if (v === 'true' || v === '1') {
+                                            newVal = true;
+                                        } else if (v === 'false' || v === '0') {
+                                            newVal = false;
+                                        }
+                                    } else if (typeof newVal === 'number') {
+                                        newVal = newVal !== 0;
+                                    }
+
+                                    if (typeof newVal !== 'boolean') {
+                                        this.log.warn(
+                                            `Received non-boolean value for boolean state "${id}" (UserDefinedService argument)`,
+                                        );
+                                        return;
+                                    }
+                                    break;
+                                }
+                                case 'string': {
+                                    if (typeof newVal !== 'string') {
+                                        newVal = newVal !== null && newVal !== undefined ? String(newVal) : '';
+                                    }
+                                    break;
+                                }
+                                default:
+                                    // For other types, keep current behavior (accept as-is)
+                                    break;
+                            }
+                        }
+
+                        await this.setStateAsync(id, { val: newVal, ack: true });
                     }
                 }
             }
