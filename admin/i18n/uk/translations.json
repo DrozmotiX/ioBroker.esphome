@@ -68,7 +68,5 @@
     "cnfClearCacheOk": "Clear Cache",
     "cnfClearCacheCancel": "Cancel",
     "lblConfigStates": "Show configuration states",
-    "hlpConfigStates": "Create configuration states for each entity to show device configuration details",
-    "lblRgbAutoWhite": "Auto white channel for RGBW lights",
-    "hlpRgbAutoWhite": "When enabled, setting colorHEX to #ffffff on RGBW lights will automatically activate the white channel and set RGB to zero. Setting any other color will disable the white channel."
+    "hlpConfigStates": "Create configuration states for each entity to show device configuration details"
 }

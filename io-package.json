@@ -188,7 +188,6 @@
     "autodiscovery": true,
     "discoveryListeningAddress": "0.0.0.0",
     "configStates": false,
-    "rgbAutoWhite": false,
     "ESPHomeDashboardEnabled": false,
     "ESPHomeDashboardPort": 6052,
     "ESPHomeDashboardIP": "",

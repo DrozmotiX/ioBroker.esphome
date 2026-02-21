@@ -19,7 +19,7 @@ const path = require('path');
 const os = require('os');
 const { clearTimeout } = require('timers');
 const resetTimers = {}; // Memory allocation for all running timers
-let autodiscovery, dashboardProcess, createConfigStates, rgbAutoWhite, discovery;
+let autodiscovery, dashboardProcess, createConfigStates, discovery;
 const clientDetails = {}; // Memory cache of all devices and their connection status
 const newlyDiscoveredClient = {}; // Memory cache of all newly discovered devices and their connection status
 const dashboardVersions = [];
@@ -62,7 +62,6 @@ class Esphome extends utils.Adapter {
             autodiscovery = this.config.autodiscovery;
             // reconnectInterval = this.config.reconnectInterval * 1000;
             createConfigStates = this.config.configStates;
-            rgbAutoWhite = this.config.rgbAutoWhite;
 
             // Ensure all online states are set to false during adapter start
             await this.resetOnlineStates();
@@ -1165,6 +1164,29 @@ class Esphome extends utils.Adapter {
                             clientDetails[host][entity.id].states.transitionLength = 0;
                         }
                     }
+
+                    // Create rgbAutoWhite state only once for lights with a dedicated white channel
+                    if (stateName === 'white' && clientDetails[host][entity.id].states.rgbAutoWhite === undefined) {
+                        let rgbAutoWhiteVal = false;
+                        try {
+                            const existing = await this.getStateAsync(
+                                `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.rgbAutoWhite`,
+                            );
+                            if (existing != null) {
+                                rgbAutoWhiteVal = !!existing.val;
+                            }
+                        } catch (e) {
+                            this.log.debug(`[handleStateArrays] Could not read rgbAutoWhite state: ${e}`);
+                        }
+                        clientDetails[host][entity.id].states.rgbAutoWhite = rgbAutoWhiteVal;
+                        await this.stateSetCreate(
+                            `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.rgbAutoWhite`,
+                            'rgbAutoWhite',
+                            rgbAutoWhiteVal,
+                            '',
+                            true,
+                        );
+                    }
                 }
 
                 if (stateName !== 'key') {
@@ -2200,6 +2222,10 @@ class Esphome extends utils.Adapter {
                         clientDetails[deviceIP][device[4]].states.effect = writeValue;
                     } else if (device[5] === 'state') {
                         clientDetails[deviceIP][device[4]].states.state = writeValue;
+                    } else if (device[5] === 'rgbAutoWhite') {
+                        // Store device-specific preference; no light command needed
+                        clientDetails[deviceIP][device[4]].states.rgbAutoWhite = writeValue;
+                        return;
                     }
 
                     const data = {
@@ -2225,7 +2251,11 @@ class Esphome extends utils.Adapter {
 
                     // Auto white channel: when colorHEX is set to white (#ffffff) on RGBW lights,
                     // automatically switch to white channel; otherwise switch to RGB mode
-                    if (rgbAutoWhite && supportsWhite && device[5] === 'colorHEX') {
+                    if (
+                        clientDetails[deviceIP][device[4]].states.rgbAutoWhite &&
+                        supportsWhite &&
+                        device[5] === 'colorHEX'
+                    ) {
                         const r = clientDetails[deviceIP][device[4]].states.red;
                         const g = clientDetails[deviceIP][device[4]].states.green;
                         const b = clientDetails[deviceIP][device[4]].states.blue;

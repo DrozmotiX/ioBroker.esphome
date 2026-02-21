@@ -363,7 +363,7 @@ If you like my work, please consider a personal donation
 ### 0.7.0-beta.4 (2026-02-21)
 * (DutchmanNL) **FIXED**: ESLint errors by code refactoring
 * (@copilot) **FIXED**: Restore missing `configStates` option in admin UI to allow configuring whether configuration states are shown per entity
-* (@copilot) **NEW**: Auto white channel feature for RGBW lights - when `colorHEX` is set to `#ffffff`, the dedicated white channel is activated and RGB channels are set to zero; any other color disables the white channel. Enable via new `rgbAutoWhite` adapter option (fixes #396 request)
+* (@copilot) **NEW**: Auto white channel for RGBW lights - a per-device `rgbAutoWhite` state is created for each light that has a white channel. When enabled, setting `colorHEX` to `#ffffff` automatically activates the dedicated white channel and sets RGB channels to zero; any other color disables the white channel.
 
 ### 0.7.0-beta.3 (2026-02-20)
 * (@copilot) **NEW**: Added support for `colorBrightness`, `coldWhite`, `warmWhite`, and `colorMode` states for lights using the new ESPHome color mode API
