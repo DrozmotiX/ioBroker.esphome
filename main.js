@@ -1164,6 +1164,38 @@ class Esphome extends utils.Adapter {
                             clientDetails[host][entity.id].states.transitionLength = 0;
                         }
                     }
+
+                    // Create rgbAutoWhite state only once for lights with a dedicated white channel
+                    if (stateName === 'white' && clientDetails[host][entity.id].rgbAutoWhite === undefined) {
+                        let rgbAutoWhiteVal = false;
+                        try {
+                            const existing = await this.getStateAsync(
+                                `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config.rgbAutoWhite`,
+                            );
+                            if (existing != null) {
+                                rgbAutoWhiteVal = !!existing.val;
+                            }
+                        } catch (e) {
+                            this.log.debug(`[handleStateArrays] Could not read rgbAutoWhite state: ${e}`);
+                        }
+                        clientDetails[host][entity.id].rgbAutoWhite = rgbAutoWhiteVal;
+                        // Ensure config channel exists before creating the state inside it
+                        await this.extendObjectAsync(
+                            `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config`,
+                            {
+                                type: 'channel',
+                                common: { name: 'Configuration data' },
+                                native: {},
+                            },
+                        );
+                        await this.stateSetCreate(
+                            `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config.rgbAutoWhite`,
+                            'rgbAutoWhite',
+                            rgbAutoWhiteVal,
+                            '',
+                            true,
+                        );
+                    }
                 }
 
                 if (stateName !== 'key') {
@@ -2199,6 +2231,12 @@ class Esphome extends utils.Adapter {
                         clientDetails[deviceIP][device[4]].states.effect = writeValue;
                     } else if (device[5] === 'state') {
                         clientDetails[deviceIP][device[4]].states.state = writeValue;
+                    } else if (device[5] === 'config' && device[6] === 'rgbAutoWhite') {
+                        // Store device-specific preference; no light command needed
+                        clientDetails[deviceIP][device[4]].rgbAutoWhite = writeValue;
+                        // Acknowledge the preference update so the state does not stay with ack=false
+                        this.setState(id, !!writeValue, true);
+                        return;
                     }
 
                     const data = {
@@ -2221,6 +2259,21 @@ class Esphome extends utils.Adapter {
                         lightConfig.legacySupportsColorTemperature === true ||
                         colorModesList.some(m => [4, 8].includes(m));
                     const supportsColdWarmWhite = colorModesList.some(m => [5, 9].includes(m));
+
+                    // Auto white channel: when colorHEX is set to white (#ffffff) on RGBW lights,
+                    // automatically switch to white channel; otherwise switch to RGB mode
+                    if (clientDetails[deviceIP][device[4]].rgbAutoWhite && supportsWhite && device[5] === 'colorHEX') {
+                        if (writeValue.replace(/^#/, '').toLowerCase() === 'ffffff') {
+                            // White color detected: redirect to dedicated white channel
+                            clientDetails[deviceIP][device[4]].states.red = 0;
+                            clientDetails[deviceIP][device[4]].states.green = 0;
+                            clientDetails[deviceIP][device[4]].states.blue = 0;
+                            clientDetails[deviceIP][device[4]].states.white = 1;
+                        } else {
+                            // Non-white color: disable white channel
+                            clientDetails[deviceIP][device[4]].states.white = 0;
+                        }
+                    }
 
                     if (supportsBrightness) {
                         data.brightness = clientDetails[deviceIP][device[4]].states.brightness;
