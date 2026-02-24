@@ -30,7 +30,7 @@
     "node": ">= 20"
   },
   "dependencies": {
-    "@2colors/esphome-native-api": "github:SimonFischer04/esphome-native-api#d93cf4acdd8885437a133c4369bddcd180030c06",
+    "@2colors/esphome-native-api": "^1.3.6",
     "@iobroker/adapter-core": "^3.3.2",
     "autopy": "github:SimonFischer04/autopy#fbe016f35e13e335e1c44783a1e7273bbb2a08c1"
   },
