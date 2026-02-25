@@ -826,9 +826,8 @@
 				// YAML content input
 				"uploadContent": {
 					"newLine": true,
-					"type": "text",
+					"type": "textarea",
 					"label": "lblUploadContent",
-					"multiline": true,
 					"rows": 10,
 					"placeholder": "esphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2",
 					"xs": 12,
