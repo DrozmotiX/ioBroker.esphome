@@ -252,7 +252,7 @@ class Esphome extends utils.Adapter {
             pillowVersions.push(...versions);
 
             // Determine Pillow version to use
-            let usePillowVersion = '11.3.0'; // Default version
+            let usePillowVersion = '12.1.1'; // Default version
 
             // Check if user has configured a specific pillow version
             if (
