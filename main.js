@@ -252,17 +252,19 @@ class Esphome extends utils.Adapter {
             pillowVersions.push(...versions);
 
             // Determine Pillow version to use
-            let usePillowVersion = '12.1.1'; // Default version
+            let usePillowVersion = '';
 
-            // Check if user has configured a specific pillow version
+            // Use configured version unless "Always last available" is selected
             if (
                 this.config.PillowVersion &&
                 this.config.PillowVersion !== '' &&
                 this.config.PillowVersion !== 'Always last available'
             ) {
                 usePillowVersion = this.config.PillowVersion;
+            } else if (this.config.PillowVersion === 'Always last available' && versions.length > 0) {
+                // Mirror dashboard behavior: pick newest fetched/cached release
+                usePillowVersion = versions[0];
             }
-            // If "Always last available" is selected, keep the default latest version
 
             this.log.debug(`Using Pillow version: ${usePillowVersion}`);
 
