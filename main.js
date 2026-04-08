@@ -14,10 +14,10 @@ const { Client, Discovery } = require('@2colors/esphome-native-api');
 const stateAttr = require(`${__dirname}/lib/stateAttr.js`); // Load attribute library
 const disableSentry = false; // Ensure to set to true during development!
 const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const { clearTimeout } = require('timers');
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
+const { clearTimeout } = require('node:timers');
 const resetTimers = {}; // Memory allocation for all running timers
 let autodiscovery, dashboardProcess, createConfigStates, discovery;
 const clientDetails = {}; // Memory cache of all devices and their connection status
