@@ -434,6 +434,8 @@ If you like my work, please consider a personal donation
 * (@DutchmanNL) Added a comprehensive FAQ section to the README to help users with common questions. #286
 * (@DutchmanNL) Updated the `esphome-native-api` library to V1.3.3, which may resolve connection issues. #201
 
+[Older changelogs can be found there](CHANGELOG_OLD.md)
+
 ## License
 MIT License
 
