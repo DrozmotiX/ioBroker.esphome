@@ -393,10 +393,11 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
-### __WORK IN PROGRESS__
-* (@SimonFischer04) fix copilot hallucinations
-* (@copilot) **NEW**: Add `lib/dashboardApi.js` module exposing all ESPHome Dashboard API endpoints (`getDevices`, `getConfig`, `getEncryptionKey`, `compile`, `upload`) for tighter dashboard integration
-* (@copilot) **FIXED**: Invalid jsonConfig warning on adapter install caused by `multiline` property not being allowed on `text` type; changed `uploadContent` to use `textarea` type (fixes #426)
+### 0.7.0 (2026-05-17)
+* (@SimonFischer04) **FIXED** copilot hallucinations
+* (@SimonFischer04) **NEW** 'Always last available' for pillow version
+* (@copilot) **FIXED**: Invalid jsonConfig warning on adapter installation
+* (DutchmanNL) **FIXED**: ESLint errors by code refactoring
 
 ### 0.7.0-beta.4 (2026-02-21)
 * (DutchmanNL) **FIXED**: ESLint errors by code refactoring

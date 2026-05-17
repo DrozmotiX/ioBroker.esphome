@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "esphome",
-    "version": "0.7.0-beta.4",
+    "version": "0.7.0",
     "news": {
+      "0.7.0": {
+        "en": "**FIXED** copilot hallucinations\n**NEW** 'Always last available' for pillow version\n**FIXED**: Invalid jsonConfig warning on adapter installation\n**FIXED**: ESLint errors by code refactoring",
+        "de": "**FIXED** Copilot Halluzinationen\n**NEW** 'Always last available' für Kissenversion\n**FIXED**: Invalid jsonConfig Warnung auf Adapterinstallation\n**FIXED**: ESLint-Fehler durch Code-Refactoring",
+        "ru": "** Исправленные** галлюцинации копилота\n** «Всегда последний доступный» для подушки\n** Фиксированный**: Недействительное предупреждение jsonConfig об установке адаптера\n**FIXED**: ошибки ESLint при рефакторинге кода",
+        "pt": "**FIXED** alucinações copiloto\n** NOVA** 'Sempre última disponível' para a versão do travesseiro\n**FIXED**: Aviso inválido do jsonConfig na instalação do adaptador\n**FIXED**: ESLint errors by code refatoring",
+        "nl": "** VASTE** copiloothallucinaties\n**NIEUW** 'Always last available' voor kussenversie\n** VAST**: Ongeldige jsonConfig waarschuwing bij adapter installatie\n** VAST**: ESLint fouten door code refactoring",
+        "fr": "**FIXED** hallucinations copilotes\n**NOUVEAU** 'Toujours dernier disponible' pour la version oreiller\n**FIXÉ**: Avertissement jsonConfig non valide sur l'installation de l'adaptateur\n**FIXED**: erreurs ESLint par refactoring de code",
+        "it": "**FISSO ** Allucinazioni copilota\n**NEW** 'Always last available' per cuscino versione\n**FISSO ** Avvertenza jsonConfig non valida per l'installazione dell'adattatore\n**FIXED**: Errori di ESLint per refactoring del codice",
+        "es": "**FIXED ** copiloto alucinaciones\n**NEW** 'Siempre disponible' para la versión de almohada\n**FIXED**: Invalid jsonConfig warning on adapter installation\n**FIXED**: errores ESLint por refactorización de código",
+        "pl": "* *FIXED* * omamy drugiego pilota \n* *NOWOŚĆ* * \"Zawsze ostatni dostępny\" dla wersji poduszki \n* *FIXED* * Nieprawidłowe ostrzeżenie jsonConfig na instalacji adaptera \n** FIXED*",
+        "uk": "**FIXED*** копілотні галюцинації\n**NEW**** 'Всі останні доступні' для версії подушки\n**FIXED***: Інвалідний jsonПопередження про встановлення адаптера\n**FIXED***: помилки ESLint від рефакторингу коду",
+        "zh-cn": "** 副驾驶幻觉\n** NEW** 枕头版本“ 永远可用”\n(单位:千美元) 在适配器安装上无效的 jsonConfig 警告\n**FIXED**:通过代码重构的ESLint错误"
+      },
       "0.7.0-beta.4": {
         "en": "**FIXED**: ESLint errors by code refactoring\n**FIXED**: Restore missing `configStates` option in admin UI to allow configuring whether configuration states are shown per entity",
         "de": "**FIXED**: ESLint-Fehler durch Code-Refactoring\n**FIXED**: Wiederherstellen fehlender `configStates` Option im Admin UI, um die Konfiguration zu ermöglichen, ob Konfigurationszustände pro Einheit angezeigt werden",
