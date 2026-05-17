@@ -427,6 +427,16 @@ If you like my work, please consider a personal donation
 * (@SimonFischer04) automatic migration from versions prior to ESPHomeDashboardUrl introduction (pre v0.6.1)
 * (@copilot) **FIXED**: Invalid jsonConfig schema - removed unsupported `doNotSave` property from table elements
 
+### 0.6.3 (2025-09-16)
+* (@DutchmanNL) Fixed an admin error related to `jsonConfig` validation. #287
+* (@DutchmanNL) Various general fixes and dependency updates to improve stability.
+* (@DutchmanNL) Improved responsive design for better usability across devices. #284
+* (@DutchmanNL) Introduced GitHub Actions to automatically verify the ESPHome Dashboard. #290
+* (@DutchmanNL) Added a comprehensive FAQ section to the README to help users with common questions. #286
+* (@DutchmanNL) Updated the `esphome-native-api` library to V1.3.3, which may resolve connection issues. #201
+
+[Older changelogs can be found there](CHANGELOG_OLD.md)
+
 ## License
 MIT License
 
