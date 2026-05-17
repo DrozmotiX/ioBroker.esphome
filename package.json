@@ -43,8 +43,8 @@
     "@iobroker/dev-server": "^0.8.0",
     "@iobroker/eslint-config": "^2.2.0",
     "@iobroker/testing": "^5.2.2",
-    "@types/node": "^25.5.0",
-    "eslint": "^9.39.2",
+    "@types/node": "^25.6.0",
+    "eslint": "^10.2.1",
     "promisify": "~0.0.3",
     "typescript": "~5.9.3"
   },
