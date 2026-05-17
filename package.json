@@ -1,6 +1,6 @@
 {
   "name": "iobroker.esphome",
-  "version": "0.7.0-beta.4",
+  "version": "0.7.0",
   "description": "Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome",
   "author": {
     "name": "DutchmanNL",
@@ -44,7 +44,7 @@
     "@iobroker/eslint-config": "^2.2.0",
     "@iobroker/testing": "^5.2.2",
     "@types/node": "^25.6.0",
-    "eslint": "^10.2.1",
+    "eslint": "^9.39.2",
     "promisify": "~0.0.3",
     "typescript": "~5.9.3"
   },
