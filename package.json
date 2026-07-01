@@ -44,7 +44,7 @@
     "@iobroker/eslint-config": "^2.3.4",
     "@iobroker/testing": "^5.2.2",
     "@tsconfig/node20": "^20.1.9",
-    "@types/node": "^25.9.1",
+    "@types/node": "^25.9.4",
     "eslint": "^9.39.2",
     "promisify": "~0.0.3",
     "typescript": "~5.9.3"
