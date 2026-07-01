@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@2colors/esphome-native-api": "^1.3.6",
-    "@iobroker/adapter-core": "^3.3.2",
+    "@iobroker/adapter-core": "^3.4.1",
     "autopy": "github:SimonFischer04/autopy#fbe016f35e13e335e1c44783a1e7273bbb2a08c1"
   },
   "devDependencies": {
