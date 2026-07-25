@@ -394,9 +394,13 @@ If you like my work, please consider a personal donation
     * (DutchmanNL) 
 -->
 ### **WORK IN PROGRESS**
-- (copilot) Adapter requires node.js >= 22 now
-- (arteck) NEW: Reconnect interval, ping interval and ping attempts for device connections are now configurable in the adapter settings (Devices tab)
-- (arteck) fix language translations
+
+### 1.0.0 (2026-07-25) 🎉 First stable release
+* (@copilot) **NEW**: Promoted ioBroker.esphome to stable **v1.0.0**
+* (@copilot) **ENHANCED**: Consolidated compatible dependency maintenance updates from pending Dependabot PRs into the stable line
+* (@copilot) **ENHANCED**: Updated `@iobroker/adapter-core` to `^3.4.1`, `@types/node` to `^25.9.4`, and `@alcalzone/release-script` to `^5.2.1`
+* (@copilot) **ENHANCED**: Deferred `eslint` v10 update due upstream peer-dependency incompatibilities in the current ioBroker ESLint stack
+* (@copilot) **ENHANCED**: Node.js requirement is `>= 22`
 
 ### 0.7.0 (2026-05-17)
 * (@SimonFischer04) **FIXED** copilot hallucinations
