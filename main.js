@@ -187,11 +187,7 @@ class Esphome extends utils.Adapter {
             }
 
             try {
-                const headers = {};
-                if (process.env.GITHUB_TOKEN) {
-                    headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
-                }
-                const response = await fetch('https://api.github.com/repos/esphome/esphome/releases', { headers });
+                const response = await fetch('https://api.github.com/repos/esphome/esphome/releases');
                 if (!response.ok) {
                     throw new Error(
                         `GitHub releases request failed with status ${response.status}: ${response.statusText}`,

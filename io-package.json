@@ -163,7 +163,7 @@
     ],
     "globalDependencies": [
       {
-        "admin": ">=7.6.17"
+        "admin": ">=7.6.20"
       }
     ],
     "licenseInformation": {
@@ -173,17 +173,20 @@
   },
   "encryptedNative": [
     "apiPass",
-    "encryptionKey"
+    "encryptionKey",
+    "apiPassword"
   ],
   "protectedNative": [
     "apiPass",
-    "encryptionKey"
+    "encryptionKey",
+    "apiPassword"
   ],
   "native": {
     "ESPHomeDashboardVersion": "Always last available",
     "PillowVersion": "Always last available",
     "reconnectInterval": 30,
     "apiPass": "",
+    "apiPassword": "",
     "encryptionKey": "",
     "autodiscovery": true,
     "discoveryListeningAddress": "0.0.0.0",
