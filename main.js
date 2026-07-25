@@ -544,6 +544,20 @@ class Esphome extends utils.Adapter {
                                 delete this.createdStatesDetails[state];
                             }
                         }
+                        // Remove cached entity descriptors so reconnect starts from a clean slate.
+                        for (const [key, value] of Object.entries(clientDetails[host])) {
+                            if (
+                                value &&
+                                typeof value === 'object' &&
+                                !Array.isArray(value) &&
+                                value.config &&
+                                value.type &&
+                                value.name
+                            ) {
+                                delete clientDetails[host][key];
+                            }
+                        }
+                        delete this.deviceStateRelation[clientDetails[host].deviceName];
 
                         this.log.warn(
                             `ESPHome client ${clientDetails[host].deviceFriendlyName} | ${clientDetails[host].deviceName} | on ${host} disconnected`,
@@ -904,9 +918,14 @@ class Esphome extends utils.Adapter {
                         }
                     });
 
-                    entity.connection.on(`destroyed`, async state => {
+                    entity.on(`destroyed`, async state => {
                         try {
-                            this.log.warn(`Connection destroyed for ${state}`);
+                            const entityIdentity = entity?.name || entity?.id || host || 'unknown';
+                            if (state !== undefined) {
+                                this.log.warn(`Connection destroyed for ${state} (${entityIdentity})`);
+                            } else {
+                                this.log.warn(`Connection destroyed for ${entityIdentity}`);
+                            }
                         } catch (e) {
                             this.log.error(`State handle error ${e}`);
                         }
@@ -997,6 +1016,9 @@ class Esphome extends utils.Adapter {
                 clientDetails[host].client.connect();
             } catch (e) {
                 this.log.error(`Client ${host} connect error ${e}`);
+                this.updateConnectionStatus(host, false, false, 'error', true).catch(error =>
+                    this.errorHandler(`[connectDevices connect]`, error),
+                );
             }
         } catch (e) {
             this.log.error(`ESP device error for ${host} | ${e} | ${e.stack}`);
@@ -1412,7 +1434,7 @@ class Esphome extends utils.Adapter {
      * Handles error messages for log and Sentry
      *
      * @param {string} codepart Function were exception occurred
-     * @param {any} error Error message
+     * @param {Error|string} error Error message
      */
     errorHandler(codepart, error) {
         let errorMsg = error;
@@ -2116,7 +2138,13 @@ class Esphome extends utils.Adapter {
                     // Skip action
                 }
 
-                const deviceIP = this.deviceStateRelation[device[2]].ip;
+                const deviceName = device[2];
+                if (!this.deviceStateRelation[deviceName]) {
+                    this.log.debug(`[onStateChange] Device ${deviceName} not connected, acknowledging state change`);
+                    await this.setStateAsync(id, { val: state.val, ack: true });
+                    return;
+                }
+                const deviceIP = this.deviceStateRelation[deviceName].ip;
 
                 // Handle Switch State
                 if (clientDetails[deviceIP][device[4]].type === `Switch`) {

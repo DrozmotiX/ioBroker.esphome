@@ -400,6 +400,7 @@ If you like my work, please consider a personal donation
 * (@copilot) **NEW**: Brings ESPHome devices into ioBroker with live state updates and direct control
 * (@copilot) **NEW**: Supports a wide range of device types including lights, switches, sensors, fans, covers, locks, and text entities
 * (@copilot) **ENHANCED**: Includes optional ESPHome Dashboard integration plus built-in helpers for discovery and YAML-based device management
+* (@arteck) **FIXED**: Improved disconnect handling and diagnostics so reconnects recover more cleanly when device connections are destroyed
 * (@copilot) **ENHANCED**: Establishes a stable baseline for future ESPHome adapter development in ioBroker
 
 ### 0.7.0 (2026-05-17)

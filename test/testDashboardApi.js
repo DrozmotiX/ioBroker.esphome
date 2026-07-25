@@ -16,7 +16,7 @@ const dashboardApi = require('../lib/dashboardApi');
  *
  * @param {number} status - HTTP status code to simulate
  * @param {object|null} body - Response body to return from .json()
- * @returns {Function} Async function that returns a mock Response-like object
+ * @returns {() => Promise<object>} Async function that returns a mock Response-like object
  */
 function mockFetch(status, body) {
     const ok = status >= 200 && status < 300;
