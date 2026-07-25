@@ -397,10 +397,10 @@ If you like my work, please consider a personal donation
 
 ### 1.0.0 (2026-07-25) 🎉 First stable release
 * (@copilot) **NEW**: Promoted ioBroker.esphome to stable **v1.0.0**
-* (@copilot) **ENHANCED**: Consolidated compatible dependency maintenance updates from pending Dependabot PRs into the stable line
-* (@copilot) **ENHANCED**: Updated `@iobroker/adapter-core` to `^3.4.1`, `@types/node` to `^25.9.4`, and `@alcalzone/release-script` to `^5.2.1`
-* (@copilot) **ENHANCED**: Deferred `eslint` v10 update due upstream peer-dependency incompatibilities in the current ioBroker ESLint stack
-* (@copilot) **ENHANCED**: Node.js requirement is `>= 22`
+* (@copilot) **NEW**: Brings ESPHome devices into ioBroker with live state updates and direct control
+* (@copilot) **NEW**: Supports a wide range of device types including lights, switches, sensors, fans, covers, locks, and text entities
+* (@copilot) **ENHANCED**: Includes optional ESPHome Dashboard integration plus built-in helpers for discovery and YAML-based device management
+* (@copilot) **ENHANCED**: Establishes a stable baseline for future ESPHome adapter development in ioBroker
 
 ### 0.7.0 (2026-05-17)
 * (@SimonFischer04) **FIXED** copilot hallucinations
