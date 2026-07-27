@@ -393,7 +393,7 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL) 
 -->
-### **WORK IN PROGRESS**
+### 1.0.0-beta.0 - Stable version release candidate
 
 * (@copilot) **NEW**: Promoted ioBroker.esphome to stable **v1.0.0**
 * (@copilot) **NEW**: Brings ESPHome devices into ioBroker with live state updates and direct control
