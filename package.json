@@ -1,6 +1,6 @@
 {
   "name": "iobroker.esphome",
-  "version": "1.0.0",
+  "version": "0.7.0",
   "description": "Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome",
   "author": {
     "name": "DutchmanNL",
@@ -68,7 +68,7 @@
     "test": "npm run test:js && npm run test:package && npm run test:integration",
     "check": "tsc --noEmit -p tsconfig.check.json",
     "lint": "eslint .",
-    "release": "release-script --all",
+    "release": "release-script --all --branchPattern '*'",
     "release-dry": "release-script --all --dry"
   },
   "bugs": {

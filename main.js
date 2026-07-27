@@ -272,14 +272,28 @@ class Esphome extends utils.Adapter {
                     const { getVenv } = await import('autopy');
                     let python;
                     try {
+                        const requirements = [];
+                        if (useDashBoardVersion) {
+                            requirements.push({ name: 'esphome', version: `==${useDashBoardVersion}` });
+                        } else {
+                            this.log.warn(
+                                `Unable to determine a specific ESPHome dashboard version. Falling back to latest available version from PyPI`,
+                            );
+                            requirements.push({ name: 'esphome' });
+                        }
+                        if (usePillowVersion) {
+                            requirements.push({ name: 'pillow', version: `==${usePillowVersion}` });
+                        } else {
+                            this.log.warn(
+                                `Unable to determine a specific Pillow version. Falling back to latest available version from PyPI`,
+                            );
+                            requirements.push({ name: 'pillow' });
+                        }
                         // Create a virtual environment with esphome installed.
                         python = await getVenv({
                             name: 'esphome',
                             pythonVersion: '3.13.2', // Use any Python 3.13.x version.
-                            requirements: [
-                                { name: 'esphome', version: `==${useDashBoardVersion}` },
-                                { name: 'pillow', version: `==${usePillowVersion}` },
-                            ], // Use latest esphome
+                            requirements,
                         });
                     } catch (error) {
                         this.log.error(`Fatal error starting ESPHomeDashboard | ${error} | ${error.stack}`);
@@ -305,7 +319,7 @@ class Esphome extends utils.Adapter {
                     }
 
                     this.log.info(`Starting ESPHome Dashboard`);
-                    const dashboardProcess = python('esphome', [
+                    dashboardProcess = python('esphome', [
                         'dashboard',
                         '--port',
                         this.config.ESPHomeDashboardPort,

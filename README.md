@@ -395,7 +395,6 @@ If you like my work, please consider a personal donation
 -->
 ### **WORK IN PROGRESS**
 
-### 1.0.0 (2026-07-25) 🎉 First stable release
 * (@copilot) **NEW**: Promoted ioBroker.esphome to stable **v1.0.0**
 * (@copilot) **NEW**: Brings ESPHome devices into ioBroker with live state updates and direct control
 * (@copilot) **NEW**: Supports a wide range of device types including lights, switches, sensors, fans, covers, locks, and text entities
