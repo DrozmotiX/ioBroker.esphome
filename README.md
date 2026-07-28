@@ -147,10 +147,37 @@ All our adapter documentation can be found at [The DrozmotiX Docu Page](https://
 
 ## Prerequisites
 
-    * NodeJS >= 20.x
+    * NodeJS >= 22.x
     * API is activated in YAML
     * For admin tabs (optional)
         * ESPHome Dashboard IP is provided in instance settings
+
+## Testing pre-releases
+
+Pre-releases are published to npm under the `next` dist-tag and are **not** offered by the
+ioBroker repository - they have to be installed explicitly. Feedback on a beta is very welcome,
+please report anything you find in the [issue tracker](https://github.com/DrozmotiX/ioBroker.esphome/issues).
+
+Install the current pre-release from the ioBroker host:
+
+```bash
+iobroker url iobroker.esphome@next
+```
+
+Or install one specific version:
+
+```bash
+iobroker url iobroker.esphome@1.0.0-beta.1
+```
+
+To go back to the released version afterwards:
+
+```bash
+iobroker url iobroker.esphome
+```
+
+Every pre-release is also listed under
+[Releases](https://github.com/DrozmotiX/ioBroker.esphome/releases) with its changelog.
 
 ## ESPHome Dashboard Integration (Optional)
 
