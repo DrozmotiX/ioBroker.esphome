@@ -185,6 +185,8 @@
     "ESPHomeDashboardVersion": "Always last available",
     "PillowVersion": "Always last available",
     "reconnectInterval": 30,
+    "pingInterval": 5,
+    "pingAttempts": 1,
     "apiPass": "",
     "apiPassword": "",
     "encryptionKey": "",
