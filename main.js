@@ -166,6 +166,28 @@ class Esphome extends utils.Adapter {
         }
     }
 
+    /**
+     * Warn when a version is left at "Always last available". Such a setup can break without any
+     * change on the user side as soon as an ESPHome release cannot be installed (#463), and the
+     * pinned defaults only apply to new installations - existing ones have to be adjusted by hand.
+     *
+     * @param {string} useDashBoardVersion - ESPHome Dashboard version which will be installed
+     * @param {string} usePillowVersion - Pillow version which will be installed
+     */
+    warnUnpinnedVersions(useDashBoardVersion, usePillowVersion) {
+        if (this.config.ESPHomeDashboardVersion === 'Always last available') {
+            this.log.warn(
+                `ESPHome Dashboard version is set to "Always last available" and resolves to ${useDashBoardVersion || 'the newest release'}. Not every ESPHome release can be installed on every system. If the dashboard does not start, select a fixed version in the adapter configuration, ${defaultDashboardVersion} is known to work.`,
+            );
+        }
+
+        if (this.config.PillowVersion === 'Always last available') {
+            this.log.warn(
+                `Pillow version is set to "Always last available" and resolves to ${usePillowVersion || 'the newest release'}. If the dashboard does not start, select a fixed version in the adapter configuration, ${defaultPillowVersion} is known to work.`,
+            );
+        }
+    }
+
     // ToDo: move to separate module
     async espHomeDashboard() {
         try {
@@ -274,6 +296,8 @@ class Esphome extends utils.Adapter {
             // Start Dashboard Process
             if (this.config.ESPHomeDashboardEnabled) {
                 this.log.info(`Native Integration of ESPHome Dashboard enabled, making environment ready`);
+
+                this.warnUnpinnedVersions(useDashBoardVersion, usePillowVersion);
                 try {
                     // @ts-expect-error autopy types are incomplete
                     const { getVenv } = await import('autopy');
