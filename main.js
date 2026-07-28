@@ -9,7 +9,6 @@
 const utils = require('@iobroker/adapter-core');
 const clientDevice = require('./lib/helpers.js');
 const YamlFileManager = require('./lib/yamlFileManager.js');
-// @ts-expect-error Client is just missing in index.d.ts file
 const { Client, Discovery } = require('@2colors/esphome-native-api');
 const stateAttr = require(`${__dirname}/lib/stateAttr.js`); // Load attribute library
 const disableSentry = false; // Ensure to set to true during development!
@@ -160,8 +159,9 @@ class Esphome extends utils.Adapter {
                 // adapter will restart
             }
         } catch (error) {
+            const reason = error instanceof Error && error.message ? error.message : String(error);
             this.log.error(
-                `Error during configuration migration from ESPHomeDashboardIP to ESPHomeDashboardUrl: ${error.message || error}`,
+                `Error during configuration migration from ESPHomeDashboardIP to ESPHomeDashboardUrl: ${reason}`,
             );
         }
     }
@@ -241,7 +241,7 @@ class Esphome extends utils.Adapter {
                 );
                 let cachedVersions = await this.getStateAsync(`_ESPHomeDashboard.versionCache`);
                 if (cachedVersions && cachedVersions.val) {
-                    cachedVersions = JSON.parse(cachedVersions.val);
+                    cachedVersions = JSON.parse(String(cachedVersions.val));
                     for (const version in cachedVersions) {
                         dashboardVersions.push(cachedVersions[version].name);
                     }
@@ -299,10 +299,13 @@ class Esphome extends utils.Adapter {
 
                 this.warnUnpinnedVersions(useDashBoardVersion, usePillowVersion);
                 try {
-                    // @ts-expect-error autopy types are incomplete
                     const { getVenv } = await import('autopy');
                     let python;
                     try {
+                        // "version" must be present on every requirement even when no version is
+                        // pinned: autopy builds the pip argument as `${name}${version}` and passes
+                        // it to pep440 satisfies(), both of which break on undefined. An empty
+                        // specifier means "any version" for both.
                         const requirements = [];
                         if (useDashBoardVersion) {
                             requirements.push({ name: 'esphome', version: `==${useDashBoardVersion}` });
@@ -310,7 +313,7 @@ class Esphome extends utils.Adapter {
                             this.log.warn(
                                 `Unable to determine a specific ESPHome dashboard version. Falling back to latest available version from PyPI`,
                             );
-                            requirements.push({ name: 'esphome' });
+                            requirements.push({ name: 'esphome', version: '' });
                         }
                         if (usePillowVersion) {
                             requirements.push({ name: 'pillow', version: `==${usePillowVersion}` });
@@ -318,7 +321,7 @@ class Esphome extends utils.Adapter {
                             this.log.warn(
                                 `Unable to determine a specific Pillow version. Falling back to latest available version from PyPI`,
                             );
-                            requirements.push({ name: 'pillow' });
+                            requirements.push({ name: 'pillow', version: '' });
                         }
                         // Create a virtual environment with esphome installed.
                         python = await getVenv({
@@ -327,7 +330,8 @@ class Esphome extends utils.Adapter {
                             requirements,
                         });
                     } catch (error) {
-                        this.log.error(`Fatal error starting ESPHomeDashboard | ${error} | ${error.stack}`);
+                        const stack = error instanceof Error ? error.stack : undefined;
+                        this.log.error(`Fatal error starting ESPHomeDashboard | ${error} | ${stack}`);
                         return;
                     }
 
@@ -353,7 +357,7 @@ class Esphome extends utils.Adapter {
                     dashboardProcess = python('esphome', [
                         'dashboard',
                         '--port',
-                        this.config.ESPHomeDashboardPort,
+                        String(this.config.ESPHomeDashboardPort),
                         `${dataDir}esphome.${this.instance}`,
                     ]);
 
@@ -668,7 +672,6 @@ class Esphome extends utils.Adapter {
                             statusStates: {
                                 onlineId: `${this.namespace}.${deviceName}.info._online`,
                             },
-                            // @ts-expect-error js-controller issue - desc should be string but friendlyName may be undefined
                             desc: deviceInfo.friendlyName,
                         },
                         native: {
@@ -976,7 +979,8 @@ class Esphome extends utils.Adapter {
                         this.log.error(`Entity error: ${name}`);
                     });
                 } catch (e) {
-                    this.log.error(`Connection issue for ${entity.name} ${e} | ${e.stack}`);
+                    const stack = e instanceof Error ? e.stack : undefined;
+                    this.log.error(`Connection issue for ${entity.name} ${e} | ${stack}`);
                 }
             });
 
@@ -1062,7 +1066,8 @@ class Esphome extends utils.Adapter {
                 );
             }
         } catch (e) {
-            this.log.error(`ESP device error for ${host} | ${e} | ${e.stack}`);
+            const stack = e instanceof Error ? e.stack : undefined;
+            this.log.error(`ESP device error for ${host} | ${e} | ${stack}`);
         }
     }
 
@@ -1444,7 +1449,6 @@ class Esphome extends utils.Adapter {
                         common.write !== this.createdStatesDetails[objName].write))
             ) {
                 // console.log(`An attribute has changed : ${state}`);
-                // @ts-expect-error values are correctly provided by state Attribute definitions, error can be ignored
                 await this.extendObjectAsync(objName, {
                     type: 'state',
                     common,
@@ -1475,7 +1479,7 @@ class Esphome extends utils.Adapter {
      * Handles error messages for log and Sentry
      *
      * @param {string} codepart Function were exception occurred
-     * @param {Error|string} error Error message
+     * @param {unknown} error Caught value, anything can be thrown in JavaScript
      */
     errorHandler(codepart, error) {
         let errorMsg = error;
@@ -1523,6 +1527,17 @@ class Esphome extends utils.Adapter {
     }
 
     /**
+     * Extract the argument of a modify method, so "multiply(2.5)" yields "2.5"
+     *
+     * @param {string} method defines the method to be executed (e.g. round())
+     * @returns {string} text between the brackets, empty when the method has no argument
+     */
+    modifyArgument(method) {
+        const inBracket = method.match(/(?<=\()(.*?)(?=\))/);
+        return inBracket ? inBracket[0] : '';
+    }
+
+    /**
      * Analysis modify an element in stateAttr.js and execute command
      *
      * @param {string} method defines the method to be executed (e.g. round())
@@ -1537,24 +1552,24 @@ class Esphome extends utils.Adapter {
                 value = eval(method.replace(/^custom:/gi, '')); //get value without "custom:"
             } else if (method.match(/^multiply\(/gi) != null) {
                 //check if starts with "multiply("
-                const inBracket = parseFloat(method.match(/(?<=\()(.*?)(?=\))/g)); //get value in brackets
-                value = value * inBracket;
+                const inBracket = parseFloat(this.modifyArgument(method)); //get value in brackets
+                value = Number(value) * inBracket;
             } else if (method.match(/^divide\(/gi) != null) {
                 //check if starts with "divide("
-                const inBracket = parseFloat(method.match(/(?<=\()(.*?)(?=\))/g)); //get value in brackets
-                value = value / inBracket;
+                const inBracket = parseFloat(this.modifyArgument(method)); //get value in brackets
+                value = Number(value) / inBracket;
             } else if (method.match(/^round\(/gi) != null) {
                 //check if starts with "round("
-                const inBracket = parseInt(method.match(/(?<=\()(.*?)(?=\))/g)); //get value in brackets
-                value = Math.round(value * Math.pow(10, inBracket)) / Math.pow(10, inBracket);
+                const inBracket = parseInt(this.modifyArgument(method)); //get value in brackets
+                value = Math.round(Number(value) * Math.pow(10, inBracket)) / Math.pow(10, inBracket);
             } else if (method.match(/^add\(/gi) != null) {
                 //check if starts with "add("
-                const inBracket = parseFloat(method.match(/(?<=\()(.*?)(?=\))/g)); //get value in brackets
-                value = parseFloat(value) + inBracket;
+                const inBracket = parseFloat(this.modifyArgument(method)); //get value in brackets
+                value = parseFloat(String(value)) + inBracket;
             } else if (method.match(/^substract\(/gi) != null) {
                 //check if starts with "substract("
-                const inBracket = parseFloat(method.match(/(?<=\()(.*?)(?=\))/g)); //get value in brackets
-                value = parseFloat(value) - inBracket;
+                const inBracket = parseFloat(this.modifyArgument(method)); //get value in brackets
+                value = parseFloat(String(value)) - inBracket;
             } else {
                 const methodUC = method.toUpperCase();
                 switch (methodUC) {
@@ -2051,7 +2066,7 @@ class Esphome extends utils.Adapter {
         try {
             const response = await fetch('https://pypi.org/pypi/pillow/json');
             if (response.ok) {
-                const data = await response.json();
+                const data = /** @type {{ releases: Record<string, unknown> }} */ (await response.json());
                 const versions = Object.keys(data.releases)
                     .filter(v => !v.includes('a') && !v.includes('b') && !v.includes('rc')) // Filter out alpha/beta/rc versions
                     .sort((a, b) => {
@@ -2089,16 +2104,15 @@ class Esphome extends utils.Adapter {
                 this.log.warn(`Unable to fetch Pillow versions from PyPI: ${response.status}, using cached values`);
             }
         } catch (error) {
-            this.log.warn(
-                `Error fetching Pillow versions from PyPI: ${error.message}, using cached or fallback versions`,
-            );
+            const reason = error instanceof Error && error.message ? error.message : String(error);
+            this.log.warn(`Error fetching Pillow versions from PyPI: ${reason}, using cached or fallback versions`);
         }
 
         // Try to load from cache
         try {
             const cachedPillowVersions = await this.getStateAsync(`_ESPHomeDashboard.pillowVersionCache`);
             if (cachedPillowVersions && cachedPillowVersions.val) {
-                const versions = JSON.parse(cachedPillowVersions.val);
+                const versions = JSON.parse(String(cachedPillowVersions.val));
                 this.log.info(`Loaded ${versions.length} Pillow versions from cache`);
                 return versions;
             }
@@ -2130,7 +2144,8 @@ class Esphome extends utils.Adapter {
                 this.log.info('Autopy cache directory does not exist');
             }
         } catch (error) {
-            this.log.error(`Error clearing autopy cache: ${error.message}`);
+            const reason = error instanceof Error && error.message ? error.message : String(error);
+            this.log.error(`Error clearing autopy cache: ${reason}`);
             throw error;
         }
     }
@@ -2308,7 +2323,7 @@ class Esphome extends utils.Adapter {
                         device[5] === `warmWhite`
                     ) {
                         // Convert value to 255 range
-                        writeValue = writeValue / 100 / 2.55;
+                        writeValue = Number(writeValue) / 100 / 2.55;
 
                         // Store value to memory
                         clientDetails[deviceIP][device[4]].states[device[5]] = writeValue;
@@ -2361,7 +2376,7 @@ class Esphome extends utils.Adapter {
                     // Auto white channel: when colorHEX is set to white (#ffffff) on RGBW lights,
                     // automatically switch to white channel; otherwise switch to RGB mode
                     if (clientDetails[deviceIP][device[4]].rgbAutoWhite && supportsWhite && device[5] === 'colorHEX') {
-                        if (writeValue.replace(/^#/, '').toLowerCase() === 'ffffff') {
+                        if (String(writeValue).replace(/^#/, '').toLowerCase() === 'ffffff') {
                             // White color detected: redirect to dedicated white channel
                             clientDetails[deviceIP][device[4]].states.red = 0;
                             clientDetails[deviceIP][device[4]].states.green = 0;
@@ -2490,7 +2505,6 @@ class Esphome extends utils.Adapter {
             const _channels = await this.getObjectViewAsync('system', 'channel', params);
             // List all found channels & compare with memory, delete unneeded channels
             for (const currDevice in _channels.rows) {
-                // @ts-expect-error _channels.rows is an array but treated as object here
                 if (
                     !clientDetails[ip].adapterObjects.channels.includes(_channels.rows[currDevice].id) &&
                     _channels.rows[currDevice].id.split('.')[2] === clientDetails[ip].deviceName

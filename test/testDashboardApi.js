@@ -16,16 +16,29 @@ const dashboardApi = require('../lib/dashboardApi');
  *
  * @param {number} status - HTTP status code to simulate
  * @param {object|null} body - Response body to return from .json()
- * @returns {() => Promise<object>} Async function that returns a mock Response-like object
+ * @returns {typeof globalThis.fetch} Mock fetch resolving to a Response with the given status/body
  */
 function mockFetch(status, body) {
     const ok = status >= 200 && status < 300;
-    return async () => ({
-        ok,
-        status,
-        statusText: ok ? 'OK' : status === 404 ? 'Not Found' : 'Error',
-        json: async () => body,
-    });
+    return async () =>
+        new Response(JSON.stringify(body), {
+            status,
+            statusText: ok ? 'OK' : status === 404 ? 'Not Found' : 'Error',
+            headers: { 'content-type': 'application/json' },
+        });
+}
+
+/**
+ * Helper – create a mock fetch that records the requested URL and answers with an empty body.
+ *
+ * @param {(url: string) => void} onRequest - Called with the URL the client requested
+ * @returns {typeof globalThis.fetch} Mock fetch recording the requested URL
+ */
+function capturingFetch(onRequest) {
+    return async url => {
+        onRequest(String(url));
+        return new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } });
+    };
 }
 
 describe('Dashboard API – request()', () => {
@@ -41,10 +54,7 @@ describe('Dashboard API – request()', () => {
 
     it('should build correct URL from dashboardUrl and path', async () => {
         let capturedUrl;
-        globalThis.fetch = async url => {
-            capturedUrl = url;
-            return { ok: true, status: 200, json: async () => ({}) };
-        };
+        globalThis.fetch = capturingFetch(url => (capturedUrl = url));
 
         await dashboardApi.request('GET', 'http://localhost:6052', 'devices');
         expect(capturedUrl).to.equal('http://localhost:6052/devices');
@@ -52,10 +62,7 @@ describe('Dashboard API – request()', () => {
 
     it('should strip a trailing slash from dashboardUrl', async () => {
         let capturedUrl;
-        globalThis.fetch = async url => {
-            capturedUrl = url;
-            return { ok: true, status: 200, json: async () => ({}) };
-        };
+        globalThis.fetch = capturingFetch(url => (capturedUrl = url));
 
         await dashboardApi.request('GET', 'http://localhost:6052/', 'devices');
         expect(capturedUrl).to.equal('http://localhost:6052/devices');
@@ -63,10 +70,7 @@ describe('Dashboard API – request()', () => {
 
     it('should append query parameters to the URL', async () => {
         let capturedUrl;
-        globalThis.fetch = async url => {
-            capturedUrl = url;
-            return { ok: true, status: 200, json: async () => ({}) };
-        };
+        globalThis.fetch = capturingFetch(url => (capturedUrl = url));
 
         await dashboardApi.request('GET', 'http://localhost:6052', 'json-config', {
             configuration: 'my-device.yaml',
@@ -89,8 +93,9 @@ describe('Dashboard API – request()', () => {
             await dashboardApi.request('GET', 'http://localhost:6052', 'devices');
             expect.fail('Expected an error to be thrown');
         } catch (err) {
-            expect(err.message).to.include('500');
-            expect(err.status).to.equal(500);
+            // Asserted through chai so the caught value stays "unknown" for the type checker
+            expect(err).to.have.property('message').that.includes('500');
+            expect(err).to.have.property('status', 500);
         }
     });
 });
@@ -151,7 +156,7 @@ describe('Dashboard API – getConfig()', () => {
             await dashboardApi.getConfig('http://localhost:6052', 'device.yaml');
             expect.fail('Expected an error to be thrown');
         } catch (err) {
-            expect(err.status).to.equal(503);
+            expect(err).to.have.property('status', 503);
         }
     });
 });
