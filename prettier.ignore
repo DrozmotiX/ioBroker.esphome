@@ -1,3 +1,10 @@
+# Ignore list for the "format" / "format:check" npm scripts.
+#
+# This is deliberately NOT named ".prettierignore": the ioBroker repo checker reports that
+# filename as obsolete (W0084, W5048) for adapters using "@iobroker/eslint-config". The
+# exclusions below are still required, because this repo runs prettier standalone via the
+# "format" scripts, so the scripts pass this file with --ignore-path instead.
+
 # Generated / vendored files
 package-lock.json
 *.map

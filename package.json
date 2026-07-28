@@ -69,8 +69,8 @@
     "check": "tsc --noEmit -p tsconfig.check.json",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier . --write",
-    "format:check": "prettier . --check",
+    "format": "prettier . --write --ignore-path .gitignore --ignore-path prettier.ignore",
+    "format:check": "prettier . --check --ignore-path .gitignore --ignore-path prettier.ignore",
     "release": "release-script --all --branchPattern '*'",
     "release-dry": "release-script --all --dry"
   },
