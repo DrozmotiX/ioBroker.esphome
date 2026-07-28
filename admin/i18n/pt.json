@@ -104,5 +104,5 @@
     "reConInterval": "Configuração entre tentativas do ioBroker para reconectar este dispositivo",
     "templateKeyTip": "Esse valor é fornecido pelo adaptador.",
     "ttGetStationId": "Execute esta ação para o dispositivo selecionado.",
-    "yamlUploadContentPlaceholder": "esphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2"
+    "yamlUploadContentPlaceholder": "# Configuração de exemplo\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2"
 }

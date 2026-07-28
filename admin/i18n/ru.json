@@ -104,5 +104,5 @@
     "reConInterval": "Настройка между попытками ioBroker повторно подключить это устройство",
     "templateKeyTip": "Это значение предоставляется адаптером.",
     "ttGetStationId": "Запустите это действие для выбранного устройства.",
-    "yamlUploadContentPlaceholder": "esphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2"
+    "yamlUploadContentPlaceholder": "# Пример конфигурации\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2"
 }
