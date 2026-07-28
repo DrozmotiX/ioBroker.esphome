@@ -34,9 +34,11 @@ this.deviceStateRelation[deviceName].ip
 // In-memory cache of every ioBroker object created this session
 this.createdStatesDetails[objName]  // avoids redundant extendObjectAsync calls
 
-// Global timer map – always clear before re-setting
-resetTimers[key] = clearTimeout(resetTimers[key]);
-resetTimers[key] = setTimeout(fn, ms);
+// Global timer map – always clear before re-setting.
+// Use the adapter-managed timers (never the global ones) so js-controller
+// cleans them up on unload – plain setTimeout() is flagged by the repo checker.
+resetTimers[key] = this.clearTimeout(resetTimers[key]);
+resetTimers[key] = this.setTimeout(fn, ms);
 ```
 
 ## State ID Scheme
