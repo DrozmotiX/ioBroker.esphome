@@ -414,6 +414,17 @@ If you like my work, please consider a personal donation
     * (DutchmanNL)
 -->
 
+### **WORK IN PROGRESS**
+
+- (@DutchmanNL) **FIXED**: Restored a green CI matrix, the dashboard integration tests no longer hang the test runner
+- (@DutchmanNL) **FIXED**: Corrected the changelog entry in io-package.json so it matches the published version
+- (@DutchmanNL) **FIXED**: Admin configuration is fully translated again, 29 texts were only available in English
+- (@DutchmanNL) **FIXED**: YAML upload field renders as a proper multi-line text area again
+- (@DutchmanNL) **ENHANCED**: Timers are now managed by the adapter, so they are always cleaned up on unload
+- (@DutchmanNL) **ENHANCED**: Pre-releases are published under the npm "beta" tag instead of "latest"
+- (@DutchmanNL) **ENHANCED**: Removed the obsolete admin/words.js and added prettier formatting scripts
+- (@dependabot) **ENHANCED**: Updated @iobroker/testing to 5.3.0 and the GitHub actions used in CI
+
 ### 1.0.0-beta.0 - Stable version release candidate
 
 - (@copilot) **NEW**: Promoted ioBroker.esphome to stable **v1.0.0**
