@@ -414,7 +414,7 @@ If you like my work, please consider a personal donation
     * (DutchmanNL)
 -->
 
-### **WORK IN PROGRESS**
+### 1.0.0-beta.1 (2026-07-28)
 
 - (@DutchmanNL) **FIXED**: Restored a green CI matrix, the dashboard integration tests no longer hang the test runner
 - (@DutchmanNL) **FIXED**: Corrected the changelog entry in io-package.json so it matches the published version
@@ -451,27 +451,6 @@ If you like my work, please consider a personal donation
 
 - (@copilot) **NEW**: Added support for `colorBrightness`, `coldWhite`, `warmWhite`, and `colorMode` states for lights using the new ESPHome color mode API
 - (@copilot) **FIXED**: RGB light control (brightness, color, white, colorTemperature) not working with newer ESPHome firmware that uses `supportedColorModesList` instead of deprecated legacy flags (#338)
-
-### 0.7.0-beta.2 (2026-02-20) - add capability for fans & Lock entity
-
-- (@SimonFischer04) improve README
-- (@SimonFischer04) fix #394, actually fix #340, #356
-- (DutchmanNL) **FIXED**: Fan component not working #205
-- (@copilot) **NEW**: Allow customization of Pillow version used by ESPHome Dashboard, similar to ESPHome version selector
-- (@copilot) **NEW**: Add "Clear Autopy Cache" button in ESPHome Dashboard configuration tab to resolve dashboard loading issues (#209)
-
-### 0.7.0-beta.1 (2026-02-16) - Add support for Lock entity & improve dashboard testing
-
-- (@copilot) **NEW**: Add support for Lock entity type - Lock devices now properly display state and control options #353
-- (@copilot) **NEW**: YAML file management interface in admin UI for upload/download/delete operations (#369)
-- (@SimonFischer04) improve dashboard testing
-- (@SimonFischer04) improve logging for #201
-- (@SimonFischer04) update pillow
-- (@SimonFischer04) fix readme link to lib
-- (@SimonFischer04) fix connection status #311
-- (@SimonFischer04) remove unneeded node-fetch dependency
-- (@SimonFischer04) automatic migration from versions prior to ESPHomeDashboardUrl introduction (pre v0.6.1)
-- (@copilot) **FIXED**: Invalid jsonConfig schema - removed unsupported `doNotSave` property from table elements
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
