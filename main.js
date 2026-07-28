@@ -23,6 +23,14 @@ const clientDetails = {}; // Memory cache of all devices and their connection st
 const newlyDiscoveredClient = {}; // Memory cache of all newly discovered devices and their connection status
 const dashboardVersions = [];
 const pillowVersions = []; // Memory cache for available Pillow versions
+
+// Versions new installations are pinned to. ESPHome 2026.7.x currently fails to install for a
+// part of our users (#463), so the defaults point at the last combination known to work instead
+// of "Always last available". Existing installations keep whatever they have configured.
+// Keep in sync with the "native" defaults in io-package.json.
+const defaultDashboardVersion = '2026.6.5';
+const defaultPillowVersion = '12.2.0';
+
 class Esphome extends utils.Adapter {
     /**
      * @param {Partial<utils.AdapterOptions>} [options] - Adapter configuration options
@@ -1725,6 +1733,9 @@ class Esphome extends utils.Adapter {
                                 value: dashboardVersions[versions],
                             });
                         }
+                        // The version new installations default to must always be selectable, also
+                        // when the release list could not be retrieved from GitHub
+                        this.ensureVersionInDropDown(dropDownEntry, defaultDashboardVersion);
 
                         this.sendTo(obj.from, obj.command, dropDownEntry, obj.callback);
                     }
@@ -1747,7 +1758,7 @@ class Esphome extends utils.Adapter {
                         } else {
                             // Fallback versions if cache is empty
                             this.log.info('No cached Pillow versions available, using fallback versions');
-                            const fallbackVersions = ['11.3.0', '11.2.0', '11.1.0', '11.0.0', '10.4.0', '10.3.0'];
+                            const fallbackVersions = ['12.2.0', '12.1.1', '12.0.0', '11.3.0', '11.2.0', '11.1.0'];
                             for (const version of fallbackVersions) {
                                 dropDownEntry.push({
                                     label: version,
@@ -1755,6 +1766,9 @@ class Esphome extends utils.Adapter {
                                 });
                             }
                         }
+                        // The version new installations default to must always be selectable, also
+                        // when the release list could not be retrieved from PyPI
+                        this.ensureVersionInDropDown(dropDownEntry, defaultPillowVersion);
 
                         this.sendTo(obj.from, obj.command, dropDownEntry, obj.callback);
                     }
@@ -1989,12 +2003,26 @@ class Esphome extends utils.Adapter {
     }
 
     /**
+     * Add a version to a dropDown when it is not part of it yet, so a configured version can never
+     * silently disappear from the selection when the release list is unavailable or outdated
+     *
+     * @param {Array<string | {label: string, value: string}>} dropDownEntry - dropDown entries to extend
+     * @param {string} version - version which must be selectable
+     */
+    ensureVersionInDropDown(dropDownEntry, version) {
+        const known = dropDownEntry.some(entry => (typeof entry === 'string' ? entry : entry.value) === version);
+        if (!known) {
+            dropDownEntry.push({ label: version, value: version });
+        }
+    }
+
+    /**
      * Fetch Pillow versions from PyPI and cache them
      *
      * @returns {Promise<string[]>} Array of available Pillow versions
      */
     async fetchAndCachePillowVersions() {
-        const fallbackVersions = ['11.3.0', '11.2.0', '11.1.0', '11.0.0', '10.4.0', '10.3.0'];
+        const fallbackVersions = ['12.2.0', '12.1.1', '12.0.0', '11.3.0', '11.2.0', '11.1.0'];
 
         try {
             const response = await fetch('https://pypi.org/pypi/pillow/json');

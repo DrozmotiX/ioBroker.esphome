@@ -182,8 +182,8 @@
     "apiPassword"
   ],
   "native": {
-    "ESPHomeDashboardVersion": "Always last available",
-    "PillowVersion": "Always last available",
+    "ESPHomeDashboardVersion": "2026.6.5",
+    "PillowVersion": "12.2.0",
     "reconnectInterval": 30,
     "apiPass": "",
     "apiPassword": "",

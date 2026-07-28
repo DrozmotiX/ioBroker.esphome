@@ -441,6 +441,10 @@ If you like my work, please consider a personal donation
     * (DutchmanNL)
 -->
 
+### **WORK IN PROGRESS**
+
+- (@SimonFischer04) **FIXED**: New installations now default to ESPHome Dashboard 2026.6.5 and Pillow 12.2.0 instead of the latest available release, the 2026.7.x releases currently fail to install (#463)
+
 ### 1.0.0-beta.1 (2026-07-28)
 
 - (@DutchmanNL) **FIXED**: Restored a green CI matrix, the dashboard integration tests no longer hang the test runner
