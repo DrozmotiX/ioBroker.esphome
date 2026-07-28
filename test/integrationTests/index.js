@@ -15,9 +15,7 @@ exports.runTests = function (suite) {
     const dashboardSuite = runDashboardTests ? suite : suite.skip;
 
     if (!runDashboardTests) {
-        console.log(
-            'Skipping ESPHome dashboard integration suites, set ESPHOME_RUN_DASHBOARD_TESTS=true to run them',
-        );
+        console.log('Skipping ESPHome dashboard integration suites, set ESPHOME_RUN_DASHBOARD_TESTS=true to run them');
     }
 
     dashboard_tests.runTests(dashboardSuite);
