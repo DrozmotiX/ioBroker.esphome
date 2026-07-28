@@ -17,7 +17,6 @@ const warnMessages = {}; // Store warn messages to avoid multiple sending to sen
 const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
-const { clearTimeout } = require('node:timers');
 const resetTimers = {}; // Memory allocation for all running timers
 let autodiscovery, dashboardProcess, createConfigStates, discovery;
 const clientDetails = {}; // Memory cache of all devices and their connection status
@@ -75,10 +74,10 @@ class Esphome extends utils.Adapter {
             // Start MDNS discovery when enabled
             if (autodiscovery) {
                 if (resetTimers['autodiscovery']) {
-                    resetTimers['autodiscovery'] = clearTimeout(resetTimers['autodiscovery']);
+                    resetTimers['autodiscovery'] = this.clearTimeout(resetTimers['autodiscovery']);
                 }
                 // this.log.info(`Adapter ready, automatic Device Discovery will be activated in 30 seconds.`);
-                resetTimers['autodiscovery'] = setTimeout(async () => {
+                resetTimers['autodiscovery'] = this.setTimeout(async () => {
                     this.deviceDiscovery(); // Start bonjour service autodiscovery
                 }, 5000);
             } else {
@@ -593,9 +592,9 @@ class Esphome extends utils.Adapter {
 
                 // Start timer to clean up unneeded objects
                 if (resetTimers[host]) {
-                    resetTimers[host] = clearTimeout(resetTimers[host]);
+                    resetTimers[host] = this.clearTimeout(resetTimers[host]);
                 }
-                resetTimers[host] = setTimeout(async () => {
+                resetTimers[host] = this.setTimeout(async () => {
                     await this.objectCleanup(host);
                 }, 10000);
             });
@@ -1592,7 +1591,7 @@ class Esphome extends utils.Adapter {
             // Ensure all possible running timers are cleared
             for (const timer in resetTimers) {
                 if (resetTimers[timer]) {
-                    resetTimers[timer] = clearTimeout(resetTimers[timer]);
+                    resetTimers[timer] = this.clearTimeout(resetTimers[timer]);
                 }
             }
 
@@ -1846,9 +1845,9 @@ class Esphome extends utils.Adapter {
                         // Clean memory data and init device again with a little delay
 
                         if (resetTimers[obj.message.ip]) {
-                            resetTimers[obj.message.ip] = clearTimeout(resetTimers[obj.message.ip]);
+                            resetTimers[obj.message.ip] = this.clearTimeout(resetTimers[obj.message.ip]);
                         }
-                        resetTimers[obj.message.ip] = setTimeout(async () => {
+                        resetTimers[obj.message.ip] = this.setTimeout(async () => {
                             delete clientDetails[obj.message.ip];
                             await initiateNDevice();
                         }, 2000);

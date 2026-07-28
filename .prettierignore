@@ -1,0 +1,18 @@
+# Generated / vendored files
+package-lock.json
+*.map
+*.tgz
+
+# Local tooling state (ignored via the global gitignore, which prettier does not read)
+.claude/
+
+# Historic changelog, kept verbatim
+CHANGELOG_OLD.md
+
+# Rewritten by @alcalzone/release-script on every release
+package.json
+io-package.json
+
+# Hand maintained, tab indented JSON5. Prettier's json5 printer would restyle
+# ~1000 of 1075 lines (unquoting keys, single quotes, trailing commas) for no gain.
+admin/jsonConfig.json5

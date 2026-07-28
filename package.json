@@ -68,6 +68,9 @@
     "test": "npm run test:js && npm run test:package && npm run test:integration",
     "check": "tsc --noEmit -p tsconfig.check.json",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
     "release": "release-script --all --branchPattern '*'",
     "release-dry": "release-script --all --dry"
   },
