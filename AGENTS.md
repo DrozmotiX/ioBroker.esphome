@@ -6,14 +6,15 @@ Guide for AI coding agents working in this repository.
 
 Single-file adapter (`main.js`, ~2500 lines) extending `@iobroker/adapter-core`'s `utils.Adapter`. Three supporting modules in `lib/`:
 
-| File | Purpose |
-|---|---|
-| `lib/helpers.js` | `DeviceInfo` / `ClientDetails` classes – one instance per ESP device |
-| `lib/stateAttr.js` | Human-readable metadata for ioBroker state objects (name, role, type) |
-| `lib/yamlFileManager.js` | Upload/download/delete YAML config files for the ESPHome directory |
-| `lib/dashboardApi.js` | Dashboard API helpers |
+| File                     | Purpose                                                               |
+| ------------------------ | --------------------------------------------------------------------- |
+| `lib/helpers.js`         | `DeviceInfo` / `ClientDetails` classes – one instance per ESP device  |
+| `lib/stateAttr.js`       | Human-readable metadata for ioBroker state objects (name, role, type) |
+| `lib/yamlFileManager.js` | Upload/download/delete YAML config files for the ESPHome directory    |
+| `lib/dashboardApi.js`    | Dashboard API helpers                                                 |
 
 **Two optional subsystems run in-process alongside device connections:**
+
 1. **MDNS auto-discovery** – `Discovery` from `@2colors/esphome-native-api`, started 5 s after `onReady`.
 2. **ESPHome Dashboard** – spawned Python process via `autopy` (virtual-env wrapper); only active when `config.ESPHomeDashboardEnabled`.
 
@@ -47,6 +48,7 @@ resetTimers[key] = this.setTimeout(fn, ms);
 {deviceName}.{entityType}.{entityKey}.{stateName}
 // e.g.  004B1296140C.Switch.123456789.state
 ```
+
 `deviceName` = MAC address with colons stripped. `entityType` comes directly from the ESPHome API (Switch, Sensor, Fan, Light, Cover, Climate, Number, Text, Select, Lock, Button…).
 
 ## Central State-Creation Function
@@ -123,4 +125,3 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
 - Workflow: `.github/workflows/test-and-release.yml` using `ioBroker/testing-action-*` official actions.
 - **Always include `env: GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}`** in the `adapter-tests` job.
 - Releases via `@alcalzone/release-script`; changelog placeholder: `## **WORK IN PROGRESS**`.
-

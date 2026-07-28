@@ -6,32 +6,32 @@ name: Dashboard Integration
 # This workflow is intentionally NOT part of the release pipeline - a slow or rate limited
 # PyPI/GitHub API must never block a release.
 on:
-  workflow_dispatch: {}
-  schedule:
-    # Sundays 03:17 UTC - off peak, lower GitHub API rate limit pressure
-    - cron: '17 3 * * 0'
+    workflow_dispatch: {}
+    schedule:
+        # Sundays 03:17 UTC - off peak, lower GitHub API rate limit pressure
+        - cron: '17 3 * * 0'
 
 jobs:
-  dashboard-integration:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
+    dashboard-integration:
+        runs-on: ubuntu-latest
+        timeout-minutes: 45
 
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      ESPHOME_RUN_DASHBOARD_TESTS: 'true'
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            ESPHOME_RUN_DASHBOARD_TESTS: 'true'
 
-    steps:
-      - uses: actions/checkout@v4
+        steps:
+            - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24.x'
-          cache: 'npm'
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '24.x'
+                  cache: 'npm'
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: '3.13'
 
-      - run: npm ci
+            - run: npm ci
 
-      - run: npm run test:integration
+            - run: npm run test:integration
