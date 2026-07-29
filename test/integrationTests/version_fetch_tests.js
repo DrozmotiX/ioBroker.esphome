@@ -84,7 +84,8 @@ exports.runTests = function (suite) {
 
                 console.log('✓ Version fetching test passed completely');
             } catch (error) {
-                console.error(`Version fetch test failed: ${error.message}`);
+                const reason = error instanceof Error && error.message ? error.message : String(error);
+                console.error(`Version fetch test failed: ${reason}`);
                 throw error;
             } finally {
                 // Ensure the adapter is always stopped
@@ -94,7 +95,11 @@ exports.runTests = function (suite) {
                         await harness.stopAdapter();
                     }
                 } catch (cleanupError) {
-                    console.error(`Failed to stop adapter during version fetch test cleanup: ${cleanupError.message}`);
+                    const reason =
+                        cleanupError instanceof Error && cleanupError.message
+                            ? cleanupError.message
+                            : String(cleanupError);
+                    console.error(`Failed to stop adapter during version fetch test cleanup: ${reason}`);
                 }
             }
         });

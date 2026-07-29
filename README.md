@@ -441,6 +441,14 @@ If you like my work, please consider a personal donation
     * (DutchmanNL)
 -->
 
+### **WORK IN PROGRESS**
+
+- (@SimonFischer04) **FIXED**: New installations now default to ESPHome Dashboard 2026.6.5 and Pillow 12.2.0 instead of the latest available release, the 2026.7.x releases currently fail to install (#463)
+- (@SimonFischer04) **NEW**: Existing installations still set to "Always last available" get a warning at startup pointing at the versions known to work (#463)
+- (@DutchmanNL) **FIXED**: Falling back to the latest ESPHome or Pillow release no longer aborts the dashboard setup, the requirement was passed to pip without a version specifier
+- (@DutchmanNL) **FIXED**: Added the missing "pingInterval" and "pingAttempts" defaults to io-package.json, they were only defined in the admin configuration
+- (@DutchmanNL) **ENHANCED**: "npm run check" is free of type errors, so type regressions are visible again
+
 ### 1.0.0-beta.1 (2026-07-28)
 
 - (@DutchmanNL) **FIXED**: Restored a green CI matrix, the dashboard integration tests no longer hang the test runner
