@@ -23,12 +23,15 @@ const newlyDiscoveredClient = {}; // Memory cache of all newly discovered device
 const dashboardVersions = [];
 const pillowVersions = []; // Memory cache for available Pillow versions
 
-// Versions new installations are pinned to. ESPHome 2026.7.x currently fails to install for a
-// part of our users (#463), so the defaults point at the last combination known to work instead
-// of "Always last available". Existing installations keep whatever they have configured.
-// Keep in sync with the "native" defaults in io-package.json.
+// Versions installations are pinned to. ESPHome 2026.7.x currently fails to install for a part of
+// our users (#463), so both the defaults for new installations and the one-time migration in
+// migratePinnedVersions() point at the last combination known to work instead of
+// "Always last available". Keep in sync with the "native" defaults in io-package.json.
 const defaultDashboardVersion = '2026.6.5';
 const defaultPillowVersion = '12.2.0';
+
+// State holding whether the one-time migration away from "Always last available" already ran.
+const versionMigrationState = '_ESPHomeDashboard.versionPinMigrationDone';
 
 class Esphome extends utils.Adapter {
     /**
@@ -61,6 +64,9 @@ class Esphome extends utils.Adapter {
         try {
             // Migrate from older adapter versions that only had ESPHomeDashboardIP
             await this.migrateConfig();
+
+            // Move installations still on "Always last available" to the pinned versions, once
+            await this.migratePinnedVersions();
 
             //ToDo: store default data into clientDetails object instead of global variable
             // Store settings in global variables
@@ -167,9 +173,83 @@ class Esphome extends utils.Adapter {
     }
 
     /**
+     * Migrate installations which are still on "Always last available" to the pinned versions, once.
+     *
+     * The pinned defaults in io-package.json only apply to new installations, so without this every
+     * existing installation would stay on a release line that currently cannot be installed (#463)
+     * and would have to be corrected by hand.
+     *
+     * Whether the migration already ran is stored in a state, not in "native": a new installation
+     * already ships the pinned defaults, and a "native" marker would be seeded into every existing
+     * instance on upgrade, so neither could tell "not migrated yet" from "nothing to migrate".
+     * Once the marker is set, a deliberate switch back to "Always last available" is never touched.
+     */
+    async migratePinnedVersions() {
+        try {
+            await this.extendObjectAsync('_ESPHomeDashboard', {
+                type: 'channel',
+                common: {
+                    name: 'ESPHome Dashboard details',
+                },
+                native: {},
+            });
+
+            const migrationDone = await this.getStateAsync(versionMigrationState);
+            if (migrationDone && migrationDone.val === true) {
+                return;
+            }
+
+            /** @type {Record<string, string>} */
+            const migrated = {};
+            if (this.config.ESPHomeDashboardVersion === 'Always last available') {
+                migrated.ESPHomeDashboardVersion = defaultDashboardVersion;
+            }
+            if (this.config.PillowVersion === 'Always last available') {
+                migrated.PillowVersion = defaultPillowVersion;
+            }
+
+            // New installation, or the versions were already pinned by hand: only remember that the
+            // migration is done so a later switch to "Always last available" is respected.
+            if (!Object.keys(migrated).length) {
+                await this.stateSetCreate(versionMigrationState, 'versionPinMigrationDone', true);
+                return;
+            }
+
+            const adapterObj = await this.getForeignObjectAsync(`system.adapter.${this.namespace}`);
+            if (!adapterObj || !adapterObj.native) {
+                this.log.error(
+                    `Migration to pinned versions failed: could not read the configuration object of ${this.namespace}. Please select a fixed ESPHome Dashboard version in the adapter configuration.`,
+                );
+                return;
+            }
+
+            const changes = Object.entries(migrated)
+                .map(([key, value]) => `${key} = ${value}`)
+                .join(', ');
+            this.log.info(
+                `Not every ESPHome release can be installed on every system, so your configuration has been migrated once from "Always last available" to the last combination known to work: ${changes}. Select "Always last available" again in the adapter configuration if you prefer to follow the newest release, this migration only runs once.`,
+            );
+
+            Object.assign(adapterObj.native, migrated);
+            // Keep this run consistent until the restart caused by the write below kicks in
+            Object.assign(this.config, migrated);
+
+            await this.setForeignObject(adapterObj._id, adapterObj);
+            // Written after the configuration: should the write above fail, the migration is retried
+            // on the next start instead of being silently skipped forever
+            await this.stateSetCreate(versionMigrationState, 'versionPinMigrationDone', true);
+
+            // adapter will restart
+        } catch (error) {
+            this.errorHandler(`[migratePinnedVersions]`, error);
+        }
+    }
+
+    /**
      * Warn when a version is left at "Always last available". Such a setup can break without any
-     * change on the user side as soon as an ESPHome release cannot be installed (#463), and the
-     * pinned defaults only apply to new installations - existing ones have to be adjusted by hand.
+     * change on the user side as soon as an ESPHome release cannot be installed (#463). Reached only
+     * when the user selected it deliberately, migratePinnedVersions() moves existing installations
+     * off that setting once.
      *
      * @param {string} useDashBoardVersion - ESPHome Dashboard version which will be installed
      * @param {string} usePillowVersion - Pillow version which will be installed
