@@ -142,7 +142,7 @@ GitHub release. A green `release-script` run therefore does not mean anything wa
 - **Do not hand-edit the `deploy` job.** `ioBroker/testing-action-deploy` already handles the npm
   dist-tag, trusted publishing (OIDC provenance) and the GitHub release. Only `node-version`,
   `build*` and `sentry*` are meant to be set here. In particular its `tag` input is **not** the npm
-  dist-tag - it overrides the *version to publish*, and the action only appends `--tag next` when
+  dist-tag - it overrides the _version to publish_, and the action only appends `--tag next` when
   that version contains a `-`. Setting `tag: next` therefore breaks pre-release publishing with
   `npm error You must specify a tag using --tag`.
 - **Pre-releases automatically go to the `next` dist-tag**, `latest` is only moved by a stable
@@ -150,7 +150,7 @@ GitHub release. A green `release-script` run therefore does not mean anything wa
 - **A failed `deploy` cannot be fixed by re-running the job.** A tag-triggered run always loads the
   workflow from the tagged commit, so a re-run executes the same broken file. Fix `main`, then move
   the tag onto the fixed commit (`git tag -f -a vX.Y.Z <commit>` + `git push --force origin
-  refs/tags/vX.Y.Z`), which re-triggers the build. Only safe while nothing was published under that
+refs/tags/vX.Y.Z`), which re-triggers the build. Only safe while nothing was published under that
   version - check `npm view iobroker.esphome@X.Y.Z` and the GitHub releases first.
 - `deploy` needs the full six-way `adapter-tests` matrix to pass, so a flaky leg leaves a pushed tag
   with nothing published. That is the normal recovery case for the point above.
