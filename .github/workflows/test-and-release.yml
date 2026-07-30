@@ -91,11 +91,11 @@ jobs:
                   # npm-token: ${{ secrets.NPM_TOKEN }}  # Commented out for migration to Trusted Publishing
                   github-token: ${{ secrets.GITHUB_TOKEN }}
 
-                  # Publish pre-release tags (v1.0.0-beta.1) under the "next" dist-tag instead of
-                  # "latest" - a pre-release tagged as "latest" is ignored by the ioBroker repository
-                  # updates and is reported as W2007 by the repo checker. "next" is the dist-tag this
-                  # package has always used for pre-releases. Stable tags keep the default.
-                  tag: ${{ contains(github.ref_name, '-') && 'next' || '' }}
+                  # Do NOT set the "tag" input to influence the npm dist-tag. It overrides the
+                  # version to publish, not the dist-tag: the action derives the version from it and
+                  # only then appends "--tag next" for versions containing a "-". Passing "next"
+                  # makes that check fail, so a pre-release is published without a dist-tag and npm
+                  # rejects it. Pre-releases already land under "next" without any configuration.
 
                   # When using Sentry for error reporting, Sentry can be informed about new releases
                   # To enable create a API-Token in Sentry (User settings, API keys)
