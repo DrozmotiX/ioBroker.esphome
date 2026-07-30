@@ -130,3 +130,33 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
   They run in `.github/workflows/dashboard-integration.yml` (manual/weekly) or locally with
   `ESPHOME_RUN_DASHBOARD_TESTS=true npm run test:integration`.
 - Releases via `@alcalzone/release-script`; changelog placeholder: `## **WORK IN PROGRESS**`.
+
+## Releasing
+
+**`release-script` does not publish to npm.** It has five stages - `check`, `edit`, `commit`, `push`,
+`cleanup` - and no publish step. It bumps `package.json` / `package-lock.json` / `io-package.json`,
+turns the changelog into an `io-package.json` news entry, commits, creates the annotated tag and
+pushes. Pushing the tag is what triggers the `deploy` job, and **that** runs `npm publish` plus the
+GitHub release. A green `release-script` run therefore does not mean anything was published.
+
+- **Do not hand-edit the `deploy` job.** `ioBroker/testing-action-deploy` already handles the npm
+  dist-tag, trusted publishing (OIDC provenance) and the GitHub release. Only `node-version`,
+  `build*` and `sentry*` are meant to be set here. In particular its `tag` input is **not** the npm
+  dist-tag - it overrides the *version to publish*, and the action only appends `--tag next` when
+  that version contains a `-`. Setting `tag: next` therefore breaks pre-release publishing with
+  `npm error You must specify a tag using --tag`.
+- **Pre-releases automatically go to the `next` dist-tag**, `latest` is only moved by a stable
+  release. No configuration needed.
+- **A failed `deploy` cannot be fixed by re-running the job.** A tag-triggered run always loads the
+  workflow from the tagged commit, so a re-run executes the same broken file. Fix `main`, then move
+  the tag onto the fixed commit (`git tag -f -a vX.Y.Z <commit>` + `git push --force origin
+  refs/tags/vX.Y.Z`), which re-triggers the build. Only safe while nothing was published under that
+  version - check `npm view iobroker.esphome@X.Y.Z` and the GitHub releases first.
+- `deploy` needs the full six-way `adapter-tests` matrix to pass, so a flaky leg leaves a pushed tag
+  with nothing published. That is the normal recovery case for the point above.
+- The ioBroker translator service behind the `iobroker` plugin regularly answers 501/503 and then
+  **rolls the whole release back**. Prepare the news entry as a `NEXT` key in `io-package.json` with
+  all languages already filled in (`npx translate-adapter translate`); the plugin then just renames
+  `NEXT` to the new version and never calls the translator.
+- `release-script` needs an interactive TTY for its prompts, and its `cleanup` stage deletes the
+  tracked `.commitmessage` file - restore it with `git checkout -- .commitmessage` afterwards.
