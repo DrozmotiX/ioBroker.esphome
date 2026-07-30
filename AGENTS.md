@@ -75,13 +75,13 @@ When adding a new ESP entity type, add a matching entry to `lib/stateAttr.js`.
 ```bash
 npm ci                                        # install deps (use ci, not install)
 ./node_modules/.bin/eslint --max-warnings 0 . # must pass clean before any commit
-npm run check                                 # TS type check – errors are non-blocking
+npm run check                                 # TS type check – currently 0 errors, keep it that way
 npm test                                      # test:js + test:package + test:integration
 ```
 
 > `npm run lint` locally does NOT enforce `--max-warnings 0` but CI does — always run the eslint command above directly.
 
-`npm test` does **not** include `test:unit` (deprecated). The integration test suite lives in `test/integrationTests/` (index, dashboard_tests, version_fetch_tests) and is imported by `test/integration.js`.
+`npm test` does **not** include `test:unit` (deprecated). The integration test suite lives in `test/integrationTests/` (index, dashboard_tests, version_fetch_tests, version_migration_tests) and is imported by `test/integration.js`.
 
 ## Integration Test Pattern
 
@@ -107,7 +107,7 @@ Always call `harness.stopAdapter()` in a `finally` block to avoid test leaks.
 
 ## Admin UI
 
-Config schema: `admin/jsonConfig.json5` (JSON5, supports comments). Translations: `admin/i18n/{locale}/translations.json`. Run `npm run translate` after any translation key changes. Labels must reference translation keys (`"i18n": true` is set globally).
+Config schema: `admin/jsonConfig.json5` (JSON5, supports comments). Translations: `admin/i18n/{locale}.json` (short format, migrated from the old `{locale}/translations.json` layout). Run `npm run translate` after any translation key changes. Labels must reference translation keys (`"i18n": true` is set globally).
 
 ## GITHUB_TOKEN Usage
 
