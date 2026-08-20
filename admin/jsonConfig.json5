@@ -359,18 +359,18 @@
 						"type" : "warning"
 					}
 				},
-                "header": {
-                    "type": "header",
-                    "size": 1,
-                    "text": "Device List"
-                },
+				"header": {
+					"type": "header",
+					"size": 1,
+					"text": "Device List"
+				},
 
-                // Refresh table showing all devices
+				// Refresh table showing all devices
 				// Sends message to backend to get all current known devices, their configuration and connection status
 				"loadDevices": {
 					"newLine": true,
 					"type": "sendTo",
-                    "defaultSendTo": "loadDevices", // das hier scheint mit useNative nicht zu funktionieren, die anfrage geht raus, aber das ergebnis wird nicht verwertet.
+					"defaultSendTo": "loadDevices", // das hier scheint mit useNative nicht zu funktionieren, die anfrage geht raus, aber das ergebnis wird nicht verwertet.
 					"hidden": "!_alive",
 					"command": "loadDevices",
 					"jsonData": "{ \"date\": \"${data.templateTable}\"}",
@@ -384,12 +384,12 @@
 					"lg": 12,
 					"xl": 12
 				},
-                "header2": {
-                    "type": "header",
-                    "size": 3,
-                    "hidden": "!data.newDevicesTable || data.newDevicesTable.length == 0",
-                    "text": "newDevicesHeader"
-                },
+				"header2": {
+					"type": "header",
+					"size": 3,
+					"hidden": "!data.newDevicesTable || data.newDevicesTable.length == 0",
+					"text": "newDevicesHeader"
+				},
 				// Table (provided by backend) of all devices and their connection status
 				"newDevicesTable": {
 					"type": "table",
@@ -443,12 +443,12 @@
 						}
 					]
 				},
-                "header3": {
-                    "type": "header",
-                    "size": 3,
-                    "text": "existDevicesHeader"
-                },
-                "existingDevicesTable": {
+				"header3": {
+					"type": "header",
+					"size": 3,
+					"text": "existDevicesHeader"
+				},
+				"existingDevicesTable": {
 					"type": "table",
 					"noDelete": true,
 					"newLine": true,
@@ -722,7 +722,7 @@
 				"advanced": {
 					"type": "panel",
 					"label": "Advanced",
-                    "collapsable": true,
+					"collapsable": true,
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
@@ -881,10 +881,12 @@
 				// YAML content input
 				"uploadContent": {
 					"newLine": true,
-					"type": "textarea",
+					"type": "text",
 					"label": "lblUploadContent",
-					"rows": 10,
-					"placeholder": "esphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2",
+					// minRows > 1 renders a textarea, "multiline"/"rows" are not part of the jsonConfig schema
+					"minRows": 10,
+					"maxRows": 10,
+					"placeholder": "yamlUploadContentPlaceholder",
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
@@ -917,7 +919,6 @@
 					"label": "lblRefreshYamlFiles",
 					"command": "listYamlFiles",
 					"defaultSendTo": "listYamlFiles",
-					"data": "yamlFilesTable",
 					"variant": "outlined",
 					"showProcess": true,
 					"hidden": "!_alive",
@@ -1029,7 +1030,7 @@
 					"command": "deleteYamlFile",
 					"jsonData": "{\"filename\": \"${data.selectedFilename}\"}",
 					"variant": "outlined",
-					"color": "error",
+					"color": "secondary",
 					"showProcess": true,
 					"hidden": "!_alive",
 					"disabled": "!data.selectedFilename",

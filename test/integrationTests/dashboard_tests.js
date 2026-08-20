@@ -46,14 +46,17 @@ async function isDashboardReachable(port, maxAttempts, delayMs) {
         try {
             const accessible = await new Promise(resolve => {
                 const req = http.get(`http://localhost:${port}/`, res => {
-                    console.log(`Dashboard check attempt ${attempt}: HTTP ${res.statusCode}`);
+                    // statusCode is only absent when the response never completed, treat that as unreachable
+                    const statusCode = res.statusCode ?? 0;
+                    console.log(`Dashboard check attempt ${attempt}: HTTP ${statusCode}`);
                     // Dashboard is reachable if we get a successful response (2xx) or redirect (3xx)
                     // This indicates the dashboard server is running and responding properly
-                    resolve(res.statusCode >= 200 && res.statusCode < 400);
+                    resolve(statusCode >= 200 && statusCode < 400);
                 });
 
                 req.on('error', err => {
-                    console.log(`Dashboard check attempt ${attempt}: ${err.code || err.message}`);
+                    const code = /** @type {NodeJS.ErrnoException} */ (err).code;
+                    console.log(`Dashboard check attempt ${attempt}: ${code || err.message}`);
                     resolve(false);
                 });
 
@@ -68,7 +71,8 @@ async function isDashboardReachable(port, maxAttempts, delayMs) {
                 return true;
             }
         } catch (err) {
-            console.log(`Dashboard check attempt ${attempt} error: ${err.message}`);
+            const reason = err instanceof Error && err.message ? err.message : String(err);
+            console.log(`Dashboard check attempt ${attempt} error: ${reason}`);
         }
 
         if (attempt < maxAttempts) {
@@ -138,7 +142,8 @@ Check the adapter logs above for more details`;
                 console.log('✓ Dashboard integration test passed completely');
                 expect(isReachable).to.be.true;
             } catch (error) {
-                console.error(`Dashboard integration test failed: ${error.message}`);
+                const reason = error instanceof Error && error.message ? error.message : String(error);
+                console.error(`Dashboard integration test failed: ${reason}`);
                 throw error;
             } finally {
                 // Ensure the adapter (and thus the dashboard process) is always stopped
@@ -148,7 +153,11 @@ Check the adapter logs above for more details`;
                         await harness.stopAdapter();
                     }
                 } catch (cleanupError) {
-                    console.error(`Failed to stop adapter during dashboard test cleanup: ${cleanupError.message}`);
+                    const reason =
+                        cleanupError instanceof Error && cleanupError.message
+                            ? cleanupError.message
+                            : String(cleanupError);
+                    console.error(`Failed to stop adapter during dashboard test cleanup: ${reason}`);
                 }
             }
         });

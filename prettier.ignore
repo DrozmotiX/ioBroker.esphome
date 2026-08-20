@@ -1,0 +1,25 @@
+# Ignore list for the "format" / "format:check" npm scripts.
+#
+# This is deliberately NOT named ".prettierignore": the ioBroker repo checker reports that
+# filename as obsolete (W0084, W5048) for adapters using "@iobroker/eslint-config". The
+# exclusions below are still required, because this repo runs prettier standalone via the
+# "format" scripts, so the scripts pass this file with --ignore-path instead.
+
+# Generated / vendored files
+package-lock.json
+*.map
+*.tgz
+
+# Local tooling state (ignored via the global gitignore, which prettier does not read)
+.claude/
+
+# Historic changelog, kept verbatim
+CHANGELOG_OLD.md
+
+# Rewritten by @alcalzone/release-script on every release
+package.json
+io-package.json
+
+# Hand maintained, tab indented JSON5. Prettier's json5 printer would restyle
+# ~1000 of 1075 lines (unquoting keys, single quotes, trailing commas) for no gain.
+admin/jsonConfig.json5
