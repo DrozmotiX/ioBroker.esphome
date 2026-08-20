@@ -919,8 +919,19 @@ class Esphome extends utils.Adapter {
 
                     await this.createNonStateDevices(host, entity);
 
-                    // Request current state values
-                    await clientDetails[host].client.connection.subscribeStatesService();
+                    // Request current state values. If the connection dropped while entities were
+                    // still being announced, `newEntity` fires again on the stale connection and
+                    // subscribeStatesService() throws "Not connected". Skip it silently here; the
+                    // reconnection cycle handles the fresh subscription.
+                    if (clientDetails[host].client.connection.connected) {
+                        try {
+                            await clientDetails[host].client.connection.subscribeStatesService();
+                        } catch (e) {
+                            this.log.debug(
+                                `[subscribeStates] ${clientDetails[host].deviceFriendlyName}: ${e instanceof Error ? e.message : e}`,
+                            );
+                        }
+                    }
                     this.log.debug(
                         `[DeviceInfoData] ${clientDetails[host].deviceFriendlyName} ${JSON.stringify(clientDetails[host].deviceInfo)}`,
                     );
