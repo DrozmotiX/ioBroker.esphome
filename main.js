@@ -639,6 +639,8 @@ class Esphome extends utils.Adapter {
                     this.log.info(`ESPHome client ${host} connected`);
                     // Clear possible present warning messages for devices from previous connection
                     delete warnMessages[host];
+                    // Allow the next connection-loss event to log a "Connection destroyed" warning again
+                    clientDetails[host].connectionDestroyedLogged = false;
 
                     // Check if device connection is caused by adding  device from admin, if yes send OK message
                     if (this.messageResponse[host]) {
@@ -1055,6 +1057,14 @@ class Esphome extends utils.Adapter {
 
                     entity.on(`destroyed`, async state => {
                         try {
+                            // `destroyed` fires once per entity when the connection goes down.
+                            // Log only the first one per connection-loss event and let the
+                            // 'disconnected' handler summarize the device that went away.
+                            if (clientDetails[host].connectionDestroyedLogged) {
+                                return;
+                            }
+                            clientDetails[host].connectionDestroyedLogged = true;
+
                             const entityIdentity = entity?.name || entity?.id || host || 'unknown';
                             if (state !== undefined) {
                                 this.log.warn(`Connection destroyed for ${state} (${entityIdentity})`);
@@ -2312,6 +2322,17 @@ class Esphome extends utils.Adapter {
                     return;
                 }
                 const deviceIP = this.deviceStateRelation[deviceName].ip;
+
+                if (
+                    !clientDetails[deviceIP] ||
+                    !clientDetails[deviceIP][device[4]] ||
+                    !clientDetails[deviceIP].client ||
+                    !clientDetails[deviceIP].client.connection
+                ) {
+                    this.log.debug(`[onStateChange] Device ${deviceName} not connected, acknowledging state change`);
+                    await this.setStateAsync(id, { val: state.val, ack: true });
+                    return;
+                }
 
                 // Handle Switch State
                 if (clientDetails[deviceIP][device[4]].type === `Switch`) {
