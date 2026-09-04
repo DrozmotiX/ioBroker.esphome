@@ -639,6 +639,8 @@ class Esphome extends utils.Adapter {
                     this.log.info(`ESPHome client ${host} connected`);
                     // Clear possible present warning messages for devices from previous connection
                     delete warnMessages[host];
+                    // Allow the next connection-loss event to log a "Connection destroyed" warning again
+                    clientDetails[host].connectionDestroyedLogged = false;
 
                     // Check if device connection is caused by adding  device from admin, if yes send OK message
                     if (this.messageResponse[host]) {
@@ -919,8 +921,19 @@ class Esphome extends utils.Adapter {
 
                     await this.createNonStateDevices(host, entity);
 
-                    // Request current state values
-                    await clientDetails[host].client.connection.subscribeStatesService();
+                    // Request current state values. If the connection dropped while entities were
+                    // still being announced, `newEntity` fires again on the stale connection and
+                    // subscribeStatesService() throws "Not connected". Skip it silently here; the
+                    // reconnection cycle handles the fresh subscription.
+                    if (clientDetails[host].client.connection.connected) {
+                        try {
+                            await clientDetails[host].client.connection.subscribeStatesService();
+                        } catch (e) {
+                            this.log.debug(
+                                `[subscribeStates] ${clientDetails[host].deviceFriendlyName}: ${e instanceof Error ? e.message : e}`,
+                            );
+                        }
+                    }
                     this.log.debug(
                         `[DeviceInfoData] ${clientDetails[host].deviceFriendlyName} ${JSON.stringify(clientDetails[host].deviceInfo)}`,
                     );
@@ -1044,6 +1057,14 @@ class Esphome extends utils.Adapter {
 
                     entity.on(`destroyed`, async state => {
                         try {
+                            // `destroyed` fires once per entity when the connection goes down.
+                            // Log only the first one per connection-loss event and let the
+                            // 'disconnected' handler summarize the device that went away.
+                            if (clientDetails[host].connectionDestroyedLogged) {
+                                return;
+                            }
+                            clientDetails[host].connectionDestroyedLogged = true;
+
                             const entityIdentity = entity?.name || entity?.id || host || 'unknown';
                             if (state !== undefined) {
                                 this.log.warn(`Connection destroyed for ${state} (${entityIdentity})`);
