@@ -2323,17 +2323,6 @@ class Esphome extends utils.Adapter {
                 }
                 const deviceIP = this.deviceStateRelation[deviceName].ip;
 
-                if (
-                    !clientDetails[deviceIP] ||
-                    !clientDetails[deviceIP][device[4]] ||
-                    !clientDetails[deviceIP].client ||
-                    !clientDetails[deviceIP].client.connection
-                ) {
-                    this.log.debug(`[onStateChange] Device ${deviceName} not connected, acknowledging state change`);
-                    await this.setStateAsync(id, { val: state.val, ack: true });
-                    return;
-                }
-
                 // Handle Switch State
                 if (clientDetails[deviceIP][device[4]].type === `Switch`) {
                     await clientDetails[deviceIP].client.connection.switchCommandService({
