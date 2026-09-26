@@ -441,6 +441,13 @@ If you like my work, please consider a personal donation
     * (DutchmanNL)
 -->
 
+### **WORK IN PROGRESS**
+
+- (@arteck) **FIXED**: A device that drops while its entities are still being announced no longer throws "Not connected", the state subscription is left to the reconnect
+- (@arteck) **FIXED**: A connection loss logs one "Connection destroyed" warning per device instead of one per entity
+- (@DutchmanNL) **ENHANCED**: Updated @iobroker/testing to 6.2.2 and @iobroker/adapter-core to 3.4.3
+- (@DutchmanNL) **ENHANCED**: Tests now cover Node.js 22, 24 and 26 and the websocket library ws was updated to 8.21.3
+
 ### 1.0.0-beta.2 (2026-07-30)
 
 - (@SimonFischer04) **FIXED**: ESPHome Dashboard 2026.6.5 and Pillow 12.2.0 are used instead of the latest available release, the 2026.7.x releases currently fail to install (#463)
