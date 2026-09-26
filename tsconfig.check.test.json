@@ -1,0 +1,11 @@
+// Specialized tsconfig for type-checking the test files.
+// @tsconfig/node22 restricts "types" to ["node"], so the mocha globals and the
+// global ioBroker namespace (normally pulled in through main.js -> adapter-core) are added explicitly.
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "types": ["node", "mocha", "@iobroker/types"]
+    },
+    "include": ["**/*.test.js", "test/**/*.js", "**/*.d.ts"],
+    "exclude": ["**/build", "node_modules/", "widgets/"]
+}
