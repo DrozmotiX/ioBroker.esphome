@@ -1,7 +1,9 @@
-// Specialized tsconfig for type-checking js files
+// Specialized tsconfig for type-checking js files (production code only).
+// Test files are checked separately by tsconfig.check.test.json, so the mocha
+// globals (describe, it, ...) never leak into the production program.
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {},
     "include": ["**/*.js", "**/*.d.ts"],
-    "exclude": ["**/build", "node_modules/", "widgets/"]
+    "exclude": ["**/build", "node_modules/", "widgets/", "test/", "**/*.test.js"]
 }

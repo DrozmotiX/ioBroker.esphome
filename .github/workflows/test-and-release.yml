@@ -33,6 +33,8 @@ jobs:
                   node-version: '24.x'
                   # Uncomment the following line if your adapter cannot be installed using 'npm ci'
                   # install-command: 'npm install'
+                  # Runs "npm run check" (main.js, lib/ and the test files) so type errors cannot slip in unnoticed
+                  type-checking: true
                   lint: true
 
     # Runs adapter tests on all supported node versions and OSes
