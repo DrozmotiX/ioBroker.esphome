@@ -155,8 +155,10 @@ refs/tags/vX.Y.Z`), which re-triggers the build. Only safe while nothing was pub
 - `deploy` needs the full six-way `adapter-tests` matrix to pass, so a flaky leg leaves a pushed tag
   with nothing published. That is the normal recovery case for the point above.
 - The ioBroker translator service behind the `iobroker` plugin regularly answers 501/503 and then
-  **rolls the whole release back**. Prepare the news entry as a `NEXT` key in `io-package.json` with
-  all languages already filled in (`npx translate-adapter translate`); the plugin then just renames
-  `NEXT` to the new version and never calls the translator.
+  **rolls the whole release back**. Prepare the news entry in `io-package.json` under the **exact
+  version you are about to release** (e.g. `"1.0.0"`) with all languages already filled in
+  (`npx translate-adapter translate`); the plugin keeps an entry that already exists for the new
+  version and never calls the translator. Do not use a `NEXT` key: since `@iobroker/testing` 6 the
+  package tests validate `io-package.json` against the schema, which rejects `NEXT`, so CI fails.
 - `release-script` needs an interactive TTY for its prompts, and its `cleanup` stage deletes the
   tracked `.commitmessage` file - restore it with `git checkout -- .commitmessage` afterwards.

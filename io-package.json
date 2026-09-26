@@ -3,7 +3,7 @@
     "name": "esphome",
     "version": "1.0.0-beta.2",
     "news": {
-      "NEXT": {
+      "1.0.0": {
         "en": "**FIXED**: A device that drops while its entities are still being announced no longer throws \"Not connected\", the state subscription is left to the reconnect\n**FIXED**: A connection loss logs one \"Connection destroyed\" warning per device instead of one per entity\n**ENHANCED**: Updated @iobroker/testing to 6.2.2 and @iobroker/adapter-core to 3.4.3\n**ENHANCED**: Tests now cover Node.js 22, 24 and 26 and the websocket library ws was updated to 8.21.3",
         "de": "**BEHOBEN**: Ein Gerät, das abbricht, während seine Entitäten noch angekündigt werden, gibt nicht mehr „Nicht verbunden“ aus, das Statusabonnement bleibt der erneuten Verbindung überlassen\n**BEHOBEN**: Bei einem Verbindungsverlust wird eine Warnung „Verbindung zerstört“ pro Gerät protokolliert statt einer pro Entität\n**VERBESSERT**: @iobroker/testing auf 6.2.2 und @iobroker/adapter-core auf 3.4.3 aktualisiert\n**VERBESSERT**: Tests decken jetzt Node.js 22, 24 und 26 ab und die Websocket-Bibliothek ws wurde auf 8.21.3 aktualisiert",
         "ru": "**ИСПРАВЛЕНО**: устройство, которое отключается, пока его объекты все еще объявляются, больше не выдает сообщение «Не подключено», государственная подписка остается на повторное подключение.\n**ИСПРАВЛЕНО**: при потере соединения регистрируется одно предупреждение «Соединение разрушено» для каждого устройства вместо одного для каждого объекта.\n**УЛУЧШЕНО**: @iobroker/testing обновлен до версии 6.2.2 и @iobroker/adapter-core до версии 3.4.3.\n**УЛУЧШЕНО**: тесты теперь охватывают Node.js 22, 24 и 26, а библиотека веб-сокетов ws обновлена до версии 8.21.3.",
