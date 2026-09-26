@@ -48,7 +48,8 @@ jobs:
             fail-fast: false
             matrix:
                 node-version: [22.x, 24.x, 26.x]
-                os: [ubuntu-latest, windows-latest, macos-latest]
+                # windows-latest removed: its legs sat in the runner queue and blocked the 1.0.0 release
+                os: [ubuntu-latest, macos-latest]
 
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

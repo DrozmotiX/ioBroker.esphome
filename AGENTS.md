@@ -152,7 +152,7 @@ GitHub release. A green `release-script` run therefore does not mean anything wa
   the tag onto the fixed commit (`git tag -f -a vX.Y.Z <commit>` + `git push --force origin
 refs/tags/vX.Y.Z`), which re-triggers the build. Only safe while nothing was published under that
   version - check `npm view iobroker.esphome@X.Y.Z` and the GitHub releases first.
-- `deploy` needs the full six-way `adapter-tests` matrix to pass, so a flaky leg leaves a pushed tag
+- `deploy` needs the full `adapter-tests` matrix (3 Node versions × Ubuntu and macOS) to pass, so a flaky leg leaves a pushed tag
   with nothing published. That is the normal recovery case for the point above.
 - The ioBroker translator service behind the `iobroker` plugin regularly answers 501/503 and then
   **rolls the whole release back**. Prepare the news entry in `io-package.json` under the **exact
