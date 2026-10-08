@@ -33,6 +33,18 @@ const defaultPillowVersion = '12.2.0';
 // State holding whether the one-time migration away from "Always last available" already ran.
 const versionMigrationState = '_ESPHomeDashboard.versionPinMigrationDone';
 
+// ColorCapability bits from ESPHome's api.proto. A light's supported_color_modes is a list of
+// ColorMode values, and every ColorMode is an OR of these bits - for example RGB = 35 is
+// ON_OFF | BRIGHTNESS | RGB. A capability is therefore tested with a bitwise AND.
+const COLOR_CAPABILITY = {
+    ON_OFF: 1,
+    BRIGHTNESS: 2,
+    WHITE: 4,
+    COLOR_TEMPERATURE: 8,
+    COLD_WARM_WHITE: 16,
+    RGB: 32,
+};
+
 class Esphome extends utils.Adapter {
     /**
      * @param {Partial<utils.AdapterOptions>} [options] - Adapter configuration options
@@ -2461,18 +2473,26 @@ class Esphome extends utils.Adapter {
 
                     const lightConfig = clientDetails[deviceIP][device[4]].config;
                     const colorModesList = lightConfig.supportedColorModesList || [];
-                    // ColorMode constants: Unknown=0, OnOff=1, Brightness=2, White=3, ColorTemperature=4,
-                    // ColdWarmWhite=5, RGB=6, RGBWhite=7, RGBColorTemperature=8, RGBColdWarmWhite=9
+                    // The values in supportedColorModesList are the ColorMode enum from
+                    // api.proto, which is a bitmask of ColorCapability and not a running
+                    // index: ON_OFF=1, BRIGHTNESS=3, WHITE=7, COLOR_TEMPERATURE=11,
+                    // COLD_WARM_WHITE=19, RGB=35, RGB_WHITE=39, RGB_COLOR_TEMPERATURE=47,
+                    // RGB_COLD_WARM_WHITE=51. Test the capability bits, not membership.
                     const supportsRgb =
-                        lightConfig.legacySupportsRgb === true || colorModesList.some(m => [6, 7, 8, 9].includes(m));
+                        lightConfig.legacySupportsRgb === true ||
+                        colorModesList.some(m => (m & COLOR_CAPABILITY.RGB) !== 0);
                     const supportsBrightness =
-                        lightConfig.legacySupportsBrightness === true || colorModesList.some(m => m >= 2 && m <= 9);
+                        lightConfig.legacySupportsBrightness === true ||
+                        colorModesList.some(m => (m & COLOR_CAPABILITY.BRIGHTNESS) !== 0);
                     const supportsWhite =
-                        lightConfig.legacySupportsWhiteValue === true || colorModesList.some(m => [3, 7].includes(m));
+                        lightConfig.legacySupportsWhiteValue === true ||
+                        colorModesList.some(m => (m & COLOR_CAPABILITY.WHITE) !== 0);
                     const supportsColorTemp =
                         lightConfig.legacySupportsColorTemperature === true ||
-                        colorModesList.some(m => [4, 8].includes(m));
-                    const supportsColdWarmWhite = colorModesList.some(m => [5, 9].includes(m));
+                        colorModesList.some(m => (m & COLOR_CAPABILITY.COLOR_TEMPERATURE) !== 0);
+                    const supportsColdWarmWhite = colorModesList.some(
+                        m => (m & COLOR_CAPABILITY.COLD_WARM_WHITE) !== 0,
+                    );
 
                     // Auto white channel: when colorHEX is set to white (#ffffff) on RGBW lights,
                     // automatically switch to white channel; otherwise switch to RGB mode
