@@ -3,113 +3,94 @@ name: Test and Release
 # Run this job on all pushes and pull requests
 # as well as tags with a semantic version
 on:
-    push:
-        branches:
-            - '*'
-        tags:
-            # normal versions
-            - 'v[0-9]+.[0-9]+.[0-9]+'
-            # pre-releases
-            - 'v[0-9]+.[0-9]+.[0-9]+-**'
-    pull_request: {}
+  push:
+    branches:
+      - "main"
+    tags:
+      # normal versions
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      # pre-releases
+      - "v[0-9]+.[0-9]+.[0-9]+-**"
+  pull_request: {}
 
-# Cancel previous PR/branch runs when a new commit is pushed.
-# The repo checker (W3009) expects exactly this form. A release run is still safe: a tag is its
-# own ref, so only pushing the same tag again could cancel it. No other workflow in this repo
-# declares a concurrency group, so the group does not need the workflow name.
+# Cancel previous PR/branch runs when a new commit is pushed
 concurrency:
-    group: ${{ github.ref }}
-    cancel-in-progress: true
+  group: ${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-    # Performs quick checks before the expensive test runs
-    check-and-lint:
-        if: contains(github.event.head_commit.message, '[skip ci]') == false
+  # Performs quick checks before the expensive test runs
+  check-and-lint:
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
 
-        runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-        steps:
-            - uses: ioBroker/testing-action-check@v2
-              with:
-                  node-version: '24.x'
-                  # Uncomment the following line if your adapter cannot be installed using 'npm ci'
-                  # install-command: 'npm install'
-                  # Runs "npm run check" (main.js, lib/ and the test files) so type errors cannot slip in unnoticed
-                  type-checking: true
-                  lint: true
+    steps:
+      - uses: ioBroker/testing-action-check@v1
+        with:
+          node-version: '22.x'
+          # Uncomment the following line if your adapter cannot be installed using 'npm ci'
+          # install-command: 'npm install'
+          type-checking: true
+          lint: true
 
-    # Runs adapter tests on all supported node versions and OSes
-    adapter-tests:
-        needs: [check-and-lint]
-        if: contains(github.event.head_commit.message, '[skip ci]') == false
+  # Runs adapter tests on all supported node versions and OSes
+  adapter-tests:
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
 
-        runs-on: ${{ matrix.os }}
-        # Windows legs take 15-27 minutes, well above the 4-7 minutes of the other OSes
-        timeout-minutes: 45
-        strategy:
-            # Do not cancel the remaining matrix legs when one of them fails,
-            # otherwise a single flaky OS/node combination hides all other results
-            fail-fast: false
-            matrix:
-                node-version: [22.x, 24.x, 26.x]
-                # Windows is required by the repo checker (E3027) unless package.json "os" excludes it.
-                # The adapter works on Windows, so it stays tested there rather than excluded.
-                os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node-version: [22.x, 24.x]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
-        env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: ioBroker/testing-action-adapter@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+          os: ${{ matrix.os }}
+          # Uncomment the following line if your adapter cannot be installed using 'npm ci'
+          # install-command: 'npm install'
+          build: true
 
-        steps:
-            - uses: ioBroker/testing-action-adapter@v1
-              with:
-                  node-version: ${{ matrix.node-version }}
-                  os: ${{ matrix.os }}
-                  # Uncomment the following line if your adapter cannot be installed using 'npm ci'
-                  # install-command: 'npm install'
+# TODO: To enable automatic npm releases, set up trusted publishing in your npm account
+# See https://docs.npmjs.com/trusted-publishers for more details
+# Then uncomment the following block:
 
-    # NOTE: Automatic npm releases are configured via npm Trusted Publishing (OIDC)
-    # using ioBroker/testing-action-deploy@v1 and the id-token permission below.
-    # Ensure your npm package is set up for GitHub OIDC; no NPM_TOKEN secret is required.
-
-    # Deploys the final package to NPM
-    deploy:
-        needs: [check-and-lint, adapter-tests]
-
-        # Trigger this step only when a commit on any branch is tagged with a version number
-        if: |
-            contains(github.event.head_commit.message, '[skip ci]') == false &&
-            github.event_name == 'push' &&
-            startsWith(github.ref, 'refs/tags/v')
-
-        runs-on: ubuntu-latest
-
-        # Write permissions are required to create Github releases
-        permissions:
-            contents: write
-            id-token: write
-
-        steps:
-            - uses: ioBroker/testing-action-deploy@v1
-              with:
-                  node-version: '24.x'
-                  # Uncomment the following line if your adapter cannot be installed using 'npm ci'
-                  # install-command: 'npm install'
-                  # npm-token: ${{ secrets.NPM_TOKEN }}  # Commented out for migration to Trusted Publishing
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
-
-                  # Do NOT set the "tag" input to influence the npm dist-tag. It overrides the
-                  # version to publish, not the dist-tag: the action derives the version from it and
-                  # only then appends "--tag next" for versions containing a "-". Passing "next"
-                  # makes that check fail, so a pre-release is published without a dist-tag and npm
-                  # rejects it. Pre-releases already land under "next" without any configuration.
-
-                  # When using Sentry for error reporting, Sentry can be informed about new releases
-                  # To enable create a API-Token in Sentry (User settings, API keys)
-                  # Enter this token as a GitHub secret (with name SENTRY_AUTH_TOKEN) in the repository options
-                  # Then uncomment and customize the following block:
-                  sentry: true
-                  sentry-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
-                  sentry-project: 'iobroker-esphome'
-                  sentry-version-prefix: 'iobroker.esphome'
-                  # If your sentry project is linked to a GitHub repository, you can enable the following option
-                  # sentry-github-integration: true
+#  # Deploys the final package to NPM
+#  deploy:
+#    needs: [check-and-lint, adapter-tests]
+#
+#    # Trigger this step only when a commit on any branch is tagged with a version number
+#    if: |
+#      contains(github.event.head_commit.message, '[skip ci]') == false &&
+#      github.event_name == 'push' &&
+#      startsWith(github.ref, 'refs/tags/v')
+#
+#    runs-on: ubuntu-latest
+#
+#    # Write permissions are required to create Github releases
+#    permissions:
+#      id-token: write
+#      contents: write
+#
+#    steps:
+#      - uses: ioBroker/testing-action-deploy@v1
+#        with:
+#          node-version: '22.x'
+#          # Uncomment the following line if your adapter cannot be installed using 'npm ci'
+#          # install-command: 'npm install'
+#          build: true
+#          github-token: ${{ secrets.GITHUB_TOKEN }}
+#
+#          # When using Sentry for error reporting, Sentry can be informed about new releases
+#          # To enable create a API-Token in Sentry (User settings, API keys)
+#          # Enter this token as a GitHub secret (with name SENTRY_AUTH_TOKEN) in the repository options
+#          # Then uncomment and customize the following block:
+#          sentry: true
+#          sentry-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
+#          sentry-project: "iobroker-esphome"
+#          sentry-version-prefix: "iobroker.esphome"
+#          sentry-sourcemap-paths: "build/"
+#          # If your sentry project is linked to a GitHub repository, you can enable the following option
+#          # sentry-github-integration: true

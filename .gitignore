@@ -1,27 +1,22 @@
-.DS_Store
-.git
-.idea
-.vscode/*
-!.vscode/settings.json
+# No dot-directories except github/vscode
+.*/
+!.vscode/
+!.github/
+!.devcontainer/
+
 *.code-workspace
 node_modules
 nbproject
-python_modules
 
 # npm package files
 iobroker.*.tgz
 
 Thumbs.db
+.commitinfo
+
+# NYC coverage files
+coverage
 
 # i18n intermediate files
 admin/i18n/flat.txt
 admin/i18n/*/flat.txt
-
-# ioBroker dev-server
-.dev-server/
-
-# python venv
-env/
-
-# Exclude commitinfo file
-.commitinfo

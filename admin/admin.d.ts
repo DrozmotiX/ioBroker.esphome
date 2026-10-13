@@ -14,12 +14,15 @@ declare const adapter: string;
 /**
  * Translates text
  *
- * @param text - The text to translate
+ * @param text
+ * @param arg1
+ * @param arg2
+ * @param arg3
  */
-declare function _(text: string): string;
+declare function _(text: string, arg1?: string, arg2?: string, arg3?: string): string;
 declare const socket: ioBrokerSocket;
 declare function sendTo(
-    instance: null,
+    instance: any,
     command: string,
     message: any,
     callback: (result: SendToResult) => void | Promise<void>,

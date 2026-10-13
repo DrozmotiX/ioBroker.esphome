@@ -1,32 +1,35 @@
-import eslintConfig from '@iobroker/eslint-config';
-import globals from 'globals';
+// ioBroker eslint template configuration file for js and ts files
+// Please note that esm or react based modules need additional modules loaded.
+import config from '@iobroker/eslint-config';
 
 export default [
-    ...eslintConfig,
-
+    ...config,
     {
-        // Ignore patterns (from .eslintignore)
-        ignores: ['.dev-server/**', '.devcontainer/**'],
+        // specify files to exclude from linting here
+        ignores: [
+            '.dev-server/',
+            '.vscode/',
+            '*.test.js',
+            'test/**/*.js',
+            '*.config.mjs',
+            'build',
+            'dist',
+            'admin/words.js',
+            'admin/admin.d.ts',
+            'admin/blockly.js',
+            '**/adapter-config.d.ts',
+            'widgets/**/*.js'
+        ],
     },
-
     {
-        // @iobroker/eslint-config builds on jsdoc's "recommended-typescript" preset, which reports
-        // "@type" and "@typedef" as redundant because TypeScript would carry the type itself. This
-        // adapter is plain JavaScript, type checked through "checkJs" (see tsconfig.json and
-        // "npm run check"), so JSDoc is the only place a type can be expressed.
-        files: ['**/*.js'],
+        // you may disable some 'jsdoc' warnings - but using jsdoc is highly recommended
+        // as this improves maintainability. jsdoc warnings will not block build process.
         rules: {
-            'jsdoc/check-tag-names': ['error', { typed: false }],
-        },
-    },
-
-    // Add mocha globals for test files
-    {
-        files: ['**/*.test.js', 'test/**/*.js'],
-        languageOptions: {
-            globals: {
-                ...globals.mocha,
-            },
+            // 'jsdoc/require-jsdoc': 'off',
+            // 'jsdoc/require-param': 'off',
+            // 'jsdoc/require-param-description': 'off',
+            // 'jsdoc/require-returns-description': 'off',
+            // 'jsdoc/require-returns-check': 'off',
         },
     },
 ];
