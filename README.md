@@ -444,6 +444,7 @@ If you like my work, please consider a personal donation
 ### **WORK IN PROGRESS**
 
 - (@Garfonso) **FIXED**: Brightness, RGB, white and colour temperature reached no light any more. The ColorMode values in supported_color_modes are the bitmasks from api.proto (RGB = 35), but they were compared against a 0..9 index, so every modern ESPHome light was treated as on/off only
+- (@SimonFischer04) **ENHANCED**: Dependency autopy switched to @simonfischer04/autopy (npm) instead of a GitHub build so dev dependencies do not get installed on user systems #495
 
 ### 1.0.0 (2026-09-26) - Public Stable Release
 
