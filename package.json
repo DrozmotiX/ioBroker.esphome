@@ -10,6 +10,7 @@
   "homepage": "https://github.com/DrozmotiX/ioBroker.esphome",
   "license": "MIT",
   "keywords": [
+    "ioBroker",
     "ESPHome",
     "ESP",
     "ESP32"
