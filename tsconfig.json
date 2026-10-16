@@ -19,6 +19,9 @@
         // This is necessary for the automatic typing of the adapter config
         "resolveJsonModule": true,
 
+        // @tsconfig/node22 limits the automatically loaded types to "node", so the test runner types are listed here
+        "types": ["node", "mocha", "chai", "chai-as-promised", "sinon-chai"],
+
         // If you want to disable the stricter type checks (not recommended), uncomment the following line
         // "strict": false,
         // And enable some of those features for more fine-grained control
