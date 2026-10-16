@@ -40,6 +40,8 @@ export default [
             'src/lib/helpers.ts',
             'src/lib/stateAttr.ts',
             'src/lib/yamlFileManager.ts',
+            'src/lib/dashboardApi.test.ts',
+            'src/lib/yamlFileManager.test.ts',
         ],
         rules: {
             '@typescript-eslint/ban-ts-comment': 'off',
