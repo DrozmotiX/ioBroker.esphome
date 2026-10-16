@@ -1,4 +1,11 @@
 # Older changes
+## 0.7.0 (2026-05-17)
+
+- (@SimonFischer04) **FIXED** copilot hallucinations
+- (@SimonFischer04) **NEW** 'Always last available' for pillow version
+- (@copilot) **FIXED**: Invalid jsonConfig warning on adapter installation
+- (DutchmanNL) **FIXED**: ESLint errors by code refactoring
+
 ## 0.7.0-beta.4 (2026-02-21)
 
 - (DutchmanNL) **FIXED**: ESLint errors by code refactoring
