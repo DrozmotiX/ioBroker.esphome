@@ -34,7 +34,7 @@ jobs:
                   node-version: '24.x'
                   # Uncomment the following line if your adapter cannot be installed using 'npm ci'
                   # install-command: 'npm install'
-                  # Runs "npm run check" (main.js, lib/ and the test files) so type errors cannot slip in unnoticed
+                  # Runs "npm run check" (tsc --noEmit over src/ and the test files) so type errors cannot slip in unnoticed
                   type-checking: true
                   lint: true
 
@@ -66,6 +66,8 @@ jobs:
                   os: ${{ matrix.os }}
                   # Uncomment the following line if your adapter cannot be installed using 'npm ci'
                   # install-command: 'npm install'
+                  # Compiles src/ to build/ before the tests run
+                  build: true
 
     # NOTE: Automatic npm releases are configured via npm Trusted Publishing (OIDC)
     # using ioBroker/testing-action-deploy@v1 and the id-token permission below.
@@ -94,6 +96,8 @@ jobs:
                   node-version: '24.x'
                   # Uncomment the following line if your adapter cannot be installed using 'npm ci'
                   # install-command: 'npm install'
+                  # Compiles src/ to build/ before publishing
+                  build: true
                   # npm-token: ${{ secrets.NPM_TOKEN }}  # Commented out for migration to Trusted Publishing
                   github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -111,5 +115,6 @@ jobs:
                   sentry-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
                   sentry-project: 'iobroker-esphome'
                   sentry-version-prefix: 'iobroker.esphome'
+                  sentry-sourcemap-paths: 'build/'
                   # If your sentry project is linked to a GitHub repository, you can enable the following option
                   # sentry-github-integration: true
