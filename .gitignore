@@ -5,8 +5,10 @@
 !.devcontainer/
 
 *.code-workspace
+.DS_Store
 node_modules
 nbproject
+python_modules
 
 # npm package files
 iobroker.*.tgz
@@ -20,3 +22,6 @@ coverage
 # i18n intermediate files
 admin/i18n/flat.txt
 admin/i18n/*/flat.txt
+
+# python venv
+env/
