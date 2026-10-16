@@ -65,7 +65,7 @@ eslint.config.mjs       -- ESLint configuration (flat config)
 .github/                -- GitHub workflows and templates
 .gitignore
 admin/                  -- Admin UI (jsonConfig.json5, translations in i18n/, README images in img/)
-build/                  -- Compiled adapter (output of "npm run build", started by ioBroker)
+build/                  -- Compiled adapter (output of "npm run build", started by ioBroker, not committed)
 io-package.json         -- ioBroker adapter configuration
 src/                    -- TypeScript sources
   main.ts               -- Main adapter code

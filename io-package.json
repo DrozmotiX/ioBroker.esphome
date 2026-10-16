@@ -145,6 +145,7 @@
       "config": "json"
     },
     "tier": 2,
+    "nogit": true,
     "plugins": {
       "sentry": {
         "dsn": "https://52227cfa250b49e99b1f28408273402c@sentry.iobroker.net/122"

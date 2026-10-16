@@ -10,6 +10,9 @@ node_modules
 nbproject
 python_modules
 
+# Compiled adapter, built by "npm run build" (not committed, see common.nogit in io-package.json)
+build/
+
 # npm package files
 iobroker.*.tgz
 
