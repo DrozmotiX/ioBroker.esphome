@@ -33,8 +33,8 @@ class Esphome extends utils.Adapter {
 
         // The adapters config (in the instance object everything under the attribute "native") is accessible via
         // this.config:
-        this.log.debug('config option1: ${this.config.option1}');
-        this.log.debug('config option2: ${this.config.option2}');
+        this.log.debug(`config autodiscovery: ${this.config.autodiscovery}`);
+        this.log.debug(`config reconnectInterval: ${this.config.reconnectInterval}`);
 
         /*
 		For every state in the system there has to be also an object of type state
