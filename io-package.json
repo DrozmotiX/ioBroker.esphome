@@ -1,109 +1,232 @@
 {
-    "common": {
-        "name": "esphome",
-        "version": "0.0.1",
-        "news": {
-            "0.0.1": {
-                "en": "initial release",
-                "de": "Erstveröffentlichung",
-                "ru": "Начальная версия",
-                "pt": "lançamento inicial",
-                "nl": "Eerste uitgave",
-                "fr": "Première version",
-                "it": "Versione iniziale",
-                "es": "Versión inicial",
-                "pl": "Pierwsze wydanie",
-                "uk": "Початкова версія",
-                "zh-cn": "首次出版"
-            }
-        },
-        "titleLang": {
-            "en": "esphome",
-            "de": "esphome",
-            "ru": "эсфом",
-            "pt": "esphome",
-            "nl": "esphome",
-            "fr": "éphome",
-            "it": "esphome",
-            "es": "esfome",
-            "pl": "esfom",
-            "uk": "есфома",
-            "zh-cn": "埃斯波梅"
-        },
-        "desc": {
-            "en": "Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome",
-            "de": "Steuern Sie Ihren ESP8266/ESP32 mit einfachen, aber leistungsstarken Konfigurationsdateien, die von ESPHome erstellt und verwaltet werden",
-            "ru": "Управляйте своим ESP8266/ESP32 с помощью простых, но мощных файлов конфигурации, созданных и управляемых ESPHome.",
-            "pt": "Controle seu ESP8266/ESP32 com arquivos de configuração simples, porém poderosos, criados e gerenciados pela ESPHome",
-            "nl": "Bedien uw ESP8266/ESP32 met eenvoudige maar krachtige configuratiebestanden gemaakt en beheerd door ESPHome",
-            "fr": "Contrôlez votre ESP8266/ESP32 avec des fichiers de configuration simples mais puissants créés et gérés par ESPHome",
-            "it": "Controlla il tuo ESP8266/ESP32 con file di configurazione semplici ma potenti creati e gestiti da ESPHome",
-            "es": "Controle su ESP8266/ESP32 con archivos de configuración simples pero potentes creados y administrados por ESPHome",
-            "pl": "Kontroluj swój ESP8266/ESP32 za pomocą prostych, ale potężnych plików konfiguracyjnych utworzonych i zarządzanych przez ESPHome",
-            "uk": "Керуйте своїм ESP8266/ESP32 за допомогою простих, але потужних конфігураційних файлів, створених і керованих ESPHome",
-            "zh-cn": "使用 ESPHome 创建和管理的简单而强大的配置文件来控制您的 ESP8266/ESP32"
-        },
-        "authors": ["DutchmanNL <rdrozda86@gmail.com>"],
-        "keywords": ["ESPHome", "ESP", "ESP32"],
-        "licenseInformation": {
-            "type": "free",
-            "license": "MIT"
-        },
-        "platform": "Javascript/Node.js",
-        "icon": "esphome.png",
-        "enabled": true,
-        "extIcon": "https://raw.githubusercontent.com/DrozmotiX/ioBroker.esphome/main/admin/esphome.png",
-        "readme": "https://github.com/DrozmotiX/ioBroker.esphome/blob/main/README.md",
-        "loglevel": "info",
-        "tier": 3,
-        "mode": "daemon",
-        "type": "hardware",
-        "compact": true,
-        "connectionType": "local",
-        "dataSource": "push",
-        "adminUI": {
-            "config": "json"
-        },
-        "adminTab": {
-            "link": "%ESPHomeDashboardUrl%"
-        },
-        "dependencies": [
-            {
-                "js-controller": ">=6.0.11"
-            }
-        ],
-        "globalDependencies": [
-            {
-                "admin": ">=7.6.20"
-            }
-        ]
+  "common": {
+    "name": "esphome",
+    "version": "1.0.0",
+    "news": {
+      "1.0.0": {
+        "en": "**FIXED**: A device that drops while its entities are still being announced no longer throws \"Not connected\", the state subscription is left to the reconnect\n**FIXED**: A connection loss logs one \"Connection destroyed\" warning per device instead of one per entity\n**ENHANCED**: Updated @iobroker/testing to 6.2.2 and @iobroker/adapter-core to 3.4.3\n**ENHANCED**: Tests now cover Node.js 22, 24 and 26 and the websocket library ws was updated to 8.21.3",
+        "de": "**BEHOBEN**: Ein Gerät, das abbricht, während seine Entitäten noch angekündigt werden, gibt nicht mehr „Nicht verbunden“ aus, das Statusabonnement bleibt der erneuten Verbindung überlassen\n**BEHOBEN**: Bei einem Verbindungsverlust wird eine Warnung „Verbindung zerstört“ pro Gerät protokolliert statt einer pro Entität\n**VERBESSERT**: @iobroker/testing auf 6.2.2 und @iobroker/adapter-core auf 3.4.3 aktualisiert\n**VERBESSERT**: Tests decken jetzt Node.js 22, 24 und 26 ab und die Websocket-Bibliothek ws wurde auf 8.21.3 aktualisiert",
+        "ru": "**ИСПРАВЛЕНО**: устройство, которое отключается, пока его объекты все еще объявляются, больше не выдает сообщение «Не подключено», государственная подписка остается на повторное подключение.\n**ИСПРАВЛЕНО**: при потере соединения регистрируется одно предупреждение «Соединение разрушено» для каждого устройства вместо одного для каждого объекта.\n**УЛУЧШЕНО**: @iobroker/testing обновлен до версии 6.2.2 и @iobroker/adapter-core до версии 3.4.3.\n**УЛУЧШЕНО**: тесты теперь охватывают Node.js 22, 24 и 26, а библиотека веб-сокетов ws обновлена до версии 8.21.3.",
+        "pt": "**CORRIGIDO**: Um dispositivo que cai enquanto suas entidades ainda estão sendo anunciadas não gera mais \"Não conectado\", a assinatura do estado fica para a reconexão\n**CORRIGIDO**: uma perda de conexão registra um aviso de \"Conexão destruída\" por dispositivo em vez de um por entidade\n**MELHORADO**: @iobroker/testing atualizado para 6.2.2 e @iobroker/adapter-core para 3.4.3\n**MELHORADO**: Os testes agora cobrem o Node.js 22, 24 e 26 e a biblioteca websocket ws foi atualizada para 8.21.3",
+        "nl": "**OPGELOST**: een apparaat dat uitvalt terwijl de entiteiten nog worden aangekondigd, geeft niet langer de melding \"Niet verbonden\", het statusabonnement wordt overgelaten aan het opnieuw verbinden\n**OPGELOST**: Bij verbindingsverlies wordt één waarschuwing 'Verbinding vernietigd' per apparaat geregistreerd in plaats van één per entiteit\n**VERBETERD**: @iobroker/testing bijgewerkt naar 6.2.2 en @iobroker/adapter-core naar 3.4.3\n**VERBETERD**: tests omvatten nu Node.js 22, 24 en 26 en de websocketbibliotheek ws is bijgewerkt naar 8.21.3",
+        "fr": "**CORRIGÉ** : Un appareil qui tombe alors que ses entités sont encore annoncées ne lance plus \"Non connecté\", l'abonnement de l'état est laissé à la reconnexion\n**CORRIGÉ** : Une perte de connexion enregistre un avertissement « Connexion détruite » par appareil au lieu d'un par entité.\n**AMÉLIORÉ** : mise à jour de @iobroker/testing vers 6.2.2 et de @iobroker/adapter-core vers 3.4.3\n**AMÉLIORÉ** : les tests couvrent désormais Node.js 22, 24 et 26 et la bibliothèque websocket ws a été mise à jour vers 8.21.3",
+        "it": "**RISOLTO**: Un dispositivo che cade mentre le sue entità vengono ancora annunciate non lancia più \"Non connesso\", l'abbonamento statale viene lasciato alla riconnessione\n**RISOLTO**: una perdita di connessione registra un avviso \"Connessione distrutta\" per dispositivo anziché uno per entità\n**MIGLIORATO**: aggiornato @iobroker/testing alla 6.2.2 e @iobroker/adapter-core alla 3.4.3\n**MIGLIORATO**: i test ora coprono Node.js 22, 24 e 26 e la libreria websocket ws è stata aggiornata alla versione 8.21.3",
+        "es": "**CORREGIDO**: Un dispositivo que se cae mientras sus entidades aún se están anunciando ya no arroja \"No conectado\", la suscripción estatal se deja para la reconexión\n**SOLUCIONADO**: Una pérdida de conexión registra una advertencia de \"Conexión destruida\" por dispositivo en lugar de una por entidad\n**MEJORADO**: @iobroker/testing actualizado a 6.2.2 y @iobroker/adapter-core a 3.4.3\n**MEJORADO**: Las pruebas ahora cubren Node.js 22, 24 y 26 y la biblioteca websocket ws se actualizó a 8.21.3",
+        "pl": "**NAPRAWIONO**: Urządzenie, które zostanie utracone, gdy nadal ogłaszane są jego elementy, nie wyświetla już komunikatu „Brak połączenia”, subskrypcja stanowa pozostaje do ponownego połączenia\n**NAPRAWIONO**: W przypadku utraty połączenia rejestrowane jest jedno ostrzeżenie „Połączenie zniszczone” na każde urządzenie zamiast jednego na jednostkę\n**ULEPSZONE**: Zaktualizowano @iobroker/testing do wersji 6.2.2 i @iobroker/adapter-core do wersji 3.4.3\n**ULEPSZONE**: Testy obejmują teraz Node.js 22, 24 i 26, a biblioteka websocket ws została zaktualizowana do wersji 8.21.3",
+        "uk": "**ВИПРАВЛЕНО**: пристрій, який відключається, поки його об’єкти все ще оголошуються, більше не видає повідомлення «Не підключено», підписка на стан залишається для повторного підключення\n**ВИПРАВЛЕНО**: втрата з’єднання реєструє одне попередження «З’єднання зруйновано» на пристрій замість одного на об’єкт.\n**ПОКРАЩЕНО**: оновлено @iobroker/testing до 6.2.2 і @iobroker/adapter-core до 3.4.3\n**ПОКРАЩЕНО**: тепер тести охоплюють Node.js 22, 24 і 26, а бібліотеку websocket ws оновлено до 8.21.3",
+        "zh-cn": "**已修复**：在其实体仍在宣布时掉落的设备不再抛出“未连接”，状态订阅将留给重新连接\n**已修复**：连接丢失会为每个设备记录一个“连接已损坏”警告，而不是每个实体一个\n**增强**：将 @iobroker/testing 更新至 6.2.2，将 @iobroker/adapter-core 更新至 3.4.3\n**增强**：测试现在涵盖 Node.js 22、24 和 26，并且 websocket 库 ws 已更新至 8.21.3"
+      },
+      "1.0.0-beta.2": {
+        "en": "**FIXED**: ESPHome Dashboard 2026.6.5 and Pillow 12.2.0 are used instead of the latest available release, the 2026.7.x releases currently fail to install (#463)\n**FIXED**: Installations still set to \"Always last available\" are migrated to those versions once, so an update no longer leaves behind a dashboard that cannot be installed (#463)\n**NEW**: Selecting \"Always last available\" again is respected, the migration runs only once and such a setup only gets a warning at startup (#463)\n**FIXED**: Falling back to the latest ESPHome or Pillow release no longer aborts the dashboard setup, the requirement was passed to pip without a version specifier\n**FIXED**: Added the missing \"pingInterval\" and \"pingAttempts\" defaults to io-package.json, they were only defined in the admin configuration\n**ENHANCED**: \"npm run check\" is free of type errors, so type regressions are visible again",
+        "de": "**BEHOBEN**: ESPHome Dashboard 2026.6.5 und Pillow 12.2.0 werden anstelle der neuesten verfügbaren Version verwendet, die 2026.7.x-Versionen können derzeit nicht installiert werden (#463)\n**BEHOBEN**: Installationen, die noch auf „Immer zuletzt verfügbar“ eingestellt sind, werden einmal auf diese Versionen migriert, sodass ein Update kein Dashboard mehr hinterlässt, das nicht installiert werden kann (#463)\n**NEU**: Die erneute Auswahl von „Immer zuletzt verfügbar“ wird berücksichtigt, die Migration wird nur einmal ausgeführt und ein solches Setup erhält nur beim Start eine Warnung (#463)\n**BEHOBEN**: Beim Zurückgreifen auf die neueste ESPHome- oder Pillow-Version wird die Dashboard-Einrichtung nicht mehr abgebrochen. Die Anforderung wurde ohne Versionsspezifizierer an pip übergeben\n**BEHOBEN**: Die fehlenden Standardeinstellungen „pingInterval“ und „pingAttempts“ wurden zu io-package.json hinzugefügt. Sie wurden nur in der Administratorkonfiguration definiert\n**VERBESSERT**: „npm run check“ ist frei von Typfehlern, sodass Typregressionen wieder sichtbar sind",
+        "ru": "**ИСПРАВЛЕНО**: ESPHome Dashboard 2026.6.5 и Pillow 12.2.0 используются вместо последней доступной версии, версии 2026.7.x в настоящее время не устанавливаются (#463).\n**ИСПРАВЛЕНО**: Установки, для которых по-прежнему установлен режим «Всегда последний доступный», переносятся в эти версии один раз, поэтому обновление больше не оставляет после себя панель управления, которую невозможно установить (#463).\n**НОВОЕ**: повторный выбор «Всегда последний доступен» учитывается, миграция выполняется только один раз, и такая настройка получает предупреждение только при запуске (# 463).\n**ИСПРАВЛЕНО**: возврат к последней версии ESPHome или Pillow больше не прерывает настройку информационной панели, требование было передано в pip без указания версии.\n**ИСПРАВЛЕНО**: в io-package.json добавлены отсутствующие значения по умолчанию «pingInterval» и «pingAttempts», они были определены только в конфигурации администратора.\n**УЛУЧШЕНО**: «проверка запуска npm» не содержит ошибок типа, поэтому регрессия типов снова видна.",
+        "pt": "**CORRIGIDO**: ESPHome Dashboard 2026.6.5 e Pillow 12.2.0 são usados em vez da versão mais recente disponível, as versões 2026.7.x atualmente não conseguem ser instaladas (#463)\n**CORRIGIDO**: As instalações ainda definidas como \"Sempre últimas disponíveis\" são migradas para essas versões uma vez, portanto, uma atualização não deixa mais um painel que não pode ser instalado (#463)\n**NOVO**: Selecionar \"Sempre o último disponível\" novamente é respeitado, a migração é executada apenas uma vez e tal configuração só recebe um aviso na inicialização (#463)\n**CORRIGIDO**: Voltar para a versão mais recente do ESPHome ou Pillow não cancela mais a configuração do painel, o requisito foi passado para pip sem um especificador de versão\n**CORRIGIDO**: Adicionados os padrões \"pingInterval\" e \"pingAttempts\" ausentes para io-package.json, eles foram definidos apenas na configuração do administrador\n**MELHORADO**: \"npm run check\" está livre de erros de tipo, então as regressões de tipo são visíveis novamente",
+        "nl": "**OPGELOST**: ESPHome Dashboard 2026.6.5 en Pillow 12.2.0 worden gebruikt in plaats van de nieuwste beschikbare release, de 2026.7.x-releases kunnen momenteel niet worden geïnstalleerd (#463)\n**OPGELOST**: Installaties die nog steeds zijn ingesteld op 'Altijd laatst beschikbaar' worden één keer naar die versies gemigreerd, zodat een update niet langer een dashboard achterlaat dat niet kan worden geïnstalleerd (#463)\n**NIEUW**: Opnieuw \"Altijd laatst beschikbaar\" selecteren wordt gerespecteerd, de migratie wordt slechts één keer uitgevoerd en zo'n setup krijgt alleen een waarschuwing bij het opstarten (#463)\n**OPGELOST**: Terugvallen naar de nieuwste ESPHome- of Pillow-release breekt niet langer de dashboardconfiguratie af, de vereiste werd doorgegeven aan pip zonder een versiespecificatie\n**OPGELOST**: De ontbrekende standaardwaarden \"pingInterval\" en \"pingAttempts\" zijn toegevoegd aan io-package.json, deze werden alleen gedefinieerd in de beheerdersconfiguratie\n**VERBETERD**: \"npm run check\" bevat geen typefouten, dus typeregressies zijn weer zichtbaar",
+        "fr": "**CORRIGÉ** : ESPHome Dashboard 2026.6.5 et Pillow 12.2.0 sont utilisés à la place de la dernière version disponible, les versions 2026.7.x ne parviennent actuellement pas à s'installer (#463)\n**CORRIGÉ** : Les installations toujours définies sur \"Toujours dernière disponible\" sont migrées vers ces versions une fois, donc une mise à jour ne laisse plus derrière elle un tableau de bord qui ne peut pas être installé (#463).\n**NOUVEAU** : La sélection à nouveau de \"Toujours dernier disponible\" est respectée, la migration ne s'exécute qu'une seule fois et une telle configuration ne reçoit qu'un avertissement au démarrage (#463)\n** CORRIGÉ ** : le retour à la dernière version d'ESPHome ou Pillow n'interrompt plus la configuration du tableau de bord, l'exigence a été transmise à pip sans spécificateur de version.\n**FIXED** : Ajout des valeurs par défaut manquantes \"pingInterval\" et \"pingAttempts\" à io-package.json, elles n'étaient définies que dans la configuration de l'administrateur\n**AMÉLIORÉ** : \"npm run check\" est exempt d'erreurs de type, donc les régressions de type sont à nouveau visibles",
+        "it": "**RISOLTO**: ESPHome Dashboard 2026.6.5 e Pillow 12.2.0 vengono utilizzati al posto dell'ultima versione disponibile, le versioni 2026.7.x attualmente non vengono installate (#463)\n**RISOLTO**: le installazioni ancora impostate su \"Sempre ultime disponibili\" vengono migrate a quelle versioni una volta, quindi un aggiornamento non lascia più un dashboard che non può essere installato (#463)\n**NOVITÀ**: Selezionando nuovamente \"Sempre ultimo disponibile\" viene rispettata, la migrazione viene eseguita solo una volta e tale configurazione riceve un avviso solo all'avvio (#463)\n**RISOLTO**: il ritorno all'ultima versione di ESPHome o Pillow non interrompe più la configurazione del dashboard, il requisito veniva passato a pip senza uno specificatore di versione\n**RISOLTO**: aggiunti i valori predefiniti mancanti \"pingInterval\" e \"pingAttempts\" a io-package.json, erano definiti solo nella configurazione dell'amministratore\n**MIGLIORATO**: \"npm run check\" è privo di errori di tipo, quindi le regressioni di tipo sono nuovamente visibili",
+        "es": "**CORREGIDO**: ESPHome Dashboard 2026.6.5 y Pillow 12.2.0 se utilizan en lugar de la última versión disponible; las versiones 2026.7.x actualmente no se instalan (#463)\n**CORREGIDO**: Las instalaciones que aún están configuradas como \"Siempre disponibles por última vez\" se migran a esas versiones una vez, por lo que una actualización ya no deja un panel que no se puede instalar (#463)\n**NUEVO**: Se respeta la selección \"Siempre último disponible\", la migración se ejecuta solo una vez y dicha configuración solo recibe una advertencia al inicio (#463)\n**CORREGIDO**: Volver a la última versión de ESPHome o Pillow ya no cancela la configuración del panel, el requisito se pasó a pip sin un especificador de versión\n**CORREGIDO**: Se agregaron los valores predeterminados faltantes de \"pingInterval\" y \"pingAttempts\" a io-package.json, solo se definieron en la configuración del administrador.\n**MEJORADO**: \"npm run check\" no tiene errores de tipo, por lo que las regresiones de tipo son visibles nuevamente",
+        "pl": "**NAPRAWIONO**: ESPHome Dashboard 2026.6.5 i Pillow 12.2.0 są używane zamiast najnowszej dostępnej wersji, obecnie nie można zainstalować wersji 2026.7.x (#463)\n**NAPRAWIONO**: Instalacje nadal ustawione na „Zawsze ostatnio dostępne” są migrowane do tych wersji tylko raz, więc aktualizacja nie pozostawia już pulpitu nawigacyjnego, którego nie można zainstalować (#463)\n**NOWOŚĆ**: Ponowne wybranie opcji „Zawsze ostatnia dostępna” jest przestrzegane, migracja odbywa się tylko raz, a taka konfiguracja wyświetla ostrzeżenie tylko przy uruchomieniu (#463)\n**NAPRAWIONO**: Powrót do najnowszej wersji ESPHome lub Pillow nie powoduje już przerwania konfiguracji pulpitu nawigacyjnego, wymaganie zostało przekazane do pip bez specyfikatora wersji\n**NAPRAWIONO**: Dodano brakujące wartości domyślne „pingInterval” i „pingAttempts” do io-package.json, zostały one zdefiniowane tylko w konfiguracji administratora\n**ULEPSZONE**: „sprawdzenie przebiegu npm” jest wolne od błędów typów, więc regresje typów są ponownie widoczne",
+        "uk": "**ВИПРАВЛЕНО**: ESPHome Dashboard 2026.6.5 і Pillow 12.2.0 використовуються замість останньої доступної версії, версії 2026.7.x наразі не вдається встановити (#463)\n**ВИПРАВЛЕНО**: інсталяції, які все ще мають значення «Завжди останні доступні», переносяться до цих версій один раз, тому оновлення більше не залишає інформаційну панель, яку неможливо встановити (#463)\n**НОВЕ**: вибір «Завжди останній доступний» знову виконується, міграція виконується лише один раз, і таке налаштування отримує лише попередження під час запуску (#463)\n**ВИПРАВЛЕНО**: повернення до останньої версії ESPHome або Pillow більше не припиняє налаштування інформаційної панелі, вимогу було передано pip без специфікатора версії\n**ВИПРАВЛЕНО**: до io-package.json додано відсутні параметри «pingInterval» і «pingAttempts» за замовчуванням, їх було визначено лише в конфігурації адміністратора\n**ПОКРАЩЕНО**: \"npm run check\" не містить помилок типу, тому регресії типу знову видно",
+        "zh-cn": "**已修复**：使用 ESPHome Dashboard 2026.6.5 和 Pillow 12.2.0，而不是最新的可用版本，2026.7.x 版本当前无法安装 (#463)\n**已修复**：仍设置为“始终最后可用”的安装会迁移到这些版本一次，因此更新不再留下无法安装的仪表板 (#463)\n**新**：再次选择“始终最后可用”受到尊重，迁移仅运行一次，并且此类设置仅在启动时收到警告（#463）\n**已修复**：回退到最新的 ESPHome 或 Pillow 版本不再中止仪表板设置，要求已在没有版本说明符的情况下传递给 pip\n**已修复**：将缺少的“pingInterval”和“pingAttempts”默认值添加到 io-package.json，它们仅在管理配置中定义\n**增强**：“npm run check”没有类型错误，因此类型回归再次可见"
+      },
+      "1.0.0-beta.1": {
+        "en": "**FIXED**: Restored a green CI matrix, the dashboard integration tests no longer hang the test runner\n**FIXED**: Corrected the changelog entry in io-package.json so it matches the published version\n**FIXED**: Admin configuration is fully translated again, 29 texts were only available in English\n**FIXED**: YAML upload field renders as a proper multi-line text area again\n**ENHANCED**: Timers are now managed by the adapter, so they are always cleaned up on unload\n**ENHANCED**: Pre-releases are published under the npm \"beta\" tag instead of \"latest\"\n**ENHANCED**: Removed the obsolete admin/words.js and added prettier formatting scripts\n**ENHANCED**: Updated @iobroker/testing to 5.3.0 and the GitHub actions used in CI",
+        "de": "**BEHOBEN**: Eine grüne CI-Matrix wurde wiederhergestellt. Die Dashboard-Integrationstests hängen den Test Runner nicht mehr auf\n**BEHOBEN**: Der Changelog-Eintrag in io-package.json wurde korrigiert, sodass er mit der veröffentlichten Version übereinstimmt\n**BEHOBEN**: Admin-Konfiguration ist wieder vollständig übersetzt, 29 Texte waren nur auf Englisch verfügbar\n**BEHOBEN**: Das YAML-Upload-Feld wird wieder als richtiger mehrzeiliger Textbereich dargestellt\n**VERBESSERT**: Timer werden jetzt vom Adapter verwaltet, sodass sie beim Entladen immer bereinigt werden\n**VERBESSERT**: Vorabversionen werden unter dem npm-Tag „beta“ anstelle von „latest“ veröffentlicht.\n**VERBESSERT**: Die veraltete Datei admin/words.js wurde entfernt und hübschere Formatierungsskripte hinzugefügt\n**VERBESSERT**: @iobroker/testing auf 5.3.0 und die in CI verwendeten GitHub-Aktionen aktualisiert",
+        "ru": "**ИСПРАВЛЕНО**: восстановлена зеленая матрица CI, интеграционные тесты информационной панели больше не зависают при выполнении тестов.\n**ИСПРАВЛЕНО**: исправлена запись журнала изменений в io-package.json, чтобы она соответствовала опубликованной версии.\n**ИСПРАВЛЕНО**: Конфигурация администратора снова полностью переведена, 29 текстов были доступны только на английском языке.\n**ИСПРАВЛЕНО**: поле загрузки YAML снова отображается как правильная многострочная текстовая область.\n**УЛУЧШЕНО**: таймеры теперь управляются адаптером, поэтому они всегда очищаются при выгрузке.\n**УЛУЧШЕНО**: предварительные версии публикуются под тегом npm «beta» вместо «последние».\n**УЛУЧШЕНО**: удален устаревший файл admin/words.js и добавлены более красивые сценарии форматирования.\n**УЛУЧШЕНО**: @iobroker/testing обновлен до версии 5.3.0, а также действия GitHub, используемые в CI.",
+        "pt": "**CORRIGIDO**: Restaurada uma matriz de CI verde, os testes de integração do painel não travam mais o executor de teste\n**CORRIGIDO**: corrigida a entrada do changelog em io-package.json para que corresponda à versão publicada\n**CORRIGIDO**: a configuração do administrador foi totalmente traduzida novamente, 29 textos estavam disponíveis apenas em inglês\n**CORRIGIDO**: o campo de upload YAML é renderizado novamente como uma área de texto multilinha adequada\n**MELHORADO**: Os temporizadores agora são gerenciados pelo adaptador, portanto, são sempre limpos ao descarregar\n**MELHORADO**: os pré-lançamentos são publicados sob a tag npm \"beta\" em vez de \"latest\"\n**MELHORADO**: Removido o obsoleto admin/words.js e adicionados scripts de formatação mais bonitos\n**MELHORADO**: @iobroker/testing atualizado para 5.3.0 e as ações do GitHub usadas no CI",
+        "nl": "**OPGELOST**: Een groene CI-matrix hersteld, de dashboardintegratietests laten de testrunner niet langer hangen\n**OPGELOST**: Het changelog-item in io-package.json is gecorrigeerd, zodat het overeenkomt met de gepubliceerde versie\n**OPGELOST**: De beheerdersconfiguratie is opnieuw volledig vertaald, 29 teksten waren alleen beschikbaar in het Engels\n**OPGELOST**: YAML-uploadveld wordt weer weergegeven als een correct tekstgebied met meerdere regels\n**VERBETERD**: Timers worden nu beheerd door de adapter, zodat ze altijd worden opgeschoond bij het uitladen\n**VERBETERD**: Pre-releases worden gepubliceerd onder de npm \"beta\"-tag in plaats van \"nieuwste\"\n**VERBETERD**: Verouderde admin/words.js verwijderd en mooiere opmaakscripts toegevoegd\n**VERBETERD**: @iobroker/testing bijgewerkt naar 5.3.0 en de GitHub-acties die in CI worden gebruikt",
+        "fr": "**CORRIGÉ** : Restauration d'une matrice CI verte, les tests d'intégration du tableau de bord ne bloquent plus le lanceur de tests\n**FIXED** : correction de l'entrée du journal des modifications dans io-package.json afin qu'elle corresponde à la version publiée\n**CORRIGÉ** : la configuration de l'administrateur est à nouveau entièrement traduite, 29 textes n'étaient disponibles qu'en anglais\n** CORRIGÉ ** : le champ de téléchargement YAML s'affiche à nouveau sous la forme d'une zone de texte multiligne appropriée.\n**AMÉLIORÉ** : Les minuteries sont désormais gérées par l'adaptateur, elles sont donc toujours nettoyées lors du déchargement\n**AMÉLIORÉ** : les versions préliminaires sont publiées sous la balise npm \"beta\" au lieu de \"latest\"\n**AMÉLIORÉ** : suppression du fichier admin/words.js obsolète et ajout de scripts de formatage plus jolis\n**AMÉLIORÉ** : mise à jour de @iobroker/testing vers 5.3.0 et des actions GitHub utilisées dans CI",
+        "it": "**RISOLTO**: ripristinata una matrice CI verde, i test di integrazione del dashboard non bloccano più il test runner\n**RISOLTO**: corretta la voce del registro delle modifiche in io-package.json in modo che corrisponda alla versione pubblicata\n**RISOLTO**: la configurazione dell'amministratore è stata nuovamente tradotta completamente, 29 testi erano disponibili solo in inglese\n**RISOLTO**: il campo di caricamento YAML viene nuovamente visualizzato come un'area di testo multilinea corretta\n**MIGLIORATO**: i timer sono ora gestiti dall'adattatore, quindi vengono sempre ripuliti durante lo scaricamento\n**OTTIMIZZATO**: le pre-release vengono pubblicate con il tag npm \"beta\" anziché \"latest\"\n**MIGLIORATO**: rimosso l'obsoleto admin/words.js e aggiunti script di formattazione più carini\n**MIGLIORATO**: aggiornato @iobroker/testing alla versione 5.3.0 e le azioni GitHub utilizzate in CI",
+        "es": "**CORREGIDO**: Se restauró una matriz de CI verde, las pruebas de integración del panel ya no bloquean el ejecutor de pruebas\n**CORREGIDO**: Se corrigió la entrada del registro de cambios en io-package.json para que coincida con la versión publicada.\n**CORREGIDO**: La configuración de administrador está completamente traducida nuevamente, 29 textos solo estaban disponibles en inglés\n**CORREGIDO**: el campo de carga YAML se muestra nuevamente como un área de texto de varias líneas adecuada\n**MEJORADO**: Los temporizadores ahora son administrados por el adaptador, por lo que siempre se limpian durante la descarga.\n**MEJORADO**: Las versiones preliminares se publican con la etiqueta \"beta\" de npm en lugar de \"último\".\n**MEJORADO**: Se eliminó el archivo admin/words.js obsoleto y se agregaron secuencias de comandos de formato más bonitas.\n**MEJORADO**: @iobroker/testing actualizado a 5.3.0 y las acciones de GitHub utilizadas en CI",
+        "pl": "**NAPRAWIONO**: Przywrócono zieloną matrycę CI, testy integracji pulpitu nawigacyjnego nie zawieszają już uruchamiającego testu\n**NAPRAWIONO**: Poprawiono wpis dziennika zmian w io-package.json, aby pasował do opublikowanej wersji\n**NAPRAWIONO**: Konfiguracja administratora została ponownie w pełni przetłumaczona, 29 tekstów było dostępnych tylko w języku angielskim\n**NAPRAWIONO**: Pole przesyłania YAML ponownie renderuje się jako prawidłowy wieloliniowy obszar tekstowy\n**ULEPSZONE**: Timery są teraz zarządzane przez adapter, więc są zawsze czyszczone po rozładowaniu\n**ULEPSZONE**: Wersje wstępne są publikowane pod tagiem npm „beta” zamiast „najnowsze”\n**ULEPSZONE**: Usunięto przestarzały plik admin/words.js i dodano ładniejsze skrypty formatujące\n**ULEPSZONE**: Zaktualizowano @iobroker/testing do wersji 5.3.0 i akcje GitHub używane w CI",
+        "uk": "**ВИПРАВЛЕНО**: відновлено зелену матрицю CI, тести інтеграції інформаційної панелі більше не зависають у виконанні тестів\n**ВИПРАВЛЕНО**: виправлено запис журналу змін у io-package.json, щоб він відповідав опублікованій версії\n**ВИПРАВЛЕНО**: конфігурацію адміністратора знову повністю перекладено, 29 текстів були доступні лише англійською мовою\n**ВИПРАВЛЕНО**: поле завантаження YAML знову відображається як правильна багаторядкова текстова область\n**ПОКРАЩЕНО**: тепер таймери керуються адаптером, тому вони завжди очищаються під час вивантаження\n**ПОКРАЩЕНО**: попередні випуски публікуються під тегом npm «beta» замість «latest»\n**ПОКРАЩЕНО**: видалено застарілий admin/words.js і додано кращі сценарії форматування\n**ПОКРАЩЕНО**: оновлено @iobroker/testing до 5.3.0 і дії GitHub, які використовуються в CI",
+        "zh-cn": "**已修复**：恢复了绿色 CI 矩阵，仪表板集成测试不再挂起测试运行程序\n**已修复**：更正了 io-package.json 中的更改日志条目，使其与已发布的版本匹配\n**已修复**：管理配置再次完全翻译，29 条文本仅提供英文版本\n**已修复**：YAML 上传字段再次呈现为正确的多行文本区域\n**增强**：计时器现在由适配器管理，因此它们始终在卸载时被清理\n**增强**：预发行版在 npm“beta”标签下发布，而不是“latest”\n**增强**：删除了过时的 admin/words.js 并添加了更漂亮的格式化脚本\n**增强**：将 @iobroker/testing 更新到 5.3.0 以及 CI 中使用的 GitHub 操作"
+      },
+      "1.0.0-beta.0": {
+        "en": "**NEW**: First stable ioBroker.esphome release (v1.0.0)\n**NEW**: Brings ESPHome devices into ioBroker with live state updates and direct control\n**NEW**: Supports lights, switches, sensors, fans, covers, locks, text entities and more\n**ENHANCED**: Includes optional ESPHome Dashboard integration plus built-in helpers for discovery and YAML-based device management\n**FIXED**: Improved disconnect handling and diagnostics so reconnects recover more cleanly when device connections are destroyed",
+        "de": "**NEU**: Erste stabile ioBroker.esphome-Version (v1.0.0)\n**NEU**: Bringt ESPHome-Geräte mit Live-Statusaktualisierungen und direkter Steuerung in ioBroker\n**NEU**: Unterstützt Lichter, Schalter, Sensoren, Lüfter, Abdeckungen, Schlösser, Textelemente und mehr\n**VERBESSERT**: Beinhaltet die optionale ESPHome-Dashboard-Integration sowie integrierte Helfer für die Erkennung und YAML-basierte Geräteverwaltung\n**BEHOBEN**: Die Handhabung und Diagnose von Verbindungsabbrüchen wurde verbessert, damit die Wiederherstellung der Verbindungen sauberer verläuft, wenn Geräteverbindungen zerstört werden",
+        "ru": "**НОВИНКА**: первая стабильная версия ioBroker.esphome (v1.0.0).\n**НОВИНКА**: устройства ESPHome добавлены в ioBroker с обновлением состояния в реальном времени и прямым контролем.\n**НОВИНКА**: поддерживает освещение, переключатели, датчики, вентиляторы, крышки, замки, текстовые объекты и многое другое.\n**УЛУЧШЕНО**: включает дополнительную интеграцию с панелью управления ESPHome, а также встроенные помощники для обнаружения и управления устройствами на основе YAML.\n**ИСПРАВЛЕНО**: улучшена обработка и диагностика отключения, поэтому повторное подключение восстанавливается более четко при разрыве соединений устройства.",
+        "pt": "**NOVO**: Primeira versão estável do ioBroker.esphome (v1.0.0)\n**NOVO**: traz dispositivos ESPHome para o ioBroker com atualizações de estado ao vivo e controle direto\n**NOVO**: Suporta luzes, interruptores, sensores, ventiladores, tampas, fechaduras, entidades de texto e muito mais\n**MELHORADO**: Inclui integração opcional com o ESPHome Dashboard, além de ajudantes integrados para descoberta e gerenciamento de dispositivos baseados em YAML\n**CORRIGIDO**: Tratamento e diagnóstico de desconexão aprimorados para que as reconexões se recuperem de maneira mais limpa quando as conexões do dispositivo forem destruídas",
+        "nl": "**NIEUW**: Eerste stabiele ioBroker.esphome-release (v1.0.0)\n**NIEUW**: Brengt ESPHome-apparaten naar ioBroker met live statusupdates en directe controle\n**NIEUW**: Ondersteunt lampen, schakelaars, sensoren, ventilatoren, afdekkingen, sloten, tekstentiteiten en meer\n**VERBETERD**: Inclusief optionele ESPHome Dashboard-integratie plus ingebouwde helpers voor detectie en op YAML gebaseerd apparaatbeheer\n**OPGELOST**: Verbeterde afhandeling en diagnostiek bij het verbreken van verbindingen, zodat het opnieuw verbinden beter verloopt wanneer apparaatverbindingen worden verbroken",
+        "fr": "**NOUVEAU** : Première version stable de ioBroker.esphome (v1.0.0)\n**NOUVEAU** : intègre les appareils ESPHome dans ioBroker avec des mises à jour d'état en direct et un contrôle direct\n**NOUVEAU** : prend en charge les lumières, les interrupteurs, les capteurs, les ventilateurs, les couvercles, les serrures, les entités de texte et bien plus encore.\n**AMÉLIORÉ** : inclut l'intégration facultative du tableau de bord ESPHome ainsi que des aides intégrées pour la découverte et la gestion des appareils basées sur YAML.\n**CORRIGÉ** : gestion des déconnexions et diagnostics améliorés afin que les reconnexions se rétablissent plus proprement lorsque les connexions des appareils sont détruites.",
+        "it": "**NOVITÀ**: Prima versione stabile di ioBroker.esphome (v1.0.0)\n**NOVITÀ**: porta i dispositivi ESPHome in ioBroker con aggiornamenti sullo stato in tempo reale e controllo diretto\n**NOVITÀ**: supporta luci, interruttori, sensori, ventole, coperture, serrature, entità di testo e altro ancora\n**MIGLIORATO**: include l'integrazione opzionale ESPHome Dashboard più aiutanti integrati per il rilevamento e la gestione dei dispositivi basata su YAML\n**RISOLTO**: gestione e diagnostica migliorate delle disconnessioni in modo che le riconnessioni vengano ripristinate in modo più pulito quando le connessioni del dispositivo vengono distrutte",
+        "es": "**NUEVO**: Primera versión estable de ioBroker.esphome (v1.0.0)\n**NUEVO**: Lleva los dispositivos ESPHome a ioBroker con actualizaciones de estado en vivo y control directo\n**NUEVO**: Admite luces, interruptores, sensores, ventiladores, cubiertas, cerraduras, entidades de texto y más\n**MEJORADO**: Incluye integración opcional del panel ESPHome más ayudas integradas para descubrimiento y administración de dispositivos basados en YAML\n**CORREGIDO**: Manejo y diagnóstico de desconexión mejorados para que las reconexiones se recuperen de manera más limpia cuando se destruyen las conexiones del dispositivo",
+        "pl": "**NOWE**: Pierwsze stabilne wydanie ioBroker.esphome (v1.0.0)\n**NOWE**: Udostępnia urządzenia ESPHome w ioBrokerze z aktualizacjami stanu na żywo i bezpośrednim sterowaniem\n**NOWE**: Obsługuje światła, przełączniki, czujniki, wentylatory, rolety, zamki, encje tekstowe i więcej\n**ULEPSZONE**: Zawiera opcjonalną integrację z ESPHome Dashboard oraz wbudowane narzędzia do wykrywania urządzeń i zarządzania nimi przez pliki YAML\n**NAPRAWIONE**: Ulepszona obsługa rozłączeń i diagnostyka, dzięki czemu ponowne połączenie przebiega poprawnie po zerwaniu połączenia z urządzeniem",
+        "uk": "**НОВИНКА**: перший стабільний випуск ioBroker.esphome (v1.0.0)\n**НОВИНКА**: переносить пристрої ESPHome в ioBroker з оновленням стану в реальному часі та прямим керуванням\n**НОВИНКА**: підтримує освітлення, перемикачі, датчики, вентилятори, кришки, замки, текстові елементи тощо\n**ПОКРАЩЕНО**: включає додаткову інтеграцію інформаційної панелі ESPHome, а також вбудовані помічники для виявлення та керування пристроями на основі YAML\n**ВИПРАВЛЕНО**: покращено обробку від’єднань і діагностику, тому повторне підключення відновлюється чистіше, коли з’єднання пристрою зруйновано",
+        "zh-cn": "**新**：第一个稳定的 ioBroker.esphome 版本 (v1.0.0)\n**新**：将 ESPHome 设备引入 ioBroker，并提供实时状态更新和直接控制\n**新**：支持灯、开关、传感器、风扇、盖子、锁、文本实体等\n**增强**：包括可选的 ESPHome 仪表板集成以及用于发现和基于 YAML 的设备管理的内置帮助程序\n**已修复**：改进了断开连接处理和诊断，因此当设备连接被破坏时，重新连接可以更干净地恢复"
+      },
+      "0.7.0": {
+        "en": "**FIXED** copilot hallucinations\n**NEW** 'Always last available' for pillow version\n**FIXED**: Invalid jsonConfig warning on adapter installation\n**FIXED**: ESLint errors by code refactoring",
+        "de": "**FIXED** Copilot Halluzinationen\n**NEW** 'Always last available' für Kissenversion\n**FIXED**: Invalid jsonConfig Warnung auf Adapterinstallation\n**FIXED**: ESLint-Fehler durch Code-Refactoring",
+        "ru": "** Исправленные** галлюцинации копилота\n** «Всегда последний доступный» для подушки\n** Фиксированный**: Недействительное предупреждение jsonConfig об установке адаптера\n**FIXED**: ошибки ESLint при рефакторинге кода",
+        "pt": "**FIXED** alucinações copiloto\n** NOVA** 'Sempre última disponível' para a versão do travesseiro\n**FIXED**: Aviso inválido do jsonConfig na instalação do adaptador\n**FIXED**: ESLint errors by code refatoring",
+        "nl": "** VASTE** copiloothallucinaties\n**NIEUW** 'Always last available' voor kussenversie\n** VAST**: Ongeldige jsonConfig waarschuwing bij adapter installatie\n** VAST**: ESLint fouten door code refactoring",
+        "fr": "**FIXED** hallucinations copilotes\n**NOUVEAU** 'Toujours dernier disponible' pour la version oreiller\n**FIXÉ**: Avertissement jsonConfig non valide sur l'installation de l'adaptateur\n**FIXED**: erreurs ESLint par refactoring de code",
+        "it": "**FISSO ** Allucinazioni copilota\n**NEW** 'Always last available' per cuscino versione\n**FISSO ** Avvertenza jsonConfig non valida per l'installazione dell'adattatore\n**FIXED**: Errori di ESLint per refactoring del codice",
+        "es": "**FIXED ** copiloto alucinaciones\n**NEW** 'Siempre disponible' para la versión de almohada\n**FIXED**: Invalid jsonConfig warning on adapter installation\n**FIXED**: errores ESLint por refactorización de código",
+        "pl": "* *FIXED* * omamy drugiego pilota \n* *NOWOŚĆ* * \"Zawsze ostatni dostępny\" dla wersji poduszki \n* *FIXED* * Nieprawidłowe ostrzeżenie jsonConfig na instalacji adaptera \n** FIXED*",
+        "uk": "**FIXED*** копілотні галюцинації\n**NEW**** 'Всі останні доступні' для версії подушки\n**FIXED***: Інвалідний jsonПопередження про встановлення адаптера\n**FIXED***: помилки ESLint від рефакторингу коду",
+        "zh-cn": "** 副驾驶幻觉\n** NEW** 枕头版本“ 永远可用”\n(单位:千美元) 在适配器安装上无效的 jsonConfig 警告\n**FIXED**:通过代码重构的ESLint错误"
+      },
+      "0.7.0-beta.4": {
+        "en": "**FIXED**: ESLint errors by code refactoring\n**FIXED**: Restore missing `configStates` option in admin UI to allow configuring whether configuration states are shown per entity",
+        "de": "**FIXED**: ESLint-Fehler durch Code-Refactoring\n**FIXED**: Wiederherstellen fehlender `configStates` Option im Admin UI, um die Konfiguration zu ermöglichen, ob Konfigurationszustände pro Einheit angezeigt werden",
+        "ru": "**FIXED**: ошибки ESLint при рефакторинге кода\n**FIXED**: Восстановление отсутствующей опции «configStates» в пользовательском интерфейсе администратора, чтобы позволить настроить, отображаются ли состояния конфигурации на единицу",
+        "pt": "**FIXED**: ESLint errors by code refatoring\n**FIXED**: Restaurar a opção 'configStates' faltando na interface de administração para permitir configurar se os estados de configuração são mostrados por entidade",
+        "nl": "** VAST**: ESLint fouten door code refactoring\n**FIXED**: Herstellen van ontbrekende optie \"configStates\" in admin UI om het configureren van configuratietoestanden per entiteit mogelijk te maken",
+        "fr": "**FIXED**: erreurs ESLint par refactoring de code\n**FIXED**: Restaurer l'option `configStates` manquante dans l'interface utilisateur admin pour permettre de configurer si les états de configuration sont affichés par entité",
+        "it": "**FIXED**: Errori ESLint per refactoring del codice\n**FIXED**: Ripristina l'opzione `configStates` mancante nell'interfaccia utente di amministrazione per consentire la configurazione se gli stati di configurazione vengono visualizzati per entità",
+        "es": "**FIXED**: errores ESLint por refactorización de código\n**FIXED**: Restaurar la opción 'configStates' desaparecida en admin UI para permitir configurar si los estados de configuración se muestran por entidad",
+        "pl": "* *FIXED* *: Błędy związane z plikiem ESLint przy pomocy refaktoringu kodu \n* *FIXED* *: Przywracanie brakującej opcji 'configStates' w systemie UI administratora, aby umożliwić konfigurację tego, czy stany konfiguracji są wyświetlane na jednostkę ",
+        "uk": "**FIXED***: помилки ESLint від рефакторингу коду\n**FIXED***: Відновити варіант `configStates` в admin UI, щоб дозволити налаштування станів конфігурації відображається на суб’єкті",
+        "zh-cn": "**FIXED**:通过代码重构的ESLint错误\n** FIXED**:在管理UI中恢复缺失的“配置状态”选项,以便配置是否显示每个实体的配置状态"
+      },
+      "0.7.0-beta.2": {
+        "en": "improve README\nfix #394, actually fix #340, #356\n**FIXED**: Fan component not working #205\n**NEW**: Allow customization of Pillow version used by ESPHome Dashboard, similar to ESPHome version selector\n**NEW**: Add \"Clear Autopy Cache\" button in ESPHome Dashboard configuration tab to resolve dashboard loading issues (#209)",
+        "de": "rEADME\nfix #394, eigentlich fix #340, #356\n**FIXED**: Fan-Komponente nicht funktioniert #205\n**NEW**: Erlauben Anpassung der Pillow-Version, die von ESPHome Dashboard verwendet wird, ähnlich wie ESPHome-Versionsauswahl\n**NEW**: Fügen Sie die Schaltfläche \"Klar Autopy Cache\" in ESPHome Dashboard Konfigurationstabelle hinzu, um dashboard Ladeprobleme zu lösen (#209)",
+        "ru": "улучшить чтение\nисправить #394, фактически исправить #340, #356\n** FIXED**: Фан-компонент не работает #205\n**NEW**: позволяет настраивать версию Pillow, используемую ESPHome Dashboard, аналогично селектору версии ESPHome\n**NEW**: Добавить кнопку «Clear Autopy Cache» во вкладку конфигурации ESPHome Dashboard для решения проблем загрузки панели управления (#209)",
+        "pt": "melhorar o README\ncorrigir #394, realmente corrigir #340, #356\n**FIXED**: Componente do ventilador não funcionando #205\n**NOVA**: Permitir a personalização da versão Pillow usada pelo ESPHome Dashboard, semelhante ao seletor de versão ESPHome\n**NOVO**: Adicione o botão \"Limpar Cache Autopy\" na guia de configuração do painel ESPHome para resolver problemas de carregamento do painel (#209)",
+        "nl": "rEADME verbeteren\nfix #394, fix eigenlijk #340, #356\n** VAST**: Fan-component werkt niet #205\n**NIEUW**: Laat aanpassing van Pillow-versie gebruikt door ESPHome Dashboard, vergelijkbaar met ESPHome versie-selector\n**NIEUW**: Voeg \"Clear Autopy Cache\" knop in ESPHome Dashboard configuratie tabblad om dashboard laden problemen op te lossen (#209)",
+        "fr": "améliorer le README\ncorrection #394, en fait correction #340, #356\n**FIXED**: Composant de ventilateur ne fonctionnant pas #205\n**NEW**: Autoriser la personnalisation de la version d'oreiller utilisée par ESPHome Dashboard, similaire au sélecteur de version ESPHome\n**NOUVEAU**: Ajouter \"Cache automatique claire\" bouton dans l'onglet de configuration du tableau de bord ESPHome pour résoudre les problèmes de chargement du tableau de bord (#209)",
+        "it": "migliorare README\nfix #394, realtã fix #340, #356\n**FIXED**: Componente ventilatore che non funziona #205\n**NEW**: Consentire la personalizzazione della versione Pillow utilizzata da ESPHome Dashboard, simile al selettore della versione ESPHome\n**NEW**: Aggiungi il pulsante \"Clear Autopy Cache\" nella scheda di configurazione di ESPHome Dashboard per risolvere i problemi di caricamento del cruscotto (#209)",
+        "es": "mejorar README\n#394, en realidad arreglar #340, #356\n**FIXED**: Componente de ventilador que no funciona #205\n**NEW**: Permitir la personalización de la versión de Pillow utilizada por ESPHome Dashboard, similar al selector de la versión ESPHome\n**NEW**: Agregue el botón \"Clear Autopy Cache\" en la pestaña de configuración de ESPHome Dashboard para resolver problemas de carga de panel (#209)",
+        "pl": "ulepszenie README\nfix # 394, actually fix # 340, # 356\n* *FIXED* *: Element wentylatora nie działa # 205 \n* *NOWOŚĆ* *: Zezwalaj na personalizację wersji Poduszki używanej przez ESPHome Dashboard, podobną do wyboru wersji ESPHome \n* *NOWOŚĆ* *: Dodaj przycisk \"Clear Autopy Cache\" w zakładce Konfiguracja tablicy rozdzielczej ESPHome, aby rozwiązać problemy z załadowaniem tablicy rozdzielczej (# 209) ",
+        "uk": "покращити резюме\nвиправити #394, насправді виправити #340, #356\n**FIXED***: Компонент вентилятора не працює #205\n**NEW**: Дозволяє налаштування версії Pillow, що використовується ESPHome Dashboard, схожим на ESPHome версія selector\n**NEW**: Додати кнопку \"Зареєструвати Autopy Cache\" у вкладці конфігурації ESPHome Dashboard для вирішення проблем завантаження панелі (#209)",
+        "zh-cn": "改进读取\n修复394号,实际修复340号,356号\n** FIXED**:粉丝组件不工作#205\n**NEW**:允许定制ESPHome Dashboard使用的Pillow版本,类似于ESPHome版本选择器\n**NEW**:在ESPHome Dashboard配置标签中添加\"清除自动缓存\"按钮以解决仪表板加载问题(# 209)"
+      }
     },
-    "native": {
-        "option1": true,
-        "option2": "42"
+    "titleLang": {
+      "en": "Control ESPHome managed devices",
+      "de": "Steuern Sie von ESPHome verwaltete Geräte",
+      "ru": "Управление устройствами ESPHome",
+      "pt": "Controlar dispositivos gerenciados ESPHome",
+      "nl": "Beheer door ESPHome beheerde apparaten",
+      "fr": "Contrôle des appareils gérés ESPHome",
+      "it": "Controlla i dispositivi gestiti da ESPHome",
+      "es": "Controle los dispositivos administrados por ESPHome",
+      "pl": "Kontroluj urządzenia zarządzane przez ESPHome",
+      "uk": "Керування пристроями ESPHome",
+      "zh-cn": "控制ESPHome受管设备"
     },
-    "objects": [],
-    "instanceObjects": [
-        {
-            "_id": "info",
-            "type": "channel",
-            "common": {
-                "name": "Information"
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.connection",
-            "type": "state",
-            "common": {
-                "role": "indicator.connected",
-                "name": "Device or service connected",
-                "type": "boolean",
-                "read": true,
-                "write": false,
-                "def": false
-            },
-            "native": {}
-        }
+    "desc": {
+      "en": "Control your ESP8266/ESP32 with simple yet powerful configuration files created and managed by ESPHome",
+      "de": "Steuern Sie Ihren ESP8266 / ESP32 mit einfachen, aber leistungsstarken Konfigurationsdateien, die von ESPHome erstellt und verwaltet werden",
+      "ru": "Управляйте своим ESP8266 / ESP32 с помощью простых, но мощных файлов конфигурации, созданных и управляемых ESPHome",
+      "pt": "Controle seu ESP8266 / ESP32 com arquivos de configuração simples, mas poderosos, criados e gerenciados por ESPHome",
+      "nl": "Beheer uw ESP8266 / ESP32 met eenvoudige maar krachtige configuratiebestanden die zijn gemaakt en beheerd door ESPHome",
+      "fr": "Contrôlez votre ESP8266 / ESP32 avec des fichiers de configuration simples mais puissants créés et gérés par ESPHome",
+      "it": "Controlla il tuo ESP8266 / ESP32 con file di configurazione semplici ma potenti creati e gestiti da ESPHome",
+      "es": "Controle su ESP8266 / ESP32 con archivos de configuración simples pero potentes creados y administrados por ESPHome",
+      "pl": "Steruj ESP8266 / ESP32 za pomocą prostych, ale potężnych plików konfiguracyjnych utworzonych i zarządzanych przez ESPHome",
+      "uk": "Керуйте своїм ESP8266/ESP32 за допомогою простих, але потужних файлів конфігурації, створених та керованих ESPHome",
+      "zh-cn": "使用由ESPHome创建和管理的简单但功能强大的配置文件控制ESP8266 / ESP32"
+    },
+    "authors": [
+      "DutchmanNL <rdrozda86@gmail.com>"
+    ],
+    "keywords": [
+      "ESPHome",
+      "ESP",
+      "ESP32"
+    ],
+    "platform": "Javascript/Node.js",
+    "icon": "esphome.png",
+    "enabled": true,
+    "messagebox": true,
+    "extIcon": "https://raw.githubusercontent.com/DrozmotiX/ioBroker.esphome/main/admin/esphome.png",
+    "readme": "https://github.com/DrozmotiX/ioBroker.esphome/blob/main/README.md",
+    "loglevel": "info",
+    "mode": "daemon",
+    "type": "hardware",
+    "compact": true,
+    "connectionType": "local",
+    "dataSource": "push",
+    "adminUI": {
+      "config": "json"
+    },
+    "tier": 2,
+    "plugins": {
+      "sentry": {
+        "dsn": "https://52227cfa250b49e99b1f28408273402c@sentry.iobroker.net/122"
+      }
+    },
+    "localLinks": {
+      "_default": "%ESPHomeDashboardUrl%"
+    },
+    "adminTab": {
+      "link": "%ESPHomeDashboardUrl%"
+    },
+    "dependencies": [
+      {
+        "js-controller": ">=6.0.11"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=7.6.20"
+      }
+    ],
+    "licenseInformation": {
+      "type": "free",
+      "license": "MIT"
+    }
+  },
+  "encryptedNative": [
+    "apiPass",
+    "encryptionKey",
+    "apiPassword"
+  ],
+  "protectedNative": [
+    "apiPass",
+    "encryptionKey",
+    "apiPassword"
+  ],
+  "native": {
+    "ESPHomeDashboardVersion": "2026.6.5",
+    "PillowVersion": "12.2.0",
+    "reconnectInterval": 30,
+    "pingInterval": 5,
+    "pingAttempts": 1,
+    "apiPass": "",
+    "apiPassword": "",
+    "encryptionKey": "",
+    "autodiscovery": true,
+    "discoveryListeningAddress": "0.0.0.0",
+    "configStates": false,
+    "ESPHomeDashboardEnabled": false,
+    "ESPHomeDashboardPort": 6052,
+    "ESPHomeDashboardIP": "",
+    "ESPHomeDashboardUrl": "",
+    "ignoredDevices": [
+      {
+        "IP-Address": "192.168.0.1",
+        "name": "Gateway",
+        "description": "*.*.*.1 are usually gateway addresses"
+      }
     ]
+  },
+  "objects": [],
+  "instanceObjects": [
+    {
+      "_id": "info",
+      "type": "channel",
+      "common": {
+        "name": "Information"
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.connection",
+      "type": "state",
+      "common": {
+        "role": "indicator.connected",
+        "name": "Device or service connected",
+        "type": "boolean",
+        "read": true,
+        "write": false,
+        "def": false
+      },
+      "native": {}
+    }
+  ]
 }
