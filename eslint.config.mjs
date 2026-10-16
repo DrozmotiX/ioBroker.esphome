@@ -16,7 +16,7 @@ export default [
             'dist',
             'admin/blockly.js',
             '**/adapter-config.d.ts',
-            'widgets/**/*.js'
+            'widgets/**/*.js',
         ],
     },
     {

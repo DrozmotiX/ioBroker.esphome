@@ -76,6 +76,8 @@
     "check": "tsc --noEmit",
     "coverage": "nyc npm run test:unit",
     "lint": "eslint -c eslint.config.mjs .",
+    "format": "prettier . --write --ignore-path .gitignore --ignore-path prettier.ignore",
+    "format:check": "prettier . --check --ignore-path .gitignore --ignore-path prettier.ignore",
     "translate": "translate-adapter",
     "release": "release-script",
     "dev-server": "dev-server"
