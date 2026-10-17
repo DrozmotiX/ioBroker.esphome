@@ -1,0 +1,92 @@
+name: E2E
+
+# End-to-end test against a real ESPHome device.
+#
+# test/e2e/esphome-device.yaml is compiled with the ESPHome "host" platform into a native Linux
+# executable - real ESPHome firmware with a real (encrypted) native API, without any hardware.
+# test/integrationTests/e2e_device_tests.js starts it, adds it to the adapter like the admin UI does
+# and checks states and commands in both directions plus the reconnect handling.
+#
+# Runs on every push / pull request with the ESPHome version pinned in test/e2e/requirements.txt,
+# and once per week with the latest ESPHome release to catch API changes early.
+on:
+    push:
+        branches:
+            - '*'
+    pull_request: {}
+    schedule:
+        # Mondays 04:23 UTC
+        - cron: '23 4 * * 1'
+    workflow_dispatch:
+        inputs:
+            esphome-version:
+                description: 'ESPHome version to build the test device with, e.g. 2026.9.1 or "latest". Empty = pinned version from test/e2e/requirements.txt'
+                required: false
+                default: ''
+
+# Prefixed with the workflow name so it does not share the group with "Test and Release"
+concurrency:
+    group: e2e-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    e2e:
+        if: contains(github.event.head_commit.message, '[skip ci]') == false
+
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            ESPHOME_E2E_DEVICE_BINARY: test/e2e/.esphome/build/iobroker-e2e/.pioenvs/iobroker-e2e/program
+
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: '24.x'
+                  cache: 'npm'
+
+            - uses: actions/setup-python@v7
+              with:
+                  python-version: '3.13'
+                  cache: 'pip'
+                  cache-dependency-path: test/e2e/requirements.txt
+
+            - name: Install ESPHome
+              env:
+                  # Weekly run: latest release, manual run: the requested version, otherwise the pinned one
+                  REQUESTED_VERSION: ${{ github.event_name == 'schedule' && 'latest' || inputs.esphome-version }}
+              run: |
+                  if [ "$REQUESTED_VERSION" = "latest" ]; then
+                      pip install --upgrade esphome
+                  elif [ -n "$REQUESTED_VERSION" ]; then
+                      pip install "esphome==$REQUESTED_VERSION"
+                  else
+                      pip install -r test/e2e/requirements.txt
+                  fi
+                  echo "ESPHOME_VERSION=$(esphome version | awk '{print $2}')" >> "$GITHUB_ENV"
+                  esphome version
+
+            # PlatformIO downloads the host platform and libraries (noise-c, libsodium) on the first build
+            - uses: actions/cache@v5
+              with:
+                  path: ~/.platformio
+                  key: platformio-${{ runner.os }}-${{ env.ESPHOME_VERSION }}
+                  restore-keys: platformio-${{ runner.os }}-
+
+            - name: Build ESPHome test device
+              run: esphome compile test/e2e/esphome-device.yaml
+
+            - run: npm ci
+
+            # The integration test starts the compiled adapter from build/
+            - run: npm run build
+
+            - name: Run end-to-end tests
+              run: npm run test:integration -- --grep "E2E"
+
+            - name: Summary
+              if: always()
+              run: echo "Tested against ESPHome ${ESPHOME_VERSION:-unknown} (${{ job.status }})" >> "$GITHUB_STEP_SUMMARY"

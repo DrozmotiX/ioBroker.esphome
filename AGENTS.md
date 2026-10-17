@@ -85,7 +85,21 @@ npm run test:integration                      # starts the adapter in a test ioB
 
 > `npm run lint` locally does NOT enforce `--max-warnings 0` but CI does — always run the eslint command above directly.
 
-Unit tests live next to the code they test as `src/**/*.test.ts` (e.g. `src/lib/dashboardApi.test.ts`) and run via `npm run test:unit`. The integration test suite lives in `test/integrationTests/` (index, dashboard_tests, version_fetch_tests, version_migration_tests) and is imported by `test/integration.js`.
+Unit tests live next to the code they test as `src/**/*.test.ts` (e.g. `src/lib/dashboardApi.test.ts`) and run via `npm run test:unit`. The integration test suite lives in `test/integrationTests/` (index, dashboard_tests, version_fetch_tests, version_migration_tests, e2e_device_tests) and is imported by `test/integration.js`.
+
+### End-to-end test with a real ESPHome device
+
+`test/e2e/esphome-device.yaml` is compiled with the ESPHome **host** platform into a native executable (real firmware, real encrypted native API on `127.0.0.1:6053`, no hardware). `test/integrationTests/e2e_device_tests.js` starts it, adds it via the `_addUpdateDevice` message and checks every entity type in both directions plus reconnect. It is skipped unless `ESPHOME_E2E_DEVICE_BINARY` is set:
+
+```bash
+pip install -r test/e2e/requirements.txt          # pinned ESPHome version
+esphome compile test/e2e/esphome-device.yaml
+npm run build
+ESPHOME_E2E_DEVICE_BINARY=test/e2e/.esphome/build/iobroker-e2e/.pioenvs/iobroker-e2e/program \
+    npm run test:integration -- --grep "E2E"
+```
+
+When adding a new entity type, add a template entity of that type to the YAML and a test that writes and reads it back.
 
 ## Integration Test Pattern
 
@@ -133,6 +147,8 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
 - The dashboard integration suites build a real Python venv and are therefore **skipped by default**.
   They run in `.github/workflows/dashboard-integration.yml` (manual/weekly) or locally with
   `ESPHOME_RUN_DASHBOARD_TESTS=true npm run test:integration`.
+- `.github/workflows/e2e.yml` runs the end-to-end device test on every push/PR with the pinned ESPHome
+  version (`test/e2e/requirements.txt`) and weekly with the latest ESPHome release.
 - Releases via `@alcalzone/release-script`; changelog placeholder: `## **WORK IN PROGRESS**`.
 
 ## Releasing
