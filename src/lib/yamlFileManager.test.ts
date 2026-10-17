@@ -1,3 +1,4 @@
+// @ts-nocheck
 const { expect } = require('chai');
 
 describe('YAML File Management', () => {

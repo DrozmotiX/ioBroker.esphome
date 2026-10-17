@@ -4,14 +4,16 @@ Guide for AI coding agents working in this repository.
 
 ## Architecture Overview
 
-Single-file adapter (`main.js`, ~2500 lines) extending `@iobroker/adapter-core`'s `utils.Adapter`. Three supporting modules in `lib/`:
+Single-file adapter (`src/main.ts`, ~2700 lines) extending `@iobroker/adapter-core`'s `utils.Adapter`, compiled to `build/` by `npm run build`. Supporting modules in `src/lib/`:
 
-| File                     | Purpose                                                               |
-| ------------------------ | --------------------------------------------------------------------- |
-| `lib/helpers.js`         | `DeviceInfo` / `ClientDetails` classes – one instance per ESP device  |
-| `lib/stateAttr.js`       | Human-readable metadata for ioBroker state objects (name, role, type) |
-| `lib/yamlFileManager.js` | Upload/download/delete YAML config files for the ESPHome directory    |
-| `lib/dashboardApi.js`    | Dashboard API helpers                                                 |
+> The code was taken over 1:1 from the former JavaScript files and is migrated to TypeScript file by file. Files not migrated yet start with `// @ts-nocheck` and are listed in the override at the end of `eslint.config.mjs` and in `prettier.ignore`. When migrating a file, remove all three.
+
+| File                         | Purpose                                                               |
+| ---------------------------- | --------------------------------------------------------------------- |
+| `src/lib/helpers.ts`         | `DeviceInfo` / `ClientDetails` classes – one instance per ESP device  |
+| `src/lib/stateAttr.ts`       | Human-readable metadata for ioBroker state objects (name, role, type) |
+| `src/lib/yamlFileManager.ts` | Upload/download/delete YAML config files for the ESPHome directory    |
+| `src/lib/dashboardApi.ts`    | Dashboard API helpers                                                 |
 
 **Two optional subsystems run in-process alongside device connections:**
 
@@ -22,7 +24,7 @@ Single-file adapter (`main.js`, ~2500 lines) extending `@iobroker/adapter-core`'
 
 ```js
 // Keyed by IP address – source of truth for every connected device
-clientDetails[ip]  // instanceof ClientDetails (lib/helpers.js)
+clientDetails[ip]  // instanceof ClientDetails (src/lib/helpers.ts)
   .client          // @2colors/esphome-native-api Client instance
   .connected / .connecting / .connectionError
   .deviceName      // MAC without colons, e.g. "004B1296140C"
@@ -57,18 +59,18 @@ resetTimers[key] = this.setTimeout(fn, ms);
 
 ```js
 await this.stateSetCreate(objName, name, value, unit, writable, initialStateCommon);
-// `name` is looked up in lib/stateAttr.js for role/type metadata
+// `name` is looked up in src/lib/stateAttr.ts for role/type metadata
 // `writable=true` auto-subscribes the state
 ```
 
-When adding a new ESP entity type, add a matching entry to `lib/stateAttr.js`.
+When adding a new ESP entity type, add a matching entry to `src/lib/stateAttr.ts`.
 
 ## Adding a New ESP Entity Type
 
-1. Handle the `entity.on('state', ...)` case in the large `switch(entity.type)` block (~line 700 in `main.js`).
+1. Handle the `entity.on('state', ...)` case in the large `switch(entity.type)` block (~line 700 in `src/main.ts`).
 2. Handle the write command in `onStateChange()` (the second large switch/else-if chain, ~line 2100).
 3. For entities with no state events (e.g., Button), override `createNonStateDevices()`.
-4. Add attribute entries to `lib/stateAttr.js`.
+4. Add attribute entries to `src/lib/stateAttr.ts`.
 
 ## Developer Workflow
 
@@ -76,12 +78,14 @@ When adding a new ESP entity type, add a matching entry to `lib/stateAttr.js`.
 npm ci                                        # install deps (use ci, not install)
 ./node_modules/.bin/eslint --max-warnings 0 . # must pass clean before any commit
 npm run check                                 # TS type check – currently 0 errors, keep it that way
-npm test                                      # test:js + test:package + test:integration
+npm run build                                 # compile src/ to build/ (the integration test starts build/main.js)
+npm test                                      # test:unit + test:package
+npm run test:integration                      # starts the adapter in a test ioBroker installation
 ```
 
 > `npm run lint` locally does NOT enforce `--max-warnings 0` but CI does — always run the eslint command above directly.
 
-`npm test` does **not** include `test:unit` (deprecated). The integration test suite lives in `test/integrationTests/` (index, dashboard_tests, version_fetch_tests, version_migration_tests) and is imported by `test/integration.js`.
+Unit tests live next to the code they test as `src/**/*.test.ts` (e.g. `src/lib/dashboardApi.test.ts`) and run via `npm run test:unit`. The integration test suite lives in `test/integrationTests/` (index, dashboard_tests, version_fetch_tests, version_migration_tests) and is imported by `test/integration.js`.
 
 ## Integration Test Pattern
 

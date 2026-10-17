@@ -1,3 +1,4 @@
+// @ts-nocheck
 const stateAttrb = {
     NAMEOFTHESTATE1: {
         name: 'READABLE NAME/DESCRIPTION',

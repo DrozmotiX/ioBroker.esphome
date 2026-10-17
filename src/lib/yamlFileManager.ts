@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * YAML File Manager Module
  * Handles upload, download, list, and delete operations for YAML configuration files

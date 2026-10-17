@@ -34,4 +34,7 @@ jobs:
 
             - run: npm ci
 
+            # The integration test starts the compiled adapter from build/
+            - run: npm run build
+
             - run: npm run test:integration

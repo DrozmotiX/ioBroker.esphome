@@ -1,8 +1,8 @@
-// This file extends the AdapterConfig type from "@types/iobroker"
+// This file extends the AdapterConfig type from "@iobroker/types"
 // using the actual properties present in io-package.json
 // in order to provide typings for adapter.config properties
 
-import type { native } from '../io-package.json';
+import type { native } from '../../io-package.json';
 
 type _AdapterConfig = typeof native;
 

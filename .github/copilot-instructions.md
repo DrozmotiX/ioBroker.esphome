@@ -19,15 +19,15 @@ Always reference these instructions first and fallback to search or bash command
 
 - Bootstrap, build, and test the repository:
     - `npm ci` -- installs dependencies. Takes 40 seconds. NEVER CANCEL. Set timeout to 90+ seconds.
+    - `npm run build` -- compiles `src/` to `build/`. Takes a few seconds.
     - `npm run lint` -- ESLint check. Takes <5 seconds.
     - `npm run check` -- TypeScript check. Takes <5 seconds. May show type errors that are non-blocking.
     - `npm test` -- runs all tests. Takes 30 seconds. NEVER CANCEL. Set timeout to 60+ minutes.
 - Development server for local testing:
     - `npm run dev-server setup` -- one-time setup. Takes 90 seconds. NEVER CANCEL. Set timeout to 180+ seconds.
     - `npm run dev-server run default` -- starts full ioBroker instance with admin UI on http://127.0.0.1:8081/
-    - `npm run startDev` -- alternative development mode (requires setup first)
 - Translation management:
-    - `npm run translate` -- updates translations using Gulp. Takes <1 second.
+    - `npm run translate` -- updates translations. Takes <1 second.
 
 #### Validation
 
@@ -61,43 +61,49 @@ npm --version: 10.8.2
 
 ```
 ls -la [repo-root]:
-.eslintrc.json          -- ESLint configuration
+eslint.config.mjs       -- ESLint configuration (flat config)
 .github/                -- GitHub workflows and templates
 .gitignore
-admin/                  -- Admin UI files (HTML, CSS, translations)
-io-package.json        -- ioBroker adapter configuration
-lib/                   -- Helper modules
-  helpers.js           -- Device client management (113 lines)
-  stateAttr.js         -- State attribute definitions (47 lines)
-  tools.js             -- Utility functions and translation (99 lines)
-main.js                -- Main adapter code (1737 lines)
-package.json           -- Node.js project configuration
-test/                  -- Test files
-  integration.js       -- Adapter startup tests
-  package.js           -- Package validation tests
-  unit.js              -- Unit tests (minimal)
-tsconfig.json          -- TypeScript configuration
+admin/                  -- Admin UI (jsonConfig.json5, translations in i18n/, README images in img/)
+build/                  -- Compiled adapter (output of "npm run build", started by ioBroker, not committed)
+io-package.json         -- ioBroker adapter configuration
+src/                    -- TypeScript sources
+  main.ts               -- Main adapter code
+  main.test.ts          -- Example unit test
+  lib/
+    dashboardApi.ts     -- ESPHome Dashboard API helpers (+ dashboardApi.test.ts)
+    helpers.ts          -- Device client management
+    stateAttr.ts        -- State attribute definitions
+    yamlFileManager.ts  -- YAML file upload/download/delete (+ yamlFileManager.test.ts)
+package.json            -- Node.js project configuration
+test/                   -- Test harness
+  integration.js        -- Adapter startup tests, loads integrationTests/
+  integrationTests/     -- Additional integration test suites
+  package.js            -- Package validation tests
+tsconfig.json           -- TypeScript configuration (type check)
+tsconfig.build.json     -- TypeScript configuration (build)
 ```
+
+The code was taken over 1:1 from the former JavaScript files and is migrated to TypeScript file by file. Files not migrated yet start with `// @ts-nocheck` and are listed in the override at the end of `eslint.config.mjs` and in `prettier.ignore`.
 
 ##### Test structure
 
+- **test:unit** -- unit tests, located next to the code as `src/**/*.test.ts` (~instant)
 - **test:package** -- validates package.json and io-package.json structure (~instant)
-- **test:unit** -- minimal unit tests (deprecated, ~instant)
-- **test:integration** -- starts adapter in test environment (~28 seconds)
-- **test:js** -- runs basic JavaScript tests (~instant)
+- **test:integration** -- starts the compiled adapter from `build/` in a test environment (~1 minute)
 
 ##### Key scripts (package.json)
 
+- `npm run build` -- compile `src/` to `build/`
 - `npm run lint` -- ESLint code quality check
 - `npm run check` -- TypeScript type checking
-- `npm test` -- run full test suite (package + unit + integration + js)
-- `npm run startDev` -- development server (requires setup)
+- `npm test` -- unit and package tests
 - `npm run dev-server setup` -- one-time development environment setup
-- `npm run translate` -- update translations via Gulp
+- `npm run translate` -- update translations
 
 ##### Development workflow
 
-1. Make code changes to main.js or lib/ files
+1. Make code changes in `src/`
 2. `./node_modules/.bin/eslint --max-warnings 0 .` -- verify code style with zero-warning tolerance, matching CI (<5 seconds)
 3. `npm run check` -- TypeScript check (<5 seconds, may show non-blocking errors)
 4. `npm test` -- run full test suite (30 seconds)

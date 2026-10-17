@@ -1,0 +1,14 @@
+// Specialized tsconfig to only compile .ts-files in the src dir
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "allowJs": false,
+        "checkJs": false,
+        "noEmit": false,
+        "declaration": false,
+        // the production code must not see the test runner globals
+        "types": ["node"]
+    },
+    "include": ["src/**/*.ts"],
+    "exclude": ["src/**/*.test.ts"]
+}

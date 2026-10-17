@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use strict';
 
 /**
@@ -9,7 +10,7 @@
  */
 
 const { expect } = require('chai');
-const dashboardApi = require('../lib/dashboardApi');
+const dashboardApi = require('./dashboardApi');
 
 /**
  * Helper – create a minimal mock fetch that returns a given status/body.
