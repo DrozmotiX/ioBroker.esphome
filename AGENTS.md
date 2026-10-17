@@ -148,7 +148,7 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
   They run in `.github/workflows/dashboard-integration.yml` (manual/weekly) or locally with
   `ESPHOME_RUN_DASHBOARD_TESTS=true npm run test:integration`.
 - `.github/workflows/e2e.yml` runs the end-to-end device test on every push/PR with the pinned ESPHome
-  version (`test/e2e/requirements.txt`) and weekly with the latest ESPHome release.
+  version (`test/e2e/requirements.txt`). Dependabot bumps that version, so new ESPHome releases are tested in its PRs.
 - Releases via `@alcalzone/release-script`; changelog placeholder: `## **WORK IN PROGRESS**`.
 
 ## Releasing

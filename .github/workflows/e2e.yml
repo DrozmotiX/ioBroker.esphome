@@ -7,20 +7,17 @@ name: E2E
 # test/integrationTests/e2e_device_tests.js starts it, adds it to the adapter like the admin UI does
 # and checks states and commands in both directions plus the reconnect handling.
 #
-# Runs on every push / pull request with the ESPHome version pinned in test/e2e/requirements.txt,
-# and once per week with the latest ESPHome release to catch API changes early.
+# Runs on every push / pull request with the ESPHome version pinned in test/e2e/requirements.txt.
+# New ESPHome releases arrive as Dependabot PRs bumping that file, which run this workflow as well.
 on:
     push:
         branches:
             - '*'
     pull_request: {}
-    schedule:
-        # Mondays 04:23 UTC
-        - cron: '23 4 * * 1'
     workflow_dispatch:
         inputs:
             esphome-version:
-                description: 'ESPHome version to build the test device with, e.g. 2026.9.1 or "latest". Empty = pinned version from test/e2e/requirements.txt'
+                description: 'ESPHome version to build the test device with, e.g. 2026.9.1. Empty = pinned version from test/e2e/requirements.txt'
                 required: false
                 default: ''
 
@@ -56,12 +53,10 @@ jobs:
 
             - name: Install ESPHome
               env:
-                  # Weekly run: latest release, manual run: the requested version, otherwise the pinned one
-                  REQUESTED_VERSION: ${{ github.event_name == 'schedule' && 'latest' || inputs.esphome-version }}
+                  # Manual run: the requested version, otherwise the pinned one
+                  REQUESTED_VERSION: ${{ inputs.esphome-version }}
               run: |
-                  if [ "$REQUESTED_VERSION" = "latest" ]; then
-                      pip install --upgrade esphome
-                  elif [ -n "$REQUESTED_VERSION" ]; then
+                  if [ -n "$REQUESTED_VERSION" ]; then
                       pip install "esphome==$REQUESTED_VERSION"
                   else
                       pip install -r test/e2e/requirements.txt
