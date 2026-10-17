@@ -1,0 +1,131 @@
+# ESPHome "host" platform device used by the end-to-end test (test/e2e/).
+#
+# The host platform compiles ESPHome into a native Linux/macOS executable, so a real ESPHome
+# firmware with a real native API server runs on the CI runner without any hardware. The adapter
+# connects to it on 127.0.0.1:6053 exactly like it would to an ESP32.
+#
+# Build and run manually:
+#   esphome run test/e2e/esphome-device.yaml --no-logs   (or: esphome compile + start the binary)
+#
+# Everything is optimistic/template based so commands sent by the adapter are reflected back as
+# state updates, which is what the test asserts on. Keep entity names in sync with test/e2e/e2e.test.js.
+
+esphome:
+    name: iobroker-e2e
+    friendly_name: ioBroker E2E
+
+host:
+    # Fixed MAC so the ioBroker device ID is predictable: esphome.0.02E2E0000001
+    mac_address: '02:E2:E0:00:00:01'
+
+logger:
+    level: DEBUG
+
+api:
+    # Test-only key, also used in test/e2e/e2e.test.js. Not a secret.
+    encryption:
+        key: '4lNKgD7rXHge2t304JyBOw4qVOF4rY8dphuqyHuDnu4='
+
+globals:
+    - id: button_presses
+      type: int
+      restore_value: false
+      initial_value: '0'
+
+sensor:
+    - platform: template
+      name: 'E2E Temperature'
+      id: e2e_temperature
+      unit_of_measurement: '°C'
+      accuracy_decimals: 1
+      lambda: 'return 21.5;'
+      update_interval: 2s
+    - platform: template
+      name: 'E2E Button Presses'
+      id: e2e_button_presses
+      accuracy_decimals: 0
+      lambda: 'return id(button_presses);'
+      update_interval: never
+
+binary_sensor:
+    - platform: template
+      name: 'E2E Binary'
+      lambda: 'return true;'
+
+text_sensor:
+    - platform: template
+      name: 'E2E Text Sensor'
+      lambda: 'return {"hello ioBroker"};'
+      update_interval: 2s
+
+switch:
+    - platform: template
+      name: 'E2E Switch'
+      optimistic: true
+      restore_mode: ALWAYS_OFF
+
+number:
+    - platform: template
+      name: 'E2E Number'
+      optimistic: true
+      min_value: 0
+      max_value: 100
+      step: 1
+      initial_value: 10
+
+select:
+    - platform: template
+      name: 'E2E Select'
+      optimistic: true
+      options:
+          - Alpha
+          - Beta
+          - Gamma
+      initial_option: Alpha
+
+text:
+    - platform: template
+      name: 'E2E Text'
+      optimistic: true
+      mode: text
+      initial_value: 'initial'
+
+button:
+    - platform: template
+      name: 'E2E Button'
+      on_press:
+          - globals.set:
+                id: button_presses
+                value: !lambda 'return id(button_presses) + 1;'
+          - component.update: e2e_button_presses
+
+output:
+    - platform: template
+      id: e2e_light_output
+      type: float
+      write_action:
+          - logger.log:
+                format: 'Light output %.2f'
+                args: ['state']
+
+light:
+    - platform: monochromatic
+      name: 'E2E Light'
+      output: e2e_light_output
+      default_transition_length: 0s
+
+cover:
+    - platform: template
+      name: 'E2E Cover'
+      optimistic: true
+      has_position: true
+
+fan:
+    - platform: template
+      name: 'E2E Fan'
+      speed_count: 3
+
+lock:
+    - platform: template
+      name: 'E2E Lock'
+      optimistic: true

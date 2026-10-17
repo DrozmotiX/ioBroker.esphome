@@ -18,8 +18,8 @@ on:
 
 # Cancel previous PR/branch runs when a new commit is pushed.
 # The repo checker (W3009) expects exactly this form. A release run is still safe: a tag is its
-# own ref, so only pushing the same tag again could cancel it. No other workflow in this repo
-# declares a concurrency group, so the group does not need the workflow name.
+# own ref, so only pushing the same tag again could cancel it. The other workflows prefix their
+# group with their name (e.g. "e2e-"), so this group does not need the workflow name.
 concurrency:
     group: ${{ github.ref }}
     cancel-in-progress: true

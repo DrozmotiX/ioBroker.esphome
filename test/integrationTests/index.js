@@ -1,4 +1,5 @@
 const dashboard_tests = require('./dashboard_tests');
+const e2e_device_tests = require('./e2e_device_tests');
 const version_fetch_tests = require('./version_fetch_tests');
 const version_migration_tests = require('./version_migration_tests');
 
@@ -21,6 +22,14 @@ exports.runTests = function (suite) {
 
     dashboard_tests.runTests(dashboardSuite);
     version_fetch_tests.runTests(dashboardSuite);
+
+    // The end-to-end suite needs a compiled ESPHome host-platform device (Python, ESPHome and a C++
+    // toolchain), see test/integrationTests/e2e_device_tests.js. Executed by the "E2E" workflow.
+    const runE2eTests = !!process.env.ESPHOME_E2E_DEVICE_BINARY;
+    if (!runE2eTests) {
+        console.log('Skipping ESPHome end-to-end device suite, set ESPHOME_E2E_DEVICE_BINARY to run it');
+    }
+    e2e_device_tests.runTests(runE2eTests ? suite : suite.skip);
 
     // Runs always: the migration keeps the dashboard integration disabled, so it needs no Python
     version_migration_tests.runTests(suite);

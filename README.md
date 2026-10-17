@@ -443,6 +443,9 @@ If you like my work, please consider a personal donation
 
 ### **WORK IN PROGRESS**
 
+- (@SimonFischer04) **FIXED**: Fan speed level could not be changed, current ESPHome reports `supportedSpeedCount` instead of `supportedSpeedLevels`, so `speedLevel` was created read-only
+- (@SimonFischer04) **FIXED**: Cover position and tilt are 0-100 % in ioBroker but were sent to ESPHome unscaled (it expects 0-1), so any value above 1 % fully opened the cover
+- (@SimonFischer04) **NEW**: End-to-end test workflow that builds a real ESPHome device with the host platform and tests the adapter against it
 - (@Garfonso) **FIXED**: Brightness, RGB, white and colour temperature reached no light any more. The ColorMode values in supported_color_modes are the bitmasks from api.proto (RGB = 35), but they were compared against a 0..9 index, so every modern ESPHome light was treated as on/off only
 
 ### 1.0.0 (2026-09-26) - Public Stable Release
