@@ -7,12 +7,15 @@ name: E2E
 # test/integrationTests/e2e_device_tests.js starts it, adds it to the adapter like the admin UI does
 # and checks states and commands in both directions plus the reconnect handling.
 #
-# Runs on every push / pull request with the ESPHome version pinned in test/e2e/requirements.txt.
-# New ESPHome releases arrive as Dependabot PRs bumping that file, which run this workflow as well.
+# Runs for pull requests and pushes to main/v2 with the ESPHome version pinned in
+# test/e2e/requirements.txt. New ESPHome releases arrive as Dependabot PRs bumping that file.
+# Push is limited to the target branches, otherwise a branch with an open PR runs twice
+# (once for the push, once for the pull request).
 on:
     push:
         branches:
-            - '*'
+            - main
+            - v2
     pull_request: {}
     workflow_dispatch:
         inputs:
