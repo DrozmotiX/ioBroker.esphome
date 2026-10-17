@@ -1,11 +1,14 @@
 name: Test and Release
 
-# Run this job on all pushes and pull requests
-# as well as tags with a semantic version
+# Run this job on pull requests, pushes to the target branches and tags with a semantic version.
+# Push is limited to main/v2 like in the create-adapter template (the repo checker E3037 needs "*"
+# or the default branch), otherwise a branch with an open PR runs twice: once for the push and
+# once for the pull request, and the concurrency group cannot merge them (different refs).
 on:
     push:
         branches:
-            - '*'
+            - main
+            - v2
         tags:
             # normal versions
             - 'v[0-9]+.[0-9]+.[0-9]+'
