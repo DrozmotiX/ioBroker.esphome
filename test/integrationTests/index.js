@@ -7,7 +7,7 @@ const version_migration_tests = require('./version_migration_tests');
 // virtual environment via autopy and pip-install esphome + pillow from PyPI. That is far too slow
 // and too network dependent for the regular CI matrix (it wedges shared GitHub runners and is
 // subject to GitHub API rate limiting). They are executed by the dedicated
-// "Dashboard Integration" workflow, or locally via:
+// "Dashboard Integration" workflow (every pull request, outside the release pipeline), or locally via:
 //   ESPHOME_RUN_DASHBOARD_TESTS=true npm run test:integration
 const runDashboardTests = process.env.ESPHOME_RUN_DASHBOARD_TESTS === 'true';
 
