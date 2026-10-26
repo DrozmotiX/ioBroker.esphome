@@ -1268,8 +1268,10 @@ class Esphome extends utils.Adapter {
 
                     case 'speedLevel': {
                         // Sensor type = Fan
-                        // Check if entity supports speed levels
-                        const supportedSpeedLevels = clientDetails[host][entity.id].config.supportedSpeedLevels;
+                        // Check if entity supports speed levels, ESPHome renamed supportedSpeedLevels to supportedSpeedCount
+                        const supportedSpeedLevels =
+                            clientDetails[host][entity.id].config.supportedSpeedCount ??
+                            clientDetails[host][entity.id].config.supportedSpeedLevels;
                         if (
                             supportedSpeedLevels === null ||
                             supportedSpeedLevels === undefined ||
@@ -2180,7 +2182,7 @@ class Esphome extends utils.Adapter {
         try {
             const response = await fetch('https://pypi.org/pypi/pillow/json');
             if (response.ok) {
-                const data = /** @type {{ releases: Record<string, unknown> }} */ (await response.json());
+                const data = /** @type {{ releases: Record<string, unknown> }} */ await response.json();
                 const versions = Object.keys(data.releases)
                     .filter(v => !v.includes('a') && !v.includes('b') && !v.includes('rc')) // Filter out alpha/beta/rc versions
                     .sort((a, b) => {
@@ -2402,17 +2404,19 @@ class Esphome extends utils.Adapter {
                     // Handle Cover Position
                 } else if (device[5] === `position`) {
                     // clientDetails[deviceIP][device[4]].states[device[5]] = state.val;
+                    // State is 0-100 %, ESPHome expects 0-1
                     await clientDetails[deviceIP].client.connection.coverCommandService({
                         key: device[4],
-                        position: state.val,
+                        position: Number(state.val) / 100,
                     });
 
                     // Handle Cover Tilt
                 } else if (device[5] === `tilt`) {
                     // clientDetails[deviceIP][device[4]].states[device[5]] = state.val;
+                    // State is 0-100 %, ESPHome expects 0-1
                     await clientDetails[deviceIP].client.connection.coverCommandService({
                         key: device[4],
-                        tilt: state.val,
+                        tilt: Number(state.val) / 100,
                     });
 
                     // Handle Cover Stop
