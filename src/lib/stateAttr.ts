@@ -1,17 +1,21 @@
-// @ts-nocheck
-const stateAttrb = {
-    NAMEOFTHESTATE1: {
-        name: 'READABLE NAME/DESCRIPTION',
-        type: 'number|string|array|boolean...',
-        read: true,
-        write: false,
-        role: 'value',
-        // unit: 's|°|%...',
-        // modify: ['multiply(3.6)', 'round(2)']
-    },
+/**
+ * Metadata of a state, looked up by the state name in stateSetCreate() of main.ts.
+ * Only name and role are used there, the type is derived from the value itself.
+ */
+interface StateAttribute {
+    /** Readable name / description of the state */
+    name: string;
+    type: ioBroker.CommonType;
+    read: boolean;
+    write: boolean;
+    /** State role, see https://www.iobroker.net/#en/documentation/dev/stateroles.md */
+    role: string;
+}
+
+const stateAttrb: Record<string, StateAttribute> = {
     Position: {
         name: 'Position of cover',
-        type: 'number.',
+        type: 'number',
         read: true,
         write: false,
         role: 'level.blind',
@@ -106,5 +110,5 @@ const stateAttrb = {
     },
 };
 
-module.exports = stateAttrb;
-//# sourceMappingURL=stateAttr.js.map
+// export = keeps the CommonJS export (module.exports = stateAttrb) that main.ts loads with require()
+export = stateAttrb;
