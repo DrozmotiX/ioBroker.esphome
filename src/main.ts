@@ -1,28 +1,74 @@
-// @ts-nocheck
-'use strict';
-
 /*
  * Created with @iobroker/create-adapter v1.31.0
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
-const utils = require('@iobroker/adapter-core');
-const clientDevice = require('./lib/helpers.js');
-const YamlFileManager = require('./lib/yamlFileManager.js');
-const { Client, Discovery } = require('@2colors/esphome-native-api');
-const stateAttr = require(`${__dirname}/lib/stateAttr.js`); // Load attribute library
+import {
+    Client,
+    type ClientConfig,
+    type ClimateCommandData,
+    Discovery,
+    type Entity,
+    type FanCommandData,
+    type LightCommandData,
+    type LockCommand,
+} from '@2colors/esphome-native-api';
+import * as utils from '@iobroker/adapter-core';
+import type { getVenv } from 'autopy' with { 'resolution-mode': 'import' };
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
+import ClientDetails from './lib/helpers';
+import stateAttr from './lib/stateAttr'; // Load attribute library
+import YamlFileManager from './lib/yamlFileManager';
+
+/** The ESPHome dashboard process started through autopy */
+type DashboardProcess = ReturnType<Awaited<ReturnType<typeof getVenv>>>;
+
+/** Device found by the MDNS discovery that is not adopted yet */
+interface DiscoveredDevice {
+    ip: string;
+    mac: string;
+    deviceFriendlyName: string;
+}
+
+/** State of an entity as received from the device, the fields depend on the entity type */
+type EntityState = Record<string, any>;
+
+/** Details of an entity, stored by entity key directly on the ClientDetails object of its device */
+interface EntityDetails {
+    config: Entity['config'];
+    name: string;
+    type: string;
+    unit: string;
+    /** Last state of the entity as received from the device */
+    states?: EntityState;
+    /** Light only: switch the white channel automatically, see handleStateArrays() */
+    rgbAutoWhite?: boolean;
+}
+
 const disableSentry = false; // Ensure to set to true during development!
-const warnMessages = {}; // Store warn messages to avoid multiple sending to sentry
-const fs = require('node:fs');
-const path = require('node:path');
-const os = require('node:os');
-const resetTimers = {}; // Memory allocation for all running timers
-let autodiscovery, dashboardProcess, createConfigStates, discovery;
-const clientDetails = {}; // Memory cache of all devices and their connection status
-const newlyDiscoveredClient = {}; // Memory cache of all newly discovered devices and their connection status
-const dashboardVersions = [];
-const pillowVersions = []; // Memory cache for available Pillow versions
+const warnMessages: Record<string, string> = {}; // Store warn messages to avoid multiple sending to sentry
+const resetTimers: Record<string, ioBroker.Timeout | undefined | void> = {}; // Memory allocation for all running timers
+let autodiscovery: boolean;
+let dashboardProcess: DashboardProcess | undefined;
+let createConfigStates: boolean;
+let discovery: Discovery | undefined;
+const clientDetails: Record<string, ClientDetails> = {}; // Memory cache of all devices and their connection status
+const newlyDiscoveredClient: Record<string, DiscoveredDevice> = {}; // Memory cache of all newly discovered devices and their connection status
+const dashboardVersions: string[] = [];
+const pillowVersions: string[] = []; // Memory cache for available Pillow versions
+
+/**
+ * Details of an entity of a device, see EntityDetails
+ *
+ * @param host - IP address of the device
+ * @param key - Entity key, as number or as part of a state id
+ */
+function entityDetails(host: string, key: string | number): EntityDetails {
+    return (clientDetails[host] as unknown as Record<string, EntityDetails>)[key];
+}
 
 // Versions installations are pinned to. ESPHome 2026.7.x currently fails to install for a part of
 // our users (#463), so both the defaults for new installations and the one-time migration in
@@ -47,10 +93,18 @@ const COLOR_CAPABILITY = {
 };
 
 class Esphome extends utils.Adapter {
+    /** Memory array of an initiated device by Device Identifier (name) and IP */
+    declare private deviceStateRelation: Record<string, { ip: string }>;
+    /** Common of every state created by stateSetCreate(), to skip unchanged object updates */
+    declare private createdStatesDetails: Record<string, Partial<ioBroker.StateCommon>>;
+    /** Messages from admin waiting for the result of adding / removing a device, by IP */
+    declare private messageResponse: Record<string, ioBroker.Message | null>;
+    declare private yamlFileManager: YamlFileManager;
+
     /**
-     * @param {Partial<utils.AdapterOptions>} [options] - Adapter configuration options
+     * @param [options] - Adapter configuration options
      */
-    constructor(options) {
+    public constructor(options: Partial<utils.AdapterOptions> = {}) {
         super({
             ...options,
             name: 'esphome',
@@ -212,8 +266,7 @@ class Esphome extends utils.Adapter {
                 return;
             }
 
-            /** @type {Record<string, string>} */
-            const migrated = {};
+            const migrated: Record<string, string> = {};
             if (this.config.ESPHomeDashboardVersion === 'Always last available') {
                 migrated.ESPHomeDashboardVersion = defaultDashboardVersion;
             }
@@ -267,7 +320,7 @@ class Esphome extends utils.Adapter {
      * @param {string} useDashBoardVersion - ESPHome Dashboard version which will be installed
      * @param {string} usePillowVersion - Pillow version which will be installed
      */
-    warnUnpinnedVersions(useDashBoardVersion, usePillowVersion) {
+    warnUnpinnedVersions(useDashBoardVersion: string, usePillowVersion: string) {
         if (this.config.ESPHomeDashboardVersion === 'Always last available') {
             this.log.warn(
                 `ESPHome Dashboard version is set to "Always last available" and resolves to ${useDashBoardVersion || 'the newest release'}. Not every ESPHome release can be installed on every system. If the dashboard does not start, select a fixed version in the adapter configuration, ${defaultDashboardVersion} is known to work.`,
@@ -294,7 +347,8 @@ class Esphome extends utils.Adapter {
             });
 
             // Get all current available ESPHome Dashboard versions
-            let content;
+            /** GitHub releases by index, only the name is used */
+            let content: Record<string, { name: string }> | undefined;
             let lastUsed;
             let useDashBoardVersion = '';
 
@@ -315,7 +369,7 @@ class Esphome extends utils.Adapter {
                         `GitHub releases request failed with status ${response.status}: ${response.statusText}`,
                     );
                 }
-                content = await response.json();
+                content = (await response.json()) as Record<string, { name: string }>;
             } catch (error) {
                 this.errorHandler(`[espHomeDashboard-VersionCall]`, error);
             }
@@ -332,9 +386,9 @@ class Esphome extends utils.Adapter {
                 this.log.warn(
                     `Unable to retrieve current Dashboard release versions, using cached values. Check your internet connection`,
                 );
-                let cachedVersions = await this.getStateAsync(`_ESPHomeDashboard.versionCache`);
-                if (cachedVersions && cachedVersions.val) {
-                    cachedVersions = JSON.parse(String(cachedVersions.val));
+                const cachedState = await this.getStateAsync(`_ESPHomeDashboard.versionCache`);
+                if (cachedState && cachedState.val) {
+                    const cachedVersions = JSON.parse(String(cachedState.val)) as Record<string, { name: string }>;
                     for (const version in cachedVersions) {
                         dashboardVersions.push(cachedVersions[version].name);
                     }
@@ -517,7 +571,7 @@ class Esphome extends utils.Adapter {
                 const deviceDetails = knownDevices[i].native;
 
                 // Create a memory object and store mandatory connection data
-                clientDetails[deviceDetails.ip] = new clientDevice();
+                clientDetails[deviceDetails.ip] = new ClientDetails();
                 clientDetails[deviceDetails.ip].storeExistingDetails(
                     deviceDetails.ip,
                     deviceDetails.encryptionKeyUsed ? deviceDetails.encryptionKeyUsed : false,
@@ -544,7 +598,7 @@ class Esphome extends utils.Adapter {
     deviceDiscovery() {
         try {
             // Get a list of IP-Addresses from Adapter config to exclude by autodiscovery
-            const excludedIP = [];
+            const excludedIP: string[] = [];
 
             // Prepare an array to easy processing containing all IP addresses to be excluded from device discovery
             //ToDo: Check function doesn't look correct
@@ -598,7 +652,7 @@ class Esphome extends utils.Adapter {
      *
      * @param {string} host IP address of a device
      */
-    connectDevices(host) {
+    connectDevices(host: string) {
         try {
             this.log.info(`Try to connect to ${host}`);
 
@@ -616,7 +670,7 @@ class Esphome extends utils.Adapter {
             const pingAttempts = Math.max(1, Number(this.config.pingAttempts) || 1);
 
             // Generic client settings
-            const clientSettings = {
+            const clientSettings: ClientConfig = {
                 host: host,
                 clientInfo: `${this.host}`,
                 clearSession: true,
@@ -637,7 +691,7 @@ class Esphome extends utils.Adapter {
                     ? this.decrypt(clientDetails[host].apiPassword)
                     : '';
             } else {
-                clientSettings.encryptionKey = this.decrypt(clientDetails[host].encryptionKey);
+                clientSettings.encryptionKey = this.decrypt(clientDetails[host].encryptionKey!);
             }
 
             // Start connection to a client, if connection fails process wil try to reconnect every "reconnection"
@@ -694,7 +748,7 @@ class Esphome extends utils.Adapter {
                                 value.type &&
                                 value.name
                             ) {
-                                delete clientDetails[host][key];
+                                delete (clientDetails[host] as unknown as Record<string, EntityDetails>)[key];
                             }
                         }
                         delete this.deviceStateRelation[clientDetails[host].deviceName];
@@ -771,7 +825,8 @@ class Esphome extends utils.Adapter {
                         },
                         native: {
                             ip: host,
-                            name: clientDetails[host].deviceInfoName,
+                            // deviceInfoName is never set, so this is always undefined (kept as is during the migration)
+                            name: (clientDetails[host] as unknown as { deviceInfoName?: string }).deviceInfoName,
                             mac: deviceInfo.macAddress,
                             deviceName: deviceName,
                             deviceFriendlyName: deviceInfo.name,
@@ -813,7 +868,6 @@ class Esphome extends utils.Adapter {
                             type: 'info',
                             message: 'success',
                         };
-                        // @ts-expect-error massageObj type mismatch with respond method signature
                         this.respond(massageObj, this.messageResponse[host]);
                         this.messageResponse[host] = null;
                     }
@@ -827,7 +881,7 @@ class Esphome extends utils.Adapter {
                 this.log.debug(`EntityData: ${JSON.stringify(entity.config)}`);
                 try {
                     // Store relevant information into memory object
-                    clientDetails[host][entity.id] = {
+                    (clientDetails[host] as unknown as Record<string, EntityDetails>)[entity.id] = {
                         config: entity.config,
                         name: entity.name,
                         type: entity.type,
@@ -835,13 +889,13 @@ class Esphome extends utils.Adapter {
                             entity.config.unitOfMeasurement !== undefined ? entity.config.unitOfMeasurement || '' : '',
                     };
 
-                    if (clientDetails[host][entity.id].config.deviceClass) {
+                    if (entityDetails(host, entity.id).config.deviceClass) {
                         this.log.info(
-                            `${clientDetails[host].deviceFriendlyName} announced ${clientDetails[host][entity.id].config.deviceClass} "${clientDetails[host][entity.id].config.name}"`,
+                            `${clientDetails[host].deviceFriendlyName} announced ${entityDetails(host, entity.id).config.deviceClass} "${entityDetails(host, entity.id).config.name}"`,
                         );
                     } else {
                         this.log.info(
-                            `${clientDetails[host].deviceFriendlyName} announced ${clientDetails[host][entity.id].type} "${clientDetails[host][entity.id].config.name}"`,
+                            `${clientDetails[host].deviceFriendlyName} announced ${entityDetails(host, entity.id).type} "${entityDetails(host, entity.id).config.name}"`,
                         );
                     }
 
@@ -938,9 +992,9 @@ class Esphome extends utils.Adapter {
                     // still being announced, `newEntity` fires again on the stale connection and
                     // subscribeStatesService() throws "Not connected". Skip it silently here; the
                     // reconnection cycle handles the fresh subscription.
-                    if (clientDetails[host].client.connection.connected) {
+                    if (clientDetails[host].client!.connection.connected) {
                         try {
-                            await clientDetails[host].client.connection.subscribeStatesService();
+                            await clientDetails[host].client!.connection.subscribeStatesService();
                         } catch (e) {
                             this.log.debug(
                                 `[subscribeStates] ${clientDetails[host].deviceFriendlyName}: ${e instanceof Error ? e.message : e}`,
@@ -957,12 +1011,12 @@ class Esphome extends utils.Adapter {
                         await this.updateConnectionStatus(host, true, false, 'connected', false);
                         this.log.debug(`StateData: ${JSON.stringify(state)}`);
                         try {
-                            this.log.debug(`[entityStateConfig] ${JSON.stringify(clientDetails[host][entity.id])}`);
+                            this.log.debug(`[entityStateConfig] ${JSON.stringify(entityDetails(host, entity.id))}`);
                             this.log.debug(`[entityStateData] ${JSON.stringify(state)}`);
-                            const deviceDetails = `DeviceType ${clientDetails[host][entity.id].type} | State-Keys ${JSON.stringify(state)} | [entityStateConfig] ${JSON.stringify(clientDetails[host][entity.id])}`;
+                            const deviceDetails = `DeviceType ${entityDetails(host, entity.id).type} | State-Keys ${JSON.stringify(state)} | [entityStateConfig] ${JSON.stringify(entityDetails(host, entity.id))}`;
 
                             // Ensure proper initialization of the state
-                            switch (clientDetails[host][entity.id].type) {
+                            switch (entityDetails(host, entity.id).type) {
                                 case 'BinarySensor':
                                     await this.handleRegularState(`${host}`, entity, state, false);
                                     break;
@@ -1052,15 +1106,15 @@ class Esphome extends utils.Adapter {
                                 }
 
                                 default:
-                                    if (!warnMessages[clientDetails[host][entity.id].type]) {
+                                    if (!warnMessages[entityDetails(host, entity.id).type]) {
                                         this.log.warn(
-                                            `DeviceType ${clientDetails[host][entity.id].type} not yet supported`,
+                                            `DeviceType ${entityDetails(host, entity.id).type} not yet supported`,
                                         );
                                         this.log.warn(`Please submit git issue with all information from next line`);
                                         this.log.warn(
-                                            `DeviceType ${clientDetails[host][entity.id].type} | State-Keys ${JSON.stringify(state)} | [entityStateConfig] ${JSON.stringify(clientDetails[host][entity.id])}`,
+                                            `DeviceType ${entityDetails(host, entity.id).type} | State-Keys ${JSON.stringify(state)} | [entityStateConfig] ${JSON.stringify(entityDetails(host, entity.id))}`,
                                         );
-                                        warnMessages[clientDetails[host][entity.id].type] = deviceDetails;
+                                        warnMessages[entityDetails(host, entity.id).type] = deviceDetails;
                                     }
                             }
                         } catch (error) {
@@ -1193,15 +1247,15 @@ class Esphome extends utils.Adapter {
      * @param {object} state State-Object
      * @param {boolean} writable Indicate if state should be writable
      */
-    async handleRegularState(host, entity, state, writable) {
+    async handleRegularState(host: string, entity: Entity, state: EntityState, writable: boolean) {
         try {
             // Round value to digits as known by configuration
             let stateVal = state.state;
 
-            if (clientDetails[host][entity.id].config.accuracyDecimals != null) {
-                const rounding = `round(${clientDetails[host][entity.id].config.accuracyDecimals})`;
+            if (entityDetails(host, entity.id).config.accuracyDecimals != null) {
+                const rounding = `round(${entityDetails(host, entity.id).config.accuracyDecimals})`;
                 this.log.debug(
-                    `Value "${stateVal}" for name "${entity}" before function modify with method "round(${clientDetails[host][entity.id].config.accuracyDecimals})"`,
+                    `Value "${stateVal}" for name "${entity}" before function modify with method "round(${entityDetails(host, entity.id).config.accuracyDecimals})"`,
                 );
                 stateVal = this.modify(rounding, stateVal);
                 this.log.debug(
@@ -1210,7 +1264,7 @@ class Esphome extends utils.Adapter {
             }
 
             //ToDo review this code section
-            const stateCommon = {};
+            const stateCommon: Partial<ioBroker.StateCommon> = {};
 
             if (entity.config.optionsList != null) {
                 stateCommon.states = entity.config.optionsList;
@@ -1219,7 +1273,7 @@ class Esphome extends utils.Adapter {
                 `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.state`,
                 `State of ${entity.config.name}`,
                 stateVal,
-                clientDetails[host][entity.id].unit,
+                entityDetails(host, entity.id).unit,
                 writable,
                 stateCommon,
             );
@@ -1235,11 +1289,11 @@ class Esphome extends utils.Adapter {
      * @param {object} entity Entity-Object of value
      * @param {object} state State-Object
      */
-    async handleStateArrays(host, entity, state) {
+    async handleStateArrays(host: string, entity: Entity, state: EntityState) {
         try {
-            clientDetails[host][entity.id].states = state;
+            entityDetails(host, entity.id).states = state;
 
-            for (const stateName in clientDetails[host][entity.id].states) {
+            for (const stateName in entityDetails(host, entity.id).states) {
                 let unit = '';
                 let writable = true;
                 let writeValue = state[stateName];
@@ -1249,7 +1303,7 @@ class Esphome extends utils.Adapter {
                     case 'currentTemperature':
                         unit = `°C`;
                         writable = false;
-                        clientDetails[host][entity.id].states.currentTemperature = this.modify(
+                        entityDetails(host, entity.id).states!.currentTemperature = this.modify(
                             'round(2)',
                             state[stateName],
                         );
@@ -1257,7 +1311,7 @@ class Esphome extends utils.Adapter {
 
                     case 'oscillating': // Sensor type = Fan
                         // Check if entity supports oscillation
-                        if (!clientDetails[host][entity.id].config.supportsOscillation) {
+                        if (!entityDetails(host, entity.id).config.supportsOscillation) {
                             writable = false;
                         }
                         break;
@@ -1270,8 +1324,8 @@ class Esphome extends utils.Adapter {
                         // Sensor type = Fan
                         // Check if entity supports speed levels, ESPHome renamed supportedSpeedLevels to supportedSpeedCount
                         const supportedSpeedLevels =
-                            clientDetails[host][entity.id].config.supportedSpeedCount ??
-                            clientDetails[host][entity.id].config.supportedSpeedLevels;
+                            entityDetails(host, entity.id).config.supportedSpeedCount ??
+                            entityDetails(host, entity.id).config.supportedSpeedLevels;
                         if (
                             supportedSpeedLevels === null ||
                             supportedSpeedLevels === undefined ||
@@ -1284,7 +1338,7 @@ class Esphome extends utils.Adapter {
 
                     case 'direction': // Sensor type = Fan
                         // Check if entity supports direction
-                        if (!clientDetails[host][entity.id].config.supportsDirection) {
+                        if (!entityDetails(host, entity.id).config.supportsDirection) {
                             writable = false;
                         }
                         break;
@@ -1314,7 +1368,7 @@ class Esphome extends utils.Adapter {
                     writeValue = Math.round(state[stateName] * 100 * 2.55);
 
                     // Create transitionLength state only ones
-                    if (clientDetails[host][entity.id].states.transitionLength == null) {
+                    if (entityDetails(host, entity.id).states!.transitionLength == null) {
                         // Check if state already exists
                         let transitionLength;
                         try {
@@ -1325,7 +1379,7 @@ class Esphome extends utils.Adapter {
 
                             // Check if state contains value
                             if (transitionLength) {
-                                clientDetails[host][entity.id].states.transitionLength = transitionLength.val;
+                                entityDetails(host, entity.id).states!.transitionLength = transitionLength.val;
                                 // Run create state routine to ensure state is cached in memory
                                 await this.stateSetCreate(
                                     `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`,
@@ -1343,7 +1397,7 @@ class Esphome extends utils.Adapter {
                                     `ms`,
                                     writable,
                                 );
-                                clientDetails[host][entity.id].states.transitionLength = 0;
+                                entityDetails(host, entity.id).states!.transitionLength = 0;
                             }
                         } catch {
                             // Else create it
@@ -1354,12 +1408,12 @@ class Esphome extends utils.Adapter {
                                 `ms`,
                                 writable,
                             );
-                            clientDetails[host][entity.id].states.transitionLength = 0;
+                            entityDetails(host, entity.id).states!.transitionLength = 0;
                         }
                     }
 
                     // Create rgbAutoWhite state only once for lights with a dedicated white channel
-                    if (stateName === 'white' && clientDetails[host][entity.id].rgbAutoWhite === undefined) {
+                    if (stateName === 'white' && entityDetails(host, entity.id).rgbAutoWhite === undefined) {
                         let rgbAutoWhiteVal = false;
                         try {
                             const existing = await this.getStateAsync(
@@ -1371,7 +1425,7 @@ class Esphome extends utils.Adapter {
                         } catch (e) {
                             this.log.debug(`[handleStateArrays] Could not read rgbAutoWhite state: ${e}`);
                         }
-                        clientDetails[host][entity.id].rgbAutoWhite = rgbAutoWhiteVal;
+                        entityDetails(host, entity.id).rgbAutoWhite = rgbAutoWhiteVal;
                         // Ensure config channel exists before creating the state inside it
                         await this.extendObjectAsync(
                             `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config`,
@@ -1404,14 +1458,14 @@ class Esphome extends utils.Adapter {
 
             // Convert RGB to HEX and write to state
             if (
-                clientDetails[host][entity.id].states.red != null &&
-                clientDetails[host][entity.id].states.blue != null &&
-                clientDetails[host][entity.id].states.green != null
+                entityDetails(host, entity.id).states!.red != null &&
+                entityDetails(host, entity.id).states!.blue != null &&
+                entityDetails(host, entity.id).states!.green != null
             ) {
                 const hexValue = this.rgbToHex(
-                    Math.round(clientDetails[host][entity.id].states.red * 100 * 2.55),
-                    Math.round(clientDetails[host][entity.id].states.green * 100 * 2.55),
-                    Math.round(clientDetails[host][entity.id].states.blue * 100 * 2.55),
+                    Math.round(entityDetails(host, entity.id).states!.red * 100 * 2.55),
+                    Math.round(entityDetails(host, entity.id).states!.green * 100 * 2.55),
+                    Math.round(entityDetails(host, entity.id).states!.blue * 100 * 2.55),
                 );
                 await this.stateSetCreate(
                     `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.colorHEX`,
@@ -1435,7 +1489,13 @@ class Esphome extends utils.Adapter {
      * @param {boolean} replaceID Steers if ID from child should be used as ID for structure element (channel); default=false;
      * @param {number} state_expire expire time for the current setState in seconds; default is no expire
      */
-    async traverseJson(jObject, parent = null, replaceName = false, replaceID = false, state_expire = 0) {
+    async traverseJson(
+        jObject: any,
+        parent: string | null = null,
+        replaceName = false,
+        replaceID = false,
+        state_expire = 0,
+    ) {
         let id = null;
         let value = null;
         let name = null;
@@ -1518,12 +1578,12 @@ class Esphome extends utils.Adapter {
      * @param {object} initialStateCommon Additional attributes for state.common
      */
     async stateSetCreate(
-        objName,
-        name,
-        value,
-        unit,
-        writable,
-        /** Partial<ioBroker.StateCommon> */ initialStateCommon = {},
+        objName: string,
+        name: string,
+        value?: boolean | string | number | null,
+        unit?: string,
+        writable?: boolean,
+        initialStateCommon: Partial<ioBroker.StateCommon> = {},
     ) {
         this.log.debug(`Create_state called for : ${objName} with value : ${value}`);
         try {
@@ -1543,7 +1603,7 @@ class Esphome extends utils.Adapter {
 
             // default to type string if value is null to avoid errors like:
             //   Object 004B1296140C.info.area is invalid: obj.common.type has an invalid value (undefined) but has to be one of number, string, boolean, array, object, mixed, json This will throw an error up from js-controller version 7.0.0!
-            common.type = value == null ? 'string' : typeof value;
+            common.type = (value == null ? 'string' : typeof value) as ioBroker.CommonType;
 
             common.role = stateAttr[name] !== undefined ? stateAttr[name].role || 'state' : 'state';
             common.read = true;
@@ -1597,7 +1657,7 @@ class Esphome extends utils.Adapter {
      * @param {string} codepart Function were exception occurred
      * @param {unknown} error Caught value, anything can be thrown in JavaScript
      */
-    errorHandler(codepart, error) {
+    errorHandler(codepart: string, error: unknown) {
         let errorMsg = error;
         if (error instanceof Error && error.stack != null) {
             errorMsg = error.stack;
@@ -1627,7 +1687,7 @@ class Esphome extends utils.Adapter {
      *
      * @param {string} string String to replace invalid chars
      */
-    escapeRegExp(string) {
+    escapeRegExp(string: string) {
         return string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
     }
 
@@ -1638,7 +1698,7 @@ class Esphome extends utils.Adapter {
      * @param {string} find String to find for replace function
      * @param {string} replace String to replace
      */
-    replaceAll(str, find, replace) {
+    replaceAll(str: string, find: string, replace: string) {
         return str.replace(new RegExp(this.escapeRegExp(find), 'g'), replace);
     }
 
@@ -1648,7 +1708,7 @@ class Esphome extends utils.Adapter {
      * @param {string} method defines the method to be executed (e.g. round())
      * @returns {string} text between the brackets, empty when the method has no argument
      */
-    modifyArgument(method) {
+    modifyArgument(method: string) {
         const inBracket = method.match(/(?<=\()(.*?)(?=\))/);
         return inBracket ? inBracket[0] : '';
     }
@@ -1659,7 +1719,7 @@ class Esphome extends utils.Adapter {
      * @param {string} method defines the method to be executed (e.g. round())
      * @param {string | number | boolean} value value to be executed
      */
-    modify(method, value) {
+    modify(method: string, value: string | number | boolean) {
         this.log.debug(`Function modify with method "${method}" and value "${value}"`);
         let result = null;
         try {
@@ -1723,7 +1783,7 @@ class Esphome extends utils.Adapter {
      *
      * @param {() => void} callback - Callback function to call when unload is complete
      */
-    onUnload(callback) {
+    onUnload(callback: () => void) {
         try {
             // this.log.debug(JSON.stringify(clientDetails));
 
@@ -1745,7 +1805,7 @@ class Esphome extends utils.Adapter {
                 }
 
                 try {
-                    clientDetails[device].client.disconnect();
+                    clientDetails[device].client!.disconnect();
                 } catch (e) {
                     this.log.debug(`[onUnload] ${JSON.stringify(e)}`);
                 }
@@ -1781,7 +1841,7 @@ class Esphome extends utils.Adapter {
      * @param {string} ipAddress
      */
 
-    validateIPAddress(ipAddress) {
+    validateIPAddress(ipAddress: string) {
         return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
             ipAddress,
         );
@@ -1793,7 +1853,7 @@ class Esphome extends utils.Adapter {
      *
      * @param {ioBroker.Message} obj - The message object
      */
-    async onMessage(obj) {
+    async onMessage(obj: ioBroker.Message) {
         this.log.debug(`Data from configuration received : ${JSON.stringify(obj)}`);
         try {
             switch (obj.command) {
@@ -1810,7 +1870,6 @@ class Esphome extends utils.Adapter {
                             type: 'error',
                             message: 'connection failed',
                         };
-                        // @ts-expect-error massageObj type mismatch with respond method signature
                         this.respond(massageObj, obj);
                     } else {
                         this.log.info(`Valid IP address received`);
@@ -1986,7 +2045,7 @@ class Esphome extends utils.Adapter {
                         const encryptionKeyUsed = !!(
                             obj.message.encryptionKey && obj.message.encryptionKey !== 'undefined'
                         );
-                        clientDetails[obj.message.ip] = new clientDevice();
+                        clientDetails[obj.message.ip] = new ClientDetails();
                         clientDetails[obj.message.ip].storeConnectDetails(
                             obj.message.ip,
                             encryptionKeyUsed,
@@ -2007,14 +2066,14 @@ class Esphome extends utils.Adapter {
                         // Ensure all existing connections are closed, will trigger disconnect event to clean-up memory attributes
                         try {
                             // if (clientDetails[obj.message.ip].connected) clientDetails[obj.message.ip].client.disconnect();
-                            clientDetails[obj.message.ip].client.disconnect();
+                            clientDetails[obj.message.ip].client!.disconnect();
                         } catch {
                             // There was no connection in memory
                         }
                         // Clean memory data and init device again with a little delay
 
                         if (resetTimers[obj.message.ip]) {
-                            resetTimers[obj.message.ip] = this.clearTimeout(resetTimers[obj.message.ip]);
+                            resetTimers[obj.message.ip] = this.clearTimeout(resetTimers[obj.message.ip] as ioBroker.Timeout | undefined);
                         }
                         resetTimers[obj.message.ip] = this.setTimeout(async () => {
                             delete clientDetails[obj.message.ip];
@@ -2028,10 +2087,10 @@ class Esphome extends utils.Adapter {
                     this.messageResponse[obj.message.ip] = obj;
                     if (clientDetails[obj.message.ip]) {
                         // Ensure all existing connections are closed, will trigger disconnect event to clean-up memory attributes
-                        clientDetails[obj.message.ip].client.disconnect();
+                        clientDetails[obj.message.ip].client!.disconnect();
                         // Try to delete Device Object including all underlying states
                         try {
-                            await this.delObjectAsync(clientDetails[obj.message.ip].deviceName, { recursive: true });
+                            await this.delObjectAsync(clientDetails[obj.message.ip].deviceName!, { recursive: true });
                         } catch {
                             // Deleting device channel failed
                         }
@@ -2041,10 +2100,10 @@ class Esphome extends utils.Adapter {
 
                         // Send confirmation to frontend
                         this.sendTo(
-                            this.messageResponse[obj.message.ip].from,
-                            this.messageResponse[obj.message.ip].command,
+                            this.messageResponse[obj.message.ip]!.from,
+                            this.messageResponse[obj.message.ip]!.command,
                             { result: 'OK - Device successfully removed' },
-                            this.messageResponse[obj.message.ip].callback,
+                            this.messageResponse[obj.message.ip]!.callback,
                         );
                         delete this.messageResponse[obj.message.ip];
                     } else {
@@ -2164,7 +2223,7 @@ class Esphome extends utils.Adapter {
      * @param {Array<string | {label: string, value: string}>} dropDownEntry - dropDown entries to extend
      * @param {string} version - version which must be selectable
      */
-    ensureVersionInDropDown(dropDownEntry, version) {
+    ensureVersionInDropDown(dropDownEntry: (string | { label: string; value: string })[], version: string) {
         const known = dropDownEntry.some(entry => (typeof entry === 'string' ? entry : entry.value) === version);
         if (!known) {
             dropDownEntry.push({ label: version, value: version });
@@ -2182,7 +2241,7 @@ class Esphome extends utils.Adapter {
         try {
             const response = await fetch('https://pypi.org/pypi/pillow/json');
             if (response.ok) {
-                const data = /** @type {{ releases: Record<string, unknown> }} */ await response.json();
+                const data = (await response.json()) as { releases: Record<string, unknown> };
                 const versions = Object.keys(data.releases)
                     .filter(v => !v.includes('a') && !v.includes('b') && !v.includes('rc')) // Filter out alpha/beta/rc versions
                     .sort((a, b) => {
@@ -2272,13 +2331,13 @@ class Esphome extends utils.Adapter {
      * @param {string} response - The response message
      * @param {object} obj - The original message object
      */
-    respond(response, obj) {
+    respond(response: ioBroker.MessagePayload, obj: ioBroker.Message) {
         if (obj.callback) {
             this.sendTo(obj.from, obj.command, response, obj.callback);
         }
     }
 
-    hexToRgb(hex) {
+    hexToRgb(hex: string) {
         const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
         hex = hex.replace(shorthandRegex, function (m, r, g, b) {
             return r + r + g + g + b + b;
@@ -2294,8 +2353,8 @@ class Esphome extends utils.Adapter {
             : null;
     }
 
-    rgbToHex(r, g, b) {
-        function componentToHex(color) {
+    rgbToHex(r: number, g: number, b: number) {
+        function componentToHex(color: number) {
             const hex = color.toString(16);
             return hex.length === 1 ? `0${hex}` : hex;
         }
@@ -2308,7 +2367,7 @@ class Esphome extends utils.Adapter {
      * @param {string} id - The state ID that changed
      * @param {ioBroker.State | null | undefined} state - The new state value
      */
-    async onStateChange(id, state) {
+    async onStateChange(id: string, state: ioBroker.State | null | undefined) {
         try {
             if (state && state.ack === false) {
                 const device = id.split('.');
@@ -2337,96 +2396,99 @@ class Esphome extends utils.Adapter {
                     return;
                 }
                 const deviceIP = this.deviceStateRelation[deviceName].ip;
+                // The commands get the entity key as the string taken from the state id, as before the
+                // TypeScript migration, although the library types it as number
+                const entityKey = device[4] as unknown as number;
 
                 // Handle Switch State
-                if (clientDetails[deviceIP][device[4]].type === `Switch`) {
-                    await clientDetails[deviceIP].client.connection.switchCommandService({
-                        key: device[4],
-                        state: state.val,
+                if (entityDetails(deviceIP, device[4]).type === `Switch`) {
+                    await clientDetails[deviceIP].client!.connection.switchCommandService({
+                        key: entityKey,
+                        state: state.val as boolean,
                     });
 
                     // Handle Fan State
-                } else if (clientDetails[deviceIP][device[4]].type === `Fan`) {
+                } else if (entityDetails(deviceIP, device[4]).type === `Fan`) {
                     // Validate that the state key exists before updating
                     const validFanStates = ['state', 'speed', 'speedLevel', 'direction', 'oscillating'];
                     if (validFanStates.includes(device[5])) {
                         // Update the state in memory
-                        clientDetails[deviceIP][device[4]].states[device[5]] = state.val;
+                        entityDetails(deviceIP, device[4]).states![device[5]] = state.val;
                         // Call fan command service with all current states
-                        await clientDetails[deviceIP].client.connection.fanCommandService(
-                            clientDetails[deviceIP][device[4]].states,
+                        await clientDetails[deviceIP].client!.connection.fanCommandService(
+                            entityDetails(deviceIP, device[4]).states as FanCommandData,
                         );
                     } else {
                         this.log.warn(`Invalid fan state key "${device[5]}" for device ${device[2]}`);
                     }
 
                     // Handle Climate State
-                } else if (clientDetails[deviceIP][device[4]].type === `Climate`) {
-                    clientDetails[deviceIP][device[4]].states[device[5]] = state.val;
-                    await clientDetails[deviceIP].client.connection.climateCommandService(
-                        clientDetails[deviceIP][device[4]].states,
+                } else if (entityDetails(deviceIP, device[4]).type === `Climate`) {
+                    entityDetails(deviceIP, device[4]).states![device[5]] = state.val;
+                    await clientDetails[deviceIP].client!.connection.climateCommandService(
+                        entityDetails(deviceIP, device[4]).states as ClimateCommandData,
                     );
 
                     // Handle Number State
-                } else if (clientDetails[deviceIP][device[4]].type === `Number`) {
-                    await clientDetails[deviceIP].client.connection.numberCommandService({
-                        key: device[4],
-                        state: state.val,
+                } else if (entityDetails(deviceIP, device[4]).type === `Number`) {
+                    await clientDetails[deviceIP].client!.connection.numberCommandService({
+                        key: entityKey,
+                        state: state.val as number,
                     });
 
                     // Handle Text State
-                } else if (clientDetails[deviceIP][device[4]].type === `Text`) {
-                    await clientDetails[deviceIP].client.connection.textCommandService({
-                        key: device[4],
-                        state: state.val,
+                } else if (entityDetails(deviceIP, device[4]).type === `Text`) {
+                    await clientDetails[deviceIP].client!.connection.textCommandService({
+                        key: entityKey,
+                        state: state.val as string,
                     });
 
                     // Handle Button State
-                } else if (clientDetails[deviceIP][device[4]].type === `Button`) {
-                    await clientDetails[deviceIP].client.connection.buttonCommandService({
-                        key: device[4],
+                } else if (entityDetails(deviceIP, device[4]).type === `Button`) {
+                    await clientDetails[deviceIP].client!.connection.buttonCommandService({
+                        key: entityKey,
                     });
 
                     // Handle Select State
-                } else if (clientDetails[deviceIP][device[4]].type === `Select`) {
-                    await clientDetails[deviceIP].client.connection.selectCommandService({
-                        key: device[4],
-                        state: state.val,
+                } else if (entityDetails(deviceIP, device[4]).type === `Select`) {
+                    await clientDetails[deviceIP].client!.connection.selectCommandService({
+                        key: entityKey,
+                        state: state.val as string,
                     });
 
                     // Handle Lock Command
-                } else if (clientDetails[deviceIP][device[4]].type === `Lock` && device[5] === `command`) {
-                    await clientDetails[deviceIP].client.connection.lockCommandService({
-                        key: device[4],
-                        command: state.val,
+                } else if (entityDetails(deviceIP, device[4]).type === `Lock` && device[5] === `command`) {
+                    await clientDetails[deviceIP].client!.connection.lockCommandService({
+                        key: entityKey,
+                        command: state.val as LockCommand,
                     });
 
                     // Handle Cover Position
                 } else if (device[5] === `position`) {
-                    // clientDetails[deviceIP][device[4]].states[device[5]] = state.val;
+                    // entityDetails(deviceIP, device[4]).states[device[5]] = state.val;
                     // State is 0-100 %, ESPHome expects 0-1
-                    await clientDetails[deviceIP].client.connection.coverCommandService({
-                        key: device[4],
+                    await clientDetails[deviceIP].client!.connection.coverCommandService({
+                        key: entityKey,
                         position: Number(state.val) / 100,
                     });
 
                     // Handle Cover Tilt
                 } else if (device[5] === `tilt`) {
-                    // clientDetails[deviceIP][device[4]].states[device[5]] = state.val;
+                    // entityDetails(deviceIP, device[4]).states[device[5]] = state.val;
                     // State is 0-100 %, ESPHome expects 0-1
-                    await clientDetails[deviceIP].client.connection.coverCommandService({
-                        key: device[4],
+                    await clientDetails[deviceIP].client!.connection.coverCommandService({
+                        key: entityKey,
                         tilt: Number(state.val) / 100,
                     });
 
                     // Handle Cover Stop
                 } else if (device[5] === `stop`) {
-                    // clientDetails[deviceIP][device[4]].states[device[5]] = state.val;
-                    await clientDetails[deviceIP].client.connection.coverCommandService({
-                        key: device[4],
+                    // entityDetails(deviceIP, device[4]).states[device[5]] = state.val;
+                    await clientDetails[deviceIP].client!.connection.coverCommandService({
+                        key: entityKey,
                         stop: true,
                     });
-                } else if (clientDetails[deviceIP][device[4]].type === `Light`) {
+                } else if (entityDetails(deviceIP, device[4]).type === `Light`) {
                     let writeValue = state.val;
                     // Add unit to temperature states
                     if (
@@ -2444,39 +2506,39 @@ class Esphome extends utils.Adapter {
                         writeValue = Number(writeValue) / 100 / 2.55;
 
                         // Store value to memory
-                        clientDetails[deviceIP][device[4]].states[device[5]] = writeValue;
+                        entityDetails(deviceIP, device[4]).states![device[5]] = writeValue;
                     } else if (device[5] === `colorMode`) {
-                        clientDetails[deviceIP][device[4]].states.colorMode = writeValue;
+                        entityDetails(deviceIP, device[4]).states!.colorMode = writeValue;
                     } else if (device[5] === `colorHEX`) {
                         // Convert hex to rgb
-                        const rgbConversion = this.hexToRgb(writeValue);
+                        const rgbConversion = this.hexToRgb(writeValue as string);
                         if (!rgbConversion) {
                             return;
                         }
-                        clientDetails[deviceIP][device[4]].states.red = rgbConversion.red / 100 / 2.55;
-                        clientDetails[deviceIP][device[4]].states.blue = rgbConversion.blue / 100 / 2.55;
-                        clientDetails[deviceIP][device[4]].states.green = rgbConversion.green / 100 / 2.55;
+                        entityDetails(deviceIP, device[4]).states!.red = rgbConversion.red / 100 / 2.55;
+                        entityDetails(deviceIP, device[4]).states!.blue = rgbConversion.blue / 100 / 2.55;
+                        entityDetails(deviceIP, device[4]).states!.green = rgbConversion.green / 100 / 2.55;
                     } else if (device[5] === `transitionLength`) {
-                        clientDetails[deviceIP][device[4]].states[device[5]] = writeValue;
+                        entityDetails(deviceIP, device[4]).states![device[5]] = writeValue;
                     } else if (device[5] === 'effect') {
-                        clientDetails[deviceIP][device[4]].states.effect = writeValue;
+                        entityDetails(deviceIP, device[4]).states!.effect = writeValue;
                     } else if (device[5] === 'state') {
-                        clientDetails[deviceIP][device[4]].states.state = writeValue;
+                        entityDetails(deviceIP, device[4]).states!.state = writeValue;
                     } else if (device[5] === 'config' && device[6] === 'rgbAutoWhite') {
                         // Store device-specific preference; no light command needed
-                        clientDetails[deviceIP][device[4]].rgbAutoWhite = writeValue;
+                        entityDetails(deviceIP, device[4]).rgbAutoWhite = writeValue as boolean;
                         // Acknowledge the preference update so the state does not stay with ack=false
                         this.setState(id, !!writeValue, true);
                         return;
                     }
 
-                    const data = {
-                        key: clientDetails[deviceIP][device[4]].states.key,
-                        state: clientDetails[deviceIP][device[4]].states.state,
-                        transitionLength: clientDetails[deviceIP][device[4]].states.transitionLength,
+                    const data: LightCommandData = {
+                        key: entityDetails(deviceIP, device[4]).states!.key,
+                        state: entityDetails(deviceIP, device[4]).states!.state,
+                        transitionLength: entityDetails(deviceIP, device[4]).states!.transitionLength,
                     };
 
-                    const lightConfig = clientDetails[deviceIP][device[4]].config;
+                    const lightConfig = entityDetails(deviceIP, device[4]).config;
                     const colorModesList = lightConfig.supportedColorModesList || [];
                     // The values in supportedColorModesList are the ColorMode enum from
                     // api.proto, which is a bitmask of ColorCapability and not a running
@@ -2485,73 +2547,73 @@ class Esphome extends utils.Adapter {
                     // RGB_COLD_WARM_WHITE=51. Test the capability bits, not membership.
                     const supportsRgb =
                         lightConfig.legacySupportsRgb === true ||
-                        colorModesList.some(m => (m & COLOR_CAPABILITY.RGB) !== 0);
+                        colorModesList.some((m: number) => (m & COLOR_CAPABILITY.RGB) !== 0);
                     const supportsBrightness =
                         lightConfig.legacySupportsBrightness === true ||
-                        colorModesList.some(m => (m & COLOR_CAPABILITY.BRIGHTNESS) !== 0);
+                        colorModesList.some((m: number) => (m & COLOR_CAPABILITY.BRIGHTNESS) !== 0);
                     const supportsWhite =
                         lightConfig.legacySupportsWhiteValue === true ||
-                        colorModesList.some(m => (m & COLOR_CAPABILITY.WHITE) !== 0);
+                        colorModesList.some((m: number) => (m & COLOR_CAPABILITY.WHITE) !== 0);
                     const supportsColorTemp =
                         lightConfig.legacySupportsColorTemperature === true ||
-                        colorModesList.some(m => (m & COLOR_CAPABILITY.COLOR_TEMPERATURE) !== 0);
+                        colorModesList.some((m: number) => (m & COLOR_CAPABILITY.COLOR_TEMPERATURE) !== 0);
                     const supportsColdWarmWhite = colorModesList.some(
-                        m => (m & COLOR_CAPABILITY.COLD_WARM_WHITE) !== 0,
+                        (m: number) => (m & COLOR_CAPABILITY.COLD_WARM_WHITE) !== 0,
                     );
 
                     // Auto white channel: when colorHEX is set to white (#ffffff) on RGBW lights,
                     // automatically switch to white channel; otherwise switch to RGB mode
-                    if (clientDetails[deviceIP][device[4]].rgbAutoWhite && supportsWhite && device[5] === 'colorHEX') {
+                    if (entityDetails(deviceIP, device[4]).rgbAutoWhite && supportsWhite && device[5] === 'colorHEX') {
                         if (String(writeValue).replace(/^#/, '').toLowerCase() === 'ffffff') {
                             // White color detected: redirect to dedicated white channel
-                            clientDetails[deviceIP][device[4]].states.red = 0;
-                            clientDetails[deviceIP][device[4]].states.green = 0;
-                            clientDetails[deviceIP][device[4]].states.blue = 0;
-                            clientDetails[deviceIP][device[4]].states.white = 1;
+                            entityDetails(deviceIP, device[4]).states!.red = 0;
+                            entityDetails(deviceIP, device[4]).states!.green = 0;
+                            entityDetails(deviceIP, device[4]).states!.blue = 0;
+                            entityDetails(deviceIP, device[4]).states!.white = 1;
                         } else {
                             // Non-white color: disable white channel
-                            clientDetails[deviceIP][device[4]].states.white = 0;
+                            entityDetails(deviceIP, device[4]).states!.white = 0;
                         }
                     }
 
                     if (supportsBrightness) {
-                        data.brightness = clientDetails[deviceIP][device[4]].states.brightness;
+                        data.brightness = entityDetails(deviceIP, device[4]).states!.brightness;
                     }
                     if (supportsRgb) {
-                        data.red = clientDetails[deviceIP][device[4]].states.red;
-                        data.green = clientDetails[deviceIP][device[4]].states.green;
-                        data.blue = clientDetails[deviceIP][device[4]].states.blue;
+                        data.red = entityDetails(deviceIP, device[4]).states!.red;
+                        data.green = entityDetails(deviceIP, device[4]).states!.green;
+                        data.blue = entityDetails(deviceIP, device[4]).states!.blue;
                     }
                     if (supportsWhite) {
-                        data.white = clientDetails[deviceIP][device[4]].states.white;
+                        data.white = entityDetails(deviceIP, device[4]).states!.white;
                     }
                     if (supportsColorTemp) {
-                        data.colorTemperature = clientDetails[deviceIP][device[4]].states.colorTemperature;
+                        data.colorTemperature = entityDetails(deviceIP, device[4]).states!.colorTemperature;
                     }
                     // Include new color fields for non-legacy devices using supportedColorModesList
                     if (colorModesList.length > 0) {
-                        if (clientDetails[deviceIP][device[4]].states.colorMode !== undefined) {
-                            data.colorMode = clientDetails[deviceIP][device[4]].states.colorMode;
+                        if (entityDetails(deviceIP, device[4]).states!.colorMode !== undefined) {
+                            data.colorMode = entityDetails(deviceIP, device[4]).states!.colorMode;
                         }
-                        if (supportsRgb && clientDetails[deviceIP][device[4]].states.colorBrightness !== undefined) {
-                            data.colorBrightness = clientDetails[deviceIP][device[4]].states.colorBrightness;
+                        if (supportsRgb && entityDetails(deviceIP, device[4]).states!.colorBrightness !== undefined) {
+                            data.colorBrightness = entityDetails(deviceIP, device[4]).states!.colorBrightness;
                         }
                         if (supportsColdWarmWhite) {
-                            if (clientDetails[deviceIP][device[4]].states.coldWhite !== undefined) {
-                                data.coldWhite = clientDetails[deviceIP][device[4]].states.coldWhite;
+                            if (entityDetails(deviceIP, device[4]).states!.coldWhite !== undefined) {
+                                data.coldWhite = entityDetails(deviceIP, device[4]).states!.coldWhite;
                             }
-                            if (clientDetails[deviceIP][device[4]].states.warmWhite !== undefined) {
-                                data.warmWhite = clientDetails[deviceIP][device[4]].states.warmWhite;
+                            if (entityDetails(deviceIP, device[4]).states!.warmWhite !== undefined) {
+                                data.warmWhite = entityDetails(deviceIP, device[4]).states!.warmWhite;
                             }
                         }
                     }
-                    const effect = clientDetails[deviceIP][device[4]].states.effect;
+                    const effect = entityDetails(deviceIP, device[4]).states!.effect;
                     if (effect !== '' && effect !== null && effect !== undefined) {
                         data.effect = effect;
                     }
 
                     this.log.debug(`Send Light values ${JSON.stringify(data)}`);
-                    await clientDetails[deviceIP].client.connection.lightCommandService(data);
+                    await clientDetails[deviceIP].client!.connection.lightCommandService(data);
                 }
             }
         } catch (e) {
@@ -2566,8 +2628,8 @@ class Esphome extends utils.Adapter {
      * @param {object} entity - The entity object from ESPHome API
      * @returns {Promise<void>}
      */
-    async createNonStateDevices(host, entity) {
-        switch (clientDetails[host][entity.id].type) {
+    async createNonStateDevices(host: string, entity: Entity) {
+        switch (entityDetails(host, entity.id).type) {
             case 'Button': {
                 await this.stateSetCreate(
                     `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.SET`,
@@ -2610,7 +2672,7 @@ class Esphome extends utils.Adapter {
         }
     }
 
-    async objectCleanup(ip) {
+    async objectCleanup(ip: string) {
         try {
             this.log.debug(
                 `[objectCleanup] Starting channel and state cleanup for ${clientDetails[ip].deviceFriendlyName} | ${ip}`,
@@ -2700,7 +2762,13 @@ class Esphome extends utils.Adapter {
      * @param {boolean} [connectionError] Indicator if a connection error (like incorrect password or timeout) is present
      * @returns void
      */
-    async updateConnectionStatus(host, connected, connecting, connectionStatus, connectionError) {
+    async updateConnectionStatus(
+        host: string,
+        connected: boolean,
+        connecting: boolean,
+        connectionStatus?: string,
+        connectionError?: boolean,
+    ) {
         try {
             // Cancel operation if host is unknown
             if (!clientDetails[host]) {
@@ -2740,12 +2808,8 @@ class Esphome extends utils.Adapter {
 
 if (require.main !== module) {
     // Export the constructor in compact mode
-    /**
-     * @param {Partial<utils.AdapterOptions>} [options] - Adapter configuration options
-     */
-    module.exports = options => new Esphome(options);
+    module.exports = (options: Partial<utils.AdapterOptions> | undefined) => new Esphome(options);
 } else {
     // otherwise start the instance directly
     new Esphome();
 }
-//# sourceMappingURL=main.js.map

@@ -45,6 +45,8 @@ export default [
             '@typescript-eslint/no-base-to-string': 'off',
             '@typescript-eslint/no-floating-promises': 'off',
             '@typescript-eslint/no-for-in-array': 'off',
+            // Commands of the native API return nothing but are awaited, cleaned up when main.ts is linted
+            '@typescript-eslint/await-thenable': 'off',
             // JSDoc carries the types in JavaScript, and the JSDoc casts need their parentheses
             'jsdoc/no-types': 'off',
             'jsdoc/check-tag-names': 'off',
