@@ -1,66 +1,64 @@
-// @ts-nocheck
-/**
- * @module class
- */
+import type { Client, DeviceInfoResponse } from '@2colors/esphome-native-api';
 
 /**
  * Device Info a device status object to manage connections and relations
- *
- * @returns {object} ip IP-Address of device
  */
 class DeviceInfo {
-    //ToDO: this object should have deeper typ-definition to ensure code & module events are verified
-    adapterObjects = {
+    /** Channels this adapter already created for the device */
+    adapterObjects: { channels: string[] } = {
         channels: [],
     };
-    client = null;
+    client: Client | null = null;
     connected = false;
     connecting = false;
     connectionError = false;
     connectionDestroyedLogged = false;
     connectStatus = 'Initialisation needed';
     deletionRequested = false;
-    /** @type {string | null} */
-    deviceFriendlyName = null;
-    deviceInfo = null;
-    /** @type {string | null} */
-    deviceName = null;
+    deviceFriendlyName: string | null = null;
+    /** Device information as reported by the device after connecting */
+    deviceInfo: DeviceInfoResponse | null = null;
+    /** MAC address of the device without ":" */
+    deviceName: string | null = null;
     initialized = false;
-    /** @type {string | null} */
-    ip = null;
-    /** @type {string | null} */
-    mac = null;
+    ip: string | null = null;
+    mac: string | null = null;
 }
 
 /**
  * Client detail object to handle all relevant information for connection status
- *
- * @param {string | undefined} ip IP-Address of device
- * @param {string} apiPassword API password of device
- * @param {boolean} encryptionKeyUsed Indicated if encryption must be used
- * @param {string} encryptionKey Encryption key of device
- * @param {string | undefined} [macAddress] MAC-Address of a device
- * @param {string | undefined} [deviceName] Name of a device (MAC address without ":")
- * @param {string | undefined} [deviceFriendlyName] Friendly name of a device taken from YAML configuration
  */
 class ClientDetails extends DeviceInfo {
+    // Only set by the store* methods below, "declare" keeps them out of the emitted class fields
+    declare apiPassword?: string | null;
+    declare encryptionKey?: string | null;
+    declare encryptionKeyUsed?: boolean;
+
     /**
      * Store mandatory connection details
      *
-     * @param {string} ip IP-Address of device
-     * @param {boolean} encryptionKeyUsed Indicated if encryption must be used
-     * @param {string} [apiPassword] API password of device
-     * @param {string} [encryptionKey] Encryption key of device
-     * @param {string | undefined} [macAddress] MAC-Address of a device
-     * @param {string | undefined} [deviceName] Name of a device (MAC address without ":")
-     * @param {string | undefined} [deviceFriendlyName] Friendly name of a device taken from YAML configuration
+     * @param ip IP-Address of device
+     * @param encryptionKeyUsed Indicated if encryption must be used
+     * @param [apiPassword] API password of device
+     * @param [encryptionKey] Encryption key of device
+     * @param [macAddress] MAC-Address of a device
+     * @param [deviceName] Name of a device (MAC address without ":")
+     * @param [deviceFriendlyName] Friendly name of a device taken from YAML configuration
      */
-    storeConnectDetails(ip, encryptionKeyUsed, apiPassword, encryptionKey, macAddress, deviceName, deviceFriendlyName) {
+    storeConnectDetails(
+        ip: string,
+        encryptionKeyUsed: boolean,
+        apiPassword?: string,
+        encryptionKey?: string,
+        macAddress?: string,
+        deviceName?: string,
+        deviceFriendlyName?: string,
+    ): void {
         this.apiPassword = apiPassword;
         this.deviceFriendlyName = deviceFriendlyName ? deviceFriendlyName : 'Initialisation needed';
         this.deviceName = deviceName ? deviceName : 'Initialisation needed';
         this.ip = ip;
-        this.mac = macAddress = macAddress ? macAddress : 'Initialisation needed';
+        this.mac = macAddress ? macAddress : 'Initialisation needed';
         this.encryptionKey = encryptionKey;
         this.encryptionKeyUsed = encryptionKeyUsed ? encryptionKeyUsed : false;
     }
@@ -68,47 +66,48 @@ class ClientDetails extends DeviceInfo {
     /**
      * Store mandatory connection details of already known device
      *
-     * @param {string} ip IP-Address of device
-     * @param {string} macAddress MAC-Address of a device
-     * @param {string} deviceName Name of a device (MAC address without ":")
-     * @param {string} deviceFriendlyName Friendly name of a device taken from YAML configuration
+     * @param ip IP-Address of device
+     * @param macAddress MAC-Address of a device
+     * @param deviceName Name of a device (MAC address without ":")
+     * @param deviceFriendlyName Friendly name of a device taken from YAML configuration
      */
-    storeDiscoveredDevice(ip, macAddress, deviceName, deviceFriendlyName) {
+    storeDiscoveredDevice(ip: string, macAddress: string, deviceName: string, deviceFriendlyName: string): void {
         this.connectStatus = 'newly discovered';
         this.deviceFriendlyName = deviceFriendlyName;
         this.deviceName = deviceName;
         this.ip = ip;
         this.mac = macAddress;
     }
+
     /**
      * Store mandatory connection details of already known device
      *
-     * @param {string} ip IP-Address of device
-     * @param {boolean} encryptionKeyUsed Indicated if encryption must be used
-     * @param {string | undefined} macAddress MAC-Address of a device
-     * @param {string | undefined} deviceName Name of a device (MAC address without ":")
-     * @param {string | undefined} deviceFriendlyName Friendly name of a device taken from YAML configuration
-     * @param {string} [apiPassword] API password of device
-     * @param {string} [encryptionKey] Encryption key of device
+     * @param ip IP-Address of device
+     * @param encryptionKeyUsed Indicated if encryption must be used
+     * @param macAddress MAC-Address of a device
+     * @param deviceName Name of a device (MAC address without ":")
+     * @param deviceFriendlyName Friendly name of a device taken from YAML configuration
+     * @param [apiPassword] API password of device
+     * @param [encryptionKey] Encryption key of device
      */
     storeExistingDetails(
-        ip,
-        encryptionKeyUsed,
-        macAddress,
-        deviceName,
-        deviceFriendlyName,
-        apiPassword,
-        encryptionKey,
-    ) {
+        ip: string,
+        encryptionKeyUsed: boolean,
+        macAddress: string | undefined,
+        deviceName: string | undefined,
+        deviceFriendlyName: string | undefined,
+        apiPassword?: string,
+        encryptionKey?: string,
+    ): void {
         this.apiPassword = !encryptionKeyUsed ? apiPassword : null;
         this.deviceFriendlyName = deviceFriendlyName ? deviceFriendlyName : 'Initialisation needed';
         this.deviceName = deviceName ? deviceName : 'Initialisation needed';
         this.ip = ip;
-        this.mac = macAddress = macAddress ? macAddress : 'Initialisation needed';
+        this.mac = macAddress ? macAddress : 'Initialisation needed';
         this.encryptionKey = encryptionKeyUsed ? encryptionKey : null;
         this.encryptionKeyUsed = encryptionKeyUsed ? encryptionKeyUsed : false;
     }
 }
 
-module.exports = ClientDetails;
-//# sourceMappingURL=helpers.js.map
+// export = keeps the CommonJS export (module.exports = ClientDetails) that main.ts loads with require()
+export = ClientDetails;

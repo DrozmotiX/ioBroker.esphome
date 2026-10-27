@@ -30,7 +30,6 @@ admin/jsonConfig.json5
 # casts. Remove a file from this list when migrating it.
 src/main.ts
 src/lib/dashboardApi.ts
-src/lib/helpers.ts
 src/lib/yamlFileManager.ts
 src/lib/dashboardApi.test.ts
 src/lib/yamlFileManager.test.ts
