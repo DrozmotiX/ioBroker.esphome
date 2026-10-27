@@ -24,8 +24,3 @@ io-package.json
 # Hand maintained, tab indented JSON5. Prettier's json5 printer would restyle
 # ~1000 of 1075 lines (unquoting keys, single quotes, trailing commas) for no gain.
 admin/jsonConfig.json5
-
-# Taken over 1:1 from the JavaScript code of v2 and not migrated to TypeScript yet (see the
-# matching override in eslint.config.mjs). Prettier would drop the parentheses of the JSDoc
-# casts. Remove a file from this list when migrating it.
-src/main.ts

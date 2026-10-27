@@ -443,7 +443,7 @@ If you like my work, please consider a personal donation
 
 ### **WORK IN PROGRESS**
 
-- (@SimonFischer04) **ENHANCED**: Adapter rebuilt on the current create-adapter template and moved to TypeScript, the code is migrated file by file (started with the state attribute list)
+- (@SimonFischer04) **ENHANCED**: Adapter rebuilt on the current create-adapter template and moved to TypeScript, all code is type checked now
 - (@SimonFischer04) **FIXED**: Fan speed level could not be changed, current ESPHome reports `supportedSpeedCount` instead of `supportedSpeedLevels`, so `speedLevel` was created read-only
 - (@SimonFischer04) **FIXED**: Cover position and tilt are 0-100 % in ioBroker but were sent to ESPHome unscaled (it expects 0-1), so any value above 1 % fully opened the cover
 - (@SimonFischer04) **NEW**: End-to-end test workflow that builds a real ESPHome device with the host platform and tests the adapter against it
