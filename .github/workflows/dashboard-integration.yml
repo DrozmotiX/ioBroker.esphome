@@ -1,15 +1,23 @@
 name: Dashboard Integration
 
 # The ESPHome dashboard integration tests build a real Python virtual environment and
-# pip-install esphome + pillow from PyPI. That is too slow and too network dependent to run
-# on every push, so they are executed on demand and once per week instead.
+# pip-install esphome + pillow from PyPI (about 4 minutes). They run for every pull request and
+# push to main/v2.
+# Push is limited to the target branches, otherwise a branch with an open PR runs twice.
 # This workflow is intentionally NOT part of the release pipeline - a slow or rate limited
 # PyPI/GitHub API must never block a release.
 on:
+    push:
+        branches:
+            - main
+            - v2
+    pull_request: {}
     workflow_dispatch: {}
-    schedule:
-        # Sundays 03:17 UTC - off peak, lower GitHub API rate limit pressure
-        - cron: '17 3 * * 0'
+
+# Prefixed with the workflow name so it does not share the group with "Test and Release"
+concurrency:
+    group: dashboard-${{ github.ref }}
+    cancel-in-progress: true
 
 jobs:
     dashboard-integration:

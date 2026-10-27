@@ -145,7 +145,8 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
 - Workflow: `.github/workflows/test-and-release.yml` using `ioBroker/testing-action-*` official actions.
 - **Always include `env: GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}`** in the `adapter-tests` job.
 - The dashboard integration suites build a real Python venv and are therefore **skipped by default**.
-  They run in `.github/workflows/dashboard-integration.yml` (manual/weekly) or locally with
+  They run in `.github/workflows/dashboard-integration.yml` (every PR, pushes to main/v2 and manual;
+  not part of the release pipeline) or locally with
   `ESPHOME_RUN_DASHBOARD_TESTS=true npm run test:integration`.
 - `.github/workflows/e2e.yml` runs the end-to-end device test for PRs and pushes to main/v2 with the pinned ESPHome
   version (`test/e2e/requirements.txt`). Dependabot bumps that version, so new ESPHome releases are tested in its PRs.
