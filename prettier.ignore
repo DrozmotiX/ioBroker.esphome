@@ -29,5 +29,3 @@ admin/jsonConfig.json5
 # matching override in eslint.config.mjs). Prettier would drop the parentheses of the JSDoc
 # casts. Remove a file from this list when migrating it.
 src/main.ts
-src/lib/dashboardApi.ts
-src/lib/dashboardApi.test.ts
