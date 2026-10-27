@@ -320,6 +320,7 @@ exports.runTests = function (suite) {
                 expect(deviceObj.type).to.equal('device');
                 expect(deviceObj.common.name).to.equal(DEVICE_NAME);
                 expect(deviceObj.native.ip).to.equal(DEVICE_HOST);
+                expect(deviceObj.native.name).to.equal(DEVICE_NAME);
                 expect(deviceObj.native.encryptionKeyUsed).to.equal(true);
                 // The key is stored encrypted, never in plain text
                 expect(deviceObj.native.encryptionKey).to.be.a('string').and.not.equal(ENCRYPTION_KEY);

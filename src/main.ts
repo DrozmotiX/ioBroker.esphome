@@ -580,7 +580,8 @@ class Esphome extends utils.Adapter {
                     deviceDetails.encryptionKeyUsed ? deviceDetails.encryptionKeyUsed : false,
                     `${deviceDetails.mac}`,
                     `${deviceDetails.deviceName}`,
-                    `${deviceDetails.name}`,
+                    // Device objects of earlier versions have no native.name, their name is in deviceFriendlyName
+                    deviceDetails.name || deviceDetails.deviceFriendlyName || undefined,
                     !deviceDetails.encryptionKeyUsed
                         ? deviceDetails.apiPassword
                             ? deviceDetails.apiPassword
@@ -830,8 +831,7 @@ class Esphome extends utils.Adapter {
                         },
                         native: {
                             ip: host,
-                            // deviceInfoName is never set, so this is always undefined (kept as is during the migration)
-                            name: (clientDetails[host] as unknown as { deviceInfoName?: string }).deviceInfoName,
+                            name: deviceInfo.name,
                             mac: deviceInfo.macAddress,
                             deviceName: deviceName,
                             deviceFriendlyName: deviceInfo.name,
