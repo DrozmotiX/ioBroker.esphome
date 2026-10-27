@@ -27,7 +27,7 @@
     "url": "git+https://github.com/DrozmotiX/ioBroker.esphome.git"
   },
   "engines": {
-    "node": ">= 22"
+    "node": ">= 22.12"
   },
   "dependencies": {
     "@2colors/esphome-native-api": "^1.3.6",
