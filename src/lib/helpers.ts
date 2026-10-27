@@ -17,7 +17,7 @@ class DeviceInfo {
     deletionRequested = false;
     deviceFriendlyName: string | null = null;
     /** Device information as reported by the device after connecting */
-    deviceInfo: DeviceInfoResponse | null = null;
+    deviceInfo?: DeviceInfoResponse | null = null;
     /** MAC address of the device without ":" */
     deviceName: string | null = null;
     initialized = false;
@@ -48,8 +48,8 @@ class ClientDetails extends DeviceInfo {
     storeConnectDetails(
         ip: string,
         encryptionKeyUsed: boolean,
-        apiPassword?: string,
-        encryptionKey?: string,
+        apiPassword?: string | null,
+        encryptionKey?: string | null,
         macAddress?: string,
         deviceName?: string,
         deviceFriendlyName?: string,
