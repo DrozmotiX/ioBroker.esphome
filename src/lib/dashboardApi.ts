@@ -1,6 +1,3 @@
-// @ts-nocheck
-'use strict';
-
 /**
  * ESPHome Dashboard API client
  * Inspired by https://github.com/esphome/dashboard-api
@@ -13,16 +10,104 @@
  * or fall back to the `ws` npm package on Node 20 if it is installed.
  */
 
+import type WsWebSocket from 'ws';
+
+/** Error thrown by request() for a non-OK HTTP response */
+export interface DashboardApiError extends Error {
+    /** HTTP status code of the response */
+    status: number;
+}
+
+/** Device configured in the ESPHome Dashboard */
+export interface ConfiguredDevice {
+    /** IP / hostname used for communication */
+    address: string;
+    /** Comment from the YAML configuration */
+    comment: string | null;
+    /** YAML filename (used for other API calls) */
+    configuration: string;
+    /** ESPHome version of the dashboard */
+    current_version: string;
+    /** ESPHome version the firmware on the device was built with */
+    deployed_version: string;
+    /** Components used by the configuration */
+    loaded_integrations: string[];
+    /** Device name */
+    name: string;
+    /** Path of the YAML file on the dashboard host */
+    path: string;
+    /** Platform, e.g. ESP32 or ESP8266 */
+    target_platform: string;
+    /** Port of the device's web server, if enabled */
+    web_port: string | null;
+}
+
+/** Device discovered on the network that can be imported into the ESPHome Dashboard */
+export interface ImportableDevice {
+    /** Device name */
+    name: string;
+    /** Network type, e.g. wifi */
+    network: string;
+    /** URL of the package the device can be adopted from */
+    package_import_url: string;
+    /** Project name announced by the device */
+    project_name: string;
+    /** Project version announced by the device */
+    project_version: string;
+}
+
+/** Response of the devices endpoint */
+export interface DevicesResponse {
+    /** Devices with a configuration in the dashboard */
+    configured: ConfiguredDevice[];
+    /** Devices discovered on the network that are not adopted yet */
+    importable: ImportableDevice[];
+}
+
+/** JSON representation of a device configuration, only the parts this module reads are typed */
+export interface DeviceConfig {
+    /** An empty `api:` section in YAML becomes null in JSON */
+    api?: { encryption?: { key?: string } | null } | null;
+    [section: string]: unknown;
+}
+
+/** Callback invoked for each log line streamed by the dashboard */
+export type LineReceivedCallback = (line: string) => void;
+
+/** JSON frame sent by the dashboard over the WebSocket */
+interface StreamFrame {
+    /** Frame type, 'line' or 'exit' */
+    event?: string;
+    /** Log line of a 'line' frame */
+    data?: string;
+    /** Exit code of an 'exit' frame */
+    code?: number;
+}
+
+/**
+ * Checks whether a caught value is the error request() throws for a non-OK response
+ *
+ * @param error - The caught value
+ */
+function isDashboardApiError(error: unknown): error is DashboardApiError {
+    return error instanceof Error && typeof (error as Partial<DashboardApiError>).status === 'number';
+}
+
 /**
  * Make an HTTP request to the ESPHome Dashboard and return the parsed JSON body.
  *
- * @param {string} method - HTTP method (e.g. 'GET', 'POST')
- * @param {string} dashboardUrl - Base URL of the ESPHome Dashboard (e.g. http://192.168.1.100:6052)
- * @param {string} path - API path (e.g. 'devices')
- * @param {object} [params] - Optional query parameters
- * @returns {Promise<object>} Parsed JSON response
+ * @param method - HTTP method (e.g. 'GET', 'POST')
+ * @param dashboardUrl - Base URL of the ESPHome Dashboard (e.g. http://192.168.1.100:6052)
+ * @param path - API path (e.g. 'devices')
+ * @param [params] - Optional query parameters
+ * @returns Parsed JSON response
  */
-async function request(method, dashboardUrl, path, params) {
+export async function request<T = unknown>(
+    method: string,
+    dashboardUrl: string,
+    path: string,
+    params?: Record<string, string>,
+): Promise<T> {
     const base = dashboardUrl.replace(/\/+$/, '');
     const url = new URL(`${base}/${path}`);
     if (params) {
@@ -32,12 +117,13 @@ async function request(method, dashboardUrl, path, params) {
     }
     const response = await fetch(url.toString(), { method });
     if (!response.ok) {
-        const error = new Error(`Dashboard API ${method} /${path} failed: ${response.status} ${response.statusText}`);
-        // @ts-expect-error custom property not in Error type
+        const error = new Error(
+            `Dashboard API ${method} /${path} failed: ${response.status} ${response.statusText}`,
+        ) as DashboardApiError;
         error.status = response.status;
         throw error;
     }
-    return await response.json();
+    return (await response.json()) as T;
 }
 
 /**
@@ -50,27 +136,30 @@ async function request(method, dashboardUrl, path, params) {
  * Uses the native WebSocket API on Node >= 22, or falls back to the `ws` npm
  * package on Node 20. If neither is available, an error is thrown.
  *
- * @param {string} dashboardUrl - Base URL of the ESPHome Dashboard
- * @param {string} path - WebSocket endpoint path (e.g. 'compile', 'upload')
- * @param {object} spawnParams - Parameters forwarded as `{ type: 'spawn', ...spawnParams }`
- * @param {((line: string) => void) | null} [lineReceivedCb] - Optional callback invoked for each log line
- * @returns {Promise<boolean>} Resolves to true when the command exits with code 0, false otherwise
+ * @param dashboardUrl - Base URL of the ESPHome Dashboard
+ * @param path - WebSocket endpoint path (e.g. 'compile', 'upload')
+ * @param spawnParams - Parameters forwarded as `{ type: 'spawn', ...spawnParams }`
+ * @param [lineReceivedCb] - Optional callback invoked for each log line
+ * @returns Resolves to true when the command exits with code 0, false otherwise
  */
-async function streamLogs(dashboardUrl, path, spawnParams, lineReceivedCb) {
+export async function streamLogs(
+    dashboardUrl: string,
+    path: string,
+    spawnParams: Record<string, unknown>,
+    lineReceivedCb?: LineReceivedCallback | null,
+): Promise<boolean> {
     const wsUrl = `${dashboardUrl.replace(/\/+$/, '').replace(/^http/, 'ws')}/${path}`;
 
     // Prefer native WebSocket (Node >= 22), but fall back to "ws" package on older Node versions.
-    // Both constructors are used interchangeably here although they expose different APIs
-    // (addEventListener vs. on), which is why the two branches below exist and why the instance
-    // cannot be described by a single type.
+    // Both constructors expose different APIs (addEventListener vs. on), which is why the two
+    // branches below exist.
     const hasNativeWebSocket = typeof WebSocket !== 'undefined';
-    let WebSocketImpl;
+    let WsImpl: typeof WsWebSocket | undefined;
 
-    if (hasNativeWebSocket) {
-        WebSocketImpl = WebSocket;
-    } else {
+    if (!hasNativeWebSocket) {
         try {
-            WebSocketImpl = require('ws');
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            WsImpl = require('ws') as typeof WsWebSocket;
         } catch {
             throw new Error(
                 'WebSocket streaming requires either Node.js >= 22 with native WebSocket support ' +
@@ -79,58 +168,64 @@ async function streamLogs(dashboardUrl, path, spawnParams, lineReceivedCb) {
         }
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise<boolean>((resolve, reject) => {
         let settled = false;
-        const ws = new WebSocketImpl(wsUrl);
 
-        const settle = fn => {
+        const settle = (fn: () => void): void => {
             if (!settled) {
                 settled = true;
                 fn();
             }
         };
 
-        if (hasNativeWebSocket) {
+        /**
+         * Handles one received frame, shared by both WebSocket implementations
+         *
+         * @param raw - The received message, a string for text frames
+         * @param close - Closes the WebSocket
+         */
+        const handleMessage = (raw: unknown, close: () => void): void => {
+            let data: StreamFrame;
+            try {
+                data = JSON.parse(String(raw)) as StreamFrame;
+            } catch (error) {
+                // Log at debug level to help diagnose malformed or unexpected messages
+                if (typeof console !== 'undefined' && typeof console.debug === 'function') {
+                    console.debug(`Failed to parse WebSocket message from /${path}:`, error, 'raw message:', raw);
+                }
+                return;
+            }
+
+            const wsEvent = data.event;
+
+            if (wsEvent === 'exit') {
+                close();
+                settle(() => resolve(data.code === 0));
+                return;
+            }
+
+            if (wsEvent === 'line') {
+                if (lineReceivedCb) {
+                    lineReceivedCb(data.data as string);
+                }
+            }
+        };
+
+        if (!WsImpl) {
             // Native WebSocket (Node >= 22 / browser-like API)
+            const ws = new WebSocket(wsUrl);
+
             ws.addEventListener('open', () => {
                 ws.send(JSON.stringify({ type: 'spawn', ...spawnParams }));
             });
 
-            ws.addEventListener('message', event => {
-                let data;
-                try {
-                    data = JSON.parse(event.data);
-                } catch (error) {
-                    // Log at debug level to help diagnose malformed or unexpected messages
-                    if (typeof console !== 'undefined' && typeof console.debug === 'function') {
-                        console.debug(
-                            `Failed to parse WebSocket message from /${path}:`,
-                            error,
-                            'raw message:',
-                            event.data,
-                        );
-                    }
-                    return;
-                }
-
-                const wsEvent = data.event;
-
-                if (wsEvent === 'exit') {
-                    ws.close();
-                    settle(() => resolve(data.code === 0));
-                    return;
-                }
-
-                if (wsEvent === 'line') {
-                    if (lineReceivedCb) {
-                        lineReceivedCb(data.data);
-                    }
-                }
-            });
+            ws.addEventListener('message', event => handleMessage(event.data, () => ws.close()));
 
             ws.addEventListener('error', err => {
-                const message =
-                    err && typeof err === 'object' && typeof err.message === 'string' ? err.message : String(err);
+                const errorMessage = (err as unknown as { message?: unknown }).message;
+                // Same fallback as before the TypeScript migration, an Event without message prints "[object Event]"
+                // eslint-disable-next-line @typescript-eslint/no-base-to-string
+                const message = typeof errorMessage === 'string' ? errorMessage : String(err);
                 settle(() => reject(new Error(`WebSocket error on /${path}: ${message}`)));
             });
 
@@ -141,41 +236,13 @@ async function streamLogs(dashboardUrl, path, spawnParams, lineReceivedCb) {
             });
         } else {
             // "ws" package (Node >= 20 without native WebSocket)
+            const ws = new WsImpl(wsUrl);
+
             ws.on('open', () => {
                 ws.send(JSON.stringify({ type: 'spawn', ...spawnParams }));
             });
 
-            ws.on('message', message => {
-                let data;
-                try {
-                    data = JSON.parse(message);
-                } catch (error) {
-                    // Log at debug level to help diagnose malformed or unexpected messages
-                    if (typeof console !== 'undefined' && typeof console.debug === 'function') {
-                        console.debug(
-                            `Failed to parse WebSocket message from /${path}:`,
-                            error,
-                            'raw message:',
-                            message,
-                        );
-                    }
-                    return;
-                }
-
-                const wsEvent = data.event;
-
-                if (wsEvent === 'exit') {
-                    ws.close();
-                    settle(() => resolve(data.code === 0));
-                    return;
-                }
-
-                if (wsEvent === 'line') {
-                    if (lineReceivedCb) {
-                        lineReceivedCb(data.data);
-                    }
-                }
-            });
+            ws.on('message', message => handleMessage(message, () => ws.close()));
 
             ws.on('error', err => {
                 const message = err && err.message ? err.message : String(err);
@@ -203,51 +270,25 @@ async function streamLogs(dashboardUrl, path, spawnParams, lineReceivedCb) {
 /**
  * Fetch all configured and importable devices from the ESPHome Dashboard.
  *
- * Response shape:
- * ```
- * {
- *   configured: [{
- *     address: string,         // IP / hostname used for communication
- *     comment: string | null,
- *     configuration: string,   // YAML filename (used for other API calls)
- *     current_version: string,
- *     deployed_version: string,
- *     loaded_integrations: string[],
- *     name: string,
- *     path: string,
- *     target_platform: string,
- *     web_port: string | null,
- *   }],
- *   importable: [{
- *     name: string,
- *     network: string,
- *     package_import_url: string,
- *     project_name: string,
- *     project_version: string,
- *   }]
- * }
- * ```
- *
- * @param {string} dashboardUrl - Base URL of the ESPHome Dashboard
- * @returns {Promise<{configured: Array<object>, importable: Array<object>}>} Devices list
+ * @param dashboardUrl - Base URL of the ESPHome Dashboard
+ * @returns Devices list
  */
-async function getDevices(dashboardUrl) {
-    return request('GET', dashboardUrl, 'devices');
+export async function getDevices(dashboardUrl: string): Promise<DevicesResponse> {
+    return request<DevicesResponse>('GET', dashboardUrl, 'devices');
 }
 
 /**
  * Fetch the JSON representation of a device configuration from the ESPHome Dashboard.
  *
- * @param {string} dashboardUrl - Base URL of the ESPHome Dashboard
- * @param {string} configuration - Configuration filename (e.g. my-device.yaml)
- * @returns {Promise<object|null>} Parsed configuration object, or null when not found (404)
+ * @param dashboardUrl - Base URL of the ESPHome Dashboard
+ * @param configuration - Configuration filename (e.g. my-device.yaml)
+ * @returns Parsed configuration object, or null when not found (404)
  */
-async function getConfig(dashboardUrl, configuration) {
+export async function getConfig(dashboardUrl: string, configuration: string): Promise<DeviceConfig | null> {
     try {
-        return await request('GET', dashboardUrl, 'json-config', { configuration });
+        return await request<DeviceConfig>('GET', dashboardUrl, 'json-config', { configuration });
     } catch (error) {
-        // @ts-expect-error custom property not in Error type
-        if (error.status === 404) {
+        if (isDashboardApiError(error) && error.status === 404) {
             return null;
         }
         throw error;
@@ -262,11 +303,11 @@ async function getConfig(dashboardUrl, configuration) {
  *   - the YAML has no `api:` section
  *   - the `api:` section has no `encryption:` block
  *
- * @param {string} dashboardUrl - Base URL of the ESPHome Dashboard
- * @param {string} configuration - Configuration filename (e.g. my-device.yaml)
- * @returns {Promise<string|null>} Base64-encoded encryption key, or null
+ * @param dashboardUrl - Base URL of the ESPHome Dashboard
+ * @param configuration - Configuration filename (e.g. my-device.yaml)
+ * @returns Base64-encoded encryption key, or null
  */
-async function getEncryptionKey(dashboardUrl, configuration) {
+export async function getEncryptionKey(dashboardUrl: string, configuration: string): Promise<string | null> {
     const config = await getConfig(dashboardUrl, configuration);
     if (!config) {
         return null;
@@ -288,12 +329,16 @@ async function getEncryptionKey(dashboardUrl, configuration) {
  *
  * Uses the native WebSocket API (Node >= 22) or falls back to the `ws` npm package (Node 20).
  *
- * @param {string} dashboardUrl - Base URL of the ESPHome Dashboard
- * @param {string} configuration - Configuration filename (e.g. my-device.yaml)
- * @param {((line: string) => void) | null} [lineReceivedCb] - Optional callback invoked for each log line
- * @returns {Promise<boolean>} Resolves to true on success, false on failure
+ * @param dashboardUrl - Base URL of the ESPHome Dashboard
+ * @param configuration - Configuration filename (e.g. my-device.yaml)
+ * @param [lineReceivedCb] - Optional callback invoked for each log line
+ * @returns Resolves to true on success, false on failure
  */
-async function compile(dashboardUrl, configuration, lineReceivedCb) {
+export async function compile(
+    dashboardUrl: string,
+    configuration: string,
+    lineReceivedCb?: LineReceivedCallback | null,
+): Promise<boolean> {
     return streamLogs(dashboardUrl, 'compile', { configuration }, lineReceivedCb);
 }
 
@@ -302,22 +347,17 @@ async function compile(dashboardUrl, configuration, lineReceivedCb) {
  *
  * Uses the native WebSocket API (Node >= 22) or falls back to the `ws` npm package (Node 20).
  *
- * @param {string} dashboardUrl - Base URL of the ESPHome Dashboard
- * @param {string} configuration - Configuration filename (e.g. my-device.yaml)
- * @param {string} port - Serial port or OTA target (e.g. '/dev/ttyUSB0' or device IP)
- * @param {((line: string) => void) | null} [lineReceivedCb] - Optional callback invoked for each log line
- * @returns {Promise<boolean>} Resolves to true on success, false on failure
+ * @param dashboardUrl - Base URL of the ESPHome Dashboard
+ * @param configuration - Configuration filename (e.g. my-device.yaml)
+ * @param port - Serial port or OTA target (e.g. '/dev/ttyUSB0' or device IP)
+ * @param [lineReceivedCb] - Optional callback invoked for each log line
+ * @returns Resolves to true on success, false on failure
  */
-async function upload(dashboardUrl, configuration, port, lineReceivedCb) {
+export async function upload(
+    dashboardUrl: string,
+    configuration: string,
+    port: string,
+    lineReceivedCb?: LineReceivedCallback | null,
+): Promise<boolean> {
     return streamLogs(dashboardUrl, 'upload', { configuration, port }, lineReceivedCb);
 }
-
-module.exports = {
-    request,
-    streamLogs,
-    getDevices,
-    getConfig,
-    getEncryptionKey,
-    compile,
-    upload,
-};
