@@ -1,44 +1,66 @@
-// @ts-nocheck
 /**
  * YAML File Manager Module
  * Handles upload, download, list, and delete operations for YAML configuration files
  * in the ESPHome directory.
- *
- * @module yamlFileManager
  */
 
-const fs = require('node:fs');
-const path = require('node:path');
-const { promisify } = require('node:util');
+import type * as AdapterCore from '@iobroker/adapter-core';
+import { constants } from 'node:fs';
+import { access, mkdir, readdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
+import * as path from 'node:path';
 
-const readdir = promisify(fs.readdir);
-const stat = promisify(fs.stat);
-const readFile = promisify(fs.readFile);
-const writeFile = promisify(fs.writeFile);
-const unlink = promisify(fs.unlink);
-const mkdir = promisify(fs.mkdir);
-const access = promisify(fs.access);
+/** One entry of the YAML file list shown in the adapter configuration */
+interface YamlFileInfo {
+    filename: string;
+    /** Human-readable size, e.g. "1.5 KB" */
+    size: string;
+    /** Last modification time, formatted with toLocaleString() */
+    modified: string;
+}
+
+/** Result of upload, download and delete, sent back to the admin UI as is */
+interface YamlFileResult {
+    success: boolean;
+    message?: string;
+    content?: string;
+    filename?: string;
+    error?: string;
+}
+
+/**
+ * Turns a caught error into the reason text of an error result
+ *
+ * @param error - The caught error
+ */
+function errorReason(error: unknown): string {
+    return error instanceof Error && error.message ? error.message : String(error);
+}
 
 /**
  * YAML File Manager class for handling ESPHome YAML configuration files
  */
 class YamlFileManager {
+    private readonly adapter: ioBroker.Adapter;
+
     /**
      * Constructor for YamlFileManager
      *
-     * @param {object} adapter - The ioBroker adapter instance
+     * @param adapter - The ioBroker adapter instance
      */
-    constructor(adapter) {
+    constructor(adapter: ioBroker.Adapter) {
         this.adapter = adapter;
     }
 
     /**
      * Get the ESPHome directory path
      *
-     * @returns {string} - The absolute path to the ESPHome directory
+     * @returns The absolute path to the ESPHome directory
      */
-    getESPHomeDirectory() {
-        const utils = require('@iobroker/adapter-core');
+    getESPHomeDirectory(): string {
+        // Loaded on demand like before: loading adapter-core throws "Cannot find js-controller" where none
+        // is installed, e.g. in the unit tests of this module
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const utils = require('@iobroker/adapter-core') as typeof AdapterCore;
         const dataDir = utils.getAbsoluteDefaultDataDir();
         return `${dataDir}esphome.${this.adapter.instance}`;
     }
@@ -46,10 +68,10 @@ class YamlFileManager {
     /**
      * Validate filename for security (prevent path traversal attacks)
      *
-     * @param {string} filename - Name of the file to validate
-     * @returns {boolean} - True if filename is valid
+     * @param filename - Name of the file to validate
+     * @returns True if filename is valid
      */
-    validateFilename(filename) {
+    validateFilename(filename: unknown): filename is string {
         if (!filename || typeof filename !== 'string') {
             return false;
         }
@@ -75,10 +97,10 @@ class YamlFileManager {
     /**
      * Format file size in human-readable format
      *
-     * @param {number} bytes - File size in bytes
-     * @returns {string} - Formatted file size
+     * @param bytes - File size in bytes
+     * @returns Formatted file size
      */
-    formatFileSize(bytes) {
+    formatFileSize(bytes: number): string {
         if (bytes === 0) {
             return '0 Bytes';
         }
@@ -93,15 +115,15 @@ class YamlFileManager {
     /**
      * List all YAML files in the ESPHome directory
      *
-     * @returns {Promise<Array<{filename: string, size: string, modified: string}>>} - Array of file information objects
+     * @returns Array of file information objects
      */
-    async listYamlFiles() {
+    async listYamlFiles(): Promise<YamlFileInfo[]> {
         try {
             const espHomeDir = this.getESPHomeDirectory();
 
             // Check if directory exists using async access
             try {
-                await access(espHomeDir, fs.constants.F_OK);
+                await access(espHomeDir, constants.F_OK);
             } catch {
                 this.adapter.log.warn(`ESPHome directory does not exist: ${espHomeDir}`);
                 return [];
@@ -123,7 +145,7 @@ class YamlFileManager {
 
             return await Promise.all(fileInfoPromises);
         } catch (error) {
-            this.adapter.log.error(`[yamlFileManager.listYamlFiles] ${error}`);
+            this.adapter.log.error(`[yamlFileManager.listYamlFiles] ${String(error)}`);
             return [];
         }
     }
@@ -131,11 +153,11 @@ class YamlFileManager {
     /**
      * Upload a YAML file to the ESPHome directory
      *
-     * @param {string} filename - Name of the file
-     * @param {string} content - Content of the file
-     * @returns {Promise<{success: boolean, message?: string, error?: string}>} - Result of the operation
+     * @param filename - Name of the file
+     * @param content - Content of the file
+     * @returns Result of the operation
      */
-    async uploadYamlFile(filename, content) {
+    async uploadYamlFile(filename: unknown, content: string): Promise<YamlFileResult> {
         try {
             const espHomeDir = this.getESPHomeDirectory();
 
@@ -149,7 +171,7 @@ class YamlFileManager {
 
             // Ensure directory exists using async mkdir
             try {
-                await access(espHomeDir, fs.constants.F_OK);
+                await access(espHomeDir, constants.F_OK);
             } catch {
                 await mkdir(espHomeDir, { recursive: true });
                 this.adapter.log.info(`Created ESPHome directory: ${espHomeDir}`);
@@ -164,11 +186,10 @@ class YamlFileManager {
                 message: `File ${filename} uploaded successfully`,
             };
         } catch (error) {
-            const reason = error instanceof Error && error.message ? error.message : String(error);
-            this.adapter.log.error(`[yamlFileManager.uploadYamlFile] ${error}`);
+            this.adapter.log.error(`[yamlFileManager.uploadYamlFile] ${String(error)}`);
             return {
                 success: false,
-                error: `Failed to upload file: ${reason}`,
+                error: `Failed to upload file: ${errorReason(error)}`,
             };
         }
     }
@@ -176,10 +197,10 @@ class YamlFileManager {
     /**
      * Download a YAML file from the ESPHome directory
      *
-     * @param {string} filename - Name of the file
-     * @returns {Promise<{success: boolean, content?: string, filename?: string, error?: string}>} - Result of the operation
+     * @param filename - Name of the file
+     * @returns Result of the operation
      */
-    async downloadYamlFile(filename) {
+    async downloadYamlFile(filename: unknown): Promise<YamlFileResult> {
         try {
             // Validate filename for security
             if (!this.validateFilename(filename)) {
@@ -194,7 +215,7 @@ class YamlFileManager {
 
             // Check if file exists using async access
             try {
-                await access(filePath, fs.constants.F_OK);
+                await access(filePath, constants.F_OK);
             } catch {
                 return {
                     success: false,
@@ -210,11 +231,10 @@ class YamlFileManager {
                 filename: filename,
             };
         } catch (error) {
-            const reason = error instanceof Error && error.message ? error.message : String(error);
-            this.adapter.log.error(`[yamlFileManager.downloadYamlFile] ${error}`);
+            this.adapter.log.error(`[yamlFileManager.downloadYamlFile] ${String(error)}`);
             return {
                 success: false,
-                error: `Failed to download file: ${reason}`,
+                error: `Failed to download file: ${errorReason(error)}`,
             };
         }
     }
@@ -222,10 +242,10 @@ class YamlFileManager {
     /**
      * Delete a YAML file from the ESPHome directory
      *
-     * @param {string} filename - Name of the file
-     * @returns {Promise<{success: boolean, message?: string, error?: string}>} - Result of the operation
+     * @param filename - Name of the file
+     * @returns Result of the operation
      */
-    async deleteYamlFile(filename) {
+    async deleteYamlFile(filename: unknown): Promise<YamlFileResult> {
         try {
             // Validate filename for security
             if (!this.validateFilename(filename)) {
@@ -240,7 +260,7 @@ class YamlFileManager {
 
             // Check if file exists using async access
             try {
-                await access(filePath, fs.constants.F_OK);
+                await access(filePath, constants.F_OK);
             } catch {
                 return {
                     success: false,
@@ -256,14 +276,14 @@ class YamlFileManager {
                 message: `File ${filename} deleted successfully`,
             };
         } catch (error) {
-            const reason = error instanceof Error && error.message ? error.message : String(error);
-            this.adapter.log.error(`[yamlFileManager.deleteYamlFile] ${error}`);
+            this.adapter.log.error(`[yamlFileManager.deleteYamlFile] ${String(error)}`);
             return {
                 success: false,
-                error: `Failed to delete file: ${reason}`,
+                error: `Failed to delete file: ${errorReason(error)}`,
             };
         }
     }
 }
 
-module.exports = YamlFileManager;
+// export = keeps the CommonJS export (module.exports = YamlFileManager) that main.ts loads with require()
+export = YamlFileManager;

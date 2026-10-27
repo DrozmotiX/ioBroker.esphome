@@ -1,77 +1,119 @@
-// @ts-nocheck
-const { expect } = require('chai');
+import { expect } from 'chai';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import * as path from 'node:path';
+import YamlFileManager from './yamlFileManager';
+
+/** Minimal adapter: the manager only uses instance and log */
+function createAdapter(): ioBroker.Adapter {
+    const noop = (): void => {};
+    return { instance: 0, log: { info: noop, warn: noop, error: noop, debug: noop } } as unknown as ioBroker.Adapter;
+}
 
 describe('YAML File Management', () => {
-    describe('File Upload', () => {
-        it('should validate YAML filename extension', function () {
-            const validNames = ['test.yaml', 'device.yml', 'my-config.yaml'];
-            const invalidNames = ['test.txt', 'config', 'file.json'];
+    const manager = new YamlFileManager(createAdapter());
 
-            validNames.forEach(name => {
-                expect(name.endsWith('.yaml') || name.endsWith('.yml')).to.be.true;
-            });
-
-            invalidNames.forEach(name => {
-                expect(name.endsWith('.yaml') || name.endsWith('.yml')).to.be.false;
-            });
+    describe('validateFilename()', () => {
+        it('accepts .yaml and .yml file names', () => {
+            for (const name of ['test.yaml', 'device.yml', 'my-config.yaml']) {
+                expect(manager.validateFilename(name), name).to.be.true;
+            }
         });
 
-        it('should format file size correctly', function () {
-            const formatFileSize = bytes => {
-                if (bytes === 0) {
-                    return '0 Bytes';
-                }
+        it('rejects other extensions, empty values and non-strings', () => {
+            for (const name of ['test.txt', 'config', 'file.json', '', undefined, null, 42]) {
+                expect(manager.validateFilename(name), String(name)).to.be.false;
+            }
+        });
 
-                const k = 1024;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-                return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${sizes[i]}`;
-            };
-
-            expect(formatFileSize(0)).to.equal('0 Bytes');
-            expect(formatFileSize(1024)).to.equal('1 KB');
-            expect(formatFileSize(1024 * 1024)).to.equal('1 MB');
-            expect(formatFileSize(500)).to.equal('500 Bytes');
+        it('rejects path traversal and path separators', () => {
+            for (const name of ['../secrets.yaml', 'sub/device.yaml', 'sub\\device.yaml', '..yaml']) {
+                expect(manager.validateFilename(name), name).to.be.false;
+            }
         });
     });
 
-    describe('File Path Handling', () => {
-        it('should construct correct ESPHome directory path', function () {
-            const instance = 0;
-            const dataDir = '/opt/iobroker/iobroker-data/';
-            const expectedPath = `${dataDir}esphome.${instance}`;
-
-            expect(expectedPath).to.equal('/opt/iobroker/iobroker-data/esphome.0');
+    describe('formatFileSize()', () => {
+        it('formats bytes, KB and MB', () => {
+            expect(manager.formatFileSize(0)).to.equal('0 Bytes');
+            expect(manager.formatFileSize(500)).to.equal('500 Bytes');
+            expect(manager.formatFileSize(1024)).to.equal('1 KB');
+            expect(manager.formatFileSize(1536)).to.equal('1.5 KB');
+            expect(manager.formatFileSize(1024 * 1024)).to.equal('1 MB');
         });
     });
 
-    describe('Message Handler Validation', () => {
-        it('should validate required fields for upload', function () {
-            const validMessage = {
-                filename: 'test.yaml',
-                content: 'esphome:\n  name: test',
-            };
+    describe('file operations', () => {
+        let dir: string;
+        let fileManager: YamlFileManager;
 
-            const invalidMessages = [
-                { filename: 'test.yaml' }, // missing content
-                { content: 'esphome:\n  name: test' }, // missing filename
-                {}, // missing both
-            ];
+        beforeEach(async () => {
+            dir = await mkdtemp(path.join(tmpdir(), 'esphome-yaml-'));
+            fileManager = new YamlFileManager(createAdapter());
+            fileManager.getESPHomeDirectory = (): string => dir;
+        });
 
-            expect(!!(validMessage.filename && validMessage.content)).to.be.true;
+        afterEach(async () => {
+            await rm(dir, { recursive: true, force: true });
+        });
 
-            invalidMessages.forEach(msg => {
-                expect(!!(msg.filename && msg.content)).to.be.false;
+        it('uploads, lists, downloads and deletes a file', async () => {
+            const content = 'esphome:\n  name: test\n';
+
+            const upload = await fileManager.uploadYamlFile('test.yaml', content);
+            expect(upload).to.deep.equal({ success: true, message: 'File test.yaml uploaded successfully' });
+            expect(await readFile(path.join(dir, 'test.yaml'), 'utf8')).to.equal(content);
+
+            const files = await fileManager.listYamlFiles();
+            expect(files.map(file => file.filename)).to.deep.equal(['test.yaml']);
+            expect(files[0].size).to.equal(`${Buffer.byteLength(content)} Bytes`);
+
+            const download = await fileManager.downloadYamlFile('test.yaml');
+            expect(download).to.deep.equal({ success: true, content, filename: 'test.yaml' });
+
+            const deletion = await fileManager.deleteYamlFile('test.yaml');
+            expect(deletion).to.deep.equal({ success: true, message: 'File test.yaml deleted successfully' });
+            expect(await fileManager.listYamlFiles()).to.deep.equal([]);
+        });
+
+        it('lists only YAML files', async () => {
+            await writeFile(path.join(dir, 'a.yaml'), '');
+            await writeFile(path.join(dir, 'b.yml'), '');
+            await writeFile(path.join(dir, 'notes.txt'), '');
+
+            const names = (await fileManager.listYamlFiles()).map(file => file.filename).sort();
+            expect(names).to.deep.equal(['a.yaml', 'b.yml']);
+        });
+
+        it('creates the directory on upload and returns an empty list if it does not exist', async () => {
+            await rm(dir, { recursive: true, force: true });
+            expect(await fileManager.listYamlFiles()).to.deep.equal([]);
+
+            expect((await fileManager.uploadYamlFile('new.yaml', 'x')).success).to.be.true;
+            expect(await readFile(path.join(dir, 'new.yaml'), 'utf8')).to.equal('x');
+        });
+
+        it('refuses invalid file names without touching the file system', async () => {
+            expect((await fileManager.uploadYamlFile('../evil.yaml', 'x')).success).to.be.false;
+            expect(await fileManager.downloadYamlFile('../evil.yaml')).to.deep.equal({
+                success: false,
+                error: 'Invalid filename',
+            });
+            expect(await fileManager.deleteYamlFile('evil.txt')).to.deep.equal({
+                success: false,
+                error: 'Invalid filename',
             });
         });
 
-        it('should validate filename for download/delete', function () {
-            const validMessage = { filename: 'test.yaml' };
-            const invalidMessage = {};
-
-            expect(validMessage.filename).to.exist;
-            expect(invalidMessage.filename).to.not.exist;
+        it('reports missing files on download and delete', async () => {
+            expect(await fileManager.downloadYamlFile('missing.yaml')).to.deep.equal({
+                success: false,
+                error: 'File not found: missing.yaml',
+            });
+            expect(await fileManager.deleteYamlFile('missing.yaml')).to.deep.equal({
+                success: false,
+                error: 'File not found: missing.yaml',
+            });
         });
     });
 });

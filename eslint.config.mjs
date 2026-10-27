@@ -34,13 +34,7 @@ export default [
         // Files taken over 1:1 from the JavaScript code of v2 that are not migrated to TypeScript yet.
         // They start with "// @ts-nocheck", and these rules only make sense for real TypeScript code.
         // Remove a file from this list (and its "// @ts-nocheck") when migrating it.
-        files: [
-            'src/main.ts',
-            'src/lib/dashboardApi.ts',
-            'src/lib/yamlFileManager.ts',
-            'src/lib/dashboardApi.test.ts',
-            'src/lib/yamlFileManager.test.ts',
-        ],
+        files: ['src/main.ts', 'src/lib/dashboardApi.ts', 'src/lib/dashboardApi.test.ts'],
         rules: {
             '@typescript-eslint/ban-ts-comment': 'off',
             '@typescript-eslint/no-require-imports': 'off',
