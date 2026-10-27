@@ -1,4 +1,3 @@
-// @ts-nocheck
 /*
  * Created with @iobroker/create-adapter v1.31.0
  */
