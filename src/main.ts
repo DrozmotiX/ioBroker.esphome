@@ -126,7 +126,7 @@ class Esphome extends utils.Adapter {
     /**
      * Is called when databases are connected and adapter received configuration.
      */
-    async onReady() {
+    async onReady(): Promise<void> {
         await this.setStateAsync('info.connection', { val: true, ack: true });
         try {
             // Migrate from older adapter versions that only had ESPHomeDashboardIP
@@ -153,11 +153,12 @@ class Esphome extends utils.Adapter {
 
             // Start MDNS discovery when enabled
             if (autodiscovery) {
-                if (resetTimers['autodiscovery']) {
-                    resetTimers['autodiscovery'] = this.clearTimeout(resetTimers['autodiscovery']);
+                if (resetTimers.autodiscovery) {
+                    resetTimers.autodiscovery = this.clearTimeout(resetTimers.autodiscovery);
                 }
                 // this.log.info(`Adapter ready, automatic Device Discovery will be activated in 30 seconds.`);
-                resetTimers['autodiscovery'] = this.setTimeout(async () => {
+                // eslint-disable-next-line @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
+                resetTimers.autodiscovery = this.setTimeout(async () => {
                     this.deviceDiscovery(); // Start bonjour service autodiscovery
                 }, 5000);
             } else {
@@ -167,7 +168,7 @@ class Esphome extends utils.Adapter {
             }
 
             // Create & Subscribe to button handling offline Device cleanup
-            this.extendObject('info.deviceCleanup', {
+            void this.extendObject('info.deviceCleanup', {
                 type: 'state',
                 common: {
                     role: 'button',
@@ -181,7 +182,7 @@ class Esphome extends utils.Adapter {
             this.subscribeStates('info.deviceCleanup');
 
             // Create & Subscribe to button for clearing autopy cache
-            this.extendObject('info.clearAutopyCache', {
+            void this.extendObject('info.clearAutopyCache', {
                 type: 'state',
                 common: {
                     role: 'button',
@@ -194,7 +195,7 @@ class Esphome extends utils.Adapter {
             });
             this.subscribeStates('info.clearAutopyCache');
         } catch (e) {
-            this.log.error(`[Adapter start] Fatal error occurred ${e}`);
+            this.log.error(`[Adapter start] Fatal error occurred ${String(e)}`);
         }
     }
 
@@ -202,7 +203,7 @@ class Esphome extends utils.Adapter {
      * Migrate configuration from older adapter versions
      * Automatically set ESPHomeDashboardUrl if ESPHomeDashboardIP is set but URL is empty
      */
-    async migrateConfig() {
+    async migrateConfig(): Promise<void> {
         try {
             // Check if migration is needed:
             // ESPHomeDashboardIP is not empty AND ESPHomeDashboardUrl is empty
@@ -251,7 +252,7 @@ class Esphome extends utils.Adapter {
      * instance on upgrade, so neither could tell "not migrated yet" from "nothing to migrate".
      * Once the marker is set, a deliberate switch back to "Always last available" is never touched.
      */
-    async migratePinnedVersions() {
+    async migratePinnedVersions(): Promise<void> {
         try {
             await this.extendObjectAsync('_ESPHomeDashboard', {
                 type: 'channel',
@@ -317,10 +318,10 @@ class Esphome extends utils.Adapter {
      * when the user selected it deliberately, migratePinnedVersions() moves existing installations
      * off that setting once.
      *
-     * @param {string} useDashBoardVersion - ESPHome Dashboard version which will be installed
-     * @param {string} usePillowVersion - Pillow version which will be installed
+     * @param useDashBoardVersion - ESPHome Dashboard version which will be installed
+     * @param usePillowVersion - Pillow version which will be installed
      */
-    warnUnpinnedVersions(useDashBoardVersion: string, usePillowVersion: string) {
+    warnUnpinnedVersions(useDashBoardVersion: string, usePillowVersion: string): void {
         if (this.config.ESPHomeDashboardVersion === 'Always last available') {
             this.log.warn(
                 `ESPHome Dashboard version is set to "Always last available" and resolves to ${useDashBoardVersion || 'the newest release'}. Not every ESPHome release can be installed on every system. If the dashboard does not start, select a fixed version in the adapter configuration, ${defaultDashboardVersion} is known to work.`,
@@ -335,7 +336,7 @@ class Esphome extends utils.Adapter {
     }
 
     // ToDo: move to separate module
-    async espHomeDashboard() {
+    async espHomeDashboard(): Promise<void> {
         try {
             // Create Channel to store ESPHomeDashboard related Data
             await this.extendObjectAsync('_ESPHomeDashboard', {
@@ -478,7 +479,7 @@ class Esphome extends utils.Adapter {
                         });
                     } catch (error) {
                         const stack = error instanceof Error ? error.stack : undefined;
-                        this.log.error(`Fatal error starting ESPHomeDashboard | ${error} | ${stack}`);
+                        this.log.error(`Fatal error starting ESPHomeDashboard | ${String(error)} | ${stack}`);
                         return;
                     }
 
@@ -496,7 +497,7 @@ class Esphome extends utils.Adapter {
                     } catch (error) {
                         // Directory has issues reading/writing data, iob fix should be executed
                         this.log.warn(
-                            `ESPHome DDashboard is unable to access directory to store YAML configuration data, please run ioBroker fix: ${error}`,
+                            `ESPHome DDashboard is unable to access directory to store YAML configuration data, please run ioBroker fix: ${String(error)}`,
                         );
                     }
 
@@ -527,15 +528,16 @@ class Esphome extends utils.Adapter {
                         }
                     });
 
-                    dashboardProcess.on('message', (code, signal) => {
+                    void dashboardProcess.on('message', (code, signal) => {
+                        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-base-to-string -- logged as before: the 'message' event passes (message, sendHandle), not (code, signal)
                         this.log.info(`[dashboardProcess MESSAGE] Exit code is: ${code} | ${signal}`);
                     });
 
-                    dashboardProcess.on('exit', (_code, _signal) => {
+                    void dashboardProcess.on('exit', (_code, _signal) => {
                         this.log.warn(`ESPHome Dashboard stopped`);
                     });
 
-                    dashboardProcess.on('error', data => {
+                    void dashboardProcess.on('error', data => {
                         if (data.message.includes('INFO')) {
                             this.log.info(`[dashboardProcess Info] ${data}`);
                         } else if (data.message.includes('ERROR')) {
@@ -556,7 +558,7 @@ class Esphome extends utils.Adapter {
     }
 
     // Try to contact and read data of already known devices
-    async tryKnownDevices() {
+    async tryKnownDevices(): Promise<void> {
         try {
             // Get all current devices from adapter tree
             const knownDevices = await this.getDevicesAsync();
@@ -567,6 +569,7 @@ class Esphome extends utils.Adapter {
             }
 
             // Get connection data of known devices and to connect
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
             for (const i in knownDevices) {
                 const deviceDetails = knownDevices[i].native;
 
@@ -595,13 +598,14 @@ class Esphome extends utils.Adapter {
     }
 
     // MDNS discovery handler for ESPHome devices
-    deviceDiscovery() {
+    deviceDiscovery(): void {
         try {
             // Get a list of IP-Addresses from Adapter config to exclude by autodiscovery
             const excludedIP: string[] = [];
 
             // Prepare an array to easy processing containing all IP addresses to be excluded from device discovery
             //ToDo: Check function doesn't look correct
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
             for (const entry in this.config.ignoredDevices) {
                 if (
                     this.config.ignoredDevices[entry] &&
@@ -650,9 +654,9 @@ class Esphome extends utils.Adapter {
     /**
      * Handle Socket connections
      *
-     * @param {string} host IP address of a device
+     * @param host IP address of a device
      */
-    connectDevices(host: string) {
+    connectDevices(host: string): void {
         try {
             this.log.info(`Try to connect to ${host}`);
 
@@ -660,7 +664,7 @@ class Esphome extends utils.Adapter {
             if (clientDetails[host] && (clientDetails[host].connecting || clientDetails[host].deletionRequested)) {
                 return;
             }
-            this.updateConnectionStatus(host, false, true, 'connecting');
+            void this.updateConnectionStatus(host, false, true, 'connecting');
 
             // Connection behavior, configurable via adapter settings.
             // Intervals are stored in seconds in the config and converted to milliseconds here.
@@ -722,7 +726,7 @@ class Esphome extends utils.Adapter {
                         delete this.messageResponse[host];
                     }
                 } catch (e) {
-                    this.log.error(`connection error ${e}`);
+                    this.log.error(`connection error ${String(e)}`);
                 }
             });
 
@@ -760,10 +764,11 @@ class Esphome extends utils.Adapter {
                         this.log.warn(`ESPHome client ${host} disconnected`);
                     }
                 } catch (e) {
-                    this.log.debug(`ESPHome disconnect error : ${e}`);
+                    this.log.debug(`ESPHome disconnect error : ${String(e)}`);
                 }
             });
 
+            // eslint-disable-next-line @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
             clientDetails[host].client.on('reconnect', async () => {
                 this.log.debug(`Trying to reconnect to ESPHome client ${host}`);
             });
@@ -994,10 +999,10 @@ class Esphome extends utils.Adapter {
                     // reconnection cycle handles the fresh subscription.
                     if (clientDetails[host].client!.connection.connected) {
                         try {
-                            await clientDetails[host].client!.connection.subscribeStatesService();
+                            clientDetails[host].client!.connection.subscribeStatesService();
                         } catch (e) {
                             this.log.debug(
-                                `[subscribeStates] ${clientDetails[host].deviceFriendlyName}: ${e instanceof Error ? e.message : e}`,
+                                `[subscribeStates] ${clientDetails[host].deviceFriendlyName}: ${e instanceof Error ? e.message : String(e)}`,
                             );
                         }
                     }
@@ -1122,6 +1127,7 @@ class Esphome extends utils.Adapter {
                         }
                     });
 
+                    // eslint-disable-next-line @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
                     entity.on(`destroyed`, async state => {
                         try {
                             // `destroyed` fires once per entity when the connection goes down.
@@ -1134,21 +1140,23 @@ class Esphome extends utils.Adapter {
 
                             const entityIdentity = entity?.name || entity?.id || host || 'unknown';
                             if (state !== undefined) {
+                                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-base-to-string -- logged as before
                                 this.log.warn(`Connection destroyed for ${state} (${entityIdentity})`);
                             } else {
                                 this.log.warn(`Connection destroyed for ${entityIdentity}`);
                             }
                         } catch (e) {
-                            this.log.error(`State handle error ${e}`);
+                            this.log.error(`State handle error ${String(e)}`);
                         }
                     });
 
+                    // eslint-disable-next-line @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
                     entity.on(`error`, async name => {
-                        this.log.error(`Entity error: ${name}`);
+                        this.log.error(`Entity error: ${String(name)}`);
                     });
                 } catch (e) {
                     const stack = e instanceof Error ? e.stack : undefined;
-                    this.log.error(`Connection issue for ${entity.name} ${e} | ${stack}`);
+                    this.log.error(`Connection issue for ${entity.name} ${String(e)} | ${stack}`);
                 }
             });
 
@@ -1228,26 +1236,26 @@ class Esphome extends utils.Adapter {
                 this.log.debug(`trying to connect to ${host}`);
                 clientDetails[host].client.connect();
             } catch (e) {
-                this.log.error(`Client ${host} connect error ${e}`);
+                this.log.error(`Client ${host} connect error ${String(e)}`);
                 this.updateConnectionStatus(host, false, false, 'error', true).catch(error =>
                     this.errorHandler(`[connectDevices connect]`, error),
                 );
             }
         } catch (e) {
             const stack = e instanceof Error ? e.stack : undefined;
-            this.log.error(`ESP device error for ${host} | ${e} | ${stack}`);
+            this.log.error(`ESP device error for ${host} | ${String(e)} | ${stack}`);
         }
     }
 
     /**
      * Handle regular state values
      *
-     * @param {string} host IP-Address of client
-     * @param {object} entity Entity-Object of value
-     * @param {object} state State-Object
-     * @param {boolean} writable Indicate if state should be writable
+     * @param host IP-Address of client
+     * @param entity Entity-Object of value
+     * @param state State-Object
+     * @param writable Indicate if state should be writable
      */
-    async handleRegularState(host: string, entity: Entity, state: EntityState, writable: boolean) {
+    async handleRegularState(host: string, entity: Entity, state: EntityState, writable: boolean): Promise<void> {
         try {
             // Round value to digits as known by configuration
             let stateVal = state.state;
@@ -1255,10 +1263,12 @@ class Esphome extends utils.Adapter {
             if (entityDetails(host, entity.id).config.accuracyDecimals != null) {
                 const rounding = `round(${entityDetails(host, entity.id).config.accuracyDecimals})`;
                 this.log.debug(
+                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-base-to-string -- logs "[object Object]" as before, to be fixed separately
                     `Value "${stateVal}" for name "${entity}" before function modify with method "round(${entityDetails(host, entity.id).config.accuracyDecimals})"`,
                 );
                 stateVal = this.modify(rounding, stateVal);
                 this.log.debug(
+                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-base-to-string -- logs "[object Object]" as before, to be fixed separately
                     `Value "${stateVal}" for name "${entity}" after function modify with method "${rounding}"`,
                 );
             }
@@ -1285,11 +1295,11 @@ class Esphome extends utils.Adapter {
     /**
      * Handle state values
      *
-     * @param {string} host IP-Address of client
-     * @param {object} entity Entity-Object of value
-     * @param {object} state State-Object
+     * @param host IP-Address of client
+     * @param entity Entity-Object of value
+     * @param state State-Object
      */
-    async handleStateArrays(host: string, entity: Entity, state: EntityState) {
+    async handleStateArrays(host: string, entity: Entity, state: EntityState): Promise<void> {
         try {
             entityDetails(host, entity.id).states = state;
 
@@ -1423,7 +1433,7 @@ class Esphome extends utils.Adapter {
                                 rgbAutoWhiteVal = !!existing.val;
                             }
                         } catch (e) {
-                            this.log.debug(`[handleStateArrays] Could not read rgbAutoWhite state: ${e}`);
+                            this.log.debug(`[handleStateArrays] Could not read rgbAutoWhite state: ${String(e)}`);
                         }
                         entityDetails(host, entity.id).rgbAutoWhite = rgbAutoWhiteVal;
                         // Ensure config channel exists before creating the state inside it
@@ -1483,11 +1493,11 @@ class Esphome extends utils.Adapter {
     /**
      * Traverses the json-object and provides all information for creating/updating states
      *
-     * @param {object} jObject Json-object to be added as states
-     * @param {string | null} parent Defines the parent object in the state tree; default=root
-     * @param {boolean} replaceName Steers if name from child should be used as name for structure element (channel); default=false
-     * @param {boolean} replaceID Steers if ID from child should be used as ID for structure element (channel); default=false;
-     * @param {number} state_expire expire time for the current setState in seconds; default is no expire
+     * @param jObject Json-object to be added as states
+     * @param parent Defines the parent object in the state tree; default=root
+     * @param replaceName Steers if name from child should be used as name for structure element (channel); default=false
+     * @param replaceID Steers if ID from child should be used as ID for structure element (channel); default=false;
+     * @param state_expire expire time for the current setState in seconds; default is no expire
      */
     async traverseJson(
         jObject: any,
@@ -1495,7 +1505,7 @@ class Esphome extends utils.Adapter {
         replaceName = false,
         replaceID = false,
         state_expire = 0,
-    ) {
+    ): Promise<void> {
         let id = null;
         let value = null;
         let name = null;
@@ -1570,12 +1580,12 @@ class Esphome extends utils.Adapter {
      * proper object definitions
      * rounding of values
      *
-     * @param {string} objName ID of the object
-     * @param {string} name Name of state (also used for stattAttrlib!)
-     * @param {boolean | string | number | null} [value] Value of the state
-     * @param {string} [unit] Unit to be set
-     * @param {boolean} [writable] state writable ?
-     * @param {object} initialStateCommon Additional attributes for state.common
+     * @param objName ID of the object
+     * @param name Name of state (also used for stattAttrlib!)
+     * @param [value] Value of the state
+     * @param [unit] Unit to be set
+     * @param [writable] state writable ?
+     * @param initialStateCommon Additional attributes for state.common
      */
     async stateSetCreate(
         objName: string,
@@ -1584,7 +1594,7 @@ class Esphome extends utils.Adapter {
         unit?: string,
         writable?: boolean,
         initialStateCommon: Partial<ioBroker.StateCommon> = {},
-    ) {
+    ): Promise<void> {
         this.log.debug(`Create_state called for : ${objName} with value : ${value}`);
         try {
             // Try to get details from state lib, if not use defaults. Throw warning if states are not known in an attribute list
@@ -1654,17 +1664,17 @@ class Esphome extends utils.Adapter {
     /**
      * Handles error messages for log and Sentry
      *
-     * @param {string} codepart Function were exception occurred
-     * @param {unknown} error Caught value, anything can be thrown in JavaScript
+     * @param codepart Function were exception occurred
+     * @param error Caught value, anything can be thrown in JavaScript
      */
-    errorHandler(codepart: string, error: unknown) {
+    errorHandler(codepart: string, error: unknown): void {
         let errorMsg = error;
         if (error instanceof Error && error.stack != null) {
             errorMsg = error.stack;
         }
         try {
             if (!disableSentry) {
-                this.log.info(`[Error caught and send to Sentry, thank you collaborating!] error: ${errorMsg}`);
+                this.log.info(`[Error caught and send to Sentry, thank you collaborating!] error: ${String(errorMsg)}`);
                 if (this.supportsFeature && this.supportsFeature('PLUGINS')) {
                     const sentryInstance = this.getPluginInstance('sentry');
                     if (sentryInstance && typeof sentryInstance.getSentryObject === 'function') {
@@ -1675,40 +1685,40 @@ class Esphome extends utils.Adapter {
                     }
                 }
             } else {
-                this.log.error(`Sentry disabled, error caught : ${errorMsg}`);
+                this.log.error(`Sentry disabled, error caught : ${String(errorMsg)}`);
             }
         } catch (error) {
-            this.log.error(`Error in function sendSentry: ${error}`);
+            this.log.error(`Error in function sendSentry: ${String(error)}`);
         }
     }
 
     /**
      * Helper replace function
      *
-     * @param {string} string String to replace invalid chars
+     * @param string String to replace invalid chars
      */
-    escapeRegExp(string: string) {
+    escapeRegExp(string: string): string {
         return string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
     }
 
     /**
      * Helper replace function
      *
-     * @param {string} str String to replace invalid chars
-     * @param {string} find String to find for replace function
-     * @param {string} replace String to replace
+     * @param str String to replace invalid chars
+     * @param find String to find for replace function
+     * @param replace String to replace
      */
-    replaceAll(str: string, find: string, replace: string) {
+    replaceAll(str: string, find: string, replace: string): string {
         return str.replace(new RegExp(this.escapeRegExp(find), 'g'), replace);
     }
 
     /**
      * Extract the argument of a modify method, so "multiply(2.5)" yields "2.5"
      *
-     * @param {string} method defines the method to be executed (e.g. round())
-     * @returns {string} text between the brackets, empty when the method has no argument
+     * @param method defines the method to be executed (e.g. round())
+     * @returns text between the brackets, empty when the method has no argument
      */
-    modifyArgument(method: string) {
+    modifyArgument(method: string): string {
         const inBracket = method.match(/(?<=\()(.*?)(?=\))/);
         return inBracket ? inBracket[0] : '';
     }
@@ -1716,10 +1726,10 @@ class Esphome extends utils.Adapter {
     /**
      * Analysis modify an element in stateAttr.js and execute command
      *
-     * @param {string} method defines the method to be executed (e.g. round())
-     * @param {string | number | boolean} value value to be executed
+     * @param method defines the method to be executed (e.g. round())
+     * @param value value to be executed
      */
-    modify(method: string, value: string | number | boolean) {
+    modify(method: string, value: string | number | boolean): string | number | boolean {
         this.log.debug(`Function modify with method "${method}" and value "${value}"`);
         let result = null;
         try {
@@ -1781,9 +1791,9 @@ class Esphome extends utils.Adapter {
     /**
      * Is called when adapter shuts down - callback has to be called under any circumstances!
      *
-     * @param {() => void} callback - Callback function to call when unload is complete
+     * @param callback - Callback function to call when unload is complete
      */
-    onUnload(callback: () => void) {
+    onUnload(callback: () => void): void {
         try {
             // this.log.debug(JSON.stringify(clientDetails));
 
@@ -1793,7 +1803,7 @@ class Esphome extends utils.Adapter {
                 if (clientDetails[device].mac != null) {
                     const deviceName = this.replaceAll(clientDetails[device].mac, `:`, ``);
                     if (clientDetails[device].connectStatus !== 'newly discovered') {
-                        this.setState(`${deviceName}.info._online`, {
+                        void this.setState(`${deviceName}.info._online`, {
                             val: false,
                             ack: true,
                         });
@@ -1841,7 +1851,7 @@ class Esphome extends utils.Adapter {
      * @param {string} ipAddress
      */
 
-    validateIPAddress(ipAddress: string) {
+    validateIPAddress(ipAddress: string): boolean {
         return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
             ipAddress,
         );
@@ -1851,9 +1861,9 @@ class Esphome extends utils.Adapter {
      * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
      * Using this method requires "common.message" property to be set to true in io-package.json
      *
-     * @param {ioBroker.Message} obj - The message object
+     * @param obj - The message object
      */
-    async onMessage(obj: ioBroker.Message) {
+    async onMessage(obj: ioBroker.Message): Promise<void> {
         this.log.debug(`Data from configuration received : ${JSON.stringify(obj)}`);
         try {
             switch (obj.command) {
@@ -1941,6 +1951,7 @@ class Esphome extends utils.Adapter {
                     {
                         const dropDownEntry = [];
                         dropDownEntry.push('Always last available');
+                        // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
                         for (const versions in dashboardVersions) {
                             dropDownEntry.push({
                                 label: dashboardVersions[versions],
@@ -1997,6 +2008,7 @@ class Esphome extends utils.Adapter {
 
                         // Only show IP4 in dropdown
                         if (hostIP) {
+                            // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
                             for (const ip in hostIP.common.address) {
                                 console.log(hostIP.common.address[ip]);
                                 if (this.validateIPAddress(hostIP.common.address[ip])) {
@@ -2040,8 +2052,8 @@ class Esphome extends utils.Adapter {
                         return;
                     }
 
-                    // eslint-disable-next-line no-case-declarations
-                    const initiateNDevice = async () => {
+                    // eslint-disable-next-line no-case-declarations, @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
+                    const initiateNDevice = async (): Promise<void> => {
                         const encryptionKeyUsed = !!(
                             obj.message.encryptionKey && obj.message.encryptionKey !== 'undefined'
                         );
@@ -2073,7 +2085,9 @@ class Esphome extends utils.Adapter {
                         // Clean memory data and init device again with a little delay
 
                         if (resetTimers[obj.message.ip]) {
-                            resetTimers[obj.message.ip] = this.clearTimeout(resetTimers[obj.message.ip] as ioBroker.Timeout | undefined);
+                            resetTimers[obj.message.ip] = this.clearTimeout(
+                                resetTimers[obj.message.ip] as ioBroker.Timeout | undefined,
+                            );
                         }
                         resetTimers[obj.message.ip] = this.setTimeout(async () => {
                             delete clientDetails[obj.message.ip];
@@ -2220,10 +2234,10 @@ class Esphome extends utils.Adapter {
      * Add a version to a dropDown when it is not part of it yet, so a configured version can never
      * silently disappear from the selection when the release list is unavailable or outdated
      *
-     * @param {Array<string | {label: string, value: string}>} dropDownEntry - dropDown entries to extend
-     * @param {string} version - version which must be selectable
+     * @param dropDownEntry - dropDown entries to extend
+     * @param version - version which must be selectable
      */
-    ensureVersionInDropDown(dropDownEntry: (string | { label: string; value: string })[], version: string) {
+    ensureVersionInDropDown(dropDownEntry: (string | { label: string; value: string })[], version: string): void {
         const known = dropDownEntry.some(entry => (typeof entry === 'string' ? entry : entry.value) === version);
         if (!known) {
             dropDownEntry.push({ label: version, value: version });
@@ -2233,9 +2247,9 @@ class Esphome extends utils.Adapter {
     /**
      * Fetch Pillow versions from PyPI and cache them
      *
-     * @returns {Promise<string[]>} Array of available Pillow versions
+     * @returns Array of available Pillow versions
      */
-    async fetchAndCachePillowVersions() {
+    async fetchAndCachePillowVersions(): Promise<string[]> {
         const fallbackVersions = ['12.2.0', '12.1.1', '12.0.0', '11.3.0', '11.2.0', '11.1.0'];
 
         try {
@@ -2303,7 +2317,8 @@ class Esphome extends utils.Adapter {
     /**
      * Clear the autopy cache directory
      */
-    async clearAutopyCache() {
+    // eslint-disable-next-line @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
+    async clearAutopyCache(): Promise<void> {
         try {
             const homeDir = os.homedir();
             const autopyCache = path.join(homeDir, '.cache', 'autopy');
@@ -2328,16 +2343,16 @@ class Esphome extends utils.Adapter {
     /**
      * responds to the adapter that sent the original message
      *
-     * @param {string} response - The response message
-     * @param {object} obj - The original message object
+     * @param response - The response message
+     * @param obj - The original message object
      */
-    respond(response: ioBroker.MessagePayload, obj: ioBroker.Message) {
+    respond(response: ioBroker.MessagePayload, obj: ioBroker.Message): void {
         if (obj.callback) {
             this.sendTo(obj.from, obj.command, response, obj.callback);
         }
     }
 
-    hexToRgb(hex: string) {
+    hexToRgb(hex: string): { red: number; green: number; blue: number } | null {
         const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
         hex = hex.replace(shorthandRegex, function (m, r, g, b) {
             return r + r + g + g + b + b;
@@ -2353,8 +2368,8 @@ class Esphome extends utils.Adapter {
             : null;
     }
 
-    rgbToHex(r: number, g: number, b: number) {
-        function componentToHex(color: number) {
+    rgbToHex(r: number, g: number, b: number): string {
+        function componentToHex(color: number): string {
             const hex = color.toString(16);
             return hex.length === 1 ? `0${hex}` : hex;
         }
@@ -2364,10 +2379,10 @@ class Esphome extends utils.Adapter {
     /**
      * Is called if a subscribed state changes
      *
-     * @param {string} id - The state ID that changed
-     * @param {ioBroker.State | null | undefined} state - The new state value
+     * @param id - The state ID that changed
+     * @param state - The new state value
      */
-    async onStateChange(id: string, state: ioBroker.State | null | undefined) {
+    async onStateChange(id: string, state: ioBroker.State | null | undefined): Promise<void> {
         try {
             if (state && state.ack === false) {
                 const device = id.split('.');
@@ -2382,7 +2397,7 @@ class Esphome extends utils.Adapter {
                     // Verify if trigger is related to clearing autopy cache
                     if (id.split('.')[3] === 'clearAutopyCache') {
                         await this.clearAutopyCache();
-                        this.setState(id, { val: false, ack: true });
+                        void this.setState(id, { val: false, ack: true });
                         return;
                     }
                 } catch {
@@ -2402,7 +2417,7 @@ class Esphome extends utils.Adapter {
 
                 // Handle Switch State
                 if (entityDetails(deviceIP, device[4]).type === `Switch`) {
-                    await clientDetails[deviceIP].client!.connection.switchCommandService({
+                    clientDetails[deviceIP].client!.connection.switchCommandService({
                         key: entityKey,
                         state: state.val as boolean,
                     });
@@ -2415,7 +2430,7 @@ class Esphome extends utils.Adapter {
                         // Update the state in memory
                         entityDetails(deviceIP, device[4]).states![device[5]] = state.val;
                         // Call fan command service with all current states
-                        await clientDetails[deviceIP].client!.connection.fanCommandService(
+                        clientDetails[deviceIP].client!.connection.fanCommandService(
                             entityDetails(deviceIP, device[4]).states as FanCommandData,
                         );
                     } else {
@@ -2425,40 +2440,40 @@ class Esphome extends utils.Adapter {
                     // Handle Climate State
                 } else if (entityDetails(deviceIP, device[4]).type === `Climate`) {
                     entityDetails(deviceIP, device[4]).states![device[5]] = state.val;
-                    await clientDetails[deviceIP].client!.connection.climateCommandService(
+                    clientDetails[deviceIP].client!.connection.climateCommandService(
                         entityDetails(deviceIP, device[4]).states as ClimateCommandData,
                     );
 
                     // Handle Number State
                 } else if (entityDetails(deviceIP, device[4]).type === `Number`) {
-                    await clientDetails[deviceIP].client!.connection.numberCommandService({
+                    clientDetails[deviceIP].client!.connection.numberCommandService({
                         key: entityKey,
                         state: state.val as number,
                     });
 
                     // Handle Text State
                 } else if (entityDetails(deviceIP, device[4]).type === `Text`) {
-                    await clientDetails[deviceIP].client!.connection.textCommandService({
+                    clientDetails[deviceIP].client!.connection.textCommandService({
                         key: entityKey,
                         state: state.val as string,
                     });
 
                     // Handle Button State
                 } else if (entityDetails(deviceIP, device[4]).type === `Button`) {
-                    await clientDetails[deviceIP].client!.connection.buttonCommandService({
+                    clientDetails[deviceIP].client!.connection.buttonCommandService({
                         key: entityKey,
                     });
 
                     // Handle Select State
                 } else if (entityDetails(deviceIP, device[4]).type === `Select`) {
-                    await clientDetails[deviceIP].client!.connection.selectCommandService({
+                    clientDetails[deviceIP].client!.connection.selectCommandService({
                         key: entityKey,
                         state: state.val as string,
                     });
 
                     // Handle Lock Command
                 } else if (entityDetails(deviceIP, device[4]).type === `Lock` && device[5] === `command`) {
-                    await clientDetails[deviceIP].client!.connection.lockCommandService({
+                    clientDetails[deviceIP].client!.connection.lockCommandService({
                         key: entityKey,
                         command: state.val as LockCommand,
                     });
@@ -2467,7 +2482,7 @@ class Esphome extends utils.Adapter {
                 } else if (device[5] === `position`) {
                     // entityDetails(deviceIP, device[4]).states[device[5]] = state.val;
                     // State is 0-100 %, ESPHome expects 0-1
-                    await clientDetails[deviceIP].client!.connection.coverCommandService({
+                    clientDetails[deviceIP].client!.connection.coverCommandService({
                         key: entityKey,
                         position: Number(state.val) / 100,
                     });
@@ -2476,7 +2491,7 @@ class Esphome extends utils.Adapter {
                 } else if (device[5] === `tilt`) {
                     // entityDetails(deviceIP, device[4]).states[device[5]] = state.val;
                     // State is 0-100 %, ESPHome expects 0-1
-                    await clientDetails[deviceIP].client!.connection.coverCommandService({
+                    clientDetails[deviceIP].client!.connection.coverCommandService({
                         key: entityKey,
                         tilt: Number(state.val) / 100,
                     });
@@ -2484,7 +2499,7 @@ class Esphome extends utils.Adapter {
                     // Handle Cover Stop
                 } else if (device[5] === `stop`) {
                     // entityDetails(deviceIP, device[4]).states[device[5]] = state.val;
-                    await clientDetails[deviceIP].client!.connection.coverCommandService({
+                    clientDetails[deviceIP].client!.connection.coverCommandService({
                         key: entityKey,
                         stop: true,
                     });
@@ -2528,7 +2543,7 @@ class Esphome extends utils.Adapter {
                         // Store device-specific preference; no light command needed
                         entityDetails(deviceIP, device[4]).rgbAutoWhite = writeValue as boolean;
                         // Acknowledge the preference update so the state does not stay with ack=false
-                        this.setState(id, !!writeValue, true);
+                        void this.setState(id, !!writeValue, true);
                         return;
                     }
 
@@ -2613,22 +2628,21 @@ class Esphome extends utils.Adapter {
                     }
 
                     this.log.debug(`Send Light values ${JSON.stringify(data)}`);
-                    await clientDetails[deviceIP].client!.connection.lightCommandService(data);
+                    clientDetails[deviceIP].client!.connection.lightCommandService(data);
                 }
             }
         } catch (e) {
-            this.log.error(`[onStateChange] ${e}`);
+            this.log.error(`[onStateChange] ${String(e)}`);
         }
     }
 
     /**
      * Some types (like Button) don't have a state. So standard method of creating iobroker objects when receiving state event via api doesn't work here
      *
-     * @param {string} host - The ESPHome device hostname or IP
-     * @param {object} entity - The entity object from ESPHome API
-     * @returns {Promise<void>}
+     * @param host - The ESPHome device hostname or IP
+     * @param entity - The entity object from ESPHome API
      */
-    async createNonStateDevices(host: string, entity: Entity) {
+    async createNonStateDevices(host: string, entity: Entity): Promise<void> {
         switch (entityDetails(host, entity.id).type) {
             case 'Button': {
                 await this.stateSetCreate(
@@ -2643,7 +2657,7 @@ class Esphome extends utils.Adapter {
         }
     }
 
-    async resetOnlineStates() {
+    async resetOnlineStates(): Promise<void> {
         try {
             // Set parameters for object view to only include objects within adapter namespace
             const params = {
@@ -2654,6 +2668,7 @@ class Esphome extends utils.Adapter {
             // Get all current devices in an adapter tree
             const _devices = await this.getObjectViewAsync('system', 'device', params);
             // List all found devices & set online state to false
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
             for (const currDevice in _devices.rows) {
                 // Extend online state to device (to ensure migration of version < 0.3.1
                 await this.extendObjectAsync(_devices.rows[currDevice].id, {
@@ -2672,7 +2687,7 @@ class Esphome extends utils.Adapter {
         }
     }
 
-    async objectCleanup(ip: string) {
+    async objectCleanup(ip: string): Promise<void> {
         try {
             this.log.debug(
                 `[objectCleanup] Starting channel and state cleanup for ${clientDetails[ip].deviceFriendlyName} | ${ip}`,
@@ -2692,6 +2707,7 @@ class Esphome extends utils.Adapter {
             // Get all current channels
             const _channels = await this.getObjectViewAsync('system', 'channel', params);
             // List all found channels & compare with memory, delete unneeded channels
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
             for (const currDevice in _channels.rows) {
                 if (
                     !clientDetails[ip].adapterObjects.channels.includes(_channels.rows[currDevice].id) &&
@@ -2707,6 +2723,7 @@ class Esphome extends utils.Adapter {
             // Get all current states in adapter tree
             const _states = await this.getObjectViewAsync('system', 'state', params);
             // List all found states & compare with memory, delete unneeded states
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
             for (const currDevice in _states.rows) {
                 if (
                     !this.createdStatesDetails[_states.rows[currDevice].id.replace(`esphome.0.`, ``)] &&
@@ -2721,7 +2738,7 @@ class Esphome extends utils.Adapter {
         }
     }
 
-    async offlineDeviceCleanup() {
+    async offlineDeviceCleanup(): Promise<void> {
         this.log.info(`Offline Device cleanup started`);
 
         try {
@@ -2729,6 +2746,7 @@ class Esphome extends utils.Adapter {
             const knownDevices = await this.getDevicesAsync();
             // console.log(`KnownDevices: ${knownDevices}`);
             // Loop to all devices, check if online state = TRUE otherwise delete device
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
             for (const device in knownDevices) {
                 // Get online value
                 const online = await this.getStateAsync(`${knownDevices[device]._id}.info._online`);
@@ -2755,11 +2773,11 @@ class Esphome extends utils.Adapter {
     /**
      * Generic function to properly update memory connection details of a device in all scenarios
      *
-     * @param {string} host IP-Address of device
-     * @param {boolean} connected Indicator if a device is connected
-     * @param {boolean} connecting Indicator if a device is initializing
-     * @param {string} [connectionStatus] Connection status shown in Adapter instance / Device Manager
-     * @param {boolean} [connectionError] Indicator if a connection error (like incorrect password or timeout) is present
+     * @param host IP-Address of device
+     * @param connected Indicator if a device is connected
+     * @param connecting Indicator if a device is initializing
+     * @param [connectionStatus] Connection status shown in Adapter instance / Device Manager
+     * @param [connectionError] Indicator if a connection error (like incorrect password or timeout) is present
      * @returns void
      */
     async updateConnectionStatus(
@@ -2768,7 +2786,7 @@ class Esphome extends utils.Adapter {
         connecting: boolean,
         connectionStatus?: string,
         connectionError?: boolean,
-    ) {
+    ): Promise<void> {
         try {
             // Cancel operation if host is unknown
             if (!clientDetails[host]) {

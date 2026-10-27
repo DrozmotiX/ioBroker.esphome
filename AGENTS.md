@@ -6,7 +6,7 @@ Guide for AI coding agents working in this repository.
 
 Single-file adapter (`src/main.ts`, ~2700 lines) extending `@iobroker/adapter-core`'s `utils.Adapter`, compiled to `build/` by `npm run build`. Supporting modules in `src/lib/`:
 
-> The code was taken over 1:1 from the former JavaScript files and is migrated to TypeScript file by file. Files not migrated yet start with `// @ts-nocheck` and are listed in the override at the end of `eslint.config.mjs` and in `prettier.ignore`. When migrating a file, remove all three.
+> All sources are TypeScript and fully type checked; there is no `// @ts-nocheck` and no per-file lint exception. Keep it that way: type new code properly instead of adding `any`, `@ts-nocheck` or broad eslint overrides. The types of `@2colors/esphome-native-api` are completed in `src/lib/esphome-native-api.d.ts`.
 
 | File                         | Purpose                                                               |
 | ---------------------------- | --------------------------------------------------------------------- |

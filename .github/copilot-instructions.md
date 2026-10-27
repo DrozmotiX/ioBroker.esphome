@@ -84,7 +84,7 @@ tsconfig.json           -- TypeScript configuration (type check)
 tsconfig.build.json     -- TypeScript configuration (build)
 ```
 
-The code was taken over 1:1 from the former JavaScript files and is migrated to TypeScript file by file. Files not migrated yet start with `// @ts-nocheck` and are listed in the override at the end of `eslint.config.mjs` and in `prettier.ignore`.
+All sources are TypeScript and fully type checked; there is no `// @ts-nocheck` and no per-file lint exception. The types of `@2colors/esphome-native-api` are completed in `src/lib/esphome-native-api.d.ts`.
 
 ##### Test structure
 
