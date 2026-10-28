@@ -67,22 +67,6 @@ class ClientDetails extends DeviceInfo {
      * Store mandatory connection details of already known device
      *
      * @param ip IP-Address of device
-     * @param macAddress MAC-Address of a device
-     * @param deviceName Name of a device (MAC address without ":")
-     * @param deviceFriendlyName Friendly name of a device taken from YAML configuration
-     */
-    storeDiscoveredDevice(ip: string, macAddress: string, deviceName: string, deviceFriendlyName: string): void {
-        this.connectStatus = 'newly discovered';
-        this.deviceFriendlyName = deviceFriendlyName;
-        this.deviceName = deviceName;
-        this.ip = ip;
-        this.mac = macAddress;
-    }
-
-    /**
-     * Store mandatory connection details of already known device
-     *
-     * @param ip IP-Address of device
      * @param encryptionKeyUsed Indicated if encryption must be used
      * @param macAddress MAC-Address of a device
      * @param deviceName Name of a device (MAC address without ":")

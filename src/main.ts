@@ -1795,12 +1795,10 @@ class Esphome extends utils.Adapter {
                 // Ensure all known online states are set to false
                 if (clientDetails[device].mac != null) {
                     const deviceName = this.replaceAll(clientDetails[device].mac, `:`, ``);
-                    if (clientDetails[device].connectStatus !== 'newly discovered') {
-                        void this.setState(`${deviceName}.info._online`, {
-                            val: false,
-                            ack: true,
-                        });
-                    }
+                    void this.setState(`${deviceName}.info._online`, {
+                        val: false,
+                        ack: true,
+                    });
                 }
 
                 if (discovery) {
