@@ -443,6 +443,7 @@ If you like my work, please consider a personal donation
 
 ### **WORK IN PROGRESS**
 
+- (@SimonFischer04) **FIXED**: When the ESPHome Dashboard stops, the log shows its exit code and signal. A handler that was meant to log them listened to an event the dashboard process never sends
 - (@SimonFischer04) **FIXED**: The debug log for rounded values showed "[object Object]" instead of the entity name
 - (@SimonFischer04) **FIXED**: Known devices were listed as "undefined" in the device table until they connected, because the device name was not stored in the device object any more
 - (@SimonFischer04) **FIXED**: The adapter requires Node.js 22.12 or newer. The ESPHome Dashboard could not start on Node.js 22.0 to 22.11, because the build loads the ESM-only autopy package with require(), which those versions do not support
