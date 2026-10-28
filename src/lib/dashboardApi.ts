@@ -5,12 +5,9 @@
  * Wraps all endpoints exposed by the ESPHome Dashboard HTTP/WebSocket API.
  * The dashboard URL is taken from adapter settings (ESPHomeDashboardUrl).
  *
- * HTTP endpoints use the native fetch API (Node >= 18).
- * WebSocket streaming endpoints (compile, upload) use the native WebSocket API on Node >= 22,
- * or fall back to the `ws` npm package on Node 20 if it is installed.
+ * HTTP endpoints use the native fetch API, WebSocket streaming endpoints (compile, upload) use the
+ * native WebSocket API of Node.js.
  */
-
-import type WsWebSocket from 'ws';
 
 /** Error thrown by request() for a non-OK HTTP response */
 export interface DashboardApiError extends Error {
@@ -133,9 +130,6 @@ export async function request<T = unknown>(
  *   - `{ event: 'line', data: '<text>' }` – a line of log output
  *   - `{ event: 'exit', code: <number> }` – the command finished
  *
- * Uses the native WebSocket API on Node >= 22, or falls back to the `ws` npm
- * package on Node 20. If neither is available, an error is thrown.
- *
  * @param dashboardUrl - Base URL of the ESPHome Dashboard
  * @param path - WebSocket endpoint path (e.g. 'compile', 'upload')
  * @param spawnParams - Parameters forwarded as `{ type: 'spawn', ...spawnParams }`
@@ -150,24 +144,6 @@ export async function streamLogs(
 ): Promise<boolean> {
     const wsUrl = `${dashboardUrl.replace(/\/+$/, '').replace(/^http/, 'ws')}/${path}`;
 
-    // Prefer native WebSocket (Node >= 22), but fall back to "ws" package on older Node versions.
-    // Both constructors expose different APIs (addEventListener vs. on), which is why the two
-    // branches below exist.
-    const hasNativeWebSocket = typeof WebSocket !== 'undefined';
-    let WsImpl: typeof WsWebSocket | undefined;
-
-    if (!hasNativeWebSocket) {
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
-            WsImpl = require('ws') as typeof WsWebSocket;
-        } catch {
-            throw new Error(
-                'WebSocket streaming requires either Node.js >= 22 with native WebSocket support ' +
-                    'or the "ws" package installed. Please upgrade Node.js or install "ws" to use compile/upload functionality.',
-            );
-        }
-    }
-
     return new Promise<boolean>((resolve, reject) => {
         let settled = false;
 
@@ -178,13 +154,14 @@ export async function streamLogs(
             }
         };
 
-        /**
-         * Handles one received frame, shared by both WebSocket implementations
-         *
-         * @param raw - The received message, a string for text frames
-         * @param close - Closes the WebSocket
-         */
-        const handleMessage = (raw: unknown, close: () => void): void => {
+        const ws = new WebSocket(wsUrl);
+
+        ws.addEventListener('open', () => {
+            ws.send(JSON.stringify({ type: 'spawn', ...spawnParams }));
+        });
+
+        ws.addEventListener('message', event => {
+            const raw: unknown = event.data;
             let data: StreamFrame;
             try {
                 data = JSON.parse(String(raw)) as StreamFrame;
@@ -199,7 +176,7 @@ export async function streamLogs(
             const wsEvent = data.event;
 
             if (wsEvent === 'exit') {
-                close();
+                ws.close();
                 settle(() => resolve(data.code === 0));
                 return;
             }
@@ -209,61 +186,21 @@ export async function streamLogs(
                     lineReceivedCb(data.data as string);
                 }
             }
-        };
+        });
 
-        if (!WsImpl) {
-            // Native WebSocket (Node >= 22 / browser-like API)
-            const ws = new WebSocket(wsUrl);
+        ws.addEventListener('error', err => {
+            const errorMessage = (err as unknown as { message?: unknown }).message;
+            // Same fallback as before the TypeScript migration, an Event without message prints "[object Event]"
+            // eslint-disable-next-line @typescript-eslint/no-base-to-string
+            const message = typeof errorMessage === 'string' ? errorMessage : String(err);
+            settle(() => reject(new Error(`WebSocket error on /${path}: ${message}`)));
+        });
 
-            ws.addEventListener('open', () => {
-                ws.send(JSON.stringify({ type: 'spawn', ...spawnParams }));
-            });
-
-            ws.addEventListener('message', event => handleMessage(event.data, () => ws.close()));
-
-            ws.addEventListener('error', err => {
-                const errorMessage = (err as unknown as { message?: unknown }).message;
-                // Same fallback as before the TypeScript migration, an Event without message prints "[object Event]"
-                // eslint-disable-next-line @typescript-eslint/no-base-to-string
-                const message = typeof errorMessage === 'string' ? errorMessage : String(err);
-                settle(() => reject(new Error(`WebSocket error on /${path}: ${message}`)));
-            });
-
-            ws.addEventListener('close', event => {
-                if (!event.wasClean) {
-                    settle(() => reject(new Error(`WebSocket closed unexpectedly on /${path}: code ${event.code}`)));
-                }
-            });
-        } else {
-            // "ws" package (Node >= 20 without native WebSocket)
-            const ws = new WsImpl(wsUrl);
-
-            ws.on('open', () => {
-                ws.send(JSON.stringify({ type: 'spawn', ...spawnParams }));
-            });
-
-            ws.on('message', message => handleMessage(message, () => ws.close()));
-
-            ws.on('error', err => {
-                const message = err && err.message ? err.message : String(err);
-                settle(() => reject(new Error(`WebSocket error on /${path}: ${message}`)));
-            });
-
-            ws.on('close', (code, reason) => {
-                // "ws" does not provide wasClean flag by default; treat non-normal close as unexpected
-                if (code !== 1000) {
-                    settle(() =>
-                        reject(
-                            new Error(
-                                `WebSocket closed unexpectedly on /${path}: code ${code}${
-                                    reason ? `, reason: ${reason.toString()}` : ''
-                                }`,
-                            ),
-                        ),
-                    );
-                }
-            });
-        }
+        ws.addEventListener('close', event => {
+            if (!event.wasClean) {
+                settle(() => reject(new Error(`WebSocket closed unexpectedly on /${path}: code ${event.code}`)));
+            }
+        });
     });
 }
 
@@ -327,8 +264,6 @@ export async function getEncryptionKey(dashboardUrl: string, configuration: stri
 /**
  * Compile the firmware for a device configuration.
  *
- * Uses the native WebSocket API (Node >= 22) or falls back to the `ws` npm package (Node 20).
- *
  * @param dashboardUrl - Base URL of the ESPHome Dashboard
  * @param configuration - Configuration filename (e.g. my-device.yaml)
  * @param [lineReceivedCb] - Optional callback invoked for each log line
@@ -344,8 +279,6 @@ export async function compile(
 
 /**
  * Upload (flash) firmware to a device.
- *
- * Uses the native WebSocket API (Node >= 22) or falls back to the `ws` npm package (Node 20).
  *
  * @param dashboardUrl - Base URL of the ESPHome Dashboard
  * @param configuration - Configuration filename (e.g. my-device.yaml)
