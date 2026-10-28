@@ -1263,13 +1263,11 @@ class Esphome extends utils.Adapter {
             if (entityDetails(host, entity.id).config.accuracyDecimals != null) {
                 const rounding = `round(${entityDetails(host, entity.id).config.accuracyDecimals})`;
                 this.log.debug(
-                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-base-to-string -- logs "[object Object]" as before, to be fixed separately
-                    `Value "${stateVal}" for name "${entity}" before function modify with method "round(${entityDetails(host, entity.id).config.accuracyDecimals})"`,
+                    `Value "${stateVal}" for name "${entity.name}" before function modify with method "round(${entityDetails(host, entity.id).config.accuracyDecimals})"`,
                 );
                 stateVal = this.modify(rounding, stateVal);
                 this.log.debug(
-                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-base-to-string -- logs "[object Object]" as before, to be fixed separately
-                    `Value "${stateVal}" for name "${entity}" after function modify with method "${rounding}"`,
+                    `Value "${stateVal}" for name "${entity.name}" after function modify with method "${rounding}"`,
                 );
             }
 
