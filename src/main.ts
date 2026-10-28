@@ -528,13 +528,8 @@ class Esphome extends utils.Adapter {
                         }
                     });
 
-                    void dashboardProcess.on('message', (code, signal) => {
-                        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-base-to-string -- logged as before: the 'message' event passes (message, sendHandle), not (code, signal)
-                        this.log.info(`[dashboardProcess MESSAGE] Exit code is: ${code} | ${signal}`);
-                    });
-
-                    void dashboardProcess.on('exit', (_code, _signal) => {
-                        this.log.warn(`ESPHome Dashboard stopped`);
+                    void dashboardProcess.on('exit', (code, signal) => {
+                        this.log.warn(`ESPHome Dashboard stopped (exit code ${code}, signal ${signal})`);
                     });
 
                     void dashboardProcess.on('error', data => {
