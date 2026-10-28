@@ -1,5 +1,6 @@
 const dashboard_tests = require('./dashboard_tests');
 const e2e_device_tests = require('./e2e_device_tests');
+const known_device_tests = require('./known_device_tests');
 const version_fetch_tests = require('./version_fetch_tests');
 const version_migration_tests = require('./version_migration_tests');
 
@@ -33,4 +34,7 @@ exports.runTests = function (suite) {
 
     // Runs always: the migration keeps the dashboard integration disabled, so it needs no Python
     version_migration_tests.runTests(suite);
+
+    // Runs always: the known device is never reachable, so it needs neither Python nor a device
+    known_device_tests.runTests(suite);
 };
