@@ -137,6 +137,12 @@ describe('Device Management', () => {
             expect(kitchen.actions?.map(action => action.id)).to.deep.equal(['edit', 'delete']);
             expect(garage.name).to.equal('garage');
             expect(garage.group?.key).to.equal('discovered');
+            // Must not look like an added device that is offline
+            expect(garage).to.not.have.property('status');
+            expect(garage.backgroundColor).to.be.a('string');
+            expect(garage.indicators?.map(indicator => indicator.id)).to.deep.equal(['discovered']);
+            expect(kitchen).to.not.have.property('backgroundColor');
+            expect(kitchen).to.not.have.property('indicators');
             expect(garage.actions?.map(action => action.id)).to.deep.equal(['adopt']);
         });
 

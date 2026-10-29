@@ -276,7 +276,8 @@ is enabled, the devices found on the network that are not added yet.
 - Add device
     - Enter the IP address and the encryption key (or API password of older firmware) of the device,
       the adapter connects and reports whether the connection succeeded
-    - Discovered devices are added with their own "add" button, the IP address is filled in already
+    - Discovered devices that are not added yet have a grey header and are marked "Not added" instead of
+      showing a connection status. They are added with their "Add" button, the IP address is filled in already
 - Change connection settings
     - Enter new credentials, leave both fields empty to keep the current ones
     - When an encryption Key is provided, API-Password is ignored, please ensure proper YAML configuration!

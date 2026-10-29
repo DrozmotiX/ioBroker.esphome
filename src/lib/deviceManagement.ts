@@ -64,6 +64,9 @@ const NOT_INITIALIZED = 'Initialisation needed';
 /** State the device manager watches for updates pushed by the adapter */
 const COMMUNICATION_STATE = 'info.deviceManager';
 
+/** Card header color of discovered devices, added devices use the default (secondary) color */
+const DISCOVERED_COLOR = '#9e9e9e';
+
 /** How long the add / edit dialog waits for the first connection result */
 const CONNECT_TIMEOUT = 30_000;
 
@@ -96,6 +99,8 @@ const texts = {
     },
     groupKnown: { en: 'Devices', de: 'Geräte' },
     groupDiscovered: { en: 'Discovered, not added yet', de: 'Gefunden, noch nicht hinzugefügt' },
+    notAdded: { en: 'Not added', de: 'Nicht hinzugefügt' },
+    add: { en: 'Add', de: 'Hinzufügen' },
     name: { en: 'Name', de: 'Name' },
     mac: { en: 'MAC address', de: 'MAC-Adresse' },
     connectionStatus: { en: 'Connection status', de: 'Verbindungsstatus' },
@@ -274,12 +279,24 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
             id: device.ip,
             identifier: device.ip,
             name: device.deviceFriendlyName,
-            status: 'disconnected',
+            // Grey header and no connection status, so it does not look like an added device that is offline
+            backgroundColor: DISCOVERED_COLOR,
+            indicators: [
+                {
+                    id: 'discovered',
+                    icon: 'search',
+                    color: 'info',
+                    text: texts.notAdded,
+                    tooltip: texts.groupDiscovered,
+                },
+            ],
             group: { key: 'discovered', name: texts.groupDiscovered },
             actions: [
                 {
                     id: 'adopt',
                     icon: 'add',
+                    title: texts.add,
+                    variant: 'contained',
                     description: texts.adoptDevice,
                     handler: async (id, context) => ({
                         refresh: (await this.addDevice(context, id)) ? 'devices' : 'none',
