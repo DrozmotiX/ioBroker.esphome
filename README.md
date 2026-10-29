@@ -439,6 +439,7 @@ If you like my work, please consider a personal donation
 - (@SimonFischer04) **NEW**: Support for the ioBroker device manager (#203). ESPHome devices are listed with their online status and details, can be added, adopted after discovery, given new credentials and deleted there
 - (@SimonFischer04) **BREAKING**: The device tables and the add / delete buttons were removed from the adapter settings. The device manager is shown in their place as the first tab ("Devices") of the adapter settings, the discovery and connection settings moved to the tab "Discovery & connection"
 - (@SimonFischer04) **BREAKING**: Requires admin 7.8.20 or newer, the first version with the current device manager
+- (@SimonFischer04) **BREAKING**: Removed the default credentials (encryption key and API password) from the main settings. They have not been used since version 0.6, when discovered devices stopped being connected automatically. Settings no longer used are removed from the instance configuration once, the adapter restarts after that
 - (@SimonFischer04) **ENHANCED**: Moved all code for the integrated ESPHome Dashboard into its own module, no change in behavior
 - (@SimonFischer04) **ENHANCED**: Removed the fallback to the ws package for compiling and flashing with the ESPHome Dashboard, the adapter always uses the WebSocket support built into Node.js 22 now, and ws is no longer installed with the adapter
 - (@SimonFischer04) **ENHANCED**: Removed unused code for newly discovered devices

@@ -530,18 +530,6 @@ exports.runTests = function (suite) {
                     reconnectInterval: 2,
                     pingInterval: 2,
                     pingAttempts: 1,
-                    // Saved by the device tab of the 1.0.0 settings, no longer used
-                    deviceIP: DEVICE_HOST,
-                    apiPassword: '',
-                    existingDevicesTable: [
-                        {
-                            MACAddress: '02:E2:E0:00:00:01',
-                            deviceName: DEVICE_NAME,
-                            ip: DEVICE_HOST,
-                            connectState: 'initialized',
-                        },
-                    ],
-                    newDevicesTable: [],
                 },
             });
 

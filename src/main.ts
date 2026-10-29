@@ -40,6 +40,20 @@ interface EntityDetails {
     rgbAutoWhite?: boolean;
 }
 
+/**
+ * Settings of earlier versions nothing reads any more, removed once by removeObsoleteSettings():
+ * the device tab of 1.0.0 (deviceIP, the device tables and the unsaved apiPassword input, whose default
+ * was still seeded) and the default credentials, unused since 0.6
+ */
+const OBSOLETE_SETTINGS = [
+    'deviceIP',
+    'existingDevicesTable',
+    'newDevicesTable',
+    'apiPassword',
+    'apiPass',
+    'encryptionKey',
+];
+
 const disableSentry = false; // Ensure to set to true during development!
 const warnMessages: Record<string, string> = {}; // Store warn messages to avoid multiple sending to sentry
 const resetTimers: Record<string, ioBroker.Timeout | undefined | void> = {}; // Memory allocation for all running timers
@@ -117,6 +131,11 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
 
         await this.setStateAsync('info.connection', { val: true, ack: true });
         try {
+            // Settings earlier versions stored and nothing reads any more, the adapter restarts if some were removed
+            if (await this.removeObsoleteSettings()) {
+                return;
+            }
+
             // Migrate from older adapter versions that only had ESPHomeDashboardIP
             await this.dashboard.migrateConfig();
 
@@ -125,7 +144,6 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
 
             //ToDo: store default data into clientDetails object instead of global variable
             // Store settings in global variables
-            // defaultApiPass = this.config.apiPass;
             autodiscovery = this.config.autodiscovery;
             // reconnectInterval / pingInterval / pingAttempts are read per device in connectDevices()
             createConfigStates = this.config.configStates;
@@ -185,6 +203,30 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
         } catch (e) {
             this.log.error(`[Adapter start] Fatal error occurred ${String(e)}`);
         }
+    }
+
+    /**
+     * Remove settings of earlier versions that nothing reads any more from the instance configuration:
+     * the inputs and tables of the device tab (replaced by the device manager) and the default credentials,
+     * unused since 0.6, when discovery stopped connecting new devices by itself.
+     *
+     * @returns true if settings were removed, the instance object changed and js-controller restarts the adapter
+     */
+    async removeObsoleteSettings(): Promise<boolean> {
+        const obsolete = Object.keys(this.config).filter(key => OBSOLETE_SETTINGS.includes(key));
+        if (!obsolete.length) {
+            return false;
+        }
+        const instanceObject = await this.getForeignObjectAsync(`system.adapter.${this.namespace}`);
+        if (!instanceObject) {
+            return false;
+        }
+        for (const key of obsolete) {
+            delete (instanceObject.native as Record<string, unknown>)[key];
+        }
+        this.log.info(`Removing settings no longer used: ${obsolete.join(', ')}, the adapter restarts`);
+        await this.setForeignObjectAsync(instanceObject._id, instanceObject);
+        return true;
     }
 
     // Try to contact and read data of already known devices

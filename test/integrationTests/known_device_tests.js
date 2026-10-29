@@ -5,7 +5,7 @@
  * their device objects on start (tryKnownDevices()) and listed in the ioBroker device manager
  * (src/lib/deviceManagement.ts). Both object formats are used: 0.6 - 1.0 (no native.name, which
  * made the device show up as "undefined") and 0.3 / 0.4 (API password in native.passWord). The
- * instance settings contain what the removed device tab of 1.0.0 saved.
+ * cleanup of old instance settings is covered by settings_cleanup_tests.js.
  *
  * The devices point to addresses of TEST-NET-1 (RFC 5737), so the adapter never reaches them and
  * the names from the device objects are all it knows. The E2E suite covers the reconnect of a device
@@ -23,7 +23,7 @@ const OLD_DEVICE_NAME = '112233445566';
 const OLD_DEVICE_IP = '192.0.2.11';
 
 exports.runTests = function (suite) {
-    suite('Known devices - device objects and settings of earlier versions', getHarness => {
+    suite('Known devices - device objects of earlier versions', getHarness => {
         let harness;
 
         before(async function () {
@@ -64,18 +64,6 @@ exports.runTests = function (suite) {
                     ESPHomeDashboardEnabled: false,
                     ESPHomeDashboardVersion: '2026.6.5',
                     PillowVersion: '12.2.0',
-                    // Saved by the device tab of the 1.0.0 settings, no longer used
-                    deviceIP: DEVICE_IP,
-                    apiPassword: '',
-                    existingDevicesTable: [
-                        {
-                            MACAddress: 'AA:BB:CC:DD:EE:FF',
-                            deviceName: 'kitchen-light',
-                            ip: DEVICE_IP,
-                            connectState: 'unreachable',
-                        },
-                    ],
-                    newDevicesTable: [],
                 },
             });
             await harness.startAdapterAndWait();

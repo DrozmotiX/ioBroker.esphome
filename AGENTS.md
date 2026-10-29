@@ -87,7 +87,7 @@ npm run test:integration                      # starts the adapter in a test ioB
 
 > `npm run lint` locally does NOT enforce `--max-warnings 0` but CI does — always run the eslint command above directly.
 
-Unit tests live next to the code they test as `src/**/*.test.ts` (e.g. `src/lib/dashboardApi.test.ts`) and run via `npm run test:unit`. The integration test suite lives in `test/integrationTests/` (index, dashboard_tests, version_fetch_tests, version_migration_tests, e2e_device_tests, known_device_tests) and is imported by `test/integration.js`.
+Unit tests live next to the code they test as `src/**/*.test.ts` (e.g. `src/lib/dashboardApi.test.ts`) and run via `npm run test:unit`. The integration test suite lives in `test/integrationTests/` (index, dashboard_tests, version_fetch_tests, version_migration_tests, e2e_device_tests, known_device_tests, settings_cleanup_tests) and is imported by `test/integration.js`.
 
 ### End-to-end test with a real ESPHome device
 
@@ -148,6 +148,15 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
 - Pillow versions fetched from PyPI; cached in state `_ESPHomeDashboard.pillowVersionCache`.
 - "Clear Autopy Cache" button triggers `clearAutopyCache()` → `fs.rmSync(~/.cache/autopy, recursive)`.
 - Config migration: `migrateConfig()` converts legacy `ESPHomeDashboardIP` + port → `ESPHomeDashboardUrl`.
+
+## Removed settings
+
+`removeObsoleteSettings()` (first thing in `onReady`) deletes settings nothing reads any more from the instance
+configuration once (`OBSOLETE_SETTINGS` in `src/main.ts`), the adapter restarts after that. When removing a
+setting from `io-package.json` / `jsonConfig.json5`, add its key there and to `test/integrationTests/settings_cleanup_tests.js`.
+The integration tests reuse the test installation in `/tmp/test-iobroker.esphome` between runs, and its instance
+object keeps the `native` defaults of the `io-package.json` it was created from. After changing those defaults,
+delete that directory, otherwise the cleanup restarts the adapter in every suite and they fail (CI always starts fresh).
 
 ## CI/CD Notes
 
