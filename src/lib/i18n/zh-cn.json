@@ -23,7 +23,6 @@
     "Not added": "未添加",
     "Open web server of the device": "打开设备的 Web 服务器",
     "Project": "项目",
-    "Refresh device list": "刷新设备列表",
     "The device did not answer yet, the adapter keeps trying to connect in the background.": "设备尚未响应，适配器将继续在后台尝试连接。",
     "Unknown device %s": "未知设备 %s"
 }

@@ -23,7 +23,6 @@
     "Not added": "Non ajouté",
     "Open web server of the device": "Ouvrir le serveur web de l'appareil",
     "Project": "Projet",
-    "Refresh device list": "Actualiser la liste des appareils",
     "The device did not answer yet, the adapter keeps trying to connect in the background.": "L'appareil n'a pas encore répondu, l'adaptateur continue d'essayer de se connecter en arrière-plan.",
     "Unknown device %s": "Appareil inconnu %s"
 }

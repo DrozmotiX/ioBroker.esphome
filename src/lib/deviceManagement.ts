@@ -79,7 +79,6 @@ const CONNECT_TIMEOUT = 30_000;
 const texts = {
     addDevice: 'Add device',
     adoptDevice: 'Add discovered device',
-    refreshDevices: 'Refresh device list',
     editDevice: 'Change connection settings',
     deleteDevice: 'Delete device',
     deleteConfirm: 'Delete this device? All its states will be removed.',
@@ -163,12 +162,6 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
                     title: t('addDevice'),
                     description: t('addDevice'),
                     handler: async context => ({ refresh: await this.addDevice(context) }),
-                },
-                {
-                    id: 'refresh',
-                    icon: 'refresh',
-                    description: t('refreshDevices'),
-                    handler: () => ({ refresh: true }),
                 },
             ],
         };

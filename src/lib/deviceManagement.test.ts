@@ -138,11 +138,11 @@ describe('Device Management', () => {
     });
 
     describe('getInstanceInfo()', () => {
-        it('offers adding devices and refreshing the list', async () => {
+        it('offers adding devices, the device manager has its own refresh button', async () => {
             const { adapter } = createAdapter();
             const info = await new TestDeviceManagement(adapter).instanceDetails();
             expect(info.apiVersion).to.equal('v3');
-            expect(info.actions?.map(action => action.id)).to.deep.equal(['add', 'refresh']);
+            expect(info.actions?.map(action => action.id)).to.deep.equal(['add']);
         });
     });
 

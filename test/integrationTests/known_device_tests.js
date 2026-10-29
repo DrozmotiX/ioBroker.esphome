@@ -62,7 +62,7 @@ exports.runTests = function (suite) {
             const info = await sendToAdapter(harness, 'dm:instanceInfo', {});
 
             expect(info.apiVersion).to.equal('v3');
-            expect(info.actions.map(action => action.id)).to.deep.equal(['add', 'refresh']);
+            expect(info.actions.map(action => action.id)).to.deep.equal(['add']);
             // Translations come from build/lib/i18n, copied there by scripts/postbuild.js
             expect(info.actions[0].title).to.deep.include({ en: 'Add device', de: 'Gerät hinzufügen' });
         });

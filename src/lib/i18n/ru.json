@@ -23,7 +23,6 @@
     "Not added": "Не добавлено",
     "Open web server of the device": "Открыть веб-сервер устройства",
     "Project": "Проект",
-    "Refresh device list": "Обновить список устройств",
     "The device did not answer yet, the adapter keeps trying to connect in the background.": "Устройство ещё не ответило, адаптер продолжает попытки подключения в фоновом режиме.",
     "Unknown device %s": "Неизвестное устройство %s"
 }
