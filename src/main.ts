@@ -15,16 +15,10 @@ import {
     type LockCommand,
 } from '@2colors/esphome-native-api';
 import * as utils from '@iobroker/adapter-core';
-import type { getVenv } from 'autopy' with { 'resolution-mode': 'import' };
-import * as fs from 'node:fs';
-import * as os from 'node:os';
-import * as path from 'node:path';
+import Dashboard from './lib/dashboard';
 import ClientDetails from './lib/helpers';
 import stateAttr from './lib/stateAttr'; // Load attribute library
 import YamlFileManager from './lib/yamlFileManager';
-
-/** The ESPHome dashboard process started through autopy */
-type DashboardProcess = ReturnType<Awaited<ReturnType<typeof getVenv>>>;
 
 /** Device found by the MDNS discovery that is not adopted yet */
 interface DiscoveredDevice {
@@ -52,13 +46,10 @@ const disableSentry = false; // Ensure to set to true during development!
 const warnMessages: Record<string, string> = {}; // Store warn messages to avoid multiple sending to sentry
 const resetTimers: Record<string, ioBroker.Timeout | undefined | void> = {}; // Memory allocation for all running timers
 let autodiscovery: boolean;
-let dashboardProcess: DashboardProcess | undefined;
 let createConfigStates: boolean;
 let discovery: Discovery | undefined;
 const clientDetails: Record<string, ClientDetails> = {}; // Memory cache of all devices and their connection status
 const newlyDiscoveredClient: Record<string, DiscoveredDevice> = {}; // Memory cache of all newly discovered devices and their connection status
-const dashboardVersions: string[] = [];
-const pillowVersions: string[] = []; // Memory cache for available Pillow versions
 
 /**
  * Details of an entity of a device, see EntityDetails
@@ -69,16 +60,6 @@ const pillowVersions: string[] = []; // Memory cache for available Pillow versio
 function entityDetails(host: string, key: string | number): EntityDetails {
     return (clientDetails[host] as unknown as Record<string, EntityDetails>)[key];
 }
-
-// Versions installations are pinned to. ESPHome 2026.7.x currently fails to install for a part of
-// our users (#463), so both the defaults for new installations and the one-time migration in
-// migratePinnedVersions() point at the last combination known to work instead of
-// "Always last available". Keep in sync with the "native" defaults in io-package.json.
-const defaultDashboardVersion = '2026.6.5';
-const defaultPillowVersion = '12.2.0';
-
-// State holding whether the one-time migration away from "Always last available" already ran.
-const versionMigrationState = '_ESPHomeDashboard.versionPinMigrationDone';
 
 // ColorCapability bits from ESPHome's api.proto. A light's supported_color_modes is a list of
 // ColorMode values, and every ColorMode is an OR of these bits - for example RGB = 35 is
@@ -100,6 +81,7 @@ class Esphome extends utils.Adapter {
     /** Messages from admin waiting for the result of adding / removing a device, by IP */
     declare private messageResponse: Record<string, ioBroker.Message | null>;
     declare private yamlFileManager: YamlFileManager;
+    declare private dashboard: Dashboard;
 
     /**
      * @param [options] - Adapter configuration options
@@ -121,6 +103,9 @@ class Esphome extends utils.Adapter {
 
         // Initialize YAML file manager
         this.yamlFileManager = new YamlFileManager(this);
+
+        // Initialize ESPHome Dashboard handling
+        this.dashboard = new Dashboard(this);
     }
 
     /**
@@ -130,10 +115,10 @@ class Esphome extends utils.Adapter {
         await this.setStateAsync('info.connection', { val: true, ack: true });
         try {
             // Migrate from older adapter versions that only had ESPHomeDashboardIP
-            await this.migrateConfig();
+            await this.dashboard.migrateConfig();
 
             // Move installations still on "Always last available" to the pinned versions, once
-            await this.migratePinnedVersions();
+            await this.dashboard.migratePinnedVersions();
 
             //ToDo: store default data into clientDetails object instead of global variable
             // Store settings in global variables
@@ -149,7 +134,7 @@ class Esphome extends utils.Adapter {
             await this.tryKnownDevices();
 
             // Get current available versions and start ESPHome Dashboard process (if enabled)
-            await this.espHomeDashboard();
+            await this.dashboard.start();
 
             // Start MDNS discovery when enabled
             if (autodiscovery) {
@@ -196,359 +181,6 @@ class Esphome extends utils.Adapter {
             this.subscribeStates('info.clearAutopyCache');
         } catch (e) {
             this.log.error(`[Adapter start] Fatal error occurred ${String(e)}`);
-        }
-    }
-
-    /**
-     * Migrate configuration from older adapter versions
-     * Automatically set ESPHomeDashboardUrl if ESPHomeDashboardIP is set but URL is empty
-     */
-    async migrateConfig(): Promise<void> {
-        try {
-            // Check if migration is needed:
-            // ESPHomeDashboardIP is not empty AND ESPHomeDashboardUrl is empty
-            if (this.config.ESPHomeDashboardIP && !this.config.ESPHomeDashboardUrl) {
-                const calculatedUrl = `http://${this.config.ESPHomeDashboardIP}:${this.config.ESPHomeDashboardPort}`;
-
-                this.log.info(`Migrating configuration: Setting ESPHomeDashboardUrl to ${calculatedUrl}`);
-
-                const adapterObj = await this.getForeignObjectAsync(`system.adapter.${this.namespace}`);
-                if (!adapterObj) {
-                    this.log.error(
-                        `Configuration migration failed: Could not retrieve adapter configuration object for ${this.namespace}`,
-                    );
-                    return;
-                }
-                if (!adapterObj.native) {
-                    this.log.error(
-                        `Configuration migration failed: Adapter configuration object has no native property`,
-                    );
-                    return;
-                }
-                adapterObj.native.ESPHomeDashboardUrl = calculatedUrl;
-                await this.setForeignObject(adapterObj._id, adapterObj);
-
-                this.log.info(`Configuration migrated successfully. ESPHomeDashboardUrl set to: ${calculatedUrl}`);
-
-                // adapter will restart
-            }
-        } catch (error) {
-            const reason = error instanceof Error && error.message ? error.message : String(error);
-            this.log.error(
-                `Error during configuration migration from ESPHomeDashboardIP to ESPHomeDashboardUrl: ${reason}`,
-            );
-        }
-    }
-
-    /**
-     * Migrate installations which are still on "Always last available" to the pinned versions, once.
-     *
-     * The pinned defaults in io-package.json only apply to new installations, so without this every
-     * existing installation would stay on a release line that currently cannot be installed (#463)
-     * and would have to be corrected by hand.
-     *
-     * Whether the migration already ran is stored in a state, not in "native": a new installation
-     * already ships the pinned defaults, and a "native" marker would be seeded into every existing
-     * instance on upgrade, so neither could tell "not migrated yet" from "nothing to migrate".
-     * Once the marker is set, a deliberate switch back to "Always last available" is never touched.
-     */
-    async migratePinnedVersions(): Promise<void> {
-        try {
-            await this.extendObjectAsync('_ESPHomeDashboard', {
-                type: 'channel',
-                common: {
-                    name: 'ESPHome Dashboard details',
-                },
-                native: {},
-            });
-
-            const migrationDone = await this.getStateAsync(versionMigrationState);
-            if (migrationDone && migrationDone.val === true) {
-                return;
-            }
-
-            const migrated: Record<string, string> = {};
-            if (this.config.ESPHomeDashboardVersion === 'Always last available') {
-                migrated.ESPHomeDashboardVersion = defaultDashboardVersion;
-            }
-            if (this.config.PillowVersion === 'Always last available') {
-                migrated.PillowVersion = defaultPillowVersion;
-            }
-
-            // New installation, or the versions were already pinned by hand: only remember that the
-            // migration is done so a later switch to "Always last available" is respected.
-            if (!Object.keys(migrated).length) {
-                await this.stateSetCreate(versionMigrationState, 'versionPinMigrationDone', true);
-                return;
-            }
-
-            const adapterObj = await this.getForeignObjectAsync(`system.adapter.${this.namespace}`);
-            if (!adapterObj || !adapterObj.native) {
-                this.log.error(
-                    `Migration to pinned versions failed: could not read the configuration object of ${this.namespace}. Please select a fixed ESPHome Dashboard version in the adapter configuration.`,
-                );
-                return;
-            }
-
-            const changes = Object.entries(migrated)
-                .map(([key, value]) => `${key} = ${value}`)
-                .join(', ');
-            this.log.info(
-                `Not every ESPHome release can be installed on every system, so your configuration has been migrated once from "Always last available" to the last combination known to work: ${changes}. Select "Always last available" again in the adapter configuration if you prefer to follow the newest release, this migration only runs once.`,
-            );
-
-            Object.assign(adapterObj.native, migrated);
-            // Keep this run consistent until the restart caused by the write below kicks in
-            Object.assign(this.config, migrated);
-
-            await this.setForeignObject(adapterObj._id, adapterObj);
-            // Written after the configuration: should the write above fail, the migration is retried
-            // on the next start instead of being silently skipped forever
-            await this.stateSetCreate(versionMigrationState, 'versionPinMigrationDone', true);
-
-            // adapter will restart
-        } catch (error) {
-            this.errorHandler(`[migratePinnedVersions]`, error);
-        }
-    }
-
-    /**
-     * Warn when a version is left at "Always last available". Such a setup can break without any
-     * change on the user side as soon as an ESPHome release cannot be installed (#463). Reached only
-     * when the user selected it deliberately, migratePinnedVersions() moves existing installations
-     * off that setting once.
-     *
-     * @param useDashBoardVersion - ESPHome Dashboard version which will be installed
-     * @param usePillowVersion - Pillow version which will be installed
-     */
-    warnUnpinnedVersions(useDashBoardVersion: string, usePillowVersion: string): void {
-        if (this.config.ESPHomeDashboardVersion === 'Always last available') {
-            this.log.warn(
-                `ESPHome Dashboard version is set to "Always last available" and resolves to ${useDashBoardVersion || 'the newest release'}. Not every ESPHome release can be installed on every system. If the dashboard does not start, select a fixed version in the adapter configuration, ${defaultDashboardVersion} is known to work.`,
-            );
-        }
-
-        if (this.config.PillowVersion === 'Always last available') {
-            this.log.warn(
-                `Pillow version is set to "Always last available" and resolves to ${usePillowVersion || 'the newest release'}. If the dashboard does not start, select a fixed version in the adapter configuration, ${defaultPillowVersion} is known to work.`,
-            );
-        }
-    }
-
-    // ToDo: move to separate module
-    async espHomeDashboard(): Promise<void> {
-        try {
-            // Create Channel to store ESPHomeDashboard related Data
-            await this.extendObjectAsync('_ESPHomeDashboard', {
-                type: 'channel',
-                common: {
-                    name: 'ESPHome Dashboard details',
-                },
-                native: {},
-            });
-
-            // Get all current available ESPHome Dashboard versions
-            /** GitHub releases by index, only the name is used */
-            let content: Record<string, { name: string }> | undefined;
-            let lastUsed;
-            let useDashBoardVersion = '';
-
-            // Get data from state which version was used previous Time
-            try {
-                lastUsed = await this.getStateAsync(`_ESPHomeDashboard.selectedVersion`);
-                if (lastUsed && lastUsed.val) {
-                    lastUsed = lastUsed.val;
-                }
-            } catch {
-                // State does not exist
-            }
-
-            try {
-                const response = await fetch('https://api.github.com/repos/esphome/esphome/releases');
-                if (!response.ok) {
-                    throw new Error(
-                        `GitHub releases request failed with status ${response.status}: ${response.statusText}`,
-                    );
-                }
-                content = (await response.json()) as Record<string, { name: string }>;
-            } catch (error) {
-                this.errorHandler(`[espHomeDashboard-VersionCall]`, error);
-            }
-
-            // If the response was successful, write versions names to a memory array
-            if (content) {
-                await this.stateSetCreate(`_ESPHomeDashboard.versionCache`, 'versionCache', JSON.stringify(content));
-                for (const version in content) {
-                    dashboardVersions.push(content[version].name);
-                }
-                await this.stateSetCreate(`_ESPHomeDashboard.newestVersion`, 'newestVersion', content[0].name);
-            } else {
-                // Not possible to load latest versions, use fallback
-                this.log.warn(
-                    `Unable to retrieve current Dashboard release versions, using cached values. Check your internet connection`,
-                );
-                const cachedState = await this.getStateAsync(`_ESPHomeDashboard.versionCache`);
-                if (cachedState && cachedState.val) {
-                    const cachedVersions = JSON.parse(String(cachedState.val)) as Record<string, { name: string }>;
-                    for (const version in cachedVersions) {
-                        dashboardVersions.push(cachedVersions[version].name);
-                    }
-                }
-            }
-
-            // Use latest available version
-            if (
-                this.config.ESPHomeDashboardVersion &&
-                this.config.ESPHomeDashboardVersion !== '' &&
-                this.config.ESPHomeDashboardVersion !== 'Always last available'
-            ) {
-                useDashBoardVersion = this.config.ESPHomeDashboardVersion;
-            } else if (this.config.ESPHomeDashboardVersion === 'Always last available') {
-                if (content) {
-                    useDashBoardVersion = content[0].name;
-                } else if (dashboardVersions.length > 0) {
-                    // Use first cached version if available
-                    useDashBoardVersion = dashboardVersions[0];
-                }
-            }
-
-            if (useDashBoardVersion !== '') {
-                await this.stateSetCreate(`_ESPHomeDashboard.selectedVersion`, 'selectedVersion', useDashBoardVersion);
-            } else if (lastUsed != null) {
-                // @ts-expect-error lastUsed may be string or number depending on adapter version
-                useDashBoardVersion = lastUsed;
-            }
-
-            // Fetch Pillow versions from PyPI and cache them
-            const versions = await this.fetchAndCachePillowVersions();
-            pillowVersions.length = 0; // Clear array
-            pillowVersions.push(...versions);
-
-            // Determine Pillow version to use
-            let usePillowVersion = '';
-
-            // Use configured version unless "Always last available" is selected
-            if (
-                this.config.PillowVersion &&
-                this.config.PillowVersion !== '' &&
-                this.config.PillowVersion !== 'Always last available'
-            ) {
-                usePillowVersion = this.config.PillowVersion;
-            } else if (this.config.PillowVersion === 'Always last available' && versions.length > 0) {
-                // Mirror dashboard behavior: pick newest fetched/cached release
-                usePillowVersion = versions[0];
-            }
-
-            this.log.debug(`Using Pillow version: ${usePillowVersion}`);
-
-            // Start Dashboard Process
-            if (this.config.ESPHomeDashboardEnabled) {
-                this.log.info(`Native Integration of ESPHome Dashboard enabled, making environment ready`);
-
-                this.warnUnpinnedVersions(useDashBoardVersion, usePillowVersion);
-                try {
-                    const { getVenv } = await import('autopy');
-                    let python;
-                    try {
-                        // "version" must be present on every requirement even when no version is
-                        // pinned: autopy builds the pip argument as `${name}${version}` and passes
-                        // it to pep440 satisfies(), both of which break on undefined. An empty
-                        // specifier means "any version" for both.
-                        const requirements = [];
-                        if (useDashBoardVersion) {
-                            requirements.push({ name: 'esphome', version: `==${useDashBoardVersion}` });
-                        } else {
-                            this.log.warn(
-                                `Unable to determine a specific ESPHome dashboard version. Falling back to latest available version from PyPI`,
-                            );
-                            requirements.push({ name: 'esphome', version: '' });
-                        }
-                        if (usePillowVersion) {
-                            requirements.push({ name: 'pillow', version: `==${usePillowVersion}` });
-                        } else {
-                            this.log.warn(
-                                `Unable to determine a specific Pillow version. Falling back to latest available version from PyPI`,
-                            );
-                            requirements.push({ name: 'pillow', version: '' });
-                        }
-                        // Create a virtual environment with esphome installed.
-                        python = await getVenv({
-                            name: 'esphome',
-                            pythonVersion: '3.13.2', // Use any Python 3.13.x version.
-                            requirements,
-                        });
-                    } catch (error) {
-                        const stack = error instanceof Error ? error.stack : undefined;
-                        this.log.error(`Fatal error starting ESPHomeDashboard | ${String(error)} | ${stack}`);
-                        return;
-                    }
-
-                    // Define directory to store configuration files
-                    const dataDir = utils.getAbsoluteDefaultDataDir();
-
-                    try {
-                        fs.mkdir(`${dataDir}esphome.${this.instance}`, err => {
-                            if (err) {
-                                return console.log(`ESPHome directory exists`);
-                            }
-                            console.log(`ESPHome directory created`);
-                        });
-                        // );
-                    } catch (error) {
-                        // Directory has issues reading/writing data, iob fix should be executed
-                        this.log.warn(
-                            `ESPHome DDashboard is unable to access directory to store YAML configuration data, please run ioBroker fix: ${String(error)}`,
-                        );
-                    }
-
-                    this.log.info(`Starting ESPHome Dashboard`);
-                    dashboardProcess = python('esphome', [
-                        'dashboard',
-                        '--port',
-                        String(this.config.ESPHomeDashboardPort),
-                        `${dataDir}esphome.${this.instance}`,
-                    ]);
-
-                    this.log.debug(`espHomeDashboard_Process ${JSON.stringify(dashboardProcess)}`);
-
-                    dashboardProcess.stdout?.on('data', data => {
-                        this.log.info(`[dashboardProcess - Data] ${data}`);
-                    });
-
-                    dashboardProcess.stderr?.on('data', data => {
-                        // this.log.warn(`[dashboardProcess ERROR] ${data}`);
-                        if (data.includes('INFO')) {
-                            if (data.includes('Starting')) {
-                                this.log.info(`[ESPHome - Console] ${data}`);
-                            } else {
-                                this.log.debug(`[ESPHome - Console] ${data}`);
-                            }
-                        } else {
-                            // console.debug(`[espHomeDashboard] Unknown logging data : ${JSON.stringify(data)}`);
-                        }
-                    });
-
-                    void dashboardProcess.on('exit', (code, signal) => {
-                        this.log.warn(`ESPHome Dashboard stopped (exit code ${code}, signal ${signal})`);
-                    });
-
-                    void dashboardProcess.on('error', data => {
-                        if (data.message.includes('INFO')) {
-                            this.log.info(`[dashboardProcess Info] ${data}`);
-                        } else if (data.message.includes('ERROR')) {
-                            this.log.error(`[dashboardProcess Warn] ${data}`);
-                        } else {
-                            this.log.error(`[dashboardProcess Error] ${data}`);
-                        }
-                    });
-                } catch (error) {
-                    this.errorHandler(`[espHomeDashboard-Process]`, error);
-                }
-            } else {
-                this.log.info(`Native Integration of ESPHome Dashboard disabled `);
-            }
-        } catch (error) {
-            this.errorHandler(`[espHomeDashboard-Function]`, error);
         }
     }
 
@@ -1819,15 +1451,7 @@ class Esphome extends utils.Adapter {
                 }
             }
 
-            try {
-                if (dashboardProcess) {
-                    dashboardProcess.kill('SIGTERM', {
-                        forceKillAfterTimeout: 2000,
-                    });
-                }
-            } catch (e) {
-                this.log.error(`[onUnload - dashboardProcess] ${JSON.stringify(e)}`);
-            }
+            this.dashboard.stop();
 
             callback();
         } catch (error) {
@@ -1939,55 +1563,12 @@ class Esphome extends utils.Adapter {
 
                 // Front End message handler to load ESPHome Dashboard dropDown with all available versions
                 case 'getESPHomeDashboardVersion':
-                    {
-                        const dropDownEntry = [];
-                        dropDownEntry.push('Always last available');
-                        // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
-                        for (const versions in dashboardVersions) {
-                            dropDownEntry.push({
-                                label: dashboardVersions[versions],
-                                value: dashboardVersions[versions],
-                            });
-                        }
-                        // The version new installations default to must always be selectable, also
-                        // when the release list could not be retrieved from GitHub
-                        this.ensureVersionInDropDown(dropDownEntry, defaultDashboardVersion);
-
-                        this.sendTo(obj.from, obj.command, dropDownEntry, obj.callback);
-                    }
+                    this.sendTo(obj.from, obj.command, this.dashboard.getDashboardVersionDropDown(), obj.callback);
                     break;
 
                 // Front End message handler to load Pillow version dropdown with available versions
                 case 'getPillowVersion':
-                    {
-                        const dropDownEntry = [];
-                        dropDownEntry.push('Always last available');
-
-                        // Use cached versions from memory
-                        if (pillowVersions.length > 0) {
-                            for (const version of pillowVersions) {
-                                dropDownEntry.push({
-                                    label: version,
-                                    value: version,
-                                });
-                            }
-                        } else {
-                            // Fallback versions if cache is empty
-                            this.log.info('No cached Pillow versions available, using fallback versions');
-                            const fallbackVersions = ['12.2.0', '12.1.1', '12.0.0', '11.3.0', '11.2.0', '11.1.0'];
-                            for (const version of fallbackVersions) {
-                                dropDownEntry.push({
-                                    label: version,
-                                    value: version,
-                                });
-                            }
-                        }
-                        // The version new installations default to must always be selectable, also
-                        // when the release list could not be retrieved from PyPI
-                        this.ensureVersionInDropDown(dropDownEntry, defaultPillowVersion);
-
-                        this.sendTo(obj.from, obj.command, dropDownEntry, obj.callback);
-                    }
+                    this.sendTo(obj.from, obj.command, this.dashboard.getPillowVersionDropDown(), obj.callback);
                     break;
 
                 // Front End message handler to host IP-Address(es)
@@ -2206,7 +1787,7 @@ class Esphome extends utils.Adapter {
                 // Handle clearing autopy cache
                 case 'clearAutopyCache':
                     {
-                        await this.clearAutopyCache();
+                        await this.dashboard.clearAutopyCache();
                         this.sendTo(
                             obj.from,
                             obj.command,
@@ -2218,116 +1799,6 @@ class Esphome extends utils.Adapter {
             }
         } catch (error) {
             this.errorHandler(`[onMessage]`, error);
-        }
-    }
-
-    /**
-     * Add a version to a dropDown when it is not part of it yet, so a configured version can never
-     * silently disappear from the selection when the release list is unavailable or outdated
-     *
-     * @param dropDownEntry - dropDown entries to extend
-     * @param version - version which must be selectable
-     */
-    ensureVersionInDropDown(dropDownEntry: (string | { label: string; value: string })[], version: string): void {
-        const known = dropDownEntry.some(entry => (typeof entry === 'string' ? entry : entry.value) === version);
-        if (!known) {
-            dropDownEntry.push({ label: version, value: version });
-        }
-    }
-
-    /**
-     * Fetch Pillow versions from PyPI and cache them
-     *
-     * @returns Array of available Pillow versions
-     */
-    async fetchAndCachePillowVersions(): Promise<string[]> {
-        const fallbackVersions = ['12.2.0', '12.1.1', '12.0.0', '11.3.0', '11.2.0', '11.1.0'];
-
-        try {
-            const response = await fetch('https://pypi.org/pypi/pillow/json');
-            if (response.ok) {
-                const data = (await response.json()) as { releases: Record<string, unknown> };
-                const versions = Object.keys(data.releases)
-                    .filter(v => !v.includes('a') && !v.includes('b') && !v.includes('rc')) // Filter out alpha/beta/rc versions
-                    .sort((a, b) => {
-                        // Sort versions in descending order (newest first)
-                        const aParts = a.split('.').map(Number);
-                        const bParts = b.split('.').map(Number);
-                        for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
-                            const aVal = aParts[i] || 0;
-                            const bVal = bParts[i] || 0;
-                            if (aVal !== bVal) {
-                                return bVal - aVal;
-                            }
-                        }
-                        return 0;
-                    })
-                    .slice(0, 20); // Limit to 20 most recent versions
-
-                if (versions.length > 0) {
-                    // Cache the versions
-                    await this.stateSetCreate(
-                        `_ESPHomeDashboard.pillowVersionCache`,
-                        'pillowVersionCache',
-                        JSON.stringify(versions),
-                    );
-                    await this.stateSetCreate(
-                        `_ESPHomeDashboard.newestPillowVersion`,
-                        'newestPillowVersion',
-                        versions[0],
-                    );
-                    this.log.debug(`Fetched ${versions.length} Pillow versions from PyPI, newest: ${versions[0]}`);
-                    return versions;
-                }
-                this.log.warn('No stable Pillow versions found on PyPI, using cached or fallback versions');
-            } else {
-                this.log.warn(`Unable to fetch Pillow versions from PyPI: ${response.status}, using cached values`);
-            }
-        } catch (error) {
-            const reason = error instanceof Error && error.message ? error.message : String(error);
-            this.log.warn(`Error fetching Pillow versions from PyPI: ${reason}, using cached or fallback versions`);
-        }
-
-        // Try to load from cache
-        try {
-            const cachedPillowVersions = await this.getStateAsync(`_ESPHomeDashboard.pillowVersionCache`);
-            if (cachedPillowVersions && cachedPillowVersions.val) {
-                const versions = JSON.parse(String(cachedPillowVersions.val));
-                this.log.info(`Loaded ${versions.length} Pillow versions from cache`);
-                return versions;
-            }
-        } catch {
-            // Cache read failed, will use fallback
-        }
-
-        // Use fallback versions
-        this.log.info(`Using ${fallbackVersions.length} fallback Pillow versions`);
-        return fallbackVersions;
-    }
-
-    /**
-     * Clear the autopy cache directory
-     */
-    // eslint-disable-next-line @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
-    async clearAutopyCache(): Promise<void> {
-        try {
-            const homeDir = os.homedir();
-            const autopyCache = path.join(homeDir, '.cache', 'autopy');
-
-            this.log.info(`Attempting to clear autopy cache at: ${autopyCache}`);
-
-            // Check if directory exists
-            if (fs.existsSync(autopyCache)) {
-                // Use recursive removal
-                fs.rmSync(autopyCache, { recursive: true, force: true });
-                this.log.info('Autopy cache cleared successfully');
-            } else {
-                this.log.info('Autopy cache directory does not exist');
-            }
-        } catch (error) {
-            const reason = error instanceof Error && error.message ? error.message : String(error);
-            this.log.error(`Error clearing autopy cache: ${reason}`);
-            throw error;
         }
     }
 
@@ -2387,7 +1858,7 @@ class Esphome extends utils.Adapter {
 
                     // Verify if trigger is related to clearing autopy cache
                     if (id.split('.')[3] === 'clearAutopyCache') {
-                        await this.clearAutopyCache();
+                        await this.dashboard.clearAutopyCache();
                         void this.setState(id, { val: false, ack: true });
                         return;
                     }
