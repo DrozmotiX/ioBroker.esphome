@@ -91,7 +91,7 @@ Unit tests live next to the code they test as `src/**/*.test.ts` (e.g. `src/lib/
 
 ### End-to-end test with a real ESPHome device
 
-`test/e2e/esphome-device.yaml` is compiled with the ESPHome **host** platform into a native executable (real firmware, real encrypted native API on `127.0.0.1:6053`, no hardware). `test/integrationTests/e2e_device_tests.js` starts it, adds it via the `_addUpdateDevice` message and checks every entity type in both directions plus reconnect. It is skipped unless `ESPHOME_E2E_DEVICE_BINARY` is set:
+`test/e2e/esphome-device.yaml` is compiled with the ESPHome **host** platform into a native executable (real firmware, real encrypted native API on `127.0.0.1:6053`, no hardware). `test/integrationTests/e2e_device_tests.js` starts it, adds it with the "Add device" dialog of the device manager (`dm:` messages) and checks every entity type in both directions plus reconnect. It is skipped unless `ESPHOME_E2E_DEVICE_BINARY` is set:
 
 ```bash
 pip install -r test/e2e/requirements.txt          # pinned ESPHome version

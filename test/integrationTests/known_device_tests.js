@@ -12,29 +12,10 @@
  */
 
 const { expect } = require('chai');
+const { NAMESPACE, addDeviceWithDeviceManager, sendToAdapter } = require('./deviceManagerHelpers');
 
-const NAMESPACE = 'esphome.0';
 const DEVICE_NAME = 'AABBCCDDEEFF';
 const DEVICE_IP = '192.0.2.10';
-
-/**
- * Sends a message to the adapter and resolves with its answer
- *
- * @param {object} harness - Integration test harness
- * @param {string} command - Message command
- * @param {object} message - Message payload
- * @param {number} [timeoutMs] - How long to wait for the answer
- * @returns {Promise<any>} The answer of the adapter
- */
-function sendToAdapter(harness, command, message, timeoutMs = 30000) {
-    return new Promise((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error(`No answer to "${command}" within ${timeoutMs}ms`)), timeoutMs);
-        harness.sendTo(NAMESPACE, command, message, response => {
-            clearTimeout(timer);
-            resolve(response);
-        });
-    });
-}
 
 exports.runTests = function (suite) {
     suite('Known devices - device object written before native.name existed', getHarness => {
@@ -103,6 +84,22 @@ exports.runTests = function (suite) {
             expect(device.group.key).to.equal('known');
             expect(device.status.connection.stateId).to.equal(`${NAMESPACE}.${DEVICE_NAME}.info._online`);
             expect(device.actions.map(action => action.id)).to.deep.equal(['edit', 'delete']);
+        });
+
+        it('walks through the add dialog of the device manager and reports an invalid IP address', async function () {
+            this.timeout(60000);
+
+            // Same dialog sequence the E2E test uses to add its device, which needs a compiled ESPHome device
+            const { messages, result } = await addDeviceWithDeviceManager(harness, {
+                ip: 'not-an-ip',
+                encryptionKey: '',
+                apiPassword: '',
+            });
+
+            expect(messages).to.deep.equal([
+                'Format of IP-Address is incorrect, please provide an valid IPV4 IP-Address',
+            ]);
+            expect(result).to.deep.equal({ refresh: false });
         });
 
         it('deletes the device from the device manager after confirmation', async function () {

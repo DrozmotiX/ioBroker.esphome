@@ -76,7 +76,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
     declare private deviceStateRelation: Record<string, { ip: string }>;
     /** Common of every state created by stateSetCreate(), to skip unchanged object updates */
     declare private createdStatesDetails: Record<string, Partial<ioBroker.StateCommon>>;
-    /** Callbacks of admin / device manager waiting for the result of adding a device, by IP */
+    /** Callbacks of the device manager waiting for the result of adding a device, by IP */
     declare private messageResponse: Record<string, (response: DeviceActionResult) => void>;
     declare private yamlFileManager: YamlFileManager;
     declare private dashboard: Dashboard;
@@ -345,7 +345,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     // Allow the next connection-loss event to log a "Connection destroyed" warning again
                     clientDetails[host].connectionDestroyedLogged = false;
 
-                    // Check if device connection is caused by adding  device from admin, if yes send OK message
+                    // Answer a pending add / modify request of the device manager
                     this.respondDeviceResult(host, {
                         result: 'OK - Device successfully connected, initializing configuration',
                     });
@@ -830,7 +830,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                         this.log.error(`ESPHome client ${host} ${error}`);
                     }
 
-                    // Check if device connection is caused by adding  device from admin, if yes send OK message
+                    // Answer a pending add / modify request of the device manager
                     this.respondDeviceResult(host, { error: `${optimisedError}` });
                 } catch (error) {
                     this.errorHandler(`[connectedDevice onError]`, error);
@@ -1466,26 +1466,6 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
         this.log.debug(`Data from configuration received : ${JSON.stringify(obj)}`);
         try {
             switch (obj.command) {
-                //ToDo previous add function to be removed
-                case 'addDevice':
-                    // eslint-disable-next-line no-case-declarations
-                    const ipValid = this.validateIPAddress(obj.message['device-ip']);
-                    if (!ipValid) {
-                        this.log.warn(
-                            `You entered an incorrect IP-Address ${obj.message['device-ip']}, cannot add device !`,
-                        );
-
-                        const massageObj = {
-                            type: 'error',
-                            message: 'connection failed',
-                        };
-                        this.respond(massageObj, obj);
-                    } else {
-                        this.log.info(`Valid IP address received`);
-                        this.connectDevices(obj.message['device-ip']);
-                    }
-                    break;
-
                 // Front End message handler to load ESPHome Dashboard dropDown with all available versions
                 case 'getESPHomeDashboardVersion':
                     this.sendTo(obj.from, obj.command, this.dashboard.getDashboardVersionDropDown(), obj.callback);
@@ -1521,21 +1501,6 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
 
                         this.sendTo(obj.from, obj.command, ip4List, obj.callback);
                     }
-                    break;
-
-                // Add / modify a device by message, e.g. from scripts or the E2E test (the admin page uses the device manager)
-                case '_addUpdateDevice':
-                    await this.addOrUpdateDevice(
-                        obj.message.ip,
-                        obj.message.apiPassword,
-                        obj.message.encryptionKey,
-                        response => this.sendTo(obj.from, obj.command, response, obj.callback),
-                    );
-                    break;
-
-                // Delete a device by message, e.g. from scripts (the admin page uses the device manager)
-                case 'deleteDevice':
-                    this.sendTo(obj.from, obj.command, await this.removeDevice(obj.message.ip), obj.callback);
                     break;
 
                 // Handle YAML file upload
@@ -1647,8 +1612,8 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
      * Add a new device or reconnect a known one with new credentials
      *
      * @param ip - IP address of the device
-     * @param apiPassword - API password, empty or "undefined" if not used
-     * @param encryptionKey - Encryption key, empty or "undefined" if not used
+     * @param apiPassword - API password, empty if not used
+     * @param encryptionKey - Encryption key, empty if not used
      * @param respond - Called once with the result of the first connection attempt
      */
     async addOrUpdateDevice(
@@ -1657,16 +1622,16 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
         encryptionKey: string | undefined,
         respond: (response: DeviceActionResult) => void,
     ): Promise<void> {
-        // IP input validation, empty admin fields arrive as "undefined"
-        if (!ip || ip === 'undefined') {
+        // IP input validation
+        if (!ip) {
             respond({ error: 'To add/modify a device, please enter the IP-Address accordingly' });
             return;
         } else if (!this.validateIPAddress(ip)) {
             respond({ error: 'Format of IP-Address is incorrect, please provide an valid IPV4 IP-Address' });
             return;
         }
-        const password = apiPassword && apiPassword !== 'undefined' ? apiPassword : '';
-        const encryptionKeyUsed = !!(encryptionKey && encryptionKey !== 'undefined');
+        const password = apiPassword || '';
+        const encryptionKeyUsed = !!encryptionKey;
 
         // eslint-disable-next-line @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
         const initiateNDevice = async (): Promise<void> => {
@@ -1743,18 +1708,6 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
         if (respond) {
             delete this.messageResponse[host];
             respond(response);
-        }
-    }
-
-    /**
-     * responds to the adapter that sent the original message
-     *
-     * @param response - The response message
-     * @param obj - The original message object
-     */
-    respond(response: ioBroker.MessagePayload, obj: ioBroker.Message): void {
-        if (obj.callback) {
-            this.sendTo(obj.from, obj.command, response, obj.callback);
         }
     }
 
