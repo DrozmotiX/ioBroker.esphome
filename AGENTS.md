@@ -14,11 +14,12 @@ Single-file adapter (`src/main.ts`, ~2700 lines) extending `@iobroker/adapter-co
 | `src/lib/stateAttr.ts`       | Human-readable metadata for ioBroker state objects (name, role, type) |
 | `src/lib/yamlFileManager.ts` | Upload/download/delete YAML config files for the ESPHome directory    |
 | `src/lib/dashboardApi.ts`    | Dashboard API helpers                                                 |
+| `src/lib/dashboard.ts`       | ESPHome Dashboard: versions, config migration, process start / stop   |
 
 **Two optional subsystems run in-process alongside device connections:**
 
 1. **MDNS auto-discovery** – `Discovery` from `@2colors/esphome-native-api`, started 5 s after `onReady`.
-2. **ESPHome Dashboard** – spawned Python process via `autopy` (virtual-env wrapper); only active when `config.ESPHomeDashboardEnabled`.
+2. **ESPHome Dashboard** – spawned Python process via `autopy` (virtual-env wrapper); only active when `config.ESPHomeDashboardEnabled`. All of it lives in `src/lib/dashboard.ts`.
 
 ## Key Data Structures
 

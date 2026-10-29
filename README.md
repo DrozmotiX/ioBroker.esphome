@@ -443,6 +443,7 @@ If you like my work, please consider a personal donation
 
 ### **WORK IN PROGRESS**
 
+- (@SimonFischer04) **ENHANCED**: Moved all code for the integrated ESPHome Dashboard into its own module, no change in behavior
 - (@SimonFischer04) **ENHANCED**: Removed the fallback to the ws package for compiling and flashing with the ESPHome Dashboard, the adapter always uses the WebSocket support built into Node.js 22 now, and ws is no longer installed with the adapter
 - (@SimonFischer04) **ENHANCED**: Removed unused code for newly discovered devices
 - (@SimonFischer04) **FIXED**: When the ESPHome Dashboard stops, the log shows its exit code and signal. A handler that was meant to log them listened to an event the dashboard process never sends
