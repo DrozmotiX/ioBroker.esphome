@@ -3,7 +3,8 @@
  *
  * Covers tryKnownDevices(): devices adopted earlier are loaded from their device objects on start.
  * The name shown for such a device before it connects comes from the device object; it used to be
- * the string "undefined", because native.name was never written.
+ * the string "undefined", because native.name was never written. The same device is also checked
+ * in the ioBroker device manager (src/lib/deviceManagement.ts), up to deleting it there.
  *
  * The device points to an address of TEST-NET-1 (RFC 5737), so the adapter never reaches it and
  * the name from the device object is all it knows. No Python environment or ESPHome device is
@@ -90,6 +91,48 @@ exports.runTests = function (suite) {
 
             expect(device, 'known device in the device table').to.be.ok;
             expect(device.deviceName).to.equal('kitchen-light');
+        });
+
+        it('offers adding devices in the device manager', async function () {
+            this.timeout(60000);
+
+            const info = await sendToAdapter(harness, 'dm:instanceInfo', {});
+
+            expect(info.apiVersion).to.equal('v3');
+            expect(info.actions.map(action => action.id)).to.deep.equal(['add']);
+        });
+
+        it('lists the known device in the device manager', async function () {
+            this.timeout(60000);
+
+            const response = await sendToAdapter(harness, 'dm:loadDevices', {});
+            const device = response.add.find(entry => entry.id === DEVICE_IP);
+
+            expect(device, 'known device in the device manager').to.be.ok;
+            expect(device.name).to.equal('kitchen-light');
+            expect(device.group.key).to.equal('known');
+            expect(device.status.connection.stateId).to.equal(`${NAMESPACE}.${DEVICE_NAME}.info._online`);
+            expect(device.actions.map(action => action.id)).to.deep.equal(['edit', 'delete']);
+        });
+
+        it('deletes the device from the device manager after confirmation', async function () {
+            this.timeout(60000);
+
+            // Actions are only accepted for devices of the last loaded list
+            await sendToAdapter(harness, 'dm:loadDevices', {});
+            const confirm = await sendToAdapter(harness, 'dm:deviceAction', {
+                deviceId: DEVICE_IP,
+                actionId: 'delete',
+            });
+            expect(confirm.type).to.equal('confirm');
+
+            const result = await sendToAdapter(harness, 'dm:actionProgress', { origin: confirm.origin, confirm: true });
+            expect(result.type).to.equal('result');
+            expect(result.result).to.deep.equal({ refresh: 'devices' });
+
+            expect(await harness.objects.getObjectAsync(`${NAMESPACE}.${DEVICE_NAME}`)).to.not.be.ok;
+            const response = await sendToAdapter(harness, 'dm:loadDevices', {});
+            expect(response.add.find(entry => entry.id === DEVICE_IP)).to.be.undefined;
         });
     });
 };

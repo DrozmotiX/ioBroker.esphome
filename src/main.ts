@@ -16,16 +16,14 @@ import {
 } from '@2colors/esphome-native-api';
 import * as utils from '@iobroker/adapter-core';
 import Dashboard from './lib/dashboard';
+import EsphomeDeviceManagement, {
+    type DeviceActionResult,
+    type DiscoveredDevice,
+    type EsphomeDeviceSource,
+} from './lib/deviceManagement';
 import ClientDetails from './lib/helpers';
 import stateAttr from './lib/stateAttr'; // Load attribute library
 import YamlFileManager from './lib/yamlFileManager';
-
-/** Device found by the MDNS discovery that is not adopted yet */
-interface DiscoveredDevice {
-    ip: string;
-    mac: string;
-    deviceFriendlyName: string;
-}
 
 /** State of an entity as received from the device, the fields depend on the entity type */
 type EntityState = Record<string, any>;
@@ -73,15 +71,16 @@ const COLOR_CAPABILITY = {
     RGB: 32,
 };
 
-class Esphome extends utils.Adapter {
+class Esphome extends utils.Adapter implements EsphomeDeviceSource {
     /** Memory array of an initiated device by Device Identifier (name) and IP */
     declare private deviceStateRelation: Record<string, { ip: string }>;
     /** Common of every state created by stateSetCreate(), to skip unchanged object updates */
     declare private createdStatesDetails: Record<string, Partial<ioBroker.StateCommon>>;
-    /** Messages from admin waiting for the result of adding / removing a device, by IP */
-    declare private messageResponse: Record<string, ioBroker.Message | null>;
+    /** Callbacks of admin / device manager waiting for the result of adding a device, by IP */
+    declare private messageResponse: Record<string, (response: DeviceActionResult) => void>;
     declare private yamlFileManager: YamlFileManager;
     declare private dashboard: Dashboard;
+    declare private deviceManagement: EsphomeDeviceManagement;
 
     /**
      * @param [options] - Adapter configuration options
@@ -99,7 +98,7 @@ class Esphome extends utils.Adapter {
 
         this.deviceStateRelation = {}; // Memory array of an initiated device by Device Identifier (name) and IP
         this.createdStatesDetails = {}; // Array to store information of created states
-        this.messageResponse = {}; // Array to store messages from admin and provide proper message to add/remove devices
+        this.messageResponse = {}; // Callbacks waiting for the result of adding / modifying a device
 
         // Initialize YAML file manager
         this.yamlFileManager = new YamlFileManager(this);
@@ -112,6 +111,10 @@ class Esphome extends utils.Adapter {
      * Is called when databases are connected and adapter received configuration.
      */
     async onReady(): Promise<void> {
+        // Integration with the ioBroker device manager, handles all "dm:" messages itself.
+        // Created here as it accesses the objects database right away.
+        this.deviceManagement = new EsphomeDeviceManagement(this);
+
         await this.setStateAsync('info.connection', { val: true, ack: true });
         try {
             // Migrate from older adapter versions that only had ESPHomeDashboardIP
@@ -272,6 +275,7 @@ class Esphome extends utils.Adapter {
                         mac: message.mac.toUpperCase(),
                         deviceFriendlyName: message.friendly_name ? message.friendly_name : message.host,
                     };
+                    void this.deviceManagement.refreshDeviceList();
                 }
             });
         } catch (error) {
@@ -342,17 +346,9 @@ class Esphome extends utils.Adapter {
                     clientDetails[host].connectionDestroyedLogged = false;
 
                     // Check if device connection is caused by adding  device from admin, if yes send OK message
-                    if (this.messageResponse[host]) {
-                        this.sendTo(
-                            this.messageResponse[host].from,
-                            this.messageResponse[host].command,
-                            {
-                                result: 'OK - Device successfully connected, initializing configuration. Refresh table to show all known devices',
-                            },
-                            this.messageResponse[host].callback,
-                        );
-                        delete this.messageResponse[host];
-                    }
+                    this.respondDeviceResult(host, {
+                        result: 'OK - Device successfully connected, initializing configuration. Refresh table to show all known devices',
+                    });
                 } catch (e) {
                     this.log.error(`connection error ${String(e)}`);
                 }
@@ -493,16 +489,8 @@ class Esphome extends utils.Adapter {
                     // Read JSON and handle states
                     await this.traverseJson(deviceInfo, `${deviceName}.info`);
 
-                    // Check if device connection is caused by adding  device from admin, if yes send OK message
-                    // ToDo rebuild to new logic
-                    if (this.messageResponse[host]) {
-                        const massageObj = {
-                            type: 'info',
-                            message: 'success',
-                        };
-                        this.respond(massageObj, this.messageResponse[host]);
-                        this.messageResponse[host] = null;
-                    }
+                    // Name and device information are known now, show them in the device manager
+                    await this.deviceManagement.refreshDeviceList();
                 } catch (error) {
                     this.errorHandler(`[deviceInfo]`, error);
                 }
@@ -843,15 +831,7 @@ class Esphome extends utils.Adapter {
                     }
 
                     // Check if device connection is caused by adding  device from admin, if yes send OK message
-                    if (this.messageResponse[host]) {
-                        this.sendTo(
-                            this.messageResponse[host].from,
-                            this.messageResponse[host].command,
-                            { error: `${optimisedError}` },
-                            this.messageResponse[host].callback,
-                        );
-                        delete this.messageResponse[host];
-                    }
+                    this.respondDeviceResult(host, { error: `${optimisedError}` });
                 } catch (error) {
                     this.errorHandler(`[connectedDevice onError]`, error);
                 }
@@ -1479,6 +1459,10 @@ class Esphome extends utils.Adapter {
      * @param obj - The message object
      */
     async onMessage(obj: ioBroker.Message): Promise<void> {
+        if (obj.command?.startsWith('dm:')) {
+            // Handled by the device manager integration (src/lib/deviceManagement.ts)
+            return;
+        }
         this.log.debug(`Data from configuration received : ${JSON.stringify(obj)}`);
         try {
             switch (obj.command) {
@@ -1600,111 +1584,17 @@ class Esphome extends utils.Adapter {
 
                 // Handle front-end messages to ADD / Modify a devices
                 case '_addUpdateDevice':
-                    // console.log(JSON.stringify(obj));
-                    // IP input validation
-                    if (obj.message.ip === 'undefined') {
-                        this.sendTo(
-                            obj.from,
-                            obj.command,
-                            {
-                                error: 'To add/modify a device, please enter the IP-Address accordingly',
-                            },
-                            obj.callback,
-                        );
-                        return;
-                    } else if (!this.validateIPAddress(obj.message.ip)) {
-                        this.sendTo(
-                            obj.from,
-                            obj.command,
-                            {
-                                error: 'Format of IP-Address is incorrect, please provide an valid IPV4 IP-Address',
-                            },
-                            obj.callback,
-                        );
-                        return;
-                    }
-
-                    // eslint-disable-next-line no-case-declarations, @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
-                    const initiateNDevice = async (): Promise<void> => {
-                        const encryptionKeyUsed = !!(
-                            obj.message.encryptionKey && obj.message.encryptionKey !== 'undefined'
-                        );
-                        clientDetails[obj.message.ip] = new ClientDetails();
-                        clientDetails[obj.message.ip].storeConnectDetails(
-                            obj.message.ip,
-                            encryptionKeyUsed,
-                            this.encrypt(obj.message.apiPassword),
-                            encryptionKeyUsed ? this.encrypt(obj.message.encryptionKey) : null,
-                        );
-                        this.messageResponse[obj.message.ip] = obj;
-                        delete newlyDiscoveredClient[obj.message.ip];
-                        this.connectDevices(obj.message.ip);
-                    };
-
-                    // Store client details in memory and try to connect
-                    if (!clientDetails[obj.message.ip]) {
-                        // Device is unknown, created memory space
-                        await initiateNDevice();
-                    } else {
-                        // Device is known, update encryptionKey or apiPass
-                        // Ensure all existing connections are closed, will trigger disconnect event to clean-up memory attributes
-                        try {
-                            // if (clientDetails[obj.message.ip].connected) clientDetails[obj.message.ip].client.disconnect();
-                            clientDetails[obj.message.ip].client!.disconnect();
-                        } catch {
-                            // There was no connection in memory
-                        }
-                        // Clean memory data and init device again with a little delay
-
-                        if (resetTimers[obj.message.ip]) {
-                            resetTimers[obj.message.ip] = this.clearTimeout(
-                                resetTimers[obj.message.ip] as ioBroker.Timeout | undefined,
-                            );
-                        }
-                        resetTimers[obj.message.ip] = this.setTimeout(async () => {
-                            delete clientDetails[obj.message.ip];
-                            await initiateNDevice();
-                        }, 2000);
-                    }
+                    await this.addOrUpdateDevice(
+                        obj.message.ip,
+                        obj.message.apiPassword,
+                        obj.message.encryptionKey,
+                        response => this.sendTo(obj.from, obj.command, response, obj.callback),
+                    );
                     break;
 
                 // Handle front-end messages to delete devices
                 case 'deleteDevice':
-                    this.messageResponse[obj.message.ip] = obj;
-                    if (clientDetails[obj.message.ip]) {
-                        // Ensure all existing connections are closed, will trigger disconnect event to clean-up memory attributes
-                        clientDetails[obj.message.ip].client!.disconnect();
-                        // Try to delete Device Object including all underlying states
-                        try {
-                            await this.delObjectAsync(clientDetails[obj.message.ip].deviceName!, { recursive: true });
-                        } catch {
-                            // Deleting device channel failed
-                        }
-
-                        // Clean memory data
-                        delete clientDetails[obj.message.ip];
-
-                        // Send confirmation to frontend
-                        this.sendTo(
-                            this.messageResponse[obj.message.ip]!.from,
-                            this.messageResponse[obj.message.ip]!.command,
-                            { result: 'OK - Device successfully removed' },
-                            this.messageResponse[obj.message.ip]!.callback,
-                        );
-                        delete this.messageResponse[obj.message.ip];
-                    } else {
-                        this.sendTo(
-                            obj.from,
-                            obj.command,
-                            {
-                                error: 'Provided IP-Address unknown, please refresh table and enter an valid IP-Address',
-                            },
-                            obj.callback,
-                        );
-                        return;
-                    }
-
-                    // this.sendTo(obj.from, obj.command, 1, obj.callback);
+                    this.sendTo(obj.from, obj.command, await this.removeDevice(obj.message.ip), obj.callback);
                     break;
 
                 // Handle YAML file upload
@@ -1799,6 +1689,119 @@ class Esphome extends utils.Adapter {
             }
         } catch (error) {
             this.errorHandler(`[onMessage]`, error);
+        }
+    }
+
+    /** Adopted devices by IP, see EsphomeDeviceSource */
+    knownDevices(): Record<string, ClientDetails> {
+        return clientDetails;
+    }
+
+    /** Devices found by the MDNS discovery that are not adopted yet, by IP, see EsphomeDeviceSource */
+    discoveredDevices(): Record<string, DiscoveredDevice> {
+        return newlyDiscoveredClient;
+    }
+
+    /**
+     * Add a new device or reconnect a known one with new credentials
+     *
+     * @param ip - IP address of the device
+     * @param apiPassword - API password, empty or "undefined" if not used
+     * @param encryptionKey - Encryption key, empty or "undefined" if not used
+     * @param respond - Called once with the result of the first connection attempt
+     */
+    async addOrUpdateDevice(
+        ip: string | undefined,
+        apiPassword: string | undefined,
+        encryptionKey: string | undefined,
+        respond: (response: DeviceActionResult) => void,
+    ): Promise<void> {
+        // IP input validation, empty admin fields arrive as "undefined"
+        if (!ip || ip === 'undefined') {
+            respond({ error: 'To add/modify a device, please enter the IP-Address accordingly' });
+            return;
+        } else if (!this.validateIPAddress(ip)) {
+            respond({ error: 'Format of IP-Address is incorrect, please provide an valid IPV4 IP-Address' });
+            return;
+        }
+        const password = apiPassword && apiPassword !== 'undefined' ? apiPassword : '';
+        const encryptionKeyUsed = !!(encryptionKey && encryptionKey !== 'undefined');
+
+        // eslint-disable-next-line @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
+        const initiateNDevice = async (): Promise<void> => {
+            clientDetails[ip] = new ClientDetails();
+            clientDetails[ip].storeConnectDetails(
+                ip,
+                encryptionKeyUsed,
+                this.encrypt(password),
+                encryptionKeyUsed ? this.encrypt(encryptionKey) : null,
+            );
+            this.messageResponse[ip] = respond;
+            delete newlyDiscoveredClient[ip];
+            this.connectDevices(ip);
+        };
+
+        // Store client details in memory and try to connect
+        if (!clientDetails[ip]) {
+            // Device is unknown, created memory space
+            await initiateNDevice();
+        } else {
+            // Device is known, update encryptionKey or apiPass
+            // Ensure all existing connections are closed, will trigger disconnect event to clean-up memory attributes
+            try {
+                clientDetails[ip].client!.disconnect();
+            } catch {
+                // There was no connection in memory
+            }
+            // Clean memory data and init device again with a little delay
+
+            if (resetTimers[ip]) {
+                resetTimers[ip] = this.clearTimeout(resetTimers[ip]);
+            }
+            resetTimers[ip] = this.setTimeout(async () => {
+                delete clientDetails[ip];
+                await initiateNDevice();
+            }, 2000);
+        }
+    }
+
+    /**
+     * Disconnect a device and delete all its objects
+     *
+     * @param ip - IP address of the device
+     */
+    async removeDevice(ip: string): Promise<DeviceActionResult> {
+        if (!clientDetails[ip]) {
+            return { error: 'Provided IP-Address unknown, please refresh table and enter an valid IP-Address' };
+        }
+        // Ensure all existing connections are closed, will trigger disconnect event to clean-up memory attributes
+        clientDetails[ip].client?.disconnect();
+        // Try to delete Device Object including all underlying states
+        try {
+            await this.delObjectAsync(clientDetails[ip].deviceName!, { recursive: true });
+        } catch {
+            // Deleting device channel failed
+        }
+
+        // Clean memory data
+        delete clientDetails[ip];
+        delete this.messageResponse[ip];
+        await this.deviceManagement.refreshDeviceList();
+
+        return { result: 'OK - Device successfully removed' };
+    }
+
+    /**
+     * Answer a pending add / modify request of a device, if any
+     *
+     * @param host - IP address of the device
+     * @param response - Result of the connection attempt
+     */
+    respondDeviceResult(host: string, response: DeviceActionResult): void {
+        const respond = this.messageResponse[host];
+        if (respond) {
+            delete this.messageResponse[host];
+            respond(response);
         }
     }
 

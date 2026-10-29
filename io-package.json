@@ -132,7 +132,10 @@
     "platform": "Javascript/Node.js",
     "icon": "esphome.png",
     "enabled": true,
-    "messagebox": true,
+    "supportedMessages": {
+      "custom": true,
+      "deviceManager": true
+    },
     "extIcon": "https://raw.githubusercontent.com/DrozmotiX/ioBroker.esphome/main/admin/esphome.png",
     "readme": "https://github.com/DrozmotiX/ioBroker.esphome/blob/main/README.md",
     "loglevel": "info",
