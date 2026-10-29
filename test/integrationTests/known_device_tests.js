@@ -3,8 +3,8 @@
  *
  * Covers tryKnownDevices(): devices adopted earlier are loaded from their device objects on start.
  * The name shown for such a device before it connects comes from the device object; it used to be
- * the string "undefined", because native.name was never written. The same device is also checked
- * in the ioBroker device manager (src/lib/deviceManagement.ts), up to deleting it there.
+ * the string "undefined", because native.name was never written. The device is checked through the
+ * ioBroker device manager (src/lib/deviceManagement.ts), up to deleting it there.
  *
  * The device points to an address of TEST-NET-1 (RFC 5737), so the adapter never reaches it and
  * the name from the device object is all it knows. No Python environment or ESPHome device is
@@ -75,24 +75,6 @@ exports.runTests = function (suite) {
             }
         });
 
-        it('lists the known device with its name instead of "undefined"', async function () {
-            this.timeout(60000);
-
-            // The known devices are loaded after the start, ask until the device is listed
-            let device;
-            const deadline = Date.now() + 30000;
-            while (!device && Date.now() < deadline) {
-                const response = await sendToAdapter(harness, 'loadDevices', {});
-                device = response.native.existingDevicesTable.find(entry => entry.ip === DEVICE_IP);
-                if (!device) {
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
-            }
-
-            expect(device, 'known device in the device table').to.be.ok;
-            expect(device.deviceName).to.equal('kitchen-light');
-        });
-
         it('offers adding devices in the device manager', async function () {
             this.timeout(60000);
 
@@ -102,11 +84,19 @@ exports.runTests = function (suite) {
             expect(info.actions.map(action => action.id)).to.deep.equal(['add']);
         });
 
-        it('lists the known device in the device manager', async function () {
+        it('lists the known device with its name instead of "undefined"', async function () {
             this.timeout(60000);
 
-            const response = await sendToAdapter(harness, 'dm:loadDevices', {});
-            const device = response.add.find(entry => entry.id === DEVICE_IP);
+            // The known devices are loaded after the start, ask until the device is listed
+            let device;
+            const deadline = Date.now() + 30000;
+            while (!device && Date.now() < deadline) {
+                const response = await sendToAdapter(harness, 'dm:loadDevices', {});
+                device = response.add.find(entry => entry.id === DEVICE_IP);
+                if (!device) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
 
             expect(device, 'known device in the device manager').to.be.ok;
             expect(device.name).to.equal('kitchen-light');

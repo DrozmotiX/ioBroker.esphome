@@ -347,7 +347,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
 
                     // Check if device connection is caused by adding  device from admin, if yes send OK message
                     this.respondDeviceResult(host, {
-                        result: 'OK - Device successfully connected, initializing configuration. Refresh table to show all known devices',
+                        result: 'OK - Device successfully connected, initializing configuration',
                     });
                 } catch (e) {
                     this.log.error(`connection error ${String(e)}`);
@@ -1486,65 +1486,6 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     }
                     break;
 
-                case 'loadDevices':
-                    {
-                        let data = {};
-
-                        const knownDeviceTable = [];
-                        const discoveredDeviceTable = [];
-
-                        //Create table for all known devices
-                        for (const device in clientDetails) {
-                            knownDeviceTable.push({
-                                MACAddress: clientDetails[device].mac,
-                                deviceName: clientDetails[device].deviceFriendlyName,
-                                ip: clientDetails[device].ip,
-                                connectState: clientDetails[device].connectStatus,
-                            });
-                        }
-
-                        //Create table for newlyDiscovered Devices
-
-                        for (const device in newlyDiscoveredClient) {
-                            discoveredDeviceTable.push({
-                                MACAddress: newlyDiscoveredClient[device].mac,
-                                deviceName: newlyDiscoveredClient[device].deviceFriendlyName,
-                                ip: newlyDiscoveredClient[device].ip,
-                            });
-                        }
-
-                        data = {
-                            native: {
-                                existingDevicesTable: knownDeviceTable,
-                                newDevicesTable: discoveredDeviceTable,
-                            },
-                        };
-                        this.sendTo(obj.from, obj.command, data, obj.callback);
-                    }
-                    break;
-
-                // Front End message handler to load IP-Address dropDown with all current known devices
-                case 'getDeviceIPs':
-                    {
-                        const dropDownEntry = [];
-                        for (const device in clientDetails) {
-                            dropDownEntry.push({
-                                label: device,
-                                value: clientDetails[device].ip,
-                            });
-                        }
-
-                        for (const device in newlyDiscoveredClient) {
-                            dropDownEntry.push({
-                                label: device,
-                                value: newlyDiscoveredClient[device].ip,
-                            });
-                        }
-
-                        this.sendTo(obj.from, obj.command, dropDownEntry, obj.callback);
-                    }
-                    break;
-
                 // Front End message handler to load ESPHome Dashboard dropDown with all available versions
                 case 'getESPHomeDashboardVersion':
                     this.sendTo(obj.from, obj.command, this.dashboard.getDashboardVersionDropDown(), obj.callback);
@@ -1582,7 +1523,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     }
                     break;
 
-                // Handle front-end messages to ADD / Modify a devices
+                // Add / modify a device by message, e.g. from scripts or the E2E test (the admin page uses the device manager)
                 case '_addUpdateDevice':
                     await this.addOrUpdateDevice(
                         obj.message.ip,
@@ -1592,7 +1533,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     );
                     break;
 
-                // Handle front-end messages to delete devices
+                // Delete a device by message, e.g. from scripts (the admin page uses the device manager)
                 case 'deleteDevice':
                     this.sendTo(obj.from, obj.command, await this.removeDevice(obj.message.ip), obj.callback);
                     break;
@@ -1772,7 +1713,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
      */
     async removeDevice(ip: string): Promise<DeviceActionResult> {
         if (!clientDetails[ip]) {
-            return { error: 'Provided IP-Address unknown, please refresh table and enter an valid IP-Address' };
+            return { error: 'Provided IP-Address unknown, please enter the IP-Address of a known device' };
         }
         // Ensure all existing connections are closed, will trigger disconnect event to clean-up memory attributes
         clientDetails[ip].client?.disconnect();
