@@ -177,13 +177,11 @@
   },
   "encryptedNative": [
     "apiPass",
-    "encryptionKey",
-    "apiPassword"
+    "encryptionKey"
   ],
   "protectedNative": [
     "apiPass",
-    "encryptionKey",
-    "apiPassword"
+    "encryptionKey"
   ],
   "native": {
     "ESPHomeDashboardVersion": "2026.6.5",
@@ -192,7 +190,6 @@
     "pingInterval": 5,
     "pingAttempts": 1,
     "apiPass": "",
-    "apiPassword": "",
     "encryptionKey": "",
     "autodiscovery": true,
     "discoveryListeningAddress": "0.0.0.0",

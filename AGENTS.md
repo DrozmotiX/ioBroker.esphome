@@ -91,7 +91,7 @@ Unit tests live next to the code they test as `src/**/*.test.ts` (e.g. `src/lib/
 
 ### End-to-end test with a real ESPHome device
 
-`test/e2e/esphome-device.yaml` is compiled with the ESPHome **host** platform into a native executable (real firmware, real encrypted native API on `127.0.0.1:6053`, no hardware). `test/integrationTests/e2e_device_tests.js` starts it, adds it with the "Add device" dialog of the device manager (`dm:` messages) and checks every entity type in both directions plus reconnect. It is skipped unless `ESPHOME_E2E_DEVICE_BINARY` is set:
+`test/e2e/esphome-device.yaml` is compiled with the ESPHome **host** platform into a native executable (real firmware, real encrypted native API on `127.0.0.1:6053`, no hardware). `test/integrationTests/e2e_device_tests.js` starts it, adds it with the "Add device" dialog of the device manager (`dm:` messages) and checks every entity type in both directions plus reconnect. A second suite starts from a device object as version 1.0.0 wrote it (encrypted key) and checks the upgrade. A harness cannot start the adapter again after `stopAdapter()` (`startAdapterAndWait` then hangs), so a scenario that needs a restart gets its own `suite`. It is skipped unless `ESPHOME_E2E_DEVICE_BINARY` is set:
 
 ```bash
 pip install -r test/e2e/requirements.txt          # pinned ESPHome version
@@ -132,8 +132,8 @@ Config schema: `admin/jsonConfig.json5` (JSON5, supports comments). Translations
 The first tab ("Devices") embeds the device manager (`"type": "deviceManager"`), the same view admin shows in its
 "Devices" tab. Devices are only added / edited / deleted there, see `src/lib/deviceManagement.ts`
 (`@iobroker/dm-utils`, needs admin >= 7.8.20 for its v3 API). Texts of the device manager live in
-`src/lib/i18n/{locale}.json` (English text as key, all 11 languages), are loaded with adapter-core's `I18n` and
-copied to `build/lib/i18n` by `scripts/postbuild.js` after `npm run build`. Add every new text to all 11 files,
+`src/i18n/{locale}.json` (English text as key, all 11 languages, same layout as ioBroker.shelly), are loaded with
+adapter-core's `I18n` and copied to `build/i18n` by `scripts/postbuild.js` after `npm run build`. Add every new text to all 11 files,
 the unit test checks they have the same keys. `npm run translate` only covers `admin/i18n`.
 
 ## GITHUB_TOKEN Usage

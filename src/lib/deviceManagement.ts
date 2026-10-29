@@ -1,6 +1,7 @@
 import type { AdapterInstance } from '@iobroker/adapter-core';
 // Not from the package root: that loads js-controller, which the unit tests do not have
 import * as I18n from '@iobroker/adapter-core/i18n';
+import * as path from 'node:path';
 import {
     type ActionContext,
     type DeviceDetails,
@@ -73,7 +74,7 @@ const DISCOVERED_COLOR = '#9e9e9e';
 const CONNECT_TIMEOUT = 30_000;
 
 /**
- * Texts shown in the device manager, the English text is the key into src/lib/i18n/<language>.json.
+ * Texts shown in the device manager, the English text is the key into src/i18n/<language>.json.
  * Missing languages fall back to English.
  */
 const texts = {
@@ -123,7 +124,7 @@ function t(key: keyof typeof texts, ...args: string[]): ioBroker.Translated {
  * Adopted devices and devices found by the MDNS discovery are listed in their own groups.
  */
 export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAdapter> {
-    /** Loading the texts in the system language (src/lib/i18n), awaited before answering the GUI */
+    /** Loading the texts in the system language (src/i18n), awaited before answering the GUI */
     private readonly translationsLoaded: Promise<void>;
 
     /**
@@ -135,7 +136,8 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
     constructor(adapter: EsphomeAdapter) {
         // Created by the base class, used to push list updates to the GUI
         super(adapter, COMMUNICATION_STATE);
-        this.translationsLoaded = I18n.init(__dirname, adapter).catch((error: unknown) =>
+        // src/i18n, copied to build/i18n by scripts/postbuild.js
+        this.translationsLoaded = I18n.init(path.join(__dirname, '..'), adapter).catch((error: unknown) =>
             this.log.error(`[deviceManagement] Cannot load translations: ${String(error)}`),
         );
     }

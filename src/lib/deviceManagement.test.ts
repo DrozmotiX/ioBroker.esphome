@@ -120,7 +120,7 @@ function knownDevice(ip: string): ClientDetails {
 describe('Device Management', () => {
     describe('translations', () => {
         it('has every text in every language', () => {
-            const dir = path.join(__dirname, 'i18n');
+            const dir = path.join(__dirname, '..', 'i18n');
             const english = Object.keys(JSON.parse(readFileSync(path.join(dir, 'en.json'), 'utf8'))).sort();
             const files = readdirSync(dir).filter(file => file.endsWith('.json'));
             expect(files).to.have.lengthOf(11);

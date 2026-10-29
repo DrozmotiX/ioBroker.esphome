@@ -2,6 +2,8 @@
  * Helpers to talk to the adapter like the admin UI / device manager does
  */
 
+const crypto = require('node:crypto');
+
 const NAMESPACE = 'esphome.0';
 
 /**
@@ -53,4 +55,29 @@ async function addDeviceWithDeviceManager(harness, form) {
     return { messages, result: response.result };
 }
 
-module.exports = { NAMESPACE, sendToAdapter, addDeviceWithDeviceManager };
+/**
+ * Encrypts a value like adapter.encrypt() does (js-controller tools.encrypt with the secret of system.config),
+ * to write credentials the way earlier adapter versions stored them in the device objects
+ *
+ * @param {object} harness - Integration test harness
+ * @param {string} value - Value to encrypt
+ * @returns {Promise<string>} The encrypted value
+ */
+async function encryptLikeAdapter(harness, value) {
+    const systemConfig = await harness.objects.getObjectAsync('system.config');
+    const secret = systemConfig.native.secret;
+    if (!/^[0-9a-f]{48}$/.test(secret)) {
+        // Legacy secret
+        let result = '';
+        for (let i = 0; i < value.length; i++) {
+            result += String.fromCharCode(secret[i % secret.length].charCodeAt(0) ^ value.charCodeAt(i));
+        }
+        return result;
+    }
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv('aes-192-cbc', Buffer.from(secret, 'hex'), iv);
+    const encrypted = Buffer.concat([cipher.update(value), cipher.final()]);
+    return `$/aes-192-cbc:${iv.toString('hex')}:${encrypted.toString('hex')}`;
+}
+
+module.exports = { NAMESPACE, sendToAdapter, addDeviceWithDeviceManager, encryptLikeAdapter };

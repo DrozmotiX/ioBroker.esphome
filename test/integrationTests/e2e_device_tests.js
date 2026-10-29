@@ -27,7 +27,7 @@ const { spawn } = require('node:child_process');
 const net = require('node:net');
 const path = require('node:path');
 const { expect } = require('chai');
-const { NAMESPACE, addDeviceWithDeviceManager, sendToAdapter } = require('./deviceManagerHelpers');
+const { NAMESPACE, addDeviceWithDeviceManager, encryptLikeAdapter, sendToAdapter } = require('./deviceManagerHelpers');
 
 // Keep in sync with test/e2e/esphome-device.yaml
 const DEVICE_HOST = '127.0.0.1';
@@ -495,6 +495,117 @@ exports.runTests = function (suite) {
                 await writeCommand(harness, `${entity}.state`, true);
                 await waitForAckedState(harness, `${entity}.state`, val => val === true, 'to be confirmed true');
             });
+        });
+    });
+
+    // A fresh harness per suite: the harness of the suite above cannot start the adapter again once stopped
+    suite('E2E - device added by version 1.0.0', getHarness => {
+        const binary = process.env.ESPHOME_E2E_DEVICE_BINARY;
+        const device = new EsphomeDevice(binary || '');
+        let harness;
+
+        before(async function () {
+            this.timeout(120000);
+            harness = getHarness();
+
+            // Device object exactly as 1.0.0 wrote it: no native.name, the credentials encrypted by the adapter
+            await harness.objects.setObjectAsync(DEVICE_PREFIX, {
+                type: 'device',
+                common: { name: DEVICE_NAME, statusStates: { onlineId: ONLINE_STATE } },
+                native: {
+                    ip: DEVICE_HOST,
+                    mac: '02:E2:E0:00:00:01',
+                    deviceName: DEVICE_ID,
+                    deviceFriendlyName: DEVICE_NAME,
+                    apiPassword: await encryptLikeAdapter(harness, ''),
+                    encryptionKey: await encryptLikeAdapter(harness, ENCRYPTION_KEY),
+                    encryptionKeyUsed: true,
+                },
+            });
+
+            await harness.changeAdapterConfig('esphome', {
+                native: {
+                    autodiscovery: false,
+                    ESPHomeDashboardEnabled: false,
+                    reconnectInterval: 2,
+                    pingInterval: 2,
+                    pingAttempts: 1,
+                    // Saved by the device tab of the 1.0.0 settings, no longer used
+                    deviceIP: DEVICE_HOST,
+                    apiPassword: '',
+                    existingDevicesTable: [
+                        {
+                            MACAddress: '02:E2:E0:00:00:01',
+                            deviceName: DEVICE_NAME,
+                            ip: DEVICE_HOST,
+                            connectState: 'initialized',
+                        },
+                    ],
+                    newDevicesTable: [],
+                },
+            });
+
+            await device.start();
+            await harness.enableSendTo();
+            await harness.startAdapterAndWait();
+        });
+
+        afterEach(function () {
+            if (this.currentTest && this.currentTest.state === 'failed') {
+                device.dumpLog();
+            }
+        });
+
+        after(async function () {
+            this.timeout(30000);
+            try {
+                if (harness && harness.isAdapterRunning()) {
+                    await harness.stopAdapter();
+                }
+            } catch (error) {
+                console.error(`Failed to stop adapter: ${error}`);
+            }
+            await device.stop();
+        });
+
+        it('connects with the stored encryption key and lists the device in the device manager', async function () {
+            this.timeout(90000);
+
+            await waitForAckedState(harness, ONLINE_STATE, val => val === true, 'to be true', 60000);
+
+            const response = await sendToAdapter(harness, 'dm:loadDevices', {});
+            const entry = response.add.find(item => item.id === DEVICE_HOST);
+            expect(entry, 'device in the device manager').to.be.ok;
+            expect(entry.name).to.equal(DEVICE_NAME);
+            expect(entry.group.key).to.equal('known');
+            expect(entry.status.connection.stateId).to.equal(ONLINE_STATE);
+            expect(entry.actions.map(action => action.id)).to.include.members(['edit', 'delete']);
+        });
+
+        it('keeps the stored encryption key when the connection settings are saved unchanged', async function () {
+            this.timeout(90000);
+
+            // "Change connection settings" with both fields left empty, then the device must connect again
+            await sendToAdapter(harness, 'dm:loadDevices', {});
+            let response = await sendToAdapter(harness, 'dm:deviceAction', { deviceId: DEVICE_HOST, actionId: 'edit' });
+            const messages = [];
+            while (response.type !== 'result') {
+                let answer = {};
+                if (response.type === 'form') {
+                    answer = { data: { ip: DEVICE_HOST, encryptionKey: '', apiPassword: '' } };
+                } else if (response.type === 'message') {
+                    messages.push(response.message);
+                }
+                response = await sendToAdapter(
+                    harness,
+                    'dm:actionProgress',
+                    { origin: response.origin, ...answer },
+                    60000,
+                );
+            }
+            expect(messages).to.have.lengthOf(1);
+            expect(messages[0]).to.match(/^OK - Device successfully connected/);
+            await waitForAckedState(harness, ONLINE_STATE, val => val === true, 'to be true again', 60000);
         });
     });
 };

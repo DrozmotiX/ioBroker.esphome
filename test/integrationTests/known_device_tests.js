@@ -1,13 +1,15 @@
 /**
  * Known Device Integration Test
  *
- * Covers tryKnownDevices(): devices adopted earlier are loaded from their device objects on start.
- * The name shown for such a device before it connects comes from the device object; it used to be
- * the string "undefined", because native.name was never written. The device is checked through the
- * ioBroker device manager (src/lib/deviceManagement.ts), up to deleting it there.
+ * Covers the upgrade of existing installations: devices adopted by earlier versions are loaded from
+ * their device objects on start (tryKnownDevices()) and listed in the ioBroker device manager
+ * (src/lib/deviceManagement.ts). Both object formats are used: 0.6 - 1.0 (no native.name, which
+ * made the device show up as "undefined") and 0.3 / 0.4 (API password in native.passWord). The
+ * instance settings contain what the removed device tab of 1.0.0 saved.
  *
- * The device points to an address of TEST-NET-1 (RFC 5737), so the adapter never reaches it and
- * the name from the device object is all it knows. No Python environment or ESPHome device is
+ * The devices point to addresses of TEST-NET-1 (RFC 5737), so the adapter never reaches them and
+ * the names from the device objects are all it knows. The E2E suite covers the reconnect of a device
+ * object written by 1.0.0 with a real (encrypted) device. No Python environment or ESPHome device is
  * needed, so this suite runs in the regular CI matrix.
  */
 
@@ -16,9 +18,12 @@ const { NAMESPACE, addDeviceWithDeviceManager, sendToAdapter } = require('./devi
 
 const DEVICE_NAME = 'AABBCCDDEEFF';
 const DEVICE_IP = '192.0.2.10';
+// Device added by version 0.3 / 0.4, those stored the API password in native.passWord
+const OLD_DEVICE_NAME = '112233445566';
+const OLD_DEVICE_IP = '192.0.2.11';
 
 exports.runTests = function (suite) {
-    suite('Known devices - device object written before native.name existed', getHarness => {
+    suite('Known devices - device objects and settings of earlier versions', getHarness => {
         let harness;
 
         before(async function () {
@@ -38,6 +43,20 @@ exports.runTests = function (suite) {
                 },
             });
 
+            // Device object as written by version 0.3 / 0.4
+            await harness.objects.setObjectAsync(`${NAMESPACE}.${OLD_DEVICE_NAME}`, {
+                type: 'device',
+                common: { name: 'garage-door' },
+                native: {
+                    ip: OLD_DEVICE_IP,
+                    name: 'garage-door',
+                    mac: '11:22:33:44:55:66',
+                    deviceName: OLD_DEVICE_NAME,
+                    // Encrypted by the adapter, the value does not matter as the device is never reached
+                    passWord: 'not-a-real-encrypted-password',
+                },
+            });
+
             // Pinned versions, so the one-time version migration does not restart the adapter
             await harness.changeAdapterConfig('esphome', {
                 native: {
@@ -45,6 +64,18 @@ exports.runTests = function (suite) {
                     ESPHomeDashboardEnabled: false,
                     ESPHomeDashboardVersion: '2026.6.5',
                     PillowVersion: '12.2.0',
+                    // Saved by the device tab of the 1.0.0 settings, no longer used
+                    deviceIP: DEVICE_IP,
+                    apiPassword: '',
+                    existingDevicesTable: [
+                        {
+                            MACAddress: 'AA:BB:CC:DD:EE:FF',
+                            deviceName: 'kitchen-light',
+                            ip: DEVICE_IP,
+                            connectState: 'unreachable',
+                        },
+                    ],
+                    newDevicesTable: [],
                 },
             });
             await harness.startAdapterAndWait();
@@ -63,7 +94,7 @@ exports.runTests = function (suite) {
 
             expect(info.apiVersion).to.equal('v3');
             expect(info.actions.map(action => action.id)).to.deep.equal(['add']);
-            // Translations come from build/lib/i18n, copied there by scripts/postbuild.js
+            // Translations come from build/i18n, copied there by scripts/postbuild.js
             expect(info.actions[0].title).to.deep.include({ en: 'Add device', de: 'Gerät hinzufügen' });
         });
 
@@ -85,6 +116,19 @@ exports.runTests = function (suite) {
             expect(device.name).to.equal('kitchen-light');
             expect(device.group.key).to.equal('known');
             expect(device.status.connection.stateId).to.equal(`${NAMESPACE}.${DEVICE_NAME}.info._online`);
+            expect(device.actions.map(action => action.id)).to.deep.equal(['edit', 'delete']);
+        });
+
+        it('lists a device added by version 0.3 / 0.4 in the device manager', async function () {
+            this.timeout(60000);
+
+            const response = await sendToAdapter(harness, 'dm:loadDevices', {});
+            const device = response.add.find(entry => entry.id === OLD_DEVICE_IP);
+
+            expect(device, 'old device in the device manager').to.be.ok;
+            expect(device.name).to.equal('garage-door');
+            expect(device.group.key).to.equal('known');
+            expect(device.status.connection.stateId).to.equal(`${NAMESPACE}.${OLD_DEVICE_NAME}.info._online`);
             expect(device.actions.map(action => action.id)).to.deep.equal(['edit', 'delete']);
         });
 
