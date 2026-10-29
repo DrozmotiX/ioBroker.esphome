@@ -1,22 +1,28 @@
-import type { ActionContext, DeviceInfo, DeviceLoadContext, JsonFormData } from '@iobroker/dm-utils';
+import type { ActionContext, DeviceInfo, DeviceLoadContext, InstanceDetails, JsonFormData } from '@iobroker/dm-utils';
 import { expect } from 'chai';
+import { readdirSync, readFileSync } from 'node:fs';
+import * as path from 'node:path';
 import EsphomeDeviceManagement, { type DeviceActionResult, type DiscoveredDevice } from './deviceManagement';
 import ClientDetails from './helpers';
 
 /** Exposes the protected methods of the device management */
 class TestDeviceManagement extends EsphomeDeviceManagement {
-    load(): DeviceInfo<string>[] {
+    async load(): Promise<DeviceInfo<string>[]> {
         const devices: DeviceInfo<string>[] = [];
         const context: DeviceLoadContext<string> = {
             addDevice: device => devices.push(device),
             setTotalDevices: () => {},
         };
-        this.loadDevices(context);
+        await this.loadDevices(context);
         return devices;
     }
 
     detailsOf(ip: string): ReturnType<EsphomeDeviceManagement['getDeviceDetails']> {
         return this.getDeviceDetails(ip);
+    }
+
+    instanceDetails(): Promise<InstanceDetails> {
+        return this.getInstanceInfo();
     }
 }
 
@@ -41,6 +47,8 @@ function createAdapter(): {
         log: { info: noop, warn: noop, error: noop, debug: noop },
         on: noop,
         getObjectAsync: () => Promise.resolve({}),
+        // system.config, read by I18n.init()
+        getForeignObjectAsync: () => Promise.resolve({ common: { language: 'en' } }),
         setObjectAsync: () => Promise.resolve(),
         setState: (id: string, val: unknown) => {
             states[id] = val;
@@ -110,8 +118,36 @@ function knownDevice(ip: string): ClientDetails {
 }
 
 describe('Device Management', () => {
+    describe('translations', () => {
+        it('has every text in every language', () => {
+            const dir = path.join(__dirname, 'i18n');
+            const english = Object.keys(JSON.parse(readFileSync(path.join(dir, 'en.json'), 'utf8'))).sort();
+            const files = readdirSync(dir).filter(file => file.endsWith('.json'));
+            expect(files).to.have.lengthOf(11);
+            for (const file of files) {
+                const keys = Object.keys(JSON.parse(readFileSync(path.join(dir, file), 'utf8'))).sort();
+                expect(keys, file).to.deep.equal(english);
+            }
+        });
+
+        it('shows the texts in all languages', async () => {
+            const { adapter } = createAdapter();
+            const [add] = (await new TestDeviceManagement(adapter).instanceDetails()).actions!;
+            expect(add.title).to.deep.include({ en: 'Add device', de: 'Gerät hinzufügen' });
+        });
+    });
+
+    describe('getInstanceInfo()', () => {
+        it('offers adding devices and refreshing the list', async () => {
+            const { adapter } = createAdapter();
+            const info = await new TestDeviceManagement(adapter).instanceDetails();
+            expect(info.apiVersion).to.equal('v3');
+            expect(info.actions?.map(action => action.id)).to.deep.equal(['add', 'refresh']);
+        });
+    });
+
     describe('loadDevices()', () => {
-        it('lists known and discovered devices, known ones only once', () => {
+        it('lists known and discovered devices, known ones only once', async () => {
             const { adapter, known, discovered } = createAdapter();
             known['192.168.0.10'] = knownDevice('192.168.0.10');
             discovered['192.168.0.11'] = { ip: '192.168.0.11', mac: '11:22:33:44:55:66', deviceFriendlyName: 'garage' };
@@ -122,7 +158,7 @@ describe('Device Management', () => {
                 deviceFriendlyName: 'kitchen',
             };
 
-            const devices = new TestDeviceManagement(adapter).load();
+            const devices = await new TestDeviceManagement(adapter).load();
 
             expect(devices.map(device => device.id)).to.deep.equal(['192.168.0.10', '192.168.0.11']);
             const [kitchen, garage] = devices;
@@ -141,29 +177,38 @@ describe('Device Management', () => {
             expect(garage).to.not.have.property('status');
             expect(garage.backgroundColor).to.be.a('string');
             expect(garage.indicators?.map(indicator => indicator.id)).to.deep.equal(['discovered']);
+            expect(kitchen.customInfo?.schema).to.deep.include({ type: 'panel' });
+            expect(
+                Object.values((kitchen.customInfo?.schema as { items: Record<string, { oid: string }> }).items).map(
+                    item => item.oid,
+                ),
+            ).to.deep.equal([
+                'esphome.0.AABBCCDDEEFF.info._connectionStatus',
+                'esphome.0.AABBCCDDEEFF.info.esphomeVersion',
+            ]);
             expect(kitchen).to.not.have.property('backgroundColor');
             expect(kitchen).to.not.have.property('indicators');
             expect(garage.actions?.map(action => action.id)).to.deep.equal(['adopt']);
         });
 
-        it('shows a device without device information by its IP address', () => {
+        it('shows a device without device information by its IP address', async () => {
             const { adapter, known } = createAdapter();
             const device = new ClientDetails();
             device.storeConnectDetails('192.168.0.12', false);
             known['192.168.0.12'] = device;
 
-            const [entry] = new TestDeviceManagement(adapter).load();
+            const [entry] = await new TestDeviceManagement(adapter).load();
 
             expect(entry.name).to.equal('192.168.0.12');
             expect(entry.status).to.equal('disconnected');
         });
 
-        it('offers the web server of the device when it has one', () => {
+        it('offers the web server of the device when it has one', async () => {
             const { adapter, known } = createAdapter();
             known['192.168.0.10'] = knownDevice('192.168.0.10');
             known['192.168.0.10'].deviceInfo = { webserverPort: 80 } as ClientDetails['deviceInfo'];
 
-            const [entry] = new TestDeviceManagement(adapter).load();
+            const [entry] = await new TestDeviceManagement(adapter).load();
 
             expect(entry.actions?.find(action => action.id === 'web')).to.deep.include({
                 url: 'http://192.168.0.10:80',
@@ -172,13 +217,13 @@ describe('Device Management', () => {
     });
 
     describe('getDeviceDetails()', () => {
-        it('returns the details of known and discovered devices', () => {
+        it('returns the details of known and discovered devices', async () => {
             const { adapter, known, discovered } = createAdapter();
             known['192.168.0.10'] = knownDevice('192.168.0.10');
             discovered['192.168.0.11'] = { ip: '192.168.0.11', mac: '11:22:33:44:55:66', deviceFriendlyName: 'garage' };
             const dm = new TestDeviceManagement(adapter);
 
-            expect(dm.detailsOf('192.168.0.10')).to.deep.include({
+            expect(await dm.detailsOf('192.168.0.10')).to.deep.include({
                 id: '192.168.0.10',
                 data: {
                     name: 'kitchen',
@@ -187,10 +232,10 @@ describe('Device Management', () => {
                     connectionStatus: 'connected',
                 },
             });
-            expect(dm.detailsOf('192.168.0.11')).to.deep.include({
+            expect(await dm.detailsOf('192.168.0.11')).to.deep.include({
                 data: { name: 'garage', ip: '192.168.0.11', mac: '11:22:33:44:55:66' },
             });
-            expect(dm.detailsOf('192.168.0.99')).to.have.property('error');
+            expect(await dm.detailsOf('192.168.0.99')).to.have.property('error');
         });
     });
 
