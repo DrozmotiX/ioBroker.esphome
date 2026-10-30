@@ -377,7 +377,9 @@ class Dashboard {
                         );
                     }
 
-                    this.adapter.log.info(`Starting ESPHome Dashboard`);
+                    this.adapter.log.info(
+                        `Starting ESPHome Dashboard. ESPHome version: ${useDashBoardVersion || 'latest'}, Pillow version: ${usePillowVersion || 'latest'}`,
+                    );
                     this.dashboardProcess = python('esphome', [
                         'dashboard',
                         '--port',
