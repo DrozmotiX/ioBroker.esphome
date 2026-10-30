@@ -437,7 +437,7 @@ If you like my work, please consider a personal donation
 ### **WORK IN PROGRESS**
 
 - (@SimonFischer04) **NEW**: Support for the ioBroker device manager (#203). ESPHome devices are listed with their online status and details, can be added, adopted after discovery, given new credentials and deleted there
-- (@SimonFischer04) **BREAKING**: The device tables and the add / delete buttons were removed from the adapter settings. The device manager is shown in their place as the second tab ("Devices") of the adapter settings, the discovery and connection settings moved to a section "Discovery & connection" of the main settings
+- (@SimonFischer04) **BREAKING**: The device tables and the add / delete buttons were removed from the adapter settings. The device manager is shown in their place as the second tab ("Devices") of the adapter settings, the discovery settings and the ignore list (previously its own tab) moved to a section "Discovery" of the main settings, where the listening address and the ignore list are only shown while device discovery is enabled, followed by a section "Connection behavior for known devices" with the configuration states, reconnect and ping settings
 - (@SimonFischer04) **BREAKING**: Requires admin 7.8.20 or newer, the first version with the current device manager
 - (@SimonFischer04) **BREAKING**: Removed the default credentials (encryption key and API password) from the main settings. They have not been used since version 0.6, when discovered devices stopped being connected automatically. Settings no longer used are removed from the instance configuration once, the adapter restarts after that
 - (@SimonFischer04) **ENHANCED**: Moved all code for the integrated ESPHome Dashboard into its own module, no change in behavior
