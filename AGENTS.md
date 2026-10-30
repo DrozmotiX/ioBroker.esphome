@@ -8,13 +8,14 @@ Single-file adapter (`src/main.ts`, ~2700 lines) extending `@iobroker/adapter-co
 
 > All sources are TypeScript and fully type checked; there is no `// @ts-nocheck` and no per-file lint exception. Keep it that way: type new code properly instead of adding `any`, `@ts-nocheck` or broad eslint overrides. The types of `@2colors/esphome-native-api` are completed in `src/lib/esphome-native-api.d.ts`.
 
-| File                         | Purpose                                                               |
-| ---------------------------- | --------------------------------------------------------------------- |
-| `src/lib/helpers.ts`         | `DeviceInfo` / `ClientDetails` classes – one instance per ESP device  |
-| `src/lib/stateAttr.ts`       | Human-readable metadata for ioBroker state objects (name, role, type) |
-| `src/lib/yamlFileManager.ts` | Upload/download/delete YAML config files for the ESPHome directory    |
-| `src/lib/dashboardApi.ts`    | Dashboard API helpers                                                 |
-| `src/lib/dashboard.ts`       | ESPHome Dashboard: versions, config migration, process start / stop   |
+| File                          | Purpose                                                                            |
+| ----------------------------- | ---------------------------------------------------------------------------------- |
+| `src/lib/helpers.ts`          | `DeviceInfo` / `ClientDetails` classes – one instance per ESP device               |
+| `src/lib/stateAttr.ts`        | Human-readable metadata for ioBroker state objects (name, role, type)              |
+| `src/lib/yamlFileManager.ts`  | Upload/download/delete YAML config files for the ESPHome directory                 |
+| `src/lib/dashboardApi.ts`     | Dashboard API helpers                                                              |
+| `src/lib/dashboard.ts`        | ESPHome Dashboard: versions, config migration, process start / stop                |
+| `src/lib/deviceManagement.ts` | ioBroker device manager (`@iobroker/dm-utils`): list / add / edit / delete devices |
 
 **Two optional subsystems run in-process alongside device connections:**
 
@@ -86,11 +87,11 @@ npm run test:integration                      # starts the adapter in a test ioB
 
 > `npm run lint` locally does NOT enforce `--max-warnings 0` but CI does — always run the eslint command above directly.
 
-Unit tests live next to the code they test as `src/**/*.test.ts` (e.g. `src/lib/dashboardApi.test.ts`) and run via `npm run test:unit`. The integration test suite lives in `test/integrationTests/` (index, dashboard_tests, version_fetch_tests, version_migration_tests, e2e_device_tests, known_device_tests) and is imported by `test/integration.js`.
+Unit tests live next to the code they test as `src/**/*.test.ts` (e.g. `src/lib/dashboardApi.test.ts`) and run via `npm run test:unit`. The integration test suite lives in `test/integrationTests/` (index, dashboard_tests, version_fetch_tests, version_migration_tests, e2e_device_tests, known_device_tests, settings_cleanup_tests) and is imported by `test/integration.js`.
 
 ### End-to-end test with a real ESPHome device
 
-`test/e2e/esphome-device.yaml` is compiled with the ESPHome **host** platform into a native executable (real firmware, real encrypted native API on `127.0.0.1:6053`, no hardware). `test/integrationTests/e2e_device_tests.js` starts it, adds it via the `_addUpdateDevice` message and checks every entity type in both directions plus reconnect. It is skipped unless `ESPHOME_E2E_DEVICE_BINARY` is set:
+`test/e2e/esphome-device.yaml` is compiled with the ESPHome **host** platform into a native executable (real firmware, real encrypted native API on `127.0.0.1:6053`, no hardware). `test/integrationTests/e2e_device_tests.js` starts it, adds it with the "Add device" dialog of the device manager (`dm:` messages) and checks every entity type in both directions plus reconnect. A second suite starts from a device object as version 1.0.0 wrote it (encrypted key) and checks the upgrade. A harness cannot start the adapter again after `stopAdapter()` (`startAdapterAndWait` then hangs), so a scenario that needs a restart gets its own `suite`. It is skipped unless `ESPHOME_E2E_DEVICE_BINARY` is set:
 
 ```bash
 pip install -r test/e2e/requirements.txt          # pinned ESPHome version
@@ -128,6 +129,18 @@ Always call `harness.stopAdapter()` in a `finally` block to avoid test leaks.
 
 Config schema: `admin/jsonConfig.json5` (JSON5, supports comments). Translations: `admin/i18n/{locale}.json` (short format, migrated from the old `{locale}/translations.json` layout). Run `npm run translate` after any translation key changes. Labels must reference translation keys (`"i18n": true` is set globally).
 
+The first tab ("Main settings") ends with the panel "Discovery & connection" (auto discovery, config states,
+listening address, reconnect / ping settings). The second tab ("Devices") embeds the device manager (`"type": "deviceManager"`), the same view admin shows in its
+"Devices" tab. Devices are only added / edited / deleted there, see `src/lib/deviceManagement.ts`
+(`@iobroker/dm-utils`, needs admin >= 7.8.20 for its v3 API). Texts of the device manager live in
+`src/i18n/{locale}.json` (English text as key, all 11 languages, same layout as ioBroker.shelly), are loaded with
+adapter-core's `I18n` and copied to `build/i18n` by `scripts/postbuild.js` after `npm run build`. Add every new text to all 11 files,
+the unit test checks they have the same keys. `npm run translate` only covers `admin/i18n`.
+Use `I18n.getTranslatedObject('English text')` directly (like ioBroker.miner / ioBroker.shelly), and
+`translateWithArgs()` for texts with `%s`: adapter-core fills only the first `%s` and returns `{}` for a `%s` text
+without arguments. Results and errors `main.ts` passes to the device manager (`DeviceActionResult`) are English
+texts of `src/i18n` with their `%s` values in `args`; a unit test checks every such text has a translation.
+
 ## GITHUB_TOKEN Usage
 
 The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases` at startup when the Dashboard is enabled. Set `GITHUB_TOKEN` in the environment (or CI `env:`) to avoid 60 req/h rate limits — both in CI jobs and locally when running integration tests.
@@ -140,6 +153,15 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
 - Pillow versions fetched from PyPI; cached in state `_ESPHomeDashboard.pillowVersionCache`.
 - "Clear Autopy Cache" button triggers `clearAutopyCache()` → `fs.rmSync(~/.cache/autopy, recursive)`.
 - Config migration: `migrateConfig()` converts legacy `ESPHomeDashboardIP` + port → `ESPHomeDashboardUrl`.
+
+## Removed settings
+
+`removeObsoleteSettings()` (first thing in `onReady`) deletes settings nothing reads any more from the instance
+configuration once (`OBSOLETE_SETTINGS` in `src/main.ts`), the adapter restarts after that. When removing a
+setting from `io-package.json` / `jsonConfig.json5`, add its key there and to `test/integrationTests/settings_cleanup_tests.js`.
+The integration tests reuse the test installation in `/tmp/test-iobroker.esphome` between runs, and its instance
+object keeps the `native` defaults of the `io-package.json` it was created from. After changing those defaults,
+delete that directory, otherwise the cleanup restarts the adapter in every suite and they fail (CI always starts fresh).
 
 ## CI/CD Notes
 

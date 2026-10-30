@@ -83,435 +83,143 @@
 					"xl": 12
 				},
 
-				"emptyLine-7": {
+				// Discovery and connection settings of the devices
+				"_discoveryConnection": {
+					"type": "panel",
 					"newLine": true,
-					"type": "staticText",
-					"text": "",
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
 					"lg": 12,
-					"xl": 12
-				},
-				"emptyLine-8": {
-					"newLine": true,
-					"type": "staticText",
-					"text": "",
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
-				},
+					"xl": 12,
+					"items": {
+						"discoveryConnectionHeader": {
+							"newLine": true,
+							"type": "header",
+							"text": "Discovery & connection",
+							"size": 1
+						},
 
-				// Header default credentials
-				"defaultCredentials": {
-					"type": "header",
-					"text": "lblDefaultCredentials",
-					"size": 1
-				},
+						// Enable/disable autodiscovery and store setting in adapter config object
+						"autodiscovery": {
+							"newLine": true,
+							"type": "checkbox",
+							"xs": 12,
+							"sm": 3,
+							"md": 3,
+							"lg": 3,
+							"xl": 3,
+							"label": "lblAutoDiscovery"
+						},
 
-				// Explanation of usage and warning
-				"headerDefaultCredentials-details-1": {
-					"newLine": true,
-					"type": "staticText",
-					"text": "lblDefaultCredentials-Line-1",
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
-				},
-				"headerDefaultCredentials-details-2": {
-					"newLine": true,
-					"type": "staticText",
-					"text": "lblDefaultCredentials-Line-2",
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
-				},
+						// Enable/disable creation of config states for each entity
+						"configStates": {
+							"type": "checkbox",
+							"xs": 12,
+							"sm": 3,
+							"md": 3,
+							"lg": 3,
+							"xl": 3,
+							"label": "lblConfigStates",
+							"help": "hlpConfigStates"
+						},
 
-				// Credentials which will be stored (encrypted) in adapter config object
-				"encryptionKey": {
-					"newLine": true,
-					"type": "password",
-					"label": "lblEncryptionKey",
-					"xs": 12,
-					"sm": 3,
-					"md": 3,
-					"lg": 3,
-					"xl": 3
-				},
-				"apiPass": {
-					"type": "password",
-					"label": "lblApiPass",
-					"xs": 12,
-					"sm": 2,
-					"md": 2,
-					"lg": 2,
-					"xl": 2
+						"discoveryListeningAddress" : {
+							"type": "ip",
+							"xs": 12,
+							"sm": 3,
+							"md": 3,
+							"lg": 3,
+							"xl": 3,
+							"default": "0.0.0.0",
+							"label": "lblDiscoveryListeningAddress",
+							"help": "hlpDiscoveryListeningAddress",
+							"listenOnAllPorts" : true,
+							"onlyIp4" : true
+						},
+
+						// Header for connection / reconnect behavior of known devices
+						"connectionBehaviorHeader": {
+							"newLine": true,
+							"type": "header",
+							"text": "lblConnectionBehavior",
+							"size": 2
+						},
+
+						// How long to wait before retrying the connection to an offline device (seconds)
+						"reconnectInterval": {
+							"newLine": true,
+							"type": "number",
+							"min": 1,
+							"max": 3600,
+							"xs": 12,
+							"sm": 4,
+							"md": 4,
+							"lg": 3,
+							"xl": 3,
+							"default": 5,
+							"label": "lblReconnectInterval",
+							"help": "hlpReconnectInterval"
+						},
+
+						// How often a connected device is pinged to detect if it is still online (seconds)
+						"pingInterval": {
+							"type": "number",
+							"min": 1,
+							"max": 3600,
+							"xs": 12,
+							"sm": 4,
+							"md": 4,
+							"lg": 3,
+							"xl": 3,
+							"default": 5,
+							"label": "lblPingInterval",
+							"help": "hlpPingInterval"
+						},
+
+						// Number of consecutive failed pings before the device is considered offline
+						"pingAttempts": {
+							"type": "number",
+							"min": 1,
+							"max": 100,
+							"xs": 12,
+							"sm": 4,
+							"md": 4,
+							"lg": 3,
+							"xl": 3,
+							"default": 1,
+							"label": "lblPingAttempts",
+							"help": "hlpPingAttempts"
+						}
+					}
 				}
 			}
 		},
 
-		// Tab devices
-		"devices": {
+		// Second tab, the device manager: list, add, edit and delete devices (src/lib/deviceManagement.ts)
+		"_deviceManager": {
 			"type": "panel",
 			"label": "Devices",
 			"items": {
-
-				// Enable/disable autodiscovery and store setting in adapter config object
-				"autodiscovery": {
-					"newLine": true,
-					"type": "checkbox",
-					"xs": 12,
-					"sm": 3,
-					"md": 3,
-					"lg": 3,
-					"xl": 3,
-					"label": "lblAutoDiscovery"
-				},
-
-				// Enable/disable creation of config states for each entity
-				"configStates": {
-					"type": "checkbox",
-					"xs": 12,
-					"sm": 3,
-					"md": 3,
-					"lg": 3,
-					"xl": 3,
-					"label": "lblConfigStates",
-					"help": "hlpConfigStates"
-				},
-
-				"discoveryListeningAddress" : {
-					"type": "ip",
-					"xs": 12,
-					"sm": 3,
-					"md": 3,
-					"lg": 3,
-					"xl": 3,
-					"default": "0.0.0.0",
-					"label": "lblDiscoveryListeningAddress",
-					"help": "hlpDiscoveryListeningAddress",
-					"listenOnAllPorts" : true,
-					"onlyIp4" : true
-				},
-
-				// Header for connection / reconnect behavior of known devices
-				"connectionBehaviorHeader": {
-					"newLine": true,
-					"type": "header",
-					"text": "lblConnectionBehavior",
-					"size": 2
-				},
-
-				// How long to wait before retrying the connection to an offline device (seconds)
-				"reconnectInterval": {
-					"newLine": true,
-					"type": "number",
-					"min": 1,
-					"max": 3600,
-					"xs": 12,
-					"sm": 4,
-					"md": 4,
-					"lg": 3,
-					"xl": 3,
-					"default": 5,
-					"label": "lblReconnectInterval",
-					"help": "hlpReconnectInterval"
-				},
-
-				// How often a connected device is pinged to detect if it is still online (seconds)
-				"pingInterval": {
-					"type": "number",
-					"min": 1,
-					"max": 3600,
-					"xs": 12,
-					"sm": 4,
-					"md": 4,
-					"lg": 3,
-					"xl": 3,
-					"default": 5,
-					"label": "lblPingInterval",
-					"help": "hlpPingInterval"
-				},
-
-				// Number of consecutive failed pings before the device is considered offline
-				"pingAttempts": {
-					"type": "number",
-					"min": 1,
-					"max": 100,
-					"xs": 12,
-					"sm": 4,
-					"md": 4,
-					"lg": 3,
-					"xl": 3,
-					"default": 1,
-					"label": "lblPingAttempts",
-					"help": "hlpPingAttempts"
-				},
-
-				// Text to explain adapter must be running to load this table
-				"details-1": {
-					"newLine": true,
-					"type": "staticText",
-					"text": "lblTxtNoButtonsIfNotActive",
-					"hidden": "_alive",
-					"xs": 12,
+				"_dm": {
+					"type": "deviceManager",
 					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
-				},
-
-				// Input fields to ADD / Modify devices
-				"deviceIP": {
-					"newLine": true,
-					"freeSolo": true,
-//					"doNotSave": true,
-					"type": "autocompleteSendTo",
-					"command": "getDeviceIPs",
-					"jsonData": "{ \"service\": \"${data.deviceInputIP}\" }",
-					"xs": 12,
-					"sm": 2,
-					"md": 2,
-					"lg": 2,
-					"xl": 2,
-					"label": "lblInputDeviceIP-content",
-					"tooltip": "hlpInputDeviceIP",
-					"help": "hlpInputDeviceIP"
-				},
-				"encryptionKey": {
-					"type": "password",
-					"label": "lblInputEncryptionKey",
-					"doNotSave": true,
-					"default": "",
-					"tooltip": "hlpInputEncryptionKey",
-					"help": "hlpInputEncryptionKey",
-					"xs": 12,
-					"sm": 4,
-					"md": 4,
-					"lg": 4,
-					"xl": 4
-				},
-				"apiPassword": {
-					"type": "password",
-					"label": "lblInputApiPassword",
-					"doNotSave": true,
-					"default": "",
-					"tooltip": "hlpInputApiPassword",
-					"help": "hlpInputApiPassword",
-					"xs": 12,
-					"sm": 2,
-					"md": 2,
-					"lg": 2,
-					"xl": 2
-				},
-
-				// Button do ADD / Modify devices, sends
-				// Sends device IP and credentials to backend
-				"_addUpdateDevice": {
-					"newLine": true,
-					"type": "sendTo",
-					"label": "lbl_addUpdateDevice",
-					"variant": "outlined",
-					"showProcess" : true,
-					"command": "_addUpdateDevice",
-					"jsonData": "{ \"ip\": \"${data.deviceIP}\", \"encryptionKey\": \"${data.encryptionKey}\", \"apiPassword\": \"${data.apiPassword}\" }",
-					"useNative": true,
-					"disabled": "data.deviceIP===''",
-					"hidden": "!_alive",
-					"tooltip": "ttGetStationId",
-					"help": "hlpGetStationId",
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
-				},
-
-				"deleteDevice": {
-					"newLine": true,
-					"type": "sendTo",
-					"label": "lblDelDevice",
-					"variant": "outlined",
-					"showProcess" : true,
-					"command": "deleteDevice",
-					"jsonData": "{ \"ip\": \"${data.deviceIP}\"}",
-					"useNative": true,
-					"disabled": "data.deviceIP===''",
-					"hidden": "!_alive",
-					"tooltip": "ttGetStationId",
-					"help": "hlpGetStationId",
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12,
-					"confirm" : {
-						"text" : "Are you sure to delete this device ? Alle states will be removed",
-						"title" : "Confirm device Deletion",
-						"ok" : "Delete Device",
-						"cancel" : "Cancel",
-						"type" : "warning"
+					"style": {
+						"width": "100%",
+						"height": "100%",
+						"overflow": "hidden"
 					}
-				},
-				"header": {
-					"type": "header",
-					"size": 1,
-					"text": "Device List"
-				},
-
-				// Refresh table showing all devices
-				// Sends message to backend to get all current known devices, their configuration and connection status
-				"loadDevices": {
-					"newLine": true,
-					"type": "sendTo",
-					"defaultSendTo": "loadDevices", // das hier scheint mit useNative nicht zu funktionieren, die anfrage geht raus, aber das ergebnis wird nicht verwertet.
-					"hidden": "!_alive",
-					"command": "loadDevices",
-					"jsonData": "{ \"date\": \"${data.templateTable}\"}",
-					"label": "lblLoadDevices",
-					"useNative": true,
-					"variant": "outlined",
-					"showProcess" : true,
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
-				},
-				"header2": {
-					"type": "header",
-					"size": 3,
-					"hidden": "!data.newDevicesTable || data.newDevicesTable.length == 0",
-					"text": "newDevicesHeader"
-				},
-				// Table (provided by backend) of all devices and their connection status
-				"newDevicesTable": {
-					"type": "table",
-					"noDelete": true,
-					"newLine": true,
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12,
-					"hidden": "!data.newDevicesTable || data.newDevicesTable.length == 0",
-					"showSecondAddAt": 5,
-					"items": [
-						{
-							"type": "text",
-							"readOnly" : true,
-							"attr": "MACAddress",
-							"width": "33% ",
-							"title": "MAC-Address",
-							"tooltip": "templateKeyTip",
-							"filter": false,
-							"sort": false,
-							"default": "",
-							"validatorNoSaveOnError": true
-						},
-						{
-							"type": "text",
-							"readOnly" : true,
-							"attr": "deviceName",
-							"width": "33% ",
-							"title": "Device Name",
-							"tooltip": "templateKeyTip",
-							"filter": false,
-							"sort": false,
-							"default": "",
-							"validatorNoSaveOnError": true
-						},
-						{
-							"type": "text",
-							"attr": "ip",
-							"readOnly" : true,
-							"width": "33% ",
-							"title": "IP Address",
-							"tooltip": "templateKeyTip",
-							"filter": false,
-							"sort": false,
-							"default": "",
-							//ToDo add validation if IP-Address format
-							//"validator": "const x={};for (const c of globalData.templateTable) {if (x[c.templateKey]==='x') return false; x[c.templateKey]='x';}; return true;",
-							"validatorNoSaveOnError": true
-						}
-					]
-				},
-				"header3": {
-					"type": "header",
-					"size": 3,
-					"text": "existDevicesHeader"
-				},
-				"existingDevicesTable": {
-					"type": "table",
-					"noDelete": true,
-					"newLine": true,
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12,
-					"showSecondAddAt": 5,
-					"items": [
-						{
-							"type": "text",
-							"readOnly" : true,
-							"attr": "MACAddress",
-							"width": "15% ",
-							"title": "MAC-Address",
-							"tooltip": "templateKeyTip",
-							"filter": false,
-							"sort": false,
-							"default": "",
-							"validatorNoSaveOnError": true
-						},
-						{
-							"type": "text",
-							"readOnly" : true,
-							"attr": "deviceName",
-							"width": "15% ",
-							"title": "Device Name",
-							"tooltip": "templateKeyTip",
-							"filter": false,
-							"sort": false,
-							"default": "",
-							"validatorNoSaveOnError": true
-						},
-						{
-							"type": "text",
-							"attr": "ip",
-							"readOnly" : true,
-							"width": "15% ",
-							"title": "IP Address",
-							"tooltip": "templateKeyTip",
-							"filter": false,
-							"sort": false,
-							"default": "",
-							//ToDo add validation if IP-Address format
-							//"validator": "const x={};for (const c of globalData.templateTable) {if (x[c.templateKey]==='x') return false; x[c.templateKey]='x';}; return true;",
-							"validatorNoSaveOnError": true
-						},
-						{
-							"type": "text",
-							"readOnly" : true,
-							"attr": "connectState",
-							"width": "15% ",
-							"title": "Connection Status",
-							"tooltip": "templateKeyTip",
-							"filter": false,
-							"sort": false,
-							"default": "",
-							"validatorNoSaveOnError": true
-						}
-
-					]
 				}
+			},
+			"style": {
+				"width": "100%",
+				"height": "100%",
+				"overflow": "hidden"
+			},
+			"innerStyle": {
+				"width": "100%",
+				"height": "100%",
+				"overflow": "hidden"
 			}
 		},
 

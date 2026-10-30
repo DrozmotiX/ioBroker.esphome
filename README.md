@@ -266,33 +266,26 @@ api:
 
 > **💡 See FAQ above** for step-by-step guidance on adding devices to the adapter.
 
-The device Tab will show all current known devices; you can either wait for Devices to be autodetect
-(currently disabled, see #175) or add them manually by providing their IP-Address and credentials
-
-![DevicesTab](admin/img/deviceTabEmpty.png)
+Devices are managed in the ioBroker device manager, shown as the second tab ("Devices") of the adapter
+settings and in the "Devices" tab of admin. It lists all known devices with their connection status and, when auto discovery
+is enabled, the devices found on the network that are not added yet.
 
 > [!NOTE]
-> Buttons to add/modify/remove devices and load device table are only available if adapter is running!
-> You must refresh the device table manually by pressing "Refresh device Overview", all devices and their connection state will be shown
+> The device manager is only available while the adapter is running.
 
-Please enter IP-Address (if a device is already known, you can select it from the dropdown) and choose the proper actions:
-
-- ADD / Modify Devices
-    - Will send IP address and credentials to the backend and try to establish a connection
+- Add device
+    - Enter the IP address and the encryption key (or API password of older firmware) of the device,
+      the adapter connects and reports whether the connection succeeded
+    - Discovered devices that are not added yet have a grey header and are marked "Not added" instead of
+      showing a connection status. They are added with their "Add" button, the IP address is filled in already
+- Change connection settings
+    - Enter new credentials, leave both fields empty to keep the current ones
     - When an encryption Key is provided, API-Password is ignored, please ensure proper YAML configuration!
-
-- Delete Device
-    - Will send a message to the backend to remove this device
+- Delete device
+    - Removes the device after confirmation
 
 > [!WARNING]
-> This action will remove a selected device and all its related states from ioBroker!
-
-> [!NOTE]
-> After a device has been added, a message will be indicated if successfully or error,
-> you can refresh the table to show current devices and their connection status
-
-![DevicesError](admin/img/connectionIssue.png)
-![DevicesOK](admin/img/connectionOK.png)
+> Deleting a device removes it and all its related states from ioBroker!
 
 If connection was successfully, the Device will be initiated and all related states created to control their attributes.  
 When making any changes to your YAML configuration, reboot of the ESP will disconnect and initiate a new connection.  
@@ -443,6 +436,10 @@ If you like my work, please consider a personal donation
 
 ### **WORK IN PROGRESS**
 
+- (@SimonFischer04) **NEW**: Support for the ioBroker device manager (#203). ESPHome devices are listed with their online status and details, can be added, adopted after discovery, given new credentials and deleted there
+- (@SimonFischer04) **BREAKING**: The device tables and the add / delete buttons were removed from the adapter settings. The device manager is shown in their place as the second tab ("Devices") of the adapter settings, the discovery and connection settings moved to a section "Discovery & connection" of the main settings
+- (@SimonFischer04) **BREAKING**: Requires admin 7.8.20 or newer, the first version with the current device manager
+- (@SimonFischer04) **BREAKING**: Removed the default credentials (encryption key and API password) from the main settings. They have not been used since version 0.6, when discovered devices stopped being connected automatically. Settings no longer used are removed from the instance configuration once, the adapter restarts after that
 - (@SimonFischer04) **ENHANCED**: Moved all code for the integrated ESPHome Dashboard into its own module, no change in behavior
 - (@SimonFischer04) **ENHANCED**: Removed the fallback to the ws package for compiling and flashing with the ESPHome Dashboard, the adapter always uses the WebSocket support built into Node.js 22 now, and ws is no longer installed with the adapter
 - (@SimonFischer04) **ENHANCED**: Removed unused code for newly discovered devices

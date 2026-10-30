@@ -132,7 +132,10 @@
     "platform": "Javascript/Node.js",
     "icon": "esphome.png",
     "enabled": true,
-    "messagebox": true,
+    "supportedMessages": {
+      "custom": true,
+      "deviceManager": true
+    },
     "extIcon": "https://raw.githubusercontent.com/DrozmotiX/ioBroker.esphome/main/admin/esphome.png",
     "readme": "https://github.com/DrozmotiX/ioBroker.esphome/blob/main/README.md",
     "loglevel": "info",
@@ -164,7 +167,7 @@
     ],
     "globalDependencies": [
       {
-        "admin": ">=7.6.20"
+        "admin": ">=7.8.20"
       }
     ],
     "licenseInformation": {
@@ -172,25 +175,12 @@
       "license": "MIT"
     }
   },
-  "encryptedNative": [
-    "apiPass",
-    "encryptionKey",
-    "apiPassword"
-  ],
-  "protectedNative": [
-    "apiPass",
-    "encryptionKey",
-    "apiPassword"
-  ],
   "native": {
     "ESPHomeDashboardVersion": "2026.6.5",
     "PillowVersion": "12.2.0",
     "reconnectInterval": 30,
     "pingInterval": 5,
     "pingAttempts": 1,
-    "apiPass": "",
-    "apiPassword": "",
-    "encryptionKey": "",
     "autodiscovery": true,
     "discoveryListeningAddress": "0.0.0.0",
     "configStates": false,

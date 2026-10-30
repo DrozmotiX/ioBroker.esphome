@@ -1,42 +1,29 @@
 /**
  * Known Device Integration Test
  *
- * Covers tryKnownDevices(): devices adopted earlier are loaded from their device objects on start.
- * The name shown for such a device before it connects comes from the device object; it used to be
- * the string "undefined", because native.name was never written.
+ * Covers the upgrade of existing installations: devices adopted by earlier versions are loaded from
+ * their device objects on start (tryKnownDevices()) and listed in the ioBroker device manager
+ * (src/lib/deviceManagement.ts). Both object formats are used: 0.6 - 1.0 (no native.name, which
+ * made the device show up as "undefined") and 0.3 / 0.4 (API password in native.passWord). The
+ * cleanup of old instance settings is covered by settings_cleanup_tests.js.
  *
- * The device points to an address of TEST-NET-1 (RFC 5737), so the adapter never reaches it and
- * the name from the device object is all it knows. No Python environment or ESPHome device is
+ * The devices point to addresses of TEST-NET-1 (RFC 5737), so the adapter never reaches them and
+ * the names from the device objects are all it knows. The E2E suite covers the reconnect of a device
+ * object written by 1.0.0 with a real (encrypted) device. No Python environment or ESPHome device is
  * needed, so this suite runs in the regular CI matrix.
  */
 
 const { expect } = require('chai');
+const { NAMESPACE, addDeviceWithDeviceManager, sendToAdapter } = require('./deviceManagerHelpers');
 
-const NAMESPACE = 'esphome.0';
 const DEVICE_NAME = 'AABBCCDDEEFF';
 const DEVICE_IP = '192.0.2.10';
-
-/**
- * Sends a message to the adapter and resolves with its answer
- *
- * @param {object} harness - Integration test harness
- * @param {string} command - Message command
- * @param {object} message - Message payload
- * @param {number} [timeoutMs] - How long to wait for the answer
- * @returns {Promise<any>} The answer of the adapter
- */
-function sendToAdapter(harness, command, message, timeoutMs = 30000) {
-    return new Promise((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error(`No answer to "${command}" within ${timeoutMs}ms`)), timeoutMs);
-        harness.sendTo(NAMESPACE, command, message, response => {
-            clearTimeout(timer);
-            resolve(response);
-        });
-    });
-}
+// Device added by version 0.3 / 0.4, those stored the API password in native.passWord
+const OLD_DEVICE_NAME = '112233445566';
+const OLD_DEVICE_IP = '192.0.2.11';
 
 exports.runTests = function (suite) {
-    suite('Known devices - device object written before native.name existed', getHarness => {
+    suite('Known devices - device objects of earlier versions', getHarness => {
         let harness;
 
         before(async function () {
@@ -53,6 +40,20 @@ exports.runTests = function (suite) {
                     deviceName: DEVICE_NAME,
                     deviceFriendlyName: 'kitchen-light',
                     encryptionKeyUsed: false,
+                },
+            });
+
+            // Device object as written by version 0.3 / 0.4
+            await harness.objects.setObjectAsync(`${NAMESPACE}.${OLD_DEVICE_NAME}`, {
+                type: 'device',
+                common: { name: 'garage-door' },
+                native: {
+                    ip: OLD_DEVICE_IP,
+                    name: 'garage-door',
+                    mac: '11:22:33:44:55:66',
+                    deviceName: OLD_DEVICE_NAME,
+                    // Encrypted by the adapter, the value does not matter as the device is never reached
+                    passWord: 'not-a-real-encrypted-password',
                 },
             });
 
@@ -74,6 +75,17 @@ exports.runTests = function (suite) {
             }
         });
 
+        it('offers adding devices in the device manager', async function () {
+            this.timeout(60000);
+
+            const info = await sendToAdapter(harness, 'dm:instanceInfo', {});
+
+            expect(info.apiVersion).to.equal('v3');
+            expect(info.actions.map(action => action.id)).to.deep.equal(['add']);
+            // Translations come from build/i18n, copied there by scripts/postbuild.js
+            expect(info.actions[0].title).to.deep.include({ en: 'Add device', de: 'Gerät hinzufügen' });
+        });
+
         it('lists the known device with its name instead of "undefined"', async function () {
             this.timeout(60000);
 
@@ -81,15 +93,70 @@ exports.runTests = function (suite) {
             let device;
             const deadline = Date.now() + 30000;
             while (!device && Date.now() < deadline) {
-                const response = await sendToAdapter(harness, 'loadDevices', {});
-                device = response.native.existingDevicesTable.find(entry => entry.ip === DEVICE_IP);
+                const response = await sendToAdapter(harness, 'dm:loadDevices', {});
+                device = response.add.find(entry => entry.id === DEVICE_IP);
                 if (!device) {
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
             }
 
-            expect(device, 'known device in the device table').to.be.ok;
-            expect(device.deviceName).to.equal('kitchen-light');
+            expect(device, 'known device in the device manager').to.be.ok;
+            expect(device.name).to.equal('kitchen-light');
+            expect(device.group.key).to.equal('known');
+            expect(device.status.connection.stateId).to.equal(`${NAMESPACE}.${DEVICE_NAME}.info._online`);
+            expect(device.actions.map(action => action.id)).to.deep.equal(['edit', 'delete']);
+        });
+
+        it('lists a device added by version 0.3 / 0.4 in the device manager', async function () {
+            this.timeout(60000);
+
+            const response = await sendToAdapter(harness, 'dm:loadDevices', {});
+            const device = response.add.find(entry => entry.id === OLD_DEVICE_IP);
+
+            expect(device, 'old device in the device manager').to.be.ok;
+            expect(device.name).to.equal('garage-door');
+            expect(device.group.key).to.equal('known');
+            expect(device.status.connection.stateId).to.equal(`${NAMESPACE}.${OLD_DEVICE_NAME}.info._online`);
+            expect(device.actions.map(action => action.id)).to.deep.equal(['edit', 'delete']);
+        });
+
+        it('walks through the add dialog of the device manager and reports an invalid IP address', async function () {
+            this.timeout(60000);
+
+            // Same dialog sequence the E2E test uses to add its device, which needs a compiled ESPHome device
+            const { messages, result } = await addDeviceWithDeviceManager(harness, {
+                ip: 'not-an-ip',
+                encryptionKey: '',
+                apiPassword: '',
+            });
+
+            // Translated by the device manager (src/i18n, copied to build/i18n), with the IP address filled in
+            expect(messages).to.have.lengthOf(1);
+            expect(messages[0]).to.deep.include({
+                en: 'The IP address not-an-ip is not valid, please enter an IPv4 address',
+                de: 'Die IP-Adresse not-an-ip ist ungültig, bitte eine IPv4-Adresse eingeben',
+            });
+            expect(result).to.deep.equal({ refresh: false });
+        });
+
+        it('deletes the device from the device manager after confirmation', async function () {
+            this.timeout(60000);
+
+            // Actions are only accepted for devices of the last loaded list
+            await sendToAdapter(harness, 'dm:loadDevices', {});
+            const confirm = await sendToAdapter(harness, 'dm:deviceAction', {
+                deviceId: DEVICE_IP,
+                actionId: 'delete',
+            });
+            expect(confirm.type).to.equal('confirm');
+
+            const result = await sendToAdapter(harness, 'dm:actionProgress', { origin: confirm.origin, confirm: true });
+            expect(result.type).to.equal('result');
+            expect(result.result).to.deep.equal({ refresh: 'devices' });
+
+            expect(await harness.objects.getObjectAsync(`${NAMESPACE}.${DEVICE_NAME}`)).to.not.be.ok;
+            const response = await sendToAdapter(harness, 'dm:loadDevices', {});
+            expect(response.add.find(entry => entry.id === DEVICE_IP)).to.be.undefined;
         });
     });
 };

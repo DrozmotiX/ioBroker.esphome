@@ -4,7 +4,7 @@
  * test/e2e/esphome-device.yaml is compiled with the ESPHome "host" platform into a native
  * executable. That is real ESPHome firmware with a real native API server (Noise encryption
  * included), it only runs on the CI runner instead of an ESP32. This suite starts that executable,
- * adds it to the adapter the same way the admin UI does, and then checks both directions:
+ * adds it with the "Add device" dialog of the device manager, and then checks both directions:
  *
  *   device -> ioBroker: device object, info states and every entity type end up as states
  *   ioBroker -> device: writing a state (ack=false) sends a command, the device executes it and the
@@ -27,6 +27,7 @@ const { spawn } = require('node:child_process');
 const net = require('node:net');
 const path = require('node:path');
 const { expect } = require('chai');
+const { NAMESPACE, addDeviceWithDeviceManager, encryptLikeAdapter, sendToAdapter } = require('./deviceManagerHelpers');
 
 // Keep in sync with test/e2e/esphome-device.yaml
 const DEVICE_HOST = '127.0.0.1';
@@ -35,7 +36,6 @@ const DEVICE_NAME = 'iobroker-e2e';
 const DEVICE_ID = '02E2E0000001'; // MAC 02:E2:E0:00:00:01 without colons
 const ENCRYPTION_KEY = '4lNKgD7rXHge2t304JyBOw4qVOF4rY8dphuqyHuDnu4=';
 
-const NAMESPACE = 'esphome.0';
 const DEVICE_PREFIX = `${NAMESPACE}.${DEVICE_ID}`;
 const ONLINE_STATE = `${DEVICE_PREFIX}.info._online`;
 
@@ -194,25 +194,6 @@ class EsphomeDevice {
 }
 
 /**
- * Sends a message to the adapter and resolves with its answer
- *
- * @param {object} harness - Integration test harness
- * @param {string} command - Message command
- * @param {object} message - Message payload
- * @param {number} [timeoutMs] - How long to wait for the answer
- * @returns {Promise<any>} The answer of the adapter
- */
-function sendToAdapter(harness, command, message, timeoutMs = 30000) {
-    return new Promise((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error(`No answer to "${command}" within ${timeoutMs}ms`)), timeoutMs);
-        harness.sendTo(NAMESPACE, command, message, response => {
-            clearTimeout(timer);
-            resolve(response);
-        });
-    });
-}
-
-/**
  * Finds the state prefix of an entity by its ESPHome name, e.g. esphome.0.02E2E0000001.Switch.123456
  *
  * Entity keys are hashes calculated by ESPHome, so the test looks them up instead of hard coding them.
@@ -281,14 +262,16 @@ exports.runTests = function (suite) {
                 60000,
             );
 
-            // Same message the admin UI sends when a device is added manually
-            const response = await sendToAdapter(harness, '_addUpdateDevice', {
+            // Same dialog a user goes through when adding a device manually
+            const { messages, result } = await addDeviceWithDeviceManager(harness, {
                 ip: DEVICE_HOST,
-                apiPassword: '',
                 encryptionKey: ENCRYPTION_KEY,
+                apiPassword: '',
             });
-            console.log(`_addUpdateDevice answered ${JSON.stringify(response)}`);
-            expect(response, 'adding the device failed').to.not.have.property('error');
+            console.log(`Device manager answered ${JSON.stringify(messages)}`);
+            expect(result, 'result of the add action').to.deep.equal({ refresh: true });
+            expect(messages, 'adding the device failed').to.have.lengthOf(1);
+            expect(messages[0].en).to.match(/^OK - Device successfully connected/);
 
             await waitForAckedState(harness, ONLINE_STATE, val => val === true, 'to be true', 60000);
         });
@@ -512,6 +495,105 @@ exports.runTests = function (suite) {
                 await writeCommand(harness, `${entity}.state`, true);
                 await waitForAckedState(harness, `${entity}.state`, val => val === true, 'to be confirmed true');
             });
+        });
+    });
+
+    // A fresh harness per suite: the harness of the suite above cannot start the adapter again once stopped
+    suite('E2E - device added by version 1.0.0', getHarness => {
+        const binary = process.env.ESPHOME_E2E_DEVICE_BINARY;
+        const device = new EsphomeDevice(binary || '');
+        let harness;
+
+        before(async function () {
+            this.timeout(120000);
+            harness = getHarness();
+
+            // Device object exactly as 1.0.0 wrote it: no native.name, the credentials encrypted by the adapter
+            await harness.objects.setObjectAsync(DEVICE_PREFIX, {
+                type: 'device',
+                common: { name: DEVICE_NAME, statusStates: { onlineId: ONLINE_STATE } },
+                native: {
+                    ip: DEVICE_HOST,
+                    mac: '02:E2:E0:00:00:01',
+                    deviceName: DEVICE_ID,
+                    deviceFriendlyName: DEVICE_NAME,
+                    apiPassword: await encryptLikeAdapter(harness, ''),
+                    encryptionKey: await encryptLikeAdapter(harness, ENCRYPTION_KEY),
+                    encryptionKeyUsed: true,
+                },
+            });
+
+            await harness.changeAdapterConfig('esphome', {
+                native: {
+                    autodiscovery: false,
+                    ESPHomeDashboardEnabled: false,
+                    reconnectInterval: 2,
+                    pingInterval: 2,
+                    pingAttempts: 1,
+                },
+            });
+
+            await device.start();
+            await harness.enableSendTo();
+            await harness.startAdapterAndWait();
+        });
+
+        afterEach(function () {
+            if (this.currentTest && this.currentTest.state === 'failed') {
+                device.dumpLog();
+            }
+        });
+
+        after(async function () {
+            this.timeout(30000);
+            try {
+                if (harness && harness.isAdapterRunning()) {
+                    await harness.stopAdapter();
+                }
+            } catch (error) {
+                console.error(`Failed to stop adapter: ${error}`);
+            }
+            await device.stop();
+        });
+
+        it('connects with the stored encryption key and lists the device in the device manager', async function () {
+            this.timeout(90000);
+
+            await waitForAckedState(harness, ONLINE_STATE, val => val === true, 'to be true', 60000);
+
+            const response = await sendToAdapter(harness, 'dm:loadDevices', {});
+            const entry = response.add.find(item => item.id === DEVICE_HOST);
+            expect(entry, 'device in the device manager').to.be.ok;
+            expect(entry.name).to.equal(DEVICE_NAME);
+            expect(entry.group.key).to.equal('known');
+            expect(entry.status.connection.stateId).to.equal(ONLINE_STATE);
+            expect(entry.actions.map(action => action.id)).to.include.members(['edit', 'delete']);
+        });
+
+        it('keeps the stored encryption key when the connection settings are saved unchanged', async function () {
+            this.timeout(90000);
+
+            // "Change connection settings" with both fields left empty, then the device must connect again
+            await sendToAdapter(harness, 'dm:loadDevices', {});
+            let response = await sendToAdapter(harness, 'dm:deviceAction', { deviceId: DEVICE_HOST, actionId: 'edit' });
+            const messages = [];
+            while (response.type !== 'result') {
+                let answer = {};
+                if (response.type === 'form') {
+                    answer = { data: { ip: DEVICE_HOST, encryptionKey: '', apiPassword: '' } };
+                } else if (response.type === 'message') {
+                    messages.push(response.message);
+                }
+                response = await sendToAdapter(
+                    harness,
+                    'dm:actionProgress',
+                    { origin: response.origin, ...answer },
+                    60000,
+                );
+            }
+            expect(messages).to.have.lengthOf(1);
+            expect(messages[0].en).to.match(/^OK - Device successfully connected/);
+            await waitForAckedState(harness, ONLINE_STATE, val => val === true, 'to be true again', 60000);
         });
     });
 };
