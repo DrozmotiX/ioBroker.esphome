@@ -136,6 +136,10 @@ listening address, reconnect / ping settings). The second tab ("Devices") embeds
 `src/i18n/{locale}.json` (English text as key, all 11 languages, same layout as ioBroker.shelly), are loaded with
 adapter-core's `I18n` and copied to `build/i18n` by `scripts/postbuild.js` after `npm run build`. Add every new text to all 11 files,
 the unit test checks they have the same keys. `npm run translate` only covers `admin/i18n`.
+Use `I18n.getTranslatedObject('English text')` directly (like ioBroker.miner / ioBroker.shelly), and
+`translateWithArgs()` for texts with `%s`: adapter-core fills only the first `%s` and returns `{}` for a `%s` text
+without arguments. Results and errors `main.ts` passes to the device manager (`DeviceActionResult`) are English
+texts of `src/i18n` with their `%s` values in `args`; a unit test checks every such text has a translation.
 
 ## GITHUB_TOKEN Usage
 

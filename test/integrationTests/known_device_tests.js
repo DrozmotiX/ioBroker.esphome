@@ -130,9 +130,12 @@ exports.runTests = function (suite) {
                 apiPassword: '',
             });
 
-            expect(messages).to.deep.equal([
-                'Format of IP-Address is incorrect, please provide an valid IPV4 IP-Address',
-            ]);
+            // Translated by the device manager (src/i18n, copied to build/i18n), with the IP address filled in
+            expect(messages).to.have.lengthOf(1);
+            expect(messages[0]).to.deep.include({
+                en: 'The IP address not-an-ip is not valid, please enter an IPv4 address',
+                de: 'Die IP-Adresse not-an-ip ist ungültig, bitte eine IPv4-Adresse eingeben',
+            });
             expect(result).to.deep.equal({ refresh: false });
         });
 

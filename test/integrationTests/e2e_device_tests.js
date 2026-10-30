@@ -271,7 +271,7 @@ exports.runTests = function (suite) {
             console.log(`Device manager answered ${JSON.stringify(messages)}`);
             expect(result, 'result of the add action').to.deep.equal({ refresh: true });
             expect(messages, 'adding the device failed').to.have.lengthOf(1);
-            expect(messages[0]).to.match(/^OK - Device successfully connected/);
+            expect(messages[0].en).to.match(/^OK - Device successfully connected/);
 
             await waitForAckedState(harness, ONLINE_STATE, val => val === true, 'to be true', 60000);
         });
@@ -592,7 +592,7 @@ exports.runTests = function (suite) {
                 );
             }
             expect(messages).to.have.lengthOf(1);
-            expect(messages[0]).to.match(/^OK - Device successfully connected/);
+            expect(messages[0].en).to.match(/^OK - Device successfully connected/);
             await waitForAckedState(harness, ONLINE_STATE, val => val === true, 'to be true again', 60000);
         });
     });

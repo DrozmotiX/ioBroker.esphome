@@ -15,6 +15,7 @@ import {
     type LockCommand,
 } from '@2colors/esphome-native-api';
 import * as utils from '@iobroker/adapter-core';
+import { format } from 'node:util';
 import Dashboard from './lib/dashboard';
 import EsphomeDeviceManagement, {
     type DeviceActionResult,
@@ -820,51 +821,63 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
             // Connection data handler
             clientDetails[host].client.on('error', async error => {
                 try {
+                    // English text, translated by the device manager when it shows it (src/i18n), %s is the host
                     let optimisedError = error.message;
+                    let errorArgs: string[] = [];
                     // Optimise error messages
                     if (
                         (error.message &&
                             (error.message.includes('EHOSTUNREACH') || error.message.includes('EHOSTDOWN'))) ||
                         (error.code && error.code.includes('ETIMEDOUT'))
                     ) {
-                        optimisedError = `Client ${host} unreachable !`;
+                        optimisedError = 'Device %s is unreachable';
+                        errorArgs = [host];
                         if (!clientDetails[host].connectionError) {
-                            this.log.error(optimisedError);
+                            this.log.error(format(optimisedError, ...errorArgs));
                             await this.updateConnectionStatus(host, false, false, 'unreachable', true);
                         }
                     } else if (error.message.includes('Invalid password')) {
-                        optimisedError = `Client ${host} incorrect password !`;
+                        optimisedError = 'Device %s rejected the API password';
+                        errorArgs = [host];
                         if (!clientDetails.connectionError) {
-                            this.log.error(optimisedError);
+                            this.log.error(format(optimisedError, ...errorArgs));
                             await this.updateConnectionStatus(host, false, false, 'API password incorrect', true);
                         }
                     } else if (error.message.includes('Encryption expected')) {
-                        optimisedError = `Client ${host} requires encryption key which has not been provided, please enter encryption key in adapter settings for this device !`;
+                        optimisedError =
+                            'Device %s requires an encryption key, please enter the encryption key of the device';
+                        errorArgs = [host];
                         if (!clientDetails[host].connectionError) {
-                            this.log.error(optimisedError);
+                            this.log.error(format(optimisedError, ...errorArgs));
                             await this.updateConnectionStatus(host, false, false, 'Encryption Key Missing', true);
                         }
                     } else if (error.message.includes('ECONNRESET')) {
-                        optimisedError = `Client ${host} Connection Lost, will reconnect automatically when device is available!`;
+                        optimisedError =
+                            'Connection to device %s lost, the adapter reconnects automatically when the device is available';
+                        errorArgs = [host];
                         if (!clientDetails[host].connectionError) {
-                            this.log.warn(optimisedError);
+                            this.log.warn(format(optimisedError, ...errorArgs));
                             await this.updateConnectionStatus(host, false, false, 'connection lost', true);
                         }
                     } else if (error.message.includes('timeout')) {
-                        optimisedError = `Client ${host} Timeout, will reconnect automatically when device is available!`;
+                        optimisedError =
+                            'Timeout connecting to device %s, the adapter reconnects automatically when the device is available';
+                        errorArgs = [host];
                         if (!clientDetails[host].connectionError) {
-                            this.log.warn(optimisedError);
+                            this.log.warn(format(optimisedError, ...errorArgs));
                             await this.updateConnectionStatus(host, false, false, 'unreachable', true);
                         }
                     } else if (error.message.includes('ECONNREFUSED')) {
-                        optimisedError = `Client ${host} not yet ready to connect, will try again!`;
+                        optimisedError = 'Device %s is not ready to connect yet, the adapter tries again';
+                        errorArgs = [host];
                         await this.updateConnectionStatus(host, false, true, 'initializing', true);
-                        this.log.warn(optimisedError);
+                        this.log.warn(format(optimisedError, ...errorArgs));
                     } else if (error.message.includes('ENETUNREACH')) {
-                        optimisedError = `Network not ready to connect to client ${host}`;
+                        optimisedError = 'Network not ready to connect to device %s';
+                        errorArgs = [host];
                         if (!clientDetails[host].connectionError) {
                             await this.updateConnectionStatus(host, false, true, 'No Network', true);
-                            this.log.warn(optimisedError);
+                            this.log.warn(format(optimisedError, ...errorArgs));
                         }
                     } else if (error.message.includes('write after end')) {
                         // Ignore error
@@ -873,7 +886,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     }
 
                     // Answer a pending add / modify request of the device manager
-                    this.respondDeviceResult(host, { error: `${optimisedError}` });
+                    this.respondDeviceResult(host, { error: `${optimisedError}`, args: errorArgs });
                 } catch (error) {
                     this.errorHandler(`[connectedDevice onError]`, error);
                 }
@@ -1666,10 +1679,10 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
     ): Promise<void> {
         // IP input validation
         if (!ip) {
-            respond({ error: 'To add/modify a device, please enter the IP-Address accordingly' });
+            respond({ error: 'Please enter the IP address of the device' });
             return;
         } else if (!this.validateIPAddress(ip)) {
-            respond({ error: 'Format of IP-Address is incorrect, please provide an valid IPV4 IP-Address' });
+            respond({ error: 'The IP address %s is not valid, please enter an IPv4 address', args: [ip] });
             return;
         }
         const password = apiPassword || '';
@@ -1720,7 +1733,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
      */
     async removeDevice(ip: string): Promise<DeviceActionResult> {
         if (!clientDetails[ip]) {
-            return { error: 'Provided IP-Address unknown, please enter the IP-Address of a known device' };
+            return { error: 'Unknown device %s', args: [ip] };
         }
         // Ensure all existing connections are closed, will trigger disconnect event to clean-up memory attributes
         clientDetails[ip].client?.disconnect();

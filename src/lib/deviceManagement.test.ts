@@ -130,6 +130,27 @@ describe('Device Management', () => {
             }
         });
 
+        it('has a translation for every text the device manager shows', () => {
+            const english = JSON.parse(readFileSync(path.join(__dirname, '..', 'i18n', 'en.json'), 'utf8'));
+            const used = new Set<string>();
+            // Texts of the device manager itself
+            const deviceManagement = readFileSync(path.join(__dirname, 'deviceManagement.ts'), 'utf8');
+            for (const match of deviceManagement.matchAll(
+                /(?:getTranslatedObject|translateWithArgs)\(\s*'([^']+)'|\['([^']+)', |result: '([^']+)'/g,
+            )) {
+                used.add(match[1] ?? match[2] ?? match[3]);
+            }
+            // Results and errors of main.ts the add / edit / delete dialogs show
+            const main = readFileSync(path.join(__dirname, '..', 'main.ts'), 'utf8');
+            for (const match of main.matchAll(
+                /respond\(\{ error: '([^']+)'|respondDeviceResult\(host, \{\s*result: '([^']+)'|optimisedError = '([^']+)'|return \{ error: '([^']+)', args/g,
+            )) {
+                used.add(match[1] ?? match[2] ?? match[3] ?? match[4]);
+            }
+            expect(used.size).to.be.greaterThan(30);
+            expect([...used].filter(text => !(text in english))).to.deep.equal([]);
+        });
+
         it('shows the texts in all languages', async () => {
             const { adapter } = createAdapter();
             const [add] = (await new TestDeviceManagement(adapter).instanceDetails()).actions!;
@@ -252,7 +273,8 @@ describe('Device Management', () => {
 
             expect(result).to.be.true;
             expect(added).to.deep.equal([{ ip: '192.168.0.20', apiPassword: undefined, encryptionKey: 'key' }]);
-            expect(messages).to.deep.equal(['OK']);
+            // Not a text of src/i18n, so English only
+            expect(messages).to.deep.equal([{ en: 'OK' }]);
         });
 
         it('adopts a discovered device under its IP address', async () => {
@@ -280,6 +302,20 @@ describe('Device Management', () => {
             await new TestDeviceManagement(adapter).editDevice('192.168.0.10', context);
 
             expect(added).to.deep.equal([{ ip: '192.168.0.10', apiPassword: undefined, encryptionKey: 'secret' }]);
+        });
+
+        it('shows translated messages with the values filled in', async () => {
+            const { adapter } = createAdapter();
+            const { context, messages } = createContext({ ip: '192.168.0.99' });
+
+            await new TestDeviceManagement(adapter).editDevice('192.168.0.99', context);
+
+            expect(messages).to.have.lengthOf(1);
+            expect(messages[0]).to.deep.include({
+                en: 'Unknown device 192.168.0.99',
+                de: 'Unbekanntes Gerät 192.168.0.99',
+            });
+            expect(Object.keys(messages[0] as object)).to.have.lengthOf(11);
         });
 
         it('deletes a device only after confirmation', async () => {

@@ -26,10 +26,12 @@ export interface DiscoveredDevice {
 
 /** Outcome of adding, updating or deleting a device, as also answered to the admin page */
 export interface DeviceActionResult {
-    /** Success message */
+    /** Success message, English text of src/i18n */
     result?: string;
-    /** Error message */
+    /** Error message, English text of src/i18n */
     error?: string;
+    /** Values for the %s placeholders of the message */
+    args?: string[];
 }
 
 /** Credentials entered in the add / edit form */
@@ -74,47 +76,20 @@ const DISCOVERED_COLOR = '#9e9e9e';
 const CONNECT_TIMEOUT = 30_000;
 
 /**
- * Texts shown in the device manager, the English text is the key into src/i18n/<language>.json.
- * Missing languages fall back to English.
- */
-const texts = {
-    addDevice: 'Add device',
-    adoptDevice: 'Add discovered device',
-    editDevice: 'Change connection settings',
-    deleteDevice: 'Delete device',
-    deleteConfirm: 'Delete this device? All its states will be removed.',
-    openWebServer: 'Open web server of the device',
-    connecting: 'Connecting to device...',
-    connectTimeout: 'The device did not answer yet, the adapter keeps trying to connect in the background.',
-    unknownDevice: 'Unknown device %s',
-    ip: 'IP address',
-    encryptionKey: 'Encryption key',
-    apiPassword: 'API password (legacy)',
-    credentialsHint:
-        'Enter the API encryption key of the device (recommended) or the API password of older firmware. Leave both fields empty if the API of the device is not protected.',
-    keepCredentialsHint: 'Leave both fields empty to keep the current credentials.',
-    groupKnown: 'Added devices',
-    groupDiscovered: 'Discovered, not added yet',
-    notAdded: 'Not added',
-    add: 'Add',
-    name: 'Name',
-    mac: 'MAC address',
-    connectionStatus: 'Connection status',
-    esphomeVersion: 'ESPHome version',
-    compilationTime: 'Compiled',
-    model: 'Model',
-    manufacturer: 'Manufacturer',
-    project: 'Project',
-} as const;
-
-/**
- * Text of the device manager in all languages
+ * Text in all languages (src/i18n, the English text is the key), filling every %s with the next argument.
+ * I18n.getTranslatedObject() itself only fills the first %s, with the last argument, and returns an empty
+ * object for a text with %s but without arguments. So it gets '%s' as argument, which keeps the placeholder.
  *
- * @param key - Key of the text in texts
- * @param args - Values for the %s placeholder
+ * @param text - English text
+ * @param args - Values for the %s placeholders, in order
  */
-function t(key: keyof typeof texts, ...args: string[]): ioBroker.Translated {
-    return I18n.getTranslatedObject(texts[key], ...args);
+function translateWithArgs(text: string, ...args: string[]): ioBroker.Translated {
+    return Object.fromEntries(
+        Object.entries(I18n.getTranslatedObject(text, '%s')).map(([language, translation]) => [
+            language,
+            args.reduce<string>((message, arg) => message.replace('%s', arg), translation),
+        ]),
+    ) as ioBroker.Translated;
 }
 
 /**
@@ -156,13 +131,13 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
         return {
             apiVersion: 'v3',
             communicationStateId: COMMUNICATION_STATE,
-            identifierLabel: t('ip'),
+            identifierLabel: I18n.getTranslatedObject('IP address'),
             actions: [
                 {
                     id: 'add',
                     icon: 'add',
-                    title: t('addDevice'),
-                    description: t('addDevice'),
+                    title: I18n.getTranslatedObject('Add device'),
+                    description: I18n.getTranslatedObject('Add device'),
                     handler: async context => ({ refresh: await this.addDevice(context) }),
                 },
             ],
@@ -192,23 +167,26 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
                 return { error: `Unknown device ${ip}` };
             }
             return this.details(ip, {
-                name: discovered.deviceFriendlyName,
-                ip,
-                mac: discovered.mac,
+                name: ['Name', discovered.deviceFriendlyName],
+                ip: ['IP address', ip],
+                mac: ['MAC address', discovered.mac],
             });
         }
 
         const info = device.deviceInfo;
         return this.details(ip, {
-            name: initialized(device.deviceFriendlyName) ?? '',
-            ip,
-            mac: initialized(device.mac) ?? '',
-            connectionStatus: device.connectStatus,
-            esphomeVersion: info?.esphomeVersion,
-            compilationTime: info?.compilationTime,
-            model: info?.model,
-            manufacturer: info?.manufacturer,
-            project: info?.projectName ? `${info.projectName} ${info.projectVersion ?? ''}`.trim() : undefined,
+            name: ['Name', initialized(device.deviceFriendlyName)],
+            ip: ['IP address', ip],
+            mac: ['MAC address', initialized(device.mac)],
+            connectionStatus: ['Connection status', device.connectStatus],
+            esphomeVersion: ['ESPHome version', info?.esphomeVersion],
+            compilationTime: ['Compiled', info?.compilationTime],
+            model: ['Model', info?.model],
+            manufacturer: ['Manufacturer', info?.manufacturer],
+            project: [
+                'Project',
+                info?.projectName ? `${info.projectName} ${info.projectVersion ?? ''}`.trim() : undefined,
+            ],
         });
     }
 
@@ -216,14 +194,17 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
      * Read-only form with the given values, empty values are left out
      *
      * @param ip - IP address of the device
-     * @param values - Values to show, keyed like the entries of texts
+     * @param values - English label and value of every field, by field name
      */
-    private details(ip: string, values: Partial<Record<keyof typeof texts, string>>): DeviceDetails<string> {
+    private details(
+        ip: string,
+        values: Record<string, [label: string, value: string | undefined]>,
+    ): DeviceDetails<string> {
         const items: Record<string, { type: 'text'; label: ioBroker.Translated; readOnly: true; sm: 6 }> = {};
         const data: Record<string, string> = {};
-        for (const [key, value] of Object.entries(values) as [keyof typeof texts, string | undefined][]) {
+        for (const [key, [label, value]] of Object.entries(values)) {
             if (value) {
-                items[key] = { type: 'text', label: t(key), readOnly: true, sm: 6 };
+                items[key] = { type: 'text', label: I18n.getTranslatedObject(label), readOnly: true, sm: 6 };
                 data[key] = value;
             }
         }
@@ -252,7 +233,7 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
             {
                 id: 'edit',
                 icon: 'settings',
-                description: t('editDevice'),
+                description: I18n.getTranslatedObject('Change connection settings'),
                 handler: async (id, context) => ({
                     refresh: (await this.editDevice(id, context)) ? 'devices' : 'none',
                 }),
@@ -260,7 +241,7 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
             {
                 id: 'delete',
                 icon: 'delete',
-                description: t('deleteDevice'),
+                description: I18n.getTranslatedObject('Delete device'),
                 handler: async (id, context) => ({
                     refresh: (await this.confirmRemoveDevice(id, context)) ? 'devices' : 'none',
                 }),
@@ -270,7 +251,7 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
             actions.push({
                 id: 'web',
                 icon: 'web',
-                description: t('openWebServer'),
+                description: I18n.getTranslatedObject('Open web server of the device'),
                 url: `http://${ip}:${device.deviceInfo.webserverPort}`,
             });
         }
@@ -293,19 +274,19 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
                                   type: 'state',
                                   oid: `${this.adapter.namespace}.${deviceName}.info._connectionStatus`,
                                   foreign: true,
-                                  label: t('connectionStatus'),
+                                  label: I18n.getTranslatedObject('Connection status'),
                               },
                               esphomeVersion: {
                                   type: 'state',
                                   oid: `${this.adapter.namespace}.${deviceName}.info.esphomeVersion`,
                                   foreign: true,
-                                  label: t('esphomeVersion'),
+                                  label: I18n.getTranslatedObject('ESPHome version'),
                               },
                           },
                       },
                   }
                 : undefined,
-            group: { key: 'known', name: t('groupKnown') },
+            group: { key: 'known', name: I18n.getTranslatedObject('Added devices') },
             actions,
             hasDetails: true,
         };
@@ -328,18 +309,18 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
                     id: 'discovered',
                     icon: 'search',
                     color: 'info',
-                    text: t('notAdded'),
-                    tooltip: t('groupDiscovered'),
+                    text: I18n.getTranslatedObject('Not added'),
+                    tooltip: I18n.getTranslatedObject('Discovered, not added yet'),
                 },
             ],
-            group: { key: 'discovered', name: t('groupDiscovered') },
+            group: { key: 'discovered', name: I18n.getTranslatedObject('Discovered, not added yet') },
             actions: [
                 {
                     id: 'adopt',
                     icon: 'add',
-                    title: t('add'),
+                    title: I18n.getTranslatedObject('Add'),
                     variant: 'contained',
-                    description: t('adoptDevice'),
+                    description: I18n.getTranslatedObject('Add discovered device'),
                     handler: async (id, context) => ({
                         refresh: (await this.addDevice(context, id)) ? 'devices' : 'none',
                     }),
@@ -357,10 +338,18 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
      * @returns true if the device was added
      */
     async addDevice(context: ActionContext, ip?: string): Promise<boolean> {
-        const form = await context.showForm(this.credentialsSchema(!!ip, t('credentialsHint')), {
-            data: { ip: ip ?? '', encryptionKey: '', apiPassword: '' },
-            title: ip ? t('adoptDevice') : t('addDevice'),
-        });
+        const form = await context.showForm(
+            this.credentialsSchema(
+                !!ip,
+                I18n.getTranslatedObject(
+                    'Enter the API encryption key of the device (recommended) or the API password of older firmware. Leave both fields empty if the API of the device is not protected.',
+                ),
+            ),
+            {
+                data: { ip: ip ?? '', encryptionKey: '', apiPassword: '' },
+                title: ip ? I18n.getTranslatedObject('Add discovered device') : I18n.getTranslatedObject('Add device'),
+            },
+        );
         if (!form) {
             return false;
         }
@@ -378,13 +367,19 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
     async editDevice(ip: string, context: ActionContext): Promise<boolean> {
         const device = this.adapter.knownDevices()[ip];
         if (!device) {
-            await context.showMessage(t('unknownDevice', ip));
+            await context.showMessage(translateWithArgs('Unknown device %s', ip));
             return false;
         }
-        const form = await context.showForm(this.credentialsSchema(true, t('keepCredentialsHint')), {
-            data: { ip, encryptionKey: '', apiPassword: '' },
-            title: t('editDevice'),
-        });
+        const form = await context.showForm(
+            this.credentialsSchema(
+                true,
+                I18n.getTranslatedObject('Leave both fields empty to keep the current credentials.'),
+            ),
+            {
+                data: { ip, encryptionKey: '', apiPassword: '' },
+                title: I18n.getTranslatedObject('Change connection settings'),
+            },
+        );
         if (!form) {
             return false;
         }
@@ -406,12 +401,16 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
      * @returns true if the device was deleted
      */
     async confirmRemoveDevice(ip: string, context: ActionContext): Promise<boolean> {
-        if (!(await context.showConfirmation(t('deleteConfirm')))) {
+        if (
+            !(await context.showConfirmation(
+                I18n.getTranslatedObject('Delete this device? All its states will be removed.'),
+            ))
+        ) {
             return false;
         }
         const response = await this.adapter.removeDevice(ip);
         if (response.error) {
-            await context.showMessage(response.error);
+            await context.showMessage(translateWithArgs(response.error, ...(response.args ?? [])));
             return false;
         }
         return true;
@@ -432,12 +431,18 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
         apiPassword: string | undefined,
         encryptionKey: string | undefined,
     ): Promise<boolean> {
-        const progress = await context.openProgress(t('connecting'), { indeterminate: true, label: ip });
+        const progress = await context.openProgress(I18n.getTranslatedObject('Connecting to device...'), {
+            indeterminate: true,
+            label: ip,
+        });
         let response: DeviceActionResult;
         try {
             response = await new Promise<DeviceActionResult>(resolve => {
                 const timeout = this.adapter.setTimeout(
-                    () => resolve({ result: I18n.translate(texts.connectTimeout) }),
+                    () =>
+                        resolve({
+                            result: 'The device did not answer yet, the adapter keeps trying to connect in the background.',
+                        }),
                     CONNECT_TIMEOUT,
                 );
                 this.adapter
@@ -454,7 +459,7 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
             await progress.close();
         }
 
-        await context.showMessage(response.error ?? response.result ?? '');
+        await context.showMessage(translateWithArgs(response.error ?? response.result ?? '', ...(response.args ?? [])));
         return !!this.adapter.knownDevices()[ip];
     }
 
@@ -468,9 +473,19 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
         return {
             type: 'panel',
             items: {
-                ip: { type: 'text', label: t('ip'), readOnly: ipReadOnly, sm: 12 },
-                encryptionKey: { type: 'password', label: t('encryptionKey'), newLine: true, sm: 12 },
-                apiPassword: { type: 'password', label: t('apiPassword'), newLine: true, sm: 12 },
+                ip: { type: 'text', label: I18n.getTranslatedObject('IP address'), readOnly: ipReadOnly, sm: 12 },
+                encryptionKey: {
+                    type: 'password',
+                    label: I18n.getTranslatedObject('Encryption key'),
+                    newLine: true,
+                    sm: 12,
+                },
+                apiPassword: {
+                    type: 'password',
+                    label: I18n.getTranslatedObject('API password (legacy)'),
+                    newLine: true,
+                    sm: 12,
+                },
                 hint: { type: 'staticText', text: hint, newLine: true, sm: 12 },
             },
         };
