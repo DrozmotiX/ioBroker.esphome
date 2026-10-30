@@ -8,14 +8,15 @@ Single-file adapter (`src/main.ts`, ~2700 lines) extending `@iobroker/adapter-co
 
 > All sources are TypeScript and fully type checked; there is no `// @ts-nocheck` and no per-file lint exception. Keep it that way: type new code properly instead of adding `any`, `@ts-nocheck` or broad eslint overrides. The types of `@2colors/esphome-native-api` are completed in `src/lib/esphome-native-api.d.ts`.
 
-| File                          | Purpose                                                                            |
-| ----------------------------- | ---------------------------------------------------------------------------------- |
-| `src/lib/helpers.ts`          | `DeviceInfo` / `ClientDetails` classes – one instance per ESP device               |
-| `src/lib/stateAttr.ts`        | Human-readable metadata for ioBroker state objects (name, role, type)              |
-| `src/lib/yamlFileManager.ts`  | Upload/download/delete YAML config files for the ESPHome directory                 |
-| `src/lib/dashboardApi.ts`     | Dashboard API helpers                                                              |
-| `src/lib/dashboard.ts`        | ESPHome Dashboard: versions, config migration, process start / stop                |
-| `src/lib/deviceManagement.ts` | ioBroker device manager (`@iobroker/dm-utils`): list / add / edit / delete devices |
+| File                               | Purpose                                                                            |
+| ---------------------------------- | ---------------------------------------------------------------------------------- |
+| `src/lib/helpers.ts`               | `DeviceInfo` / `ClientDetails` classes – one instance per ESP device               |
+| `src/lib/stateAttr.ts`             | Human-readable metadata for ioBroker state objects (name, role, type)              |
+| `src/lib/yamlFileManager.ts`       | Upload/download/delete YAML config files for the ESPHome directory                 |
+| `src/lib/dashboardApi.ts`          | Dashboard API helpers                                                              |
+| `src/lib/dashboard.ts`             | ESPHome Dashboard: versions, config migration, process start / stop                |
+| `src/lib/dashboardRequirements.ts` | Pillow / ESPHome Device Builder versions installed next to ESPHome (PyPI)          |
+| `src/lib/deviceManagement.ts`      | ioBroker device manager (`@iobroker/dm-utils`): list / add / edit / delete devices |
 
 **Two optional subsystems run in-process alongside device connections:**
 

@@ -22,6 +22,10 @@ const { expect } = require('chai');
 const DASHBOARD_PORT = 6052;
 const DASHBOARD_VERSION = 'Always last available';
 const PILLOW_VERSION = 'Always last available';
+// ESPHome 2026.7.0 and newer serve the dashboard through ESPHome Device Builder and pin a newer
+// Pillow version than the configured one (#479). A fixed version keeps the test reproducible.
+const DEVICE_BUILDER_DASHBOARD_VERSION = '2026.10.1';
+const DEVICE_BUILDER_PILLOW_VERSION = '12.2.0';
 const DASHBOARD_INITIALIZATION_DELAY_MS = 10000; // 10 seconds initial delay for dashboard to start initializing
 const REACHABILITY_CHECK_DELAY_MS = 3000; // 3 seconds between reachability checks
 const TOTAL_TIMEOUT_MS = 300000; // 5 minutes total test timeout
@@ -83,8 +87,17 @@ async function isDashboardReachable(port, maxAttempts, delayMs) {
     return false;
 }
 
-exports.runTests = function (suite) {
-    suite('ESPHome Dashboard Integration', getHarness => {
+/**
+ * Registers a suite enabling the dashboard with the given versions and checking it becomes reachable.
+ * Each needs its own suite, the harness cannot start the adapter again after stopAdapter().
+ *
+ * @param {Mocha.SuiteFunction} suite - suite function of the harness
+ * @param {string} title - suite title
+ * @param {string} dashboardVersion - configured ESPHome Dashboard version
+ * @param {string} pillowVersion - configured Pillow version
+ */
+function dashboardSuite(suite, title, dashboardVersion, pillowVersion) {
+    suite(title, getHarness => {
         it('should enable dashboard in adapter settings and verify it becomes reachable', async function () {
             // Extended timeout for dashboard initialization
             this.timeout(TEST_TIMEOUT_MS);
@@ -104,8 +117,8 @@ exports.runTests = function (suite) {
                     native: {
                         ESPHomeDashboardEnabled: true,
                         ESPHomeDashboardPort: DASHBOARD_PORT,
-                        ESPHomeDashboardVersion: DASHBOARD_VERSION,
-                        PillowVersion: PILLOW_VERSION,
+                        ESPHomeDashboardVersion: dashboardVersion,
+                        PillowVersion: pillowVersion,
                     },
                 });
 
@@ -162,4 +175,14 @@ Check the adapter logs above for more details`;
             }
         });
     });
+}
+
+exports.runTests = function (suite) {
+    dashboardSuite(suite, 'ESPHome Dashboard Integration', DASHBOARD_VERSION, PILLOW_VERSION);
+    dashboardSuite(
+        suite,
+        'ESPHome Dashboard Integration (ESPHome Device Builder)',
+        DEVICE_BUILDER_DASHBOARD_VERSION,
+        DEVICE_BUILDER_PILLOW_VERSION,
+    );
 };

@@ -10,6 +10,13 @@ import type { getVenv } from 'autopy' with { 'resolution-mode': 'import' };
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import {
+    compareVersions,
+    requirementsCacheState,
+    resolveRequirements,
+    usesDeviceBuilder,
+    type DashboardRequirements,
+} from './dashboardRequirements';
 
 /** The ESPHome dashboard process started through autopy */
 type DashboardProcess = ReturnType<Awaited<ReturnType<typeof getVenv>>>;
@@ -32,9 +39,10 @@ export interface DashboardAdapter extends ioBroker.Adapter {
     errorHandler(codepart: string, error: unknown): void;
 }
 
-// Versions installations are pinned to. ESPHome 2026.7.x currently fails to install for a part of
-// our users (#463), so both the defaults for new installations and the one-time migration in
-// migratePinnedVersions() point at the last combination known to work instead of
+// Versions installations are pinned to. ESPHome 2026.7.x failed to install for a part of our users
+// (#463): ESPHome pins Pillow exactly and 2026.7.0 removed the built-in dashboard, both handled since
+// (#479, see dashboardRequirements.ts). Both the defaults for new installations and the one-time
+// migration in migratePinnedVersions() point at the last combination known to work instead of
 // "Always last available". Keep in sync with the "native" defaults in io-package.json.
 const defaultDashboardVersion = '2026.6.5';
 const defaultPillowVersion = '12.2.0';
@@ -218,14 +226,15 @@ class Dashboard {
             // Get all current available ESPHome Dashboard versions
             /** GitHub releases by index, only the name is used */
             let content: Record<string, { name: string }> | undefined;
-            let lastUsed;
+            let lastUsed: string | undefined;
             let useDashBoardVersion = '';
 
             // Get data from state which version was used previous Time
             try {
-                lastUsed = await this.adapter.getStateAsync(`_ESPHomeDashboard.selectedVersion`);
-                if (lastUsed && lastUsed.val) {
-                    lastUsed = lastUsed.val;
+                const lastUsedState = await this.adapter.getStateAsync(`_ESPHomeDashboard.selectedVersion`);
+                if (lastUsedState && lastUsedState.val) {
+                    // string or number depending on adapter version
+                    lastUsed = String(lastUsedState.val);
                 }
             } catch {
                 // State does not exist
@@ -291,7 +300,6 @@ class Dashboard {
                     useDashBoardVersion,
                 );
             } else if (lastUsed != null) {
-                // @ts-expect-error lastUsed may be string or number depending on adapter version
                 useDashBoardVersion = lastUsed;
             }
 
@@ -315,13 +323,26 @@ class Dashboard {
                 usePillowVersion = versions[0];
             }
 
-            this.adapter.log.debug(`Using Pillow version: ${usePillowVersion}`);
-
             // Start Dashboard Process
             if (this.adapter.config.ESPHomeDashboardEnabled) {
                 this.adapter.log.info(`Native Integration of ESPHome Dashboard enabled, making environment ready`);
 
                 this.warnUnpinnedVersions(useDashBoardVersion, usePillowVersion);
+
+                const useDeviceBuilder = usesDeviceBuilder(useDashBoardVersion);
+                const resolved: DashboardRequirements = useDashBoardVersion
+                    ? await resolveRequirements(this.adapter, useDashBoardVersion)
+                    : {};
+
+                // ESPHome pins Pillow exactly, pip cannot install any other version next to it (#479)
+                if (resolved.pillow && resolved.pillow !== usePillowVersion) {
+                    this.adapter.log.info(
+                        `ESPHome ${useDashBoardVersion} requires Pillow ${resolved.pillow}, using it instead of the configured Pillow version ${usePillowVersion || 'Always last available'}`,
+                    );
+                    usePillowVersion = resolved.pillow;
+                }
+                this.adapter.log.debug(`Using Pillow version: ${usePillowVersion}`);
+
                 try {
                     const { getVenv } = await import('autopy');
                     let python;
@@ -346,6 +367,19 @@ class Dashboard {
                                 `Unable to determine a specific Pillow version. Falling back to latest available version from PyPI`,
                             );
                             requirements.push({ name: 'pillow', version: '' });
+                        }
+                        if (useDeviceBuilder) {
+                            if (resolved.deviceBuilder) {
+                                requirements.push({
+                                    name: 'esphome-device-builder',
+                                    version: `==${resolved.deviceBuilder}`,
+                                });
+                            } else {
+                                this.adapter.log.warn(
+                                    `Unable to determine the ESPHome Device Builder version matching ESPHome ${useDashBoardVersion || 'latest'}. Falling back to latest available version from PyPI`,
+                                );
+                                requirements.push({ name: 'esphome-device-builder', version: '' });
+                            }
                         }
                         // Create a virtual environment with esphome installed.
                         python = await getVenv({
@@ -377,13 +411,21 @@ class Dashboard {
                         );
                     }
 
-                    this.adapter.log.info(`Starting ESPHome Dashboard`);
-                    this.dashboardProcess = python('esphome', [
-                        'dashboard',
-                        '--port',
-                        String(this.adapter.config.ESPHomeDashboardPort),
-                        `${dataDir}esphome.${this.adapter.instance}`,
-                    ]);
+                    const configDir = `${dataDir}esphome.${this.adapter.instance}`;
+                    const port = String(this.adapter.config.ESPHomeDashboardPort);
+                    // From ESPHome 2026.7.0 on `esphome dashboard` only exits with an error, ESPHome Device
+                    // Builder takes the same port and configuration directory
+                    const command = useDeviceBuilder ? 'esphome-device-builder' : 'esphome';
+                    const args = useDeviceBuilder
+                        ? ['--port', port, configDir]
+                        : ['dashboard', '--port', port, configDir];
+
+                    this.adapter.log.info(
+                        `Starting ESPHome Dashboard${useDeviceBuilder ? ' (ESPHome Device Builder)' : ''}`,
+                    );
+                    // buffer: false, the output is only logged below and would otherwise be kept in memory
+                    // for as long as the dashboard runs. NO_COLOR keeps color codes out of the log.
+                    this.dashboardProcess = python(command, args, { buffer: false, env: { NO_COLOR: '1' } });
 
                     this.adapter.log.debug(`espHomeDashboard_Process ${JSON.stringify(this.dashboardProcess)}`);
 
@@ -392,15 +434,15 @@ class Dashboard {
                     });
 
                     this.dashboardProcess.stderr?.on('data', data => {
-                        // this.adapter.log.warn(`[this.dashboardProcess ERROR] ${data}`);
-                        if (data.includes('INFO')) {
-                            if (data.includes('Starting')) {
+                        if (data.includes('ERROR')) {
+                            // e.g. the reason why the dashboard stops right after the start
+                            this.adapter.log.error(`[ESPHome - Console] ${data}`);
+                        } else if (data.includes('INFO')) {
+                            if (data.includes('Starting') || data.includes('Device Builder ready')) {
                                 this.adapter.log.info(`[ESPHome - Console] ${data}`);
                             } else {
                                 this.adapter.log.debug(`[ESPHome - Console] ${data}`);
                             }
-                        } else {
-                            // console.debug(`[espHomeDashboard] Unknown logging data : ${JSON.stringify(data)}`);
                         }
                     });
 
@@ -408,13 +450,25 @@ class Dashboard {
                         this.adapter.log.warn(`ESPHome Dashboard stopped (exit code ${code}, signal ${signal})`);
                     });
 
-                    void this.dashboardProcess.on('error', data => {
-                        if (data.message.includes('INFO')) {
-                            this.adapter.log.info(`[this.dashboardProcess Info] ${data}`);
-                        } else if (data.message.includes('ERROR')) {
-                            this.adapter.log.error(`[this.dashboardProcess Warn] ${data}`);
+                    // The process is also a promise, which rejects when it cannot be started, exits with an
+                    // error or is stopped. Unhandled, that rejection terminates the whole adapter (#479).
+                    this.dashboardProcess.catch((error: unknown) => {
+                        const { code, exitCode, signal } = error as {
+                            code?: string;
+                            exitCode?: number;
+                            signal?: string;
+                        };
+                        if (exitCode != null || signal != null) {
+                            // Exited or stopped, already logged by the exit handler
+                            return;
+                        }
+                        const reason = error instanceof Error && error.message ? error.message : String(error);
+                        if (code === 'ENOENT') {
+                            this.adapter.log.error(
+                                `ESPHome Dashboard could not be started, "${command}" is missing in the Python environment. Clear the autopy cache in the adapter configuration and restart the adapter to install it again: ${reason}`,
+                            );
                         } else {
-                            this.adapter.log.error(`[this.dashboardProcess Error] ${data}`);
+                            this.adapter.log.error(`ESPHome Dashboard could not be started: ${reason}`);
                         }
                     });
                 } catch (error) {
@@ -456,19 +510,7 @@ class Dashboard {
                 const data = (await response.json()) as { releases: Record<string, unknown> };
                 const versions = Object.keys(data.releases)
                     .filter(v => !v.includes('a') && !v.includes('b') && !v.includes('rc')) // Filter out alpha/beta/rc versions
-                    .sort((a, b) => {
-                        // Sort versions in descending order (newest first)
-                        const aParts = a.split('.').map(Number);
-                        const bParts = b.split('.').map(Number);
-                        for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
-                            const aVal = aParts[i] || 0;
-                            const bVal = bParts[i] || 0;
-                            if (aVal !== bVal) {
-                                return bVal - aVal;
-                            }
-                        }
-                        return 0;
-                    })
+                    .sort((a, b) => compareVersions(b, a)) // Sort versions in descending order (newest first)
                     .slice(0, 20); // Limit to 20 most recent versions
 
                 if (versions.length > 0) {
@@ -521,9 +563,11 @@ class Dashboard {
     /**
      * Clear the autopy cache directory
      */
-    // eslint-disable-next-line @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
     async clearAutopyCache(): Promise<void> {
         try {
+            // Resolve the versions installed next to ESPHome again with the next start
+            await this.adapter.stateSetCreate(requirementsCacheState, 'requirementsCache', '{}');
+
             const homeDir = os.homedir();
             const autopyCache = path.join(homeDir, '.cache', 'autopy');
 
