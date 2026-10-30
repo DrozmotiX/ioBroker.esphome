@@ -129,7 +129,8 @@ Always call `harness.stopAdapter()` in a `finally` block to avoid test leaks.
 
 Config schema: `admin/jsonConfig.json5` (JSON5, supports comments). Translations: `admin/i18n/{locale}.json` (short format, migrated from the old `{locale}/translations.json` layout). Run `npm run translate` after any translation key changes. Labels must reference translation keys (`"i18n": true` is set globally).
 
-The first tab ("Devices") embeds the device manager (`"type": "deviceManager"`), the same view admin shows in its
+The first tab ("Main settings") ends with the panel "Discovery & connection" (auto discovery, config states,
+listening address, reconnect / ping settings). The second tab ("Devices") embeds the device manager (`"type": "deviceManager"`), the same view admin shows in its
 "Devices" tab. Devices are only added / edited / deleted there, see `src/lib/deviceManagement.ts`
 (`@iobroker/dm-utils`, needs admin >= 7.8.20 for its v3 API). Texts of the device manager live in
 `src/i18n/{locale}.json` (English text as key, all 11 languages, same layout as ioBroker.shelly), are loaded with

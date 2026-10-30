@@ -2,33 +2,6 @@
 	"i18n": true,
 	"type": "tabs",
 	"items": {
-		// Device manager: list, add, edit and delete devices (src/lib/deviceManagement.ts)
-		"_deviceManager": {
-			"type": "panel",
-			"label": "Devices",
-			"items": {
-				"_dm": {
-					"type": "deviceManager",
-					"sm": 12,
-					"style": {
-						"width": "100%",
-						"height": "100%",
-						"overflow": "hidden"
-					}
-				}
-			},
-			"style": {
-				"width": "100%",
-				"height": "100%",
-				"overflow": "hidden"
-			},
-			"innerStyle": {
-				"width": "100%",
-				"height": "100%",
-				"overflow": "hidden"
-			}
-		},
-
 		// Main Page and generic Setting of Adapter & ESPHome Dashboard
 		"_options": {
 			"type": "panel",
@@ -108,107 +81,145 @@
 					"md": 12,
 					"lg": 12,
 					"xl": 12
+				},
+
+				// Discovery and connection settings of the devices
+				"_discoveryConnection": {
+					"type": "panel",
+					"newLine": true,
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12,
+					"items": {
+						"discoveryConnectionHeader": {
+							"newLine": true,
+							"type": "header",
+							"text": "Discovery & connection",
+							"size": 1
+						},
+
+						// Enable/disable autodiscovery and store setting in adapter config object
+						"autodiscovery": {
+							"newLine": true,
+							"type": "checkbox",
+							"xs": 12,
+							"sm": 3,
+							"md": 3,
+							"lg": 3,
+							"xl": 3,
+							"label": "lblAutoDiscovery"
+						},
+
+						// Enable/disable creation of config states for each entity
+						"configStates": {
+							"type": "checkbox",
+							"xs": 12,
+							"sm": 3,
+							"md": 3,
+							"lg": 3,
+							"xl": 3,
+							"label": "lblConfigStates",
+							"help": "hlpConfigStates"
+						},
+
+						"discoveryListeningAddress" : {
+							"type": "ip",
+							"xs": 12,
+							"sm": 3,
+							"md": 3,
+							"lg": 3,
+							"xl": 3,
+							"default": "0.0.0.0",
+							"label": "lblDiscoveryListeningAddress",
+							"help": "hlpDiscoveryListeningAddress",
+							"listenOnAllPorts" : true,
+							"onlyIp4" : true
+						},
+
+						// Header for connection / reconnect behavior of known devices
+						"connectionBehaviorHeader": {
+							"newLine": true,
+							"type": "header",
+							"text": "lblConnectionBehavior",
+							"size": 2
+						},
+
+						// How long to wait before retrying the connection to an offline device (seconds)
+						"reconnectInterval": {
+							"newLine": true,
+							"type": "number",
+							"min": 1,
+							"max": 3600,
+							"xs": 12,
+							"sm": 4,
+							"md": 4,
+							"lg": 3,
+							"xl": 3,
+							"default": 5,
+							"label": "lblReconnectInterval",
+							"help": "hlpReconnectInterval"
+						},
+
+						// How often a connected device is pinged to detect if it is still online (seconds)
+						"pingInterval": {
+							"type": "number",
+							"min": 1,
+							"max": 3600,
+							"xs": 12,
+							"sm": 4,
+							"md": 4,
+							"lg": 3,
+							"xl": 3,
+							"default": 5,
+							"label": "lblPingInterval",
+							"help": "hlpPingInterval"
+						},
+
+						// Number of consecutive failed pings before the device is considered offline
+						"pingAttempts": {
+							"type": "number",
+							"min": 1,
+							"max": 100,
+							"xs": 12,
+							"sm": 4,
+							"md": 4,
+							"lg": 3,
+							"xl": 3,
+							"default": 1,
+							"label": "lblPingAttempts",
+							"help": "hlpPingAttempts"
+						}
+					}
 				}
 			}
 		},
 
-		// Tab with the discovery and connection settings of the devices
-		"devices": {
+		// Second tab, the device manager: list, add, edit and delete devices (src/lib/deviceManagement.ts)
+		"_deviceManager": {
 			"type": "panel",
-			"label": "Discovery & connection",
+			"label": "Devices",
 			"items": {
-
-				// Enable/disable autodiscovery and store setting in adapter config object
-				"autodiscovery": {
-					"newLine": true,
-					"type": "checkbox",
-					"xs": 12,
-					"sm": 3,
-					"md": 3,
-					"lg": 3,
-					"xl": 3,
-					"label": "lblAutoDiscovery"
-				},
-
-				// Enable/disable creation of config states for each entity
-				"configStates": {
-					"type": "checkbox",
-					"xs": 12,
-					"sm": 3,
-					"md": 3,
-					"lg": 3,
-					"xl": 3,
-					"label": "lblConfigStates",
-					"help": "hlpConfigStates"
-				},
-
-				"discoveryListeningAddress" : {
-					"type": "ip",
-					"xs": 12,
-					"sm": 3,
-					"md": 3,
-					"lg": 3,
-					"xl": 3,
-					"default": "0.0.0.0",
-					"label": "lblDiscoveryListeningAddress",
-					"help": "hlpDiscoveryListeningAddress",
-					"listenOnAllPorts" : true,
-					"onlyIp4" : true
-				},
-
-				// Header for connection / reconnect behavior of known devices
-				"connectionBehaviorHeader": {
-					"newLine": true,
-					"type": "header",
-					"text": "lblConnectionBehavior",
-					"size": 2
-				},
-
-				// How long to wait before retrying the connection to an offline device (seconds)
-				"reconnectInterval": {
-					"newLine": true,
-					"type": "number",
-					"min": 1,
-					"max": 3600,
-					"xs": 12,
-					"sm": 4,
-					"md": 4,
-					"lg": 3,
-					"xl": 3,
-					"default": 5,
-					"label": "lblReconnectInterval",
-					"help": "hlpReconnectInterval"
-				},
-
-				// How often a connected device is pinged to detect if it is still online (seconds)
-				"pingInterval": {
-					"type": "number",
-					"min": 1,
-					"max": 3600,
-					"xs": 12,
-					"sm": 4,
-					"md": 4,
-					"lg": 3,
-					"xl": 3,
-					"default": 5,
-					"label": "lblPingInterval",
-					"help": "hlpPingInterval"
-				},
-
-				// Number of consecutive failed pings before the device is considered offline
-				"pingAttempts": {
-					"type": "number",
-					"min": 1,
-					"max": 100,
-					"xs": 12,
-					"sm": 4,
-					"md": 4,
-					"lg": 3,
-					"xl": 3,
-					"default": 1,
-					"label": "lblPingAttempts",
-					"help": "hlpPingAttempts"
+				"_dm": {
+					"type": "deviceManager",
+					"sm": 12,
+					"style": {
+						"width": "100%",
+						"height": "100%",
+						"overflow": "hidden"
+					}
 				}
+			},
+			"style": {
+				"width": "100%",
+				"height": "100%",
+				"overflow": "hidden"
+			},
+			"innerStyle": {
+				"width": "100%",
+				"height": "100%",
+				"overflow": "hidden"
 			}
 		},
 
