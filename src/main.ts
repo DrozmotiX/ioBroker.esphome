@@ -315,7 +315,10 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     // Store device data into memory to allow adoption by admin interface
                     newlyDiscoveredClient[message.address] = {
                         ip: message.address,
-                        mac: message.mac.toUpperCase(),
+                        mac: String(message.mac)
+                            .replace(/[^0-9a-fA-F]/g, '')
+                            .toUpperCase()
+                            .replace(/(.{2})(?=.)/g, '$1:'),
                         deviceFriendlyName: message.friendly_name ? message.friendly_name : message.host,
                     };
                     void this.deviceManagement.refreshDeviceList();
