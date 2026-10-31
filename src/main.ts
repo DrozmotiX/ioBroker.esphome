@@ -44,7 +44,8 @@ interface EntityDetails {
 /**
  * Settings of earlier versions nothing reads any more, removed once by removeObsoleteSettings():
  * the device tab of 1.0.0 (deviceIP, the device tables and the unsaved apiPassword input, whose default
- * was still seeded) and the default credentials, unused since 0.6
+ * was still seeded), the default credentials, unused since 0.6, and the inputs of the YAML Files tab, whose
+ * values (including the pasted YAML) were saved with the configuration
  */
 const OBSOLETE_SETTINGS = [
     'deviceIP',
@@ -53,6 +54,10 @@ const OBSOLETE_SETTINGS = [
     'apiPassword',
     'apiPass',
     'encryptionKey',
+    'uploadFilename',
+    'uploadContent',
+    'selectedFilename',
+    'yamlFilesTable',
 ];
 
 const disableSentry = false; // Ensure to set to true during development!
@@ -1523,6 +1528,12 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
         }
         this.log.debug(`Data from configuration received : ${JSON.stringify(obj)}`);
         try {
+            if (this.yamlFileManager.isAdminCommand(obj.command)) {
+                // "YAML Files" tab of the instance configuration
+                const response = await this.yamlFileManager.handleAdminMessage(obj.command, obj.message);
+                this.sendTo(obj.from, obj.command, response, obj.callback);
+                return;
+            }
             switch (obj.command) {
                 // Front End message handler to load ESPHome Dashboard dropDown with all available versions
                 case 'getESPHomeDashboardVersion':
@@ -1558,83 +1569,6 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                         // console.log(`IP4 List ${ip4List}`);
 
                         this.sendTo(obj.from, obj.command, ip4List, obj.callback);
-                    }
-                    break;
-
-                // Handle YAML file upload
-                case 'uploadYamlFile':
-                    {
-                        if (!obj.message || !obj.message.filename || !obj.message.content) {
-                            this.sendTo(
-                                obj.from,
-                                obj.command,
-                                { error: 'Filename and content are required' },
-                                obj.callback,
-                            );
-                            return;
-                        }
-
-                        const result = await this.yamlFileManager.uploadYamlFile(
-                            obj.message.filename,
-                            obj.message.content,
-                        );
-                        this.sendTo(obj.from, obj.command, result, obj.callback);
-                    }
-                    break;
-
-                // Handle listing YAML files
-                case 'listYamlFiles':
-                    {
-                        const files = await this.yamlFileManager.listYamlFiles();
-                        this.sendTo(
-                            obj.from,
-                            obj.command,
-                            {
-                                native: {
-                                    yamlFilesTable: files,
-                                },
-                            },
-                            obj.callback,
-                        );
-                    }
-                    break;
-
-                // Handle YAML file download
-                case 'downloadYamlFile':
-                    {
-                        if (!obj.message || !obj.message.filename) {
-                            this.sendTo(obj.from, obj.command, { error: 'Filename is required' }, obj.callback);
-                            return;
-                        }
-
-                        const result = await this.yamlFileManager.downloadYamlFile(obj.message.filename);
-
-                        // Format the response to show file content in a user-friendly way
-                        if (result.success) {
-                            this.sendTo(
-                                obj.from,
-                                obj.command,
-                                {
-                                    result: `File content (copy to use):\n\n${result.content}`,
-                                },
-                                obj.callback,
-                            );
-                        } else {
-                            this.sendTo(obj.from, obj.command, result, obj.callback);
-                        }
-                    }
-                    break;
-
-                // Handle YAML file deletion
-                case 'deleteYamlFile':
-                    {
-                        if (!obj.message || !obj.message.filename) {
-                            this.sendTo(obj.from, obj.command, { error: 'Filename is required' }, obj.callback);
-                            return;
-                        }
-
-                        const result = await this.yamlFileManager.deleteYamlFile(obj.message.filename);
-                        this.sendTo(obj.from, obj.command, result, obj.callback);
                     }
                     break;
 

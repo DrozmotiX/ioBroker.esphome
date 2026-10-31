@@ -3,7 +3,8 @@
  *
  * Covers removeObsoleteSettings() in src/main.ts: settings of earlier versions that nothing reads any
  * more are removed from the instance configuration once. These are the inputs and tables of the device
- * tab of 1.0.0 (replaced by the device manager) and the default credentials, unused since 0.6.
+ * tab of 1.0.0 (replaced by the device manager), the default credentials, unused since 0.6, and the inputs
+ * of the YAML Files tab.
  *
  * Its own suite on purpose: writing the configuration ends the adapter process (js-controller would
  * restart it), and the harness refuses a second start, see version_migration_tests.js.
@@ -19,6 +20,11 @@ const OBSOLETE_SETTINGS = [
     'apiPassword',
     'apiPass',
     'encryptionKey',
+    // Inputs of the YAML Files tab, saved with the configuration
+    'uploadFilename',
+    'uploadContent',
+    'selectedFilename',
+    'yamlFilesTable',
 ];
 
 /**
@@ -67,6 +73,11 @@ exports.runTests = function (suite) {
                         // Default credentials of the main tab, stored encrypted
                         apiPass: 'encrypted-password',
                         encryptionKey: 'encrypted-key',
+                        // Inputs of the YAML Files tab
+                        uploadFilename: 'kitchen.yaml',
+                        uploadContent: 'esphome:\n  name: kitchen\n',
+                        selectedFilename: 'kitchen.yaml',
+                        yamlFilesTable: [{ filename: 'kitchen.yaml', size: '24 Bytes', modified: '1/1/2026' }],
                     },
                 });
 

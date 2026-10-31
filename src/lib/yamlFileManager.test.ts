@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { readFileSync } from 'node:fs';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
@@ -105,6 +106,13 @@ describe('YAML File Management', () => {
             });
         });
 
+        it('lists the files sorted by name', async () => {
+            await writeFile(path.join(dir, 'b.yaml'), '');
+            await writeFile(path.join(dir, 'a.yaml'), '');
+
+            expect((await fileManager.listYamlFiles()).map(file => file.filename)).to.deep.equal(['a.yaml', 'b.yaml']);
+        });
+
         it('reports missing files on download and delete', async () => {
             expect(await fileManager.downloadYamlFile('missing.yaml')).to.deep.equal({
                 success: false,
@@ -113,6 +121,99 @@ describe('YAML File Management', () => {
             expect(await fileManager.deleteYamlFile('missing.yaml')).to.deep.equal({
                 success: false,
                 error: 'File not found: missing.yaml',
+            });
+        });
+    });
+    describe('handleAdminMessage()', () => {
+        let dir: string;
+        let fileManager: YamlFileManager;
+
+        beforeEach(async () => {
+            dir = await mkdtemp(path.join(tmpdir(), 'esphome-yaml-'));
+            fileManager = new YamlFileManager(createAdapter());
+            fileManager.getESPHomeDirectory = (): string => dir;
+        });
+
+        afterEach(async () => {
+            await rm(dir, { recursive: true, force: true });
+        });
+
+        it('handles every sendTo command of the YAML Files tab', () => {
+            const jsonConfig = readFileSync(path.join(__dirname, '../../admin/jsonConfig.json5'), 'utf8');
+            const yamlTab = jsonConfig.slice(jsonConfig.indexOf('"yamlFiles": {'));
+            const commands = [...yamlTab.matchAll(/"command":\s*"(\w+)"/g)].map(match => match[1]);
+
+            expect(commands).to.have.length.greaterThan(0);
+            for (const command of commands) {
+                expect(fileManager.isAdminCommand(command), command).to.be.true;
+            }
+            expect(fileManager.isAdminCommand('getHostIp')).to.be.false;
+        });
+
+        it('shows the files as HTML table and as options', async () => {
+            await writeFile(path.join(dir, 'b.yaml'), 'x');
+            await writeFile(path.join(dir, 'a<b>.yml'), '');
+
+            const list = await fileManager.handleAdminMessage('getYamlFileList', null);
+            expect(list).to.have.property('text').that.includes('<table');
+            const text = (list as { text: string }).text;
+            expect(text).to.include('a&#60;b&#62;.yml').and.include('b.yaml').and.include('1 Bytes');
+            expect(text).to.not.include('<b>');
+
+            expect(await fileManager.handleAdminMessage('getYamlFileOptions', null)).to.deep.equal([
+                { label: 'a<b>.yml', value: 'a<b>.yml', noTranslation: true },
+                { label: 'b.yaml', value: 'b.yaml', noTranslation: true },
+            ]);
+        });
+
+        it('shows a hint if there are no files', async () => {
+            const list = await fileManager.handleAdminMessage('getYamlFileList', null);
+            expect((list as { text: string }).text).to.include('No YAML files found');
+            expect(await fileManager.handleAdminMessage('getYamlFileOptions', null)).to.deep.equal([]);
+        });
+
+        it('reloads list and selection after upload, refresh and delete', async () => {
+            const content = 'esphome:\n  name: "kitchen"\n';
+
+            const upload = await fileManager.handleAdminMessage('uploadYamlFile', {
+                filename: 'kitchen.yaml',
+                content,
+            });
+            expect(upload).to.have.nested.property('native._selectedFilename', 'kitchen.yaml');
+            expect(upload).to.have.nested.property('native._yamlFilesRefresh').that.is.a('number');
+            expect(await readFile(path.join(dir, 'kitchen.yaml'), 'utf8')).to.equal(content);
+
+            const refresh = await fileManager.handleAdminMessage('refreshYamlFiles', null);
+            expect(refresh).to.have.nested.property('native._yamlFilesRefresh').that.is.a('number');
+
+            expect(await fileManager.handleAdminMessage('loadYamlFile', { filename: 'kitchen.yaml' })).to.deep.equal({
+                native: { _uploadFilename: 'kitchen.yaml', _uploadContent: content },
+            });
+
+            const deletion = await fileManager.handleAdminMessage('deleteYamlFile', { filename: 'kitchen.yaml' });
+            expect(deletion).to.have.nested.property('native._selectedFilename', '');
+            expect(await fileManager.listYamlFiles()).to.deep.equal([]);
+        });
+
+        it('answers invalid requests with an error', async () => {
+            expect(await fileManager.handleAdminMessage('uploadYamlFile', { filename: 'a.yaml' })).to.deep.equal({
+                error: 'Filename and content are required',
+            });
+            // jsonData admin could not parse arrives as string
+            expect(await fileManager.handleAdminMessage('uploadYamlFile', '{"filename": "a.yaml"')).to.deep.equal({
+                error: 'Filename and content are required',
+            });
+            expect(await fileManager.handleAdminMessage('uploadYamlFile', { filename: '../a.yaml', content: 'x' }))
+                .to.have.property('error')
+                .that.includes('Invalid filename');
+            expect(await fileManager.handleAdminMessage('loadYamlFile', { filename: '' })).to.deep.equal({
+                error: 'Filename is required',
+            });
+            expect(await fileManager.handleAdminMessage('loadYamlFile', { filename: 'missing.yaml' })).to.deep.equal({
+                error: 'File not found: missing.yaml',
+            });
+            expect(await fileManager.handleAdminMessage('deleteYamlFile', null)).to.deep.equal({
+                error: 'Filename is required',
             });
         });
     });
