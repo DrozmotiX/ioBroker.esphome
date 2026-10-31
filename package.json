@@ -33,7 +33,7 @@
     "@2colors/esphome-native-api": "^1.3.6",
     "@iobroker/adapter-core": "^3.4.3",
     "@iobroker/dm-utils": "^3.2.1",
-    "autopy": "github:SimonFischer04/autopy#06d609f231cb1eef860d7dc684b226f65c7d3757"
+    "autopy": "github:SimonFischer04/autopy#40b9bae3a9493a21398ec0ae5ee47771c7c157f2"
   },
   "devDependencies": {
     "@alcalzone/release-script": "^5.2.1",
