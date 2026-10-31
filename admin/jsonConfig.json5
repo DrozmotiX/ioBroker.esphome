@@ -147,6 +147,8 @@
 				"apiPass": {
 					"type": "password",
 					"label": "lblApiPass",
+					"tooltip": "hlpInputApiPassword",
+					"help": "hlpInputApiPassword",
 					"xs": 12,
 					"sm": 2,
 					"md": 2,
