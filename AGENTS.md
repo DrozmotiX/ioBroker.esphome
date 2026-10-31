@@ -149,9 +149,9 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
 ## ESPHome Dashboard Specifics
 
 - Managed via `autopy` (Python venv); cache at `~/.cache/autopy`.
-- `autopy` is pinned to a commit of `github:SimonFischer04/autopy` (branch `pip-upgrade-dist`, built `dist`
-  committed) for the `upgrade` option of `getVenv()`. The fork is published on npm as `@simonfischer04/autopy`;
-  switch to that once a release contains the option. The repo checker flags the commit pin as S0047.
+- `autopy` is the fork `@simonfischer04/autopy` from npm, installed under the alias `autopy`
+  (`npm:@simonfischer04/autopy@^1.3.0`, source: github.com/SimonFischer04/autopy). 1.3.0 added the `upgrade`
+  option of `getVenv()` and checks the extras of installed requirements.
 - From ESPHome 2026.7.0 on the dashboard is ESPHome Device Builder (`esphome dashboard` only exits with an error).
   `buildRequirements()` (`src/lib/dashboardRequirements.ts`) installs it as `esphome-device-builder[esphome]`: its
   `esphome` extra holds the minimum ESPHome version, so pip picks the matching release. `getVenv()` runs with
