@@ -83,7 +83,7 @@
 					"xl": 12
 				},
 
-				// Discovery and connection settings of the devices
+				// Discovery settings and connection behavior of the devices
 				"_discoveryConnection": {
 					"type": "panel",
 					"newLine": true,
@@ -93,10 +93,10 @@
 					"lg": 12,
 					"xl": 12,
 					"items": {
-						"discoveryConnectionHeader": {
+						"discoveryHeader": {
 							"newLine": true,
 							"type": "header",
-							"text": "Discovery & connection",
+							"text": "Discovery",
 							"size": 1
 						},
 
@@ -112,18 +112,7 @@
 							"label": "lblAutoDiscovery"
 						},
 
-						// Enable/disable creation of config states for each entity
-						"configStates": {
-							"type": "checkbox",
-							"xs": 12,
-							"sm": 3,
-							"md": 3,
-							"lg": 3,
-							"xl": 3,
-							"label": "lblConfigStates",
-							"help": "hlpConfigStates"
-						},
-
+						// Network interface the mDNS discovery listens on
 						"discoveryListeningAddress" : {
 							"type": "ip",
 							"xs": 12,
@@ -132,10 +121,64 @@
 							"lg": 3,
 							"xl": 3,
 							"default": "0.0.0.0",
+							"hidden": "!data.autodiscovery",
 							"label": "lblDiscoveryListeningAddress",
 							"help": "hlpDiscoveryListeningAddress",
 							"listenOnAllPorts" : true,
 							"onlyIp4" : true
+						},
+
+						// Table (stored in adapter instance native object), to be ignored for device discovery
+						"ignoredDevices": {
+							"type": "table",
+							"newLine": true,
+							"xs": 12,
+							"sm": 12,
+							"md": 12,
+							"lg": 12,
+							"xl": 12,
+							"hidden": "!data.autodiscovery",
+							"label": "lblIgnoreList",
+							"showSecondAddAt": 5,
+//							"useNative": true,
+							"allowAddByFilter" : true,
+							"items": [
+								{
+									"type": "text",
+									"attr": "IP-Address",
+									"width": "30% ",
+									"title": "IP-Address",
+									"tooltip": "templateKeyTip",
+									"filter": false,
+									"sort": false,
+									"default": "",
+									//ToDo add validation if IP-Address format
+									//"validator": "const x={};for (const c of globalData.templateTable) {if (x[c.templateKey]==='x') return false; x[c.templateKey]='x';}; return true;",
+									"validatorNoSaveOnError": true
+								},
+								{
+									"type": "text",
+									"attr": "name",
+									"width": "20% ",
+									"title": "Name",
+									"tooltip": "templateKeyTip",
+									"filter": false,
+									"sort": false,
+									"default": "",
+									"validatorNoSaveOnError": true
+								},
+								{
+									"type": "text",
+									"attr": "description",
+									"width": "40% ",
+									"title": "Description",
+									"tooltip": "templateKeyTip",
+									"filter": false,
+									"sort": false,
+									"default": "",
+									"validatorNoSaveOnError": true
+								}
+							]
 						},
 
 						// Header for connection / reconnect behavior of known devices
@@ -143,7 +186,20 @@
 							"newLine": true,
 							"type": "header",
 							"text": "lblConnectionBehavior",
-							"size": 2
+							"size": 1
+						},
+
+						// Enable/disable creation of config states for each entity
+						"configStates": {
+							"newLine": true,
+							"type": "checkbox",
+							"xs": 12,
+							"sm": 12,
+							"md": 12,
+							"lg": 12,
+							"xl": 12,
+							"label": "lblConfigStates",
+							"help": "hlpConfigStates"
 						},
 
 						// How long to wait before retrying the connection to an offline device (seconds)
@@ -463,68 +519,6 @@
 						}
 					}
 				},
-			}
-		},
-
-		"ignoreList": {
-			"type": "panel",
-			"label": "Ignore List",
-			"items": {
-
-				// Table (stored in adapter instance native object), to be ignored for device discovery
-				"ignoredDevices": {
-					"type": "table",
-					"newLine": true,
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12,
-					"hidden": "data._templateTable[0].template == 'template.NewMessage'",
-					"label": "lblIgnoreList",
-					"showSecondAddAt": 5,
-//					"useNative": true,
-					"allowAddByFilter" : true,
-					"items": [
-						{
-							"type": "text",
-							"attr": "IP-Address",
-							"width": "30% ",
-							"title": "IP-Address",
-							"tooltip": "templateKeyTip",
-							"filter": false,
-							"sort": false,
-							"default": "",
-							//ToDo add validation if IP-Address format
-							//"validator": "const x={};for (const c of globalData.templateTable) {if (x[c.templateKey]==='x') return false; x[c.templateKey]='x';}; return true;",
-							"validatorNoSaveOnError": true
-						},
-						{
-							"type": "text",
-							"attr": "name",
-							"width": "20% ",
-							"title": "Name",
-							"tooltip": "templateKeyTip",
-							"filter": false,
-							"sort": false,
-							"default": "",
-							"validatorNoSaveOnError": true
-						},
-						{
-							"type": "text",
-							"attr": "description",
-							"width": "40% ",
-							"title": "Description",
-							"tooltip": "templateKeyTip",
-							"filter": false,
-							"sort": false,
-							"default": "",
-							"validatorNoSaveOnError": true
-						}
-
-					]
-				}
-
 			}
 		},
 

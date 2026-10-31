@@ -420,8 +420,11 @@ class Dashboard {
                         ? ['--port', port, configDir]
                         : ['dashboard', '--port', port, configDir];
 
+                    const deviceBuilderInfo = useDeviceBuilder
+                        ? `, ESPHome Device Builder version: ${resolved.deviceBuilder || 'latest'}`
+                        : '';
                     this.adapter.log.info(
-                        `Starting ESPHome Dashboard${useDeviceBuilder ? ' (ESPHome Device Builder)' : ''}`,
+                        `Starting ESPHome Dashboard. ESPHome version: ${useDashBoardVersion || 'latest'}, Pillow version: ${usePillowVersion || 'latest'}${deviceBuilderInfo}`,
                     );
                     // buffer: false, the output is only logged below and would otherwise be kept in memory
                     // for as long as the dashboard runs. NO_COLOR keeps color codes out of the log.
