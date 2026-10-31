@@ -301,20 +301,25 @@ The adapter provides a convenient interface for managing YAML configuration file
 
 - **Upload YAML Files**: Paste your YAML configuration content directly into the admin interface and upload it to the ESPHome directory
 - **View File List**: See all YAML files currently stored in the ESPHome directory with file size and modification date
-- **Download Files**: Retrieve the content of any YAML file for editing or backup
+- **Edit Files**: Load the content of any YAML file into the editor, change it and upload it again
 - **Delete Files**: Remove YAML files that are no longer needed
 
 #### How to Use
 
-1. **Navigate to the "YAML Files" tab** in the adapter configuration
+The adapter instance must be running, the tab shows a note otherwise.
+
+1. **Navigate to the "YAML Files" tab** in the adapter configuration, the file list is loaded automatically
+   ("Refresh File List" reloads it, e.g. after files were changed in the ESPHome Dashboard)
 2. **Upload a new file**:
     - Enter a filename (must end with .yaml or .yml)
     - Paste your YAML configuration content
-    - Click "Upload File"
-3. **Refresh the file list** to see all available YAML files
-4. **Download or delete files**:
-    - Enter the filename in the "Select file" field
-    - Click "Download File" to view the content or "Delete File" to remove it
+    - Click "Upload File". An existing file with the same name is overwritten
+3. **Edit or delete a file**:
+    - Pick the file in the "YAML file" dropdown
+    - Click "Open in Editor" to load it into the upload fields, change it and click "Upload File" to save it,
+      or click "Delete File" to remove it
+
+The filename and content fields are only used to transfer files, they are not stored in the adapter settings.
 
 > [!NOTE]
 > Files are stored in the ESPHome directory: `/opt/iobroker/iobroker-data/esphome.<instance>/`
@@ -448,6 +453,7 @@ If you like my work, please consider a personal donation
 - (@SimonFischer04) **FIXED**: When the ESPHome Dashboard stops, the log shows its exit code and signal. A handler that was meant to log them listened to an event the dashboard process never sends
 - (@SimonFischer04) **FIXED**: The debug log for rounded values showed "[object Object]" instead of the entity name
 - (@SimonFischer04) **FIXED**: Known devices were listed as "undefined" in the device table until they connected, because the device name was not stored in the device object any more
+- (@SimonFischer04) **FIXED**: YAML file management works again (fixes #419). The file list loads when the "YAML Files" tab is opened, files are picked from a dropdown, "Open in Editor" loads a file into the upload fields, and uploading YAML with several lines no longer fails with "Filename and content are required". The upload fields are no longer stored in the adapter settings
 - (@SimonFischer04) **FIXED**: The adapter requires Node.js 22.12 or newer. The ESPHome Dashboard could not start on Node.js 22.0 to 22.11, because the build loads the ESM-only autopy package with require(), which those versions do not support
 - (@SimonFischer04) **ENHANCED**: Adapter rebuilt on the current create-adapter template and moved to TypeScript, all code is type checked now
 - (@SimonFischer04) **FIXED**: Fan speed level could not be changed, current ESPHome reports `supportedSpeedCount` instead of `supportedSpeedLevels`, so `speedLevel` was created read-only

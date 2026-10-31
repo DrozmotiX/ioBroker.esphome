@@ -5,6 +5,7 @@
  */
 
 import type * as AdapterCore from '@iobroker/adapter-core';
+import * as I18n from '@iobroker/adapter-core/i18n';
 import { constants } from 'node:fs';
 import { access, mkdir, readdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
@@ -28,12 +29,57 @@ interface YamlFileResult {
 }
 
 /**
+ * Answer to a message of the "YAML Files" tab of admin/jsonConfig.json5.
+ * - `text` is shown by a "textSendTo" control
+ * - a list of options fills a "selectSendTo" control
+ * - `native` changes the given (not saved, "_" prefixed) fields of the form, the buttons have "useNative"
+ * - `error` is shown in an error dialog
+ */
+type AdminResponse =
+    { text: string } | { label: string; value: string }[] | { native: Record<string, unknown> } | { error: string };
+
+/** sendTo commands of the "YAML Files" tab, answered by handleAdminMessage() */
+const ADMIN_COMMANDS = [
+    'getYamlFileList',
+    'getYamlFileOptions',
+    'refreshYamlFiles',
+    'uploadYamlFile',
+    'loadYamlFile',
+    'deleteYamlFile',
+] as const;
+
+type AdminCommand = (typeof ADMIN_COMMANDS)[number];
+
+/**
  * Turns a caught error into the reason text of an error result
  *
  * @param error - The caught error
  */
 function errorReason(error: unknown): string {
     return error instanceof Error && error.message ? error.message : String(error);
+}
+
+/**
+ * Escapes a text for the HTML of the file list
+ *
+ * @param text - Text to escape
+ */
+function escapeHtml(text: string): string {
+    return text.replace(/[&<>"']/g, char => `&#${char.charCodeAt(0)};`);
+}
+
+/**
+ * Reads a string property of the message admin sent, undefined if it is missing or not a string
+ *
+ * @param message - The message of the sendTo control
+ * @param key - Name of the property
+ */
+function messageString(message: unknown, key: string): string | undefined {
+    if (message && typeof message === 'object') {
+        const value = (message as Record<string, unknown>)[key];
+        return typeof value === 'string' ? value : undefined;
+    }
+    return undefined;
 }
 
 /**
@@ -143,7 +189,8 @@ class YamlFileManager {
                 };
             });
 
-            return await Promise.all(fileInfoPromises);
+            const fileInfos = await Promise.all(fileInfoPromises);
+            return fileInfos.sort((a, b) => a.filename.localeCompare(b.filename));
         } catch (error) {
             this.adapter.log.error(`[yamlFileManager.listYamlFiles] ${String(error)}`);
             return [];
@@ -281,6 +328,105 @@ class YamlFileManager {
                 success: false,
                 error: `Failed to delete file: ${errorReason(error)}`,
             };
+        }
+    }
+
+    /**
+     * Whether a sendTo command belongs to the "YAML Files" tab
+     *
+     * @param command - Command of the message
+     */
+    isAdminCommand(command: string): command is AdminCommand {
+        return (ADMIN_COMMANDS as readonly string[]).includes(command);
+    }
+
+    /**
+     * Renders the file list of the "YAML Files" tab as HTML table
+     */
+    async renderFileList(): Promise<string> {
+        const files = await this.listYamlFiles();
+        if (!files.length) {
+            return `<i>${escapeHtml(I18n.translate('No YAML files found'))}</i>`;
+        }
+        const cell = 'text-align: left; padding: 4px 16px 4px 0';
+        const header = [I18n.translate('File name'), I18n.translate('Size'), I18n.translate('Modified')]
+            .map(title => `<th style="${cell}">${escapeHtml(title)}</th>`)
+            .join('');
+        const rows = files
+            .map(
+                file =>
+                    `<tr>${[file.filename, file.size, file.modified]
+                        .map(value => `<td style="${cell}">${escapeHtml(value)}</td>`)
+                        .join('')}</tr>`,
+            )
+            .join('');
+        return `<table style="border-collapse: collapse"><thead><tr>${header}</tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    /**
+     * Answers a sendTo message of the "YAML Files" tab in admin/jsonConfig.json5
+     *
+     * @param command - One of ADMIN_COMMANDS
+     * @param message - Data of the message, built by the jsonData of the control
+     */
+    async handleAdminMessage(command: AdminCommand, message: unknown): Promise<AdminResponse> {
+        try {
+            switch (command) {
+                case 'getYamlFileList':
+                    return { text: await this.renderFileList() };
+
+                case 'getYamlFileOptions':
+                    // noTranslation: file names are no translation keys (the control itself must not set it, its help is one)
+                    return (await this.listYamlFiles()).map(file => ({
+                        label: file.filename,
+                        value: file.filename,
+                        noTranslation: true,
+                    }));
+
+                case 'refreshYamlFiles':
+                    // The file list and the file selection reload when this value changes
+                    return { native: { _yamlFilesRefresh: Date.now() } };
+
+                case 'uploadYamlFile': {
+                    const filename = messageString(message, 'filename');
+                    const content = messageString(message, 'content');
+                    if (!filename || !content) {
+                        return { error: 'Filename and content are required' };
+                    }
+                    const result = await this.uploadYamlFile(filename, content);
+                    if (!result.success) {
+                        return { error: result.error ?? 'Failed to upload file' };
+                    }
+                    return { native: { _yamlFilesRefresh: Date.now(), _selectedFilename: filename } };
+                }
+
+                case 'loadYamlFile': {
+                    const filename = messageString(message, 'filename');
+                    if (!filename) {
+                        return { error: 'Filename is required' };
+                    }
+                    const result = await this.downloadYamlFile(filename);
+                    if (!result.success) {
+                        return { error: result.error ?? 'Failed to download file' };
+                    }
+                    return { native: { _uploadFilename: filename, _uploadContent: result.content ?? '' } };
+                }
+
+                case 'deleteYamlFile': {
+                    const filename = messageString(message, 'filename');
+                    if (!filename) {
+                        return { error: 'Filename is required' };
+                    }
+                    const result = await this.deleteYamlFile(filename);
+                    if (!result.success) {
+                        return { error: result.error ?? 'Failed to delete file' };
+                    }
+                    return { native: { _yamlFilesRefresh: Date.now(), _selectedFilename: '' } };
+                }
+            }
+        } catch (error) {
+            this.adapter.log.error(`[yamlFileManager.handleAdminMessage] ${command}: ${String(error)}`);
+            return { error: errorReason(error) };
         }
     }
 }
