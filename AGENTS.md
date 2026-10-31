@@ -148,6 +148,11 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
 ## ESPHome Dashboard Specifics
 
 - Managed via `autopy` (Python venv); cache at `~/.cache/autopy`.
+- With `config.ESPHomeDashboardDocker` ("Use Docker Integration") it runs as the official `ghcr.io/esphome/esphome` container
+  instead: `docker-compose.yaml` (shipped in `files` of package.json) is managed by `@iobroker/plugin-docker`
+  (`common.plugins.docker` in `io-package.json`). The service has `iobWaitForReady`, so the plugin starts nothing by itself;
+  `startDockerContainer()` in `src/lib/dashboard.ts` sets the image tag and the `/config` bind mount on `plugin.configurations`
+  and calls `instanceIsReady()`, only when the dashboard is enabled. Unit tests: `src/lib/dashboard.test.ts`.
 - `autopy` is intentionally pinned to a commit of `github:SimonFischer04/autopy` — the fork is not published
   to npm, and the commit pin is deliberate. The repo checker flags this as S0047; it is a known won't-fix.
 - Pillow versions fetched from PyPI; cached in state `_ESPHomeDashboard.pillowVersionCache`.

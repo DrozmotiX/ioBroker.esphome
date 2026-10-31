@@ -149,9 +149,15 @@
     },
     "tier": 2,
     "nogit": true,
+    "stopTimeout": 10000,
     "plugins": {
       "sentry": {
         "dsn": "https://52227cfa250b49e99b1f28408273402c@sentry.iobroker.net/122"
+      },
+      "docker": {
+        "iobDockerComposeFiles": [
+          "docker-compose.yaml"
+        ]
       }
     },
     "localLinks": {
@@ -185,6 +191,7 @@
     "discoveryListeningAddress": "0.0.0.0",
     "configStates": false,
     "ESPHomeDashboardEnabled": false,
+    "ESPHomeDashboardDocker": false,
     "ESPHomeDashboardPort": 6052,
     "ESPHomeDashboardIP": "",
     "ESPHomeDashboardUrl": "",

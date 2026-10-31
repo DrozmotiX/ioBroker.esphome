@@ -2,10 +2,12 @@
  * ESPHome Dashboard Module
  * Handles everything around the ESPHome Dashboard integrated in the adapter: migration of the
  * dashboard configuration, lookup of the available ESPHome and Pillow versions, the version
- * dropDowns of the adapter configuration and the dashboard process started through autopy.
+ * dropDowns of the adapter configuration and the dashboard process started through autopy, or the
+ * dashboard container started through the docker plugin of ioBroker.
  */
 
-import * as utils from '@iobroker/adapter-core';
+import type * as AdapterCore from '@iobroker/adapter-core';
+import type DockerPlugin from '@iobroker/plugin-docker';
 import type { getVenv } from 'autopy' with { 'resolution-mode': 'import' };
 import * as fs from 'node:fs';
 import * as os from 'node:os';
@@ -13,6 +15,11 @@ import * as path from 'node:path';
 
 /** The ESPHome dashboard process started through autopy */
 type DashboardProcess = ReturnType<Awaited<ReturnType<typeof getVenv>>>;
+
+/** Official ESPHome image, the tag is the ESPHome version */
+const dockerImage = 'ghcr.io/esphome/esphome';
+/** Directory of the container the YAML configuration files are mounted to, see docker-compose.yaml */
+const dockerConfigDir = '/config';
 
 /** One entry of a version dropDown in the adapter configuration */
 type VersionDropDownEntry = string | { label: string; value: string };
@@ -318,7 +325,9 @@ class Dashboard {
             this.adapter.log.debug(`Using Pillow version: ${usePillowVersion}`);
 
             // Start Dashboard Process
-            if (this.adapter.config.ESPHomeDashboardEnabled) {
+            if (this.adapter.config.ESPHomeDashboardEnabled && this.adapter.config.ESPHomeDashboardDocker) {
+                void this.startDockerContainer(useDashBoardVersion);
+            } else if (this.adapter.config.ESPHomeDashboardEnabled) {
                 this.adapter.log.info(`Native Integration of ESPHome Dashboard enabled, making environment ready`);
 
                 this.warnUnpinnedVersions(useDashBoardVersion, usePillowVersion);
@@ -360,10 +369,10 @@ class Dashboard {
                     }
 
                     // Define directory to store configuration files
-                    const dataDir = utils.getAbsoluteDefaultDataDir();
+                    const configDir = this.getConfigDirectory();
 
                     try {
-                        fs.mkdir(`${dataDir}esphome.${this.adapter.instance}`, err => {
+                        fs.mkdir(configDir, err => {
                             if (err) {
                                 return console.log(`ESPHome directory exists`);
                             }
@@ -384,7 +393,7 @@ class Dashboard {
                         'dashboard',
                         '--port',
                         String(this.adapter.config.ESPHomeDashboardPort),
-                        `${dataDir}esphome.${this.adapter.instance}`,
+                        configDir,
                     ]);
 
                     this.adapter.log.debug(`espHomeDashboard_Process ${JSON.stringify(this.dashboardProcess)}`);
@@ -427,6 +436,77 @@ class Dashboard {
             }
         } catch (error) {
             this.adapter.errorHandler(`[espHomeDashboard-Function]`, error);
+        }
+    }
+
+    /**
+     * Get the directory of the YAML configuration files of this instance, the same directory the YAML
+     * file management of the adapter configuration uses
+     *
+     * @returns absolute path of the directory
+     */
+    getConfigDirectory(): string {
+        // Loaded on demand: loading adapter-core throws "Cannot find js-controller" where none is
+        // installed, e.g. in the unit tests of this module
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const utils = require('@iobroker/adapter-core') as typeof AdapterCore;
+        return `${utils.getAbsoluteDefaultDataDir()}esphome.${this.adapter.instance}`;
+    }
+
+    /**
+     * Run the ESPHome Dashboard as container of the official ESPHome image instead of the autopy process
+     *
+     * The container is declared in docker-compose.yaml and managed by the docker plugin of ioBroker
+     * (common.plugins.docker in io-package.json). The plugin prepares it when the instance starts, but
+     * waits (iobWaitForReady) until instanceIsReady() is called here: only now the image tag and the
+     * configuration directory are known, which a compose file cannot express. As this only happens when
+     * the dashboard is enabled, the container never runs with a disabled dashboard. iobStopOnUnload
+     * stops it together with the instance, like the native dashboard process.
+     *
+     * Not awaited by start(): on the first start the image is pulled, which takes a while.
+     *
+     * @param version - ESPHome version (image tag) to run, the newest stable release if empty
+     */
+    async startDockerContainer(version: string): Promise<void> {
+        try {
+            const plugin = this.adapter.getPluginInstance('docker') as DockerPlugin | null;
+            const container = plugin?.configurations.find(config =>
+                config.mounts?.some(mount => mount.target === dockerConfigDir),
+            );
+            if (!plugin || !container) {
+                this.adapter.log.error(
+                    `Docker Integration of the ESPHome Dashboard is enabled, but the docker plugin of ioBroker is not available. Disable "Use Docker Integration" to run the dashboard without Docker.`,
+                );
+                return;
+            }
+
+            // The container writes into the same directory as the native dashboard and the YAML file management
+            const configDir = this.getConfigDirectory();
+            fs.mkdirSync(configDir, { recursive: true });
+
+            container.image = `${dockerImage}:${version || 'stable'}`;
+            for (const mount of container.mounts ?? []) {
+                if (mount.target === dockerConfigDir) {
+                    mount.type = 'bind';
+                    mount.source = configDir;
+                }
+            }
+
+            this.adapter.log.info(
+                `Docker Integration of ESPHome Dashboard enabled, starting container. Image: ${container.image}, configuration directory: ${configDir}`,
+            );
+            await plugin.instanceIsReady();
+
+            const dockerInfo = await plugin.getDockerManager()?.getDockerDaemonInfo();
+            if (dockerInfo?.daemonRunning) {
+                this.adapter.log.info(`ESPHome Dashboard container is managed by Docker ${dockerInfo.version}`);
+            } else {
+                this.adapter.log.error(
+                    `ESPHome Dashboard cannot be started: Docker is not installed or not running. Install Docker or disable "Use Docker Integration" to run the dashboard without Docker.`,
+                );
+            }
+        } catch (error) {
+            this.adapter.errorHandler(`[espHomeDashboard-Docker]`, error);
         }
     }
 

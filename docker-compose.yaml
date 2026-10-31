@@ -1,0 +1,24 @@
+# ESPHome Dashboard in Docker, managed by the docker plugin of ioBroker (@iobroker/plugin-docker).
+# Only used when "Use Docker Integration" is enabled in the ESPHome Dashboard settings of the instance.
+#
+# The container is started by the adapter (iobWaitForReady), and only when the ESPHome Dashboard is
+# enabled as well. Before that, the adapter sets the image tag to the selected ESPHome version and
+# mounts the YAML directory of the instance (iobroker-data/esphome.<instance>) to /config,
+# see startDockerContainer() in src/lib/dashboard.ts.
+services:
+    esphome:
+        image: ghcr.io/esphome/esphome:stable
+        labels:
+            - 'iobEnabled=${config.ESPHomeDashboardDocker:-false}'
+            - 'iobWaitForReady=true'
+            # Like the native dashboard process, the container runs only while the instance runs
+            - 'iobStopOnUnload=true'
+            - 'iobMonitoringEnabled=true'
+        # Host network, as recommended by ESPHome: the dashboard needs mDNS to show the online status of the devices
+        network_mode: host
+        command: ['dashboard', '--port=${config.ESPHomeDashboardPort:-6052}', '/config']
+        volumes:
+            # Source replaced by the adapter with the YAML directory of the instance
+            - './esphome-config:/config'
+        stop_grace_period: 5s
+        restart: unless-stopped
