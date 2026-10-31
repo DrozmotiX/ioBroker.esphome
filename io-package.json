@@ -177,7 +177,8 @@
   },
   "native": {
     "ESPHomeDashboardVersion": "2026.6.5",
-    "PillowVersion": "12.2.0",
+    "PillowVersion": "Auto Detect",
+    "DeviceBuilderVersion": "Auto Detect",
     "reconnectInterval": 30,
     "pingInterval": 5,
     "pingAttempts": 1,

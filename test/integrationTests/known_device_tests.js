@@ -63,7 +63,7 @@ exports.runTests = function (suite) {
                     autodiscovery: false,
                     ESPHomeDashboardEnabled: false,
                     ESPHomeDashboardVersion: '2026.6.5',
-                    PillowVersion: '12.2.0',
+                    PillowVersion: 'Auto Detect',
                 },
             });
             await harness.startAdapterAndWait();

@@ -49,7 +49,7 @@ exports.runTests = function (suite) {
                         ESPHomeDashboardEnabled: false,
                         // Pinned versions, so the version migration has nothing to do
                         ESPHomeDashboardVersion: '2026.6.5',
-                        PillowVersion: '12.2.0',
+                        PillowVersion: 'Auto Detect',
                         reconnectInterval: 7,
                         ignoredDevices: [{ 'IP-Address': '192.0.2.1', name: 'Gateway', description: '' }],
                         // Device tab of 1.0.0

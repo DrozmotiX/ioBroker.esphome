@@ -22,10 +22,10 @@ const { expect } = require('chai');
 const DASHBOARD_PORT = 6052;
 const DASHBOARD_VERSION = 'Always last available';
 const PILLOW_VERSION = 'Always last available';
-// ESPHome 2026.7.0 and newer serve the dashboard through ESPHome Device Builder and pin a newer
-// Pillow version than the configured one (#479). A fixed version keeps the test reproducible.
+// ESPHome 2026.7.0 and newer serve the dashboard through ESPHome Device Builder, pip installs the
+// Pillow and Device Builder versions matching ESPHome (#479). A fixed version keeps the test reproducible.
 const DEVICE_BUILDER_DASHBOARD_VERSION = '2026.10.1';
-const DEVICE_BUILDER_PILLOW_VERSION = '12.2.0';
+const DEVICE_BUILDER_PILLOW_VERSION = 'Auto Detect';
 const DASHBOARD_INITIALIZATION_DELAY_MS = 10000; // 10 seconds initial delay for dashboard to start initializing
 const REACHABILITY_CHECK_DELAY_MS = 3000; // 3 seconds between reachability checks
 const TOTAL_TIMEOUT_MS = 300000; // 5 minutes total test timeout
