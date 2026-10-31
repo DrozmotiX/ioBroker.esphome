@@ -190,6 +190,18 @@ This adapter can optionally integrate the ESPHome Dashboard into ioBroker's admi
 - Dashboard runs on port 6052 by default
 - Set Dashboard IP to `127.0.0.1:6052` for admin integration
 
+**Option 1b: Built-in Dashboard in Docker**
+
+- Enable the dashboard and "Use Docker Integration" in the "ESPHome Dashboard" tab of the adapter settings
+- Instead of a Python environment, the dashboard runs in the official ESPHome container (`ghcr.io/esphome/esphome`),
+  started and stopped together with the instance by the [docker plugin of ioBroker](https://github.com/ioBroker/plugin-docker)
+- Requires Docker on the ioBroker host (the checkbox is only available when Docker is found), not available e.g. on Windows without Docker
+- The image tag is the selected ESPHome Dashboard version ("Always last available" uses the newest release), the Pillow version is not used
+- The container uses the host network (needed for the online status of the devices) and the port configured in the advanced settings
+- The YAML files stay in `iobroker-data/esphome.<instance>`, the same directory as without Docker. When ioBroker itself runs in
+  a container, this path has to exist on the Docker host as well
+- Files created by the container belong to `root`, run `iob fix` if the YAML file management cannot change them
+
 **Option 2: External Dashboard**
 
 - Use existing ESPHome installation (Docker, standalone, etc.)
@@ -436,6 +448,7 @@ If you like my work, please consider a personal donation
 
 ### **WORK IN PROGRESS**
 
+- (@copilot) **NEW**: The integrated ESPHome Dashboard can run in the official ESPHome Docker container instead of a Python environment, enable "Use Docker Integration" in the ESPHome Dashboard settings. Requires Docker on the ioBroker host (#493)
 - (@SimonFischer04) **FIXED**: Discovered devices show their MAC address with ":" separators again
 - (@SimonFischer04) **NEW**: Support for the ioBroker device manager (#203). ESPHome devices are listed with their online status and details, can be added, adopted after discovery, given new credentials and deleted there
 - (@SimonFischer04) **BREAKING**: The device tables and the add / delete buttons were removed from the adapter settings. The device manager is shown in their place as the second tab ("Devices") of the adapter settings, the discovery settings and the ignore list (previously its own tab) moved to a section "Discovery" of the main settings, where the listening address and the ignore list are only shown while device discovery is enabled, followed by a section "Connection behavior for known devices" with the configuration states, reconnect and ping settings

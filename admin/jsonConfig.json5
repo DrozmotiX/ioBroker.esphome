@@ -377,8 +377,21 @@
 					"xl": 4,
 					"label": "chkEnableESPHome"
 				},
+				// Run the dashboard as container of the official ESPHome image (docker-compose.yaml, @iobroker/plugin-docker) instead of a Python environment
+				"ESPHomeDashboardDocker": {
+					"type": "checkDocker",
+					"xs": 12,
+					"sm": 8,
+					"md": 8,
+					"lg": 8,
+					"xl": 8,
+					"hidden": "!data.ESPHomeDashboardEnabled",
+					"label": "lblUseDockerIntegration",
+					"help": "hlpUseDockerIntegration"
+				},
 				"ESPHomeDashboardVersion": {
 					"type": "autocompleteSendTo",
+					"newLine": true,
 					"xs": 12,
 					"sm": 6,
 					"md": 6,
@@ -397,6 +410,8 @@
 					"xl": 6,
 					"label": "lblPillowVersion",
 					"help": "hlpPillowVersion",
+					// The ESPHome image brings its own Pillow
+					"hidden": "data.ESPHomeDashboardEnabled && data.ESPHomeDashboardDocker",
 					"command": "getPillowVersion"
 				},
 				"ESPHomeDashboardIP": {
@@ -466,7 +481,7 @@
 					"variant": "outlined",
 					"color": "primary",
 					"showProcess": true,
-					"hidden": "!_alive",
+					"hidden": "!_alive || (data.ESPHomeDashboardEnabled && data.ESPHomeDashboardDocker)",
 					"command": "clearAutopyCache",
 					"jsonData": "{}",
 					"xs": 12,
