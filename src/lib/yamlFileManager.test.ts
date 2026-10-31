@@ -152,16 +152,17 @@ describe('YAML File Management', () => {
 
         it('shows the files as HTML table and as options', async () => {
             await writeFile(path.join(dir, 'b.yaml'), 'x');
-            await writeFile(path.join(dir, 'a<b>.yml'), '');
+            // "<" and ">" are not allowed in file names on Windows
+            await writeFile(path.join(dir, "a&'b.yml"), '');
 
             const list = await fileManager.handleAdminMessage('getYamlFileList', null);
             expect(list).to.have.property('text').that.includes('<table');
             const text = (list as { text: string }).text;
-            expect(text).to.include('a&#60;b&#62;.yml').and.include('b.yaml').and.include('1 Bytes');
-            expect(text).to.not.include('<b>');
+            expect(text).to.include('a&#38;&#39;b.yml').and.include('b.yaml').and.include('1 Bytes');
+            expect(text).to.not.include("a&'b");
 
             expect(await fileManager.handleAdminMessage('getYamlFileOptions', null)).to.deep.equal([
-                { label: 'a<b>.yml', value: 'a<b>.yml', noTranslation: true },
+                { label: "a&'b.yml", value: "a&'b.yml", noTranslation: true },
                 { label: 'b.yaml', value: 'b.yaml', noTranslation: true },
             ]);
         });
