@@ -1,9 +1,10 @@
 /**
  * Pinned Version Migration Integration Test
  *
- * Covers the one-time migration in main.js migratePinnedVersions(): installations still set to
- * "Always last available" are rewritten once to the versions known to work (#463), while a
- * deliberate switch back afterwards is never overridden again.
+ * Covers the one-time migrations in dashboard.ts migratePinnedVersions(): an ESPHome version still
+ * set to "Always last available" is rewritten once to the version known to work (#463), the Pillow
+ * version is set to "Auto Detect" once (#479), and a deliberate change afterwards is never overridden
+ * again.
  *
  * The dashboard integration stays disabled, so no Python environment is built and these suites are
  * cheap enough for the regular CI matrix.
@@ -15,12 +16,13 @@
 
 const { expect } = require('chai');
 
-// Keep in sync with defaultDashboardVersion / defaultPillowVersion in main.js
+// Keep in sync with defaultDashboardVersion in dashboard.ts
 const PINNED_DASHBOARD_VERSION = '2026.6.5';
-const PINNED_PILLOW_VERSION = '12.2.0';
+const AUTO_DETECT = 'Auto Detect';
 const UNPINNED = 'Always last available';
 
 const MIGRATION_STATE = 'esphome.0._ESPHomeDashboard.versionPinMigrationDone';
+const PILLOW_MIGRATION_STATE = 'esphome.0._ESPHomeDashboard.pillowAutoDetectMigrationDone';
 const INSTANCE_OBJECT = 'system.adapter.esphome.0';
 
 /**
@@ -99,7 +101,7 @@ exports.runTests = function (suite) {
 
                 const native = await readNativeConfig(harness);
                 expect(native.ESPHomeDashboardVersion).to.equal(PINNED_DASHBOARD_VERSION);
-                expect(native.PillowVersion).to.equal(PINNED_PILLOW_VERSION);
+                expect(native.PillowVersion).to.equal(AUTO_DETECT);
                 console.log(
                     `✓ migrated to dashboard ${native.ESPHomeDashboardVersion} / pillow ${native.PillowVersion}`,
                 );
@@ -110,7 +112,7 @@ exports.runTests = function (suite) {
     });
 
     suite('Pinned Version Migration - already pinned installation', getHarness => {
-        it('keeps hand picked versions and only records the marker', async function () {
+        it('keeps a hand picked ESPHome version and sets Pillow to "Auto Detect"', async function () {
             this.timeout(120000);
 
             const harness = getHarness();
@@ -132,8 +134,9 @@ exports.runTests = function (suite) {
 
                 const native = await readNativeConfig(harness);
                 expect(native.ESPHomeDashboardVersion).to.equal('2026.6.4');
-                expect(native.PillowVersion).to.equal('12.1.1');
-                console.log('✓ hand picked versions were not changed');
+                // ESPHome installs the Pillow version it needs, until now a version had to be selected
+                expect(native.PillowVersion).to.equal(AUTO_DETECT);
+                console.log('✓ hand picked ESPHome version was not changed, Pillow moved to "Auto Detect"');
             } finally {
                 await stopAdapterQuietly(harness);
             }
@@ -166,7 +169,7 @@ exports.runTests = function (suite) {
                     native: {
                         ESPHomeDashboardEnabled: false,
                         ESPHomeDashboardVersion: UNPINNED,
-                        PillowVersion: UNPINNED,
+                        PillowVersion: AUTO_DETECT,
                     },
                 });
 
@@ -181,8 +184,49 @@ exports.runTests = function (suite) {
                     native.ESPHomeDashboardVersion,
                     'a deliberate "Always last available" was migrated a second time',
                 ).to.equal(UNPINNED);
-                expect(native.PillowVersion).to.equal(UNPINNED);
+                expect(native.PillowVersion).to.equal(AUTO_DETECT);
                 console.log('✓ deliberate "Always last available" survives once the marker is set');
+            } finally {
+                await stopAdapterQuietly(harness);
+            }
+        });
+    });
+
+    suite('Pinned Version Migration - deliberate Pillow version', getHarness => {
+        it('never overrides a Pillow version selected once the Pillow migration has run', async function () {
+            this.timeout(120000);
+
+            const harness = getHarness();
+
+            try {
+                // Simulate the state after both migrations: the user has selected a Pillow version again
+                for (const id of [MIGRATION_STATE, PILLOW_MIGRATION_STATE]) {
+                    await harness.objects.setObjectAsync(id, {
+                        type: 'state',
+                        common: { name: id, type: 'boolean', role: 'indicator', read: true, write: false },
+                        native: {},
+                    });
+                    await harness.states.setStateAsync(id, { val: true, ack: true });
+                }
+
+                await harness.changeAdapterConfig('esphome', {
+                    native: {
+                        ESPHomeDashboardEnabled: false,
+                        ESPHomeDashboardVersion: PINNED_DASHBOARD_VERSION,
+                        PillowVersion: '12.1.1',
+                    },
+                });
+
+                await harness.startAdapterAndWait();
+
+                // Give the adapter more than enough time to write the configuration
+                await new Promise(resolve => setTimeout(resolve, 10000));
+
+                const native = await readNativeConfig(harness);
+                expect(native.PillowVersion, 'a deliberate Pillow version was migrated a second time').to.equal(
+                    '12.1.1',
+                );
+                console.log('✓ deliberate Pillow version survives once the marker is set');
             } finally {
                 await stopAdapterQuietly(harness);
             }

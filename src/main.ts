@@ -1545,6 +1545,11 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     this.sendTo(obj.from, obj.command, this.dashboard.getPillowVersionDropDown(), obj.callback);
                     break;
 
+                // Front End message handler to load ESPHome Device Builder version dropdown with available versions
+                case 'getDeviceBuilderVersion':
+                    this.sendTo(obj.from, obj.command, this.dashboard.getDeviceBuilderVersionDropDown(), obj.callback);
+                    break;
+
                 // Front End message handler to host IP-Address(es)
                 case 'getHostIp':
                     {

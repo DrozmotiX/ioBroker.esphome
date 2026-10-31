@@ -388,17 +388,6 @@
 					"help": "hlpESPHomeDashboardVersion",
 					"command": "getESPHomeDashboardVersion"
 				},
-				"PillowVersion": {
-					"type": "autocompleteSendTo",
-					"xs": 12,
-					"sm": 6,
-					"md": 6,
-					"lg": 6,
-					"xl": 6,
-					"label": "lblPillowVersion",
-					"help": "hlpPillowVersion",
-					"command": "getPillowVersion"
-				},
 				"ESPHomeDashboardIP": {
 					"type": "autocompleteSendTo",
 					"newLine": true,
@@ -502,6 +491,30 @@
 							"lg": 2,
 							"xl": 2,
 							"label": "lblESPHomePort"
+						},
+						// Versions installed next to ESPHome, "Auto Detect" leaves them to pip (#479)
+						"PillowVersion": {
+							"newLine": true,
+							"type": "autocompleteSendTo",
+							"xs": 12,
+							"sm": 6,
+							"md": 6,
+							"lg": 6,
+							"xl": 6,
+							"label": "lblPillowVersion",
+							"help": "hlpPillowVersion",
+							"command": "getPillowVersion"
+						},
+						"DeviceBuilderVersion": {
+							"type": "autocompleteSendTo",
+							"xs": 12,
+							"sm": 6,
+							"md": 6,
+							"lg": 6,
+							"xl": 6,
+							"label": "lblDeviceBuilderVersion",
+							"help": "hlpDeviceBuilderVersion",
+							"command": "getDeviceBuilderVersion"
 						},
 						"ESPHomeDashboardUrl": {
 							"type": "text",

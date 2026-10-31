@@ -441,6 +441,9 @@ If you like my work, please consider a personal donation
 
 ### **WORK IN PROGRESS**
 
+- (@SimonFischer04) **FIXED**: ESPHome Dashboard versions 2026.7.0 and newer work again (#479). ESPHome removed the built-in dashboard in 2026.7.0, from this version on ESPHome Device Builder is installed and started in its place, by default in the newest version supporting the selected ESPHome version. Pillow is no longer installed separately: ESPHome installs the version it requires itself, a different selected version made the installation fail. The Pillow version is set to "Auto Detect" once
+- (@SimonFischer04) **NEW**: The Pillow and ESPHome Device Builder versions can be selected in the "Advanced" section of the dashboard settings, "Auto Detect" (default) leaves them to ESPHome and pip
+- (@SimonFischer04) **FIXED**: The adapter no longer terminates when the ESPHome Dashboard cannot be started (`spawn esphome ENOENT`), an error with the reason is logged instead. Errors of the dashboard, like the reason why it stops right after the start, are logged as well
 - (@SimonFischer04) **FIXED**: Discovered devices show their MAC address with ":" separators again
 - (@SimonFischer04) **NEW**: Support for the ioBroker device manager (#203). ESPHome devices are listed with their online status and details, can be added, adopted after discovery, given new credentials and deleted there
 - (@SimonFischer04) **BREAKING**: The device tables and the add / delete buttons were removed from the adapter settings. The device manager is shown in their place as the second tab ("Devices") of the adapter settings, the discovery settings and the ignore list (previously its own tab) moved to a section "Discovery" of the main settings, where the listening address and the ignore list are only shown while device discovery is enabled, followed by a section "Connection behavior for known devices" with the configuration states, reconnect and ping settings
