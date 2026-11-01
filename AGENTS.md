@@ -17,10 +17,12 @@ Single-file adapter (`src/main.ts`, ~2700 lines) extending `@iobroker/adapter-co
 | `src/lib/dashboard.ts`             | ESPHome Dashboard: versions, config migration, process start / stop                |
 | `src/lib/dashboardRequirements.ts` | Python requirements of the dashboard (ESPHome, Pillow, ESPHome Device Builder)     |
 | `src/lib/deviceManagement.ts`      | ioBroker device manager (`@iobroker/dm-utils`): list / add / edit / delete devices |
+| `src/lib/discoveryOptions.ts`      | Options of the MDNS discovery for the listening address (IPv4 or IPv6 interface)   |
 
 **Two optional subsystems run in-process alongside device connections:**
 
-1. **MDNS auto-discovery** – `Discovery` from `@2colors/esphome-native-api`, started 5 s after `onReady`.
+1. **MDNS auto-discovery** – `Discovery` from `@2colors/esphome-native-api`, started 5 s after `onReady`. The listening
+   address may be IPv6: `discoveryOptions()` then joins the IPv6 mDNS group on the interface of that address.
 2. **ESPHome Dashboard** – spawned Python process via `autopy` (virtual-env wrapper); only active when `config.ESPHomeDashboardEnabled`. All of it lives in `src/lib/dashboard.ts`.
 
 ## Key Data Structures

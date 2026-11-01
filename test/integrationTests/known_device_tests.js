@@ -167,8 +167,8 @@ exports.runTests = function (suite) {
             // Translated by the device manager (src/i18n, copied to build/i18n)
             expect(messages).to.have.lengthOf(1);
             expect(messages[0]).to.deep.include({
-                en: 'Please enter the IP address of the device',
-                de: 'Bitte die IP-Adresse des Geräts eingeben',
+                en: 'Please enter the IP address or host name of the device',
+                de: 'Bitte die IP-Adresse oder den Hostnamen des Geräts eingeben',
             });
             expect(result).to.deep.equal({ refresh: false });
         });

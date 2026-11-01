@@ -343,7 +343,7 @@ describe('Device Management', () => {
 
             expect(added).to.be.empty;
             expect(messages).to.have.lengthOf(1);
-            expect(messages[0]).to.deep.include({ en: 'Please enter the IP address of the device' });
+            expect(messages[0]).to.deep.include({ en: 'Please enter the IP address or host name of the device' });
         });
 
         it('adopts a discovered device under its IP address', async () => {

@@ -19,6 +19,7 @@ import { isIPv4 } from 'node:net';
 import { format } from 'node:util';
 import { connectionStateValue, isDeviceOnline } from './lib/connectionState';
 import Dashboard from './lib/dashboard';
+import { discoveryOptions } from './lib/discoveryOptions';
 import EsphomeDeviceManagement, {
     type DeviceActionResult,
     type DiscoveredDevice,
@@ -304,20 +305,27 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
             }
 
             // Start device discovery
-            discovery = new Discovery({
-                interface: this.config.discoveryListeningAddress ? this.config.discoveryListeningAddress : '0.0.0.0',
-            });
+            const options = discoveryOptions(this.config.discoveryListeningAddress);
+            if (!options) {
+                this.log.warn(
+                    `Listening address ${this.config.discoveryListeningAddress} of the auto discovery belongs to no network interface, listening on all IPv4 interfaces`,
+                );
+            }
+            discovery = new Discovery(options ?? { interface: '0.0.0.0' });
             discovery.run();
 
             discovery.on('info', message => {
-                this.log.debug(`ESPHome Device found on ${message.address} | ${JSON.stringify(message)}`);
+                // The IPv6 address only for devices announcing no IPv4 address
+                const address = message.address || message.address6;
+                this.log.debug(`ESPHome Device found on ${address} | ${JSON.stringify(message)}`);
                 if (
-                    !excludedIP.includes(message.address) &&
-                    !newlyDiscoveredClient[message.address] &&
-                    !clientDetails[message.address]
+                    address &&
+                    !excludedIP.includes(address) &&
+                    !newlyDiscoveredClient[address] &&
+                    !clientDetails[address]
                 ) {
                     this.log.info(
-                        `New ESPHome Device discovered: ${message.friendly_name ? message.friendly_name : message.host} on ${message.address}`,
+                        `New ESPHome Device discovered: ${message.friendly_name ? message.friendly_name : message.host} on ${address}`,
                     );
 
                     if (message.mac == null) {
@@ -326,8 +334,8 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     }
 
                     // Store device data into memory to allow adoption by admin interface
-                    newlyDiscoveredClient[message.address] = {
-                        ip: message.address,
+                    newlyDiscoveredClient[address] = {
+                        ip: address,
                         mac: String(message.mac)
                             .replace(/[^0-9a-fA-F]/g, '')
                             .toUpperCase()

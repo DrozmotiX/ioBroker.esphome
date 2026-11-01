@@ -124,8 +124,7 @@
 							"hidden": "!data.autodiscovery",
 							"label": "lblDiscoveryListeningAddress",
 							"help": "hlpDiscoveryListeningAddress",
-							"listenOnAllPorts" : true,
-							"onlyIp4" : true
+							"listenOnAllPorts" : true
 						},
 
 						// Table (stored in adapter instance native object), to be ignored for device discovery

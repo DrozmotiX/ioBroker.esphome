@@ -162,7 +162,7 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
         return {
             apiVersion: 'v3',
             communicationStateId: COMMUNICATION_STATE,
-            identifierLabel: I18n.getTranslatedObject('IP address'),
+            identifierLabel: I18n.getTranslatedObject('IP address or host name'),
             actions: [
                 {
                     id: 'add',
@@ -199,7 +199,7 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
             }
             return this.details(ip, {
                 name: ['Name', discovered.deviceFriendlyName],
-                ip: ['IP address', ip],
+                ip: ['IP address or host name', ip],
                 mac: ['MAC address', discovered.mac],
             });
         }
@@ -207,7 +207,7 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
         const info = device.deviceInfo;
         return this.details(ip, {
             name: ['Name', initialized(device.deviceFriendlyName)],
-            ip: ['IP address', ip],
+            ip: ['IP address or host name', ip],
             mac: ['MAC address', initialized(device.mac)],
             connectionStatus: ['Connection status', device.connectStatus],
             esphomeVersion: ['ESPHome version', info?.esphomeVersion],
@@ -471,7 +471,9 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
         encryptionKey: string | undefined,
     ): Promise<boolean> {
         if (!ip) {
-            await context.showMessage(I18n.getTranslatedObject('Please enter the IP address of the device'));
+            await context.showMessage(
+                I18n.getTranslatedObject('Please enter the IP address or host name of the device'),
+            );
             return false;
         }
         const progress = await context.openProgress(I18n.getTranslatedObject('Connecting to device...'), {
@@ -520,7 +522,12 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
         return {
             type: 'panel',
             items: {
-                ip: { type: 'text', label: I18n.getTranslatedObject('IP address'), readOnly: ipReadOnly, sm: 12 },
+                ip: {
+                    type: 'text',
+                    label: I18n.getTranslatedObject('IP address or host name'),
+                    readOnly: ipReadOnly,
+                    sm: 12,
+                },
                 encryptionKey: {
                     type: 'password',
                     label: I18n.getTranslatedObject('Encryption key'),
