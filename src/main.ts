@@ -15,7 +15,7 @@ import {
     type LockCommand,
 } from '@2colors/esphome-native-api';
 import * as utils from '@iobroker/adapter-core';
-import { isIPv4 } from 'node:net';
+import { isIPv4, isIPv6 } from 'node:net';
 import { format } from 'node:util';
 import { connectionStateValue, isDeviceOnline } from './lib/connectionState';
 import Dashboard from './lib/dashboard';
@@ -1569,27 +1569,16 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                 // Front End message handler to host IP-Address(es)
                 case 'getHostIp':
                     {
-                        // Get all current known host IP-Addresses from System object
-                        const hostIP = await this.getForeignObjectAsync(`system.host.${this.host}`);
-                        const ip4List = [];
-
-                        // Only show IP4 in dropdown
-                        if (hostIP) {
-                            // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
-                            for (const ip in hostIP.common.address) {
-                                console.log(hostIP.common.address[ip]);
-                                if (isIPv4(hostIP.common.address[ip])) {
-                                    ip4List.push({
-                                        label: hostIP.common.address[ip],
-                                        value: hostIP.common.address[ip],
-                                    });
-                                }
-                            }
-                        }
-
-                        // console.log(`IP4 List ${ip4List}`);
-
-                        this.sendTo(obj.from, obj.command, ip4List, obj.callback);
+                        // Suggestions only, the field also accepts any host name or address
+                        const hostObject = await this.getForeignObjectAsync(`system.host.${this.host}`);
+                        const addresses = (hostObject?.common.address ?? []).filter(
+                            address => typeof address === 'string',
+                        );
+                        const options = [...addresses.filter(isIPv4), ...addresses.filter(isIPv6)].map(address => ({
+                            label: address,
+                            value: address,
+                        }));
+                        this.sendTo(obj.from, obj.command, options, obj.callback);
                     }
                     break;
 

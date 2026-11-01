@@ -9,6 +9,7 @@
 import * as utils from '@iobroker/adapter-core';
 import type { getVenv } from 'autopy' with { 'resolution-mode': 'import' };
 import * as fs from 'node:fs';
+import { buildDashboardUrl } from './dashboardApi';
 import { autoDetect, buildRequirements, compareVersions, usesDeviceBuilder } from './dashboardRequirements';
 
 /** Name of the autopy virtual environment the dashboard is installed in */
@@ -92,7 +93,10 @@ class Dashboard {
             // Check if migration is needed:
             // ESPHomeDashboardIP is not empty AND ESPHomeDashboardUrl is empty
             if (this.adapter.config.ESPHomeDashboardIP && !this.adapter.config.ESPHomeDashboardUrl) {
-                const calculatedUrl = `http://${this.adapter.config.ESPHomeDashboardIP}:${this.adapter.config.ESPHomeDashboardPort}`;
+                const calculatedUrl = buildDashboardUrl(
+                    this.adapter.config.ESPHomeDashboardIP,
+                    this.adapter.config.ESPHomeDashboardPort,
+                );
 
                 this.adapter.log.info(`Migrating configuration: Setting ESPHomeDashboardUrl to ${calculatedUrl}`);
 

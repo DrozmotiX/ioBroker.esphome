@@ -91,6 +91,18 @@ function isDashboardApiError(error: unknown): error is DashboardApiError {
 }
 
 /**
+ * URL of the dashboard from the address the browser reaches it at and its port.
+ * Same as the calculateFunc of ESPHomeDashboardUrl in admin/jsonConfig.json5.
+ *
+ * @param address - IP address or host name, an IPv6 address is put in brackets
+ * @param port - Port of the dashboard
+ */
+export function buildDashboardUrl(address: string, port: string | number): string {
+    const host = address.includes(':') && !address.startsWith('[') ? `[${address}]` : address;
+    return `http://${host}:${port}`;
+}
+
+/**
  * Make an HTTP request to the ESPHome Dashboard and return the parsed JSON body.
  *
  * @param method - HTTP method (e.g. 'GET', 'POST')
