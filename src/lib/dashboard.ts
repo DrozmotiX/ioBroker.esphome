@@ -50,7 +50,7 @@ const versionMigrationState = '_ESPHomeDashboard.versionPinMigrationDone';
 const pillowMigrationState = '_ESPHomeDashboard.pillowAutoDetectMigrationDone';
 
 // Interval and per-request timeout of the check whether the started dashboard answers
-const readyCheckIntervalMs = 3000;
+const readyCheckIntervalMs = 60000;
 const readyCheckTimeoutMs = 5000;
 
 /**
