@@ -347,11 +347,11 @@ class Dashboard {
                         return;
                     }
 
-                    // Same directory the YAML Files tab uses (path.join: getAbsoluteDefaultDataDir has no slash)
-                    const configDir = path.join(utils.getAbsoluteDefaultDataDir(), `esphome.${this.adapter.instance}`);
+                    // Define directory to store configuration files
+                    const dataDir = utils.getAbsoluteDefaultDataDir();
 
                     try {
-                        fs.mkdir(configDir, err => {
+                        fs.mkdir(`${dataDir}esphome.${this.adapter.instance}`, err => {
                             if (err) {
                                 return console.log(`ESPHome directory exists`);
                             }
@@ -364,6 +364,8 @@ class Dashboard {
                             `ESPHome DDashboard is unable to access directory to store YAML configuration data, please run ioBroker fix: ${String(error)}`,
                         );
                     }
+
+                    const configDir = `${dataDir}esphome.${this.adapter.instance}`;
                     const port = String(this.adapter.config.ESPHomeDashboardPort);
                     // From ESPHome 2026.7.0 on `esphome dashboard` only exits with an error, ESPHome Device
                     // Builder takes the same port and configuration directory
