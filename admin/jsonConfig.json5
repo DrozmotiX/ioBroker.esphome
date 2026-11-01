@@ -124,8 +124,7 @@
 							"hidden": "!data.autodiscovery",
 							"label": "lblDiscoveryListeningAddress",
 							"help": "hlpDiscoveryListeningAddress",
-							"listenOnAllPorts" : true,
-							"onlyIp4" : true
+							"listenOnAllPorts" : true
 						},
 
 						// Table (stored in adapter instance native object), to be ignored for device discovery
@@ -415,8 +414,7 @@
 					"lg": 5,
 					"xl": 5,
 					"label": "lblESPHomeIP",
-					"command": "getHostIp",
-					"jsonData": "{ \"service\": \"${data.deviceInputIP}\" }"
+					"command": "getHostIp"
 				},
 
 				// Explanation usage of IP-Address input field
@@ -572,7 +570,8 @@
 							"label": "URL of ESPHome Dashboard",
 							onChange: {
 								"alsoDependsOn": ["ESPHomeDashboardIP", "ESPHomeDashboardPort"],
-								"calculateFunc": "`http://${data.ESPHomeDashboardIP}:${data.ESPHomeDashboardPort}`",
+								// Same as buildDashboardUrl() in src/lib/dashboardApi.ts: an IPv6 address needs brackets in the URL
+								"calculateFunc": "`http://${String(data.ESPHomeDashboardIP).includes(':') && !String(data.ESPHomeDashboardIP).startsWith('[') ? `[${data.ESPHomeDashboardIP}]` : data.ESPHomeDashboardIP}:${data.ESPHomeDashboardPort}`",
 								"ignoreOwnChanges": true
 							}
 						}

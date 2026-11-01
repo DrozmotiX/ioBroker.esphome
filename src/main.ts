@@ -15,9 +15,11 @@ import {
     type LockCommand,
 } from '@2colors/esphome-native-api';
 import * as utils from '@iobroker/adapter-core';
+import { isIPv4, isIPv6 } from 'node:net';
 import { format } from 'node:util';
 import { connectionStateValue, isDeviceOnline } from './lib/connectionState';
 import Dashboard from './lib/dashboard';
+import { discoveryOptions } from './lib/discoveryOptions';
 import EsphomeDeviceManagement, {
     type DeviceActionResult,
     type DiscoveredDevice,
@@ -98,8 +100,6 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
     declare private deviceStateRelation: Record<string, { ip: string }>;
     /** Common of every state created by stateSetCreate(), to skip unchanged object updates */
     declare private createdStatesDetails: Record<string, Partial<ioBroker.StateCommon>>;
-    /** Callbacks of the device manager waiting for the result of adding a device, by IP */
-    declare private messageResponse: Record<string, (response: DeviceActionResult) => void>;
     declare private yamlFileManager: YamlFileManager;
     declare private dashboard: Dashboard;
     declare private deviceManagement: EsphomeDeviceManagement;
@@ -122,7 +122,6 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
 
         this.deviceStateRelation = {}; // Memory array of an initiated device by Device Identifier (name) and IP
         this.createdStatesDetails = {}; // Array to store information of created states
-        this.messageResponse = {}; // Callbacks waiting for the result of adding / modifying a device
 
         // Initialize YAML file manager
         this.yamlFileManager = new YamlFileManager(this);
@@ -306,20 +305,27 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
             }
 
             // Start device discovery
-            discovery = new Discovery({
-                interface: this.config.discoveryListeningAddress ? this.config.discoveryListeningAddress : '0.0.0.0',
-            });
+            const options = discoveryOptions(this.config.discoveryListeningAddress);
+            if (!options) {
+                this.log.warn(
+                    `Listening address ${this.config.discoveryListeningAddress} of the auto discovery belongs to no network interface, listening on all IPv4 interfaces`,
+                );
+            }
+            discovery = new Discovery(options ?? { interface: '0.0.0.0' });
             discovery.run();
 
             discovery.on('info', message => {
-                this.log.debug(`ESPHome Device found on ${message.address} | ${JSON.stringify(message)}`);
+                // The IPv6 address only for devices announcing no IPv4 address
+                const address = message.address || message.address6;
+                this.log.debug(`ESPHome Device found on ${address} | ${JSON.stringify(message)}`);
                 if (
-                    !excludedIP.includes(message.address) &&
-                    !newlyDiscoveredClient[message.address] &&
-                    !clientDetails[message.address]
+                    address &&
+                    !excludedIP.includes(address) &&
+                    !newlyDiscoveredClient[address] &&
+                    !clientDetails[address]
                 ) {
                     this.log.info(
-                        `New ESPHome Device discovered: ${message.friendly_name ? message.friendly_name : message.host} on ${message.address}`,
+                        `New ESPHome Device discovered: ${message.friendly_name ? message.friendly_name : message.host} on ${address}`,
                     );
 
                     if (message.mac == null) {
@@ -328,8 +334,8 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     }
 
                     // Store device data into memory to allow adoption by admin interface
-                    newlyDiscoveredClient[message.address] = {
-                        ip: message.address,
+                    newlyDiscoveredClient[address] = {
+                        ip: address,
                         mac: String(message.mac)
                             .replace(/[^0-9a-fA-F]/g, '')
                             .toUpperCase()
@@ -407,7 +413,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     clientDetails[host].connectionDestroyedLogged = false;
 
                     // Answer a pending add / modify request of the device manager
-                    this.respondDeviceResult(host, {
+                    this.deviceManagement.onConnectResult(host, {
                         result: 'OK - Device successfully connected, initializing configuration',
                     });
                 } catch (e) {
@@ -912,7 +918,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     }
 
                     // Answer a pending add / modify request of the device manager
-                    this.respondDeviceResult(host, { error: `${optimisedError}`, args: errorArgs });
+                    this.deviceManagement.onConnectResult(host, { error: `${optimisedError}`, args: errorArgs });
                 } catch (error) {
                     this.errorHandler(`[connectedDevice onError]`, error);
                 }
@@ -1526,18 +1532,6 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
     }
 
     /**
-     * Validate a proper format of IP-Address
-     *
-     * @param {string} ipAddress
-     */
-
-    validateIPAddress(ipAddress: string): boolean {
-        return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
-            ipAddress,
-        );
-    }
-
-    /**
      * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
      * Using this method requires "common.message" property to be set to true in io-package.json
      *
@@ -1577,27 +1571,16 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                 // Front End message handler to host IP-Address(es)
                 case 'getHostIp':
                     {
-                        // Get all current known host IP-Addresses from System object
-                        const hostIP = await this.getForeignObjectAsync(`system.host.${this.host}`);
-                        const ip4List = [];
-
-                        // Only show IP4 in dropdown
-                        if (hostIP) {
-                            // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
-                            for (const ip in hostIP.common.address) {
-                                console.log(hostIP.common.address[ip]);
-                                if (this.validateIPAddress(hostIP.common.address[ip])) {
-                                    ip4List.push({
-                                        label: hostIP.common.address[ip],
-                                        value: hostIP.common.address[ip],
-                                    });
-                                }
-                            }
-                        }
-
-                        // console.log(`IP4 List ${ip4List}`);
-
-                        this.sendTo(obj.from, obj.command, ip4List, obj.callback);
+                        // Suggestions only, the field also accepts any host name or address
+                        const hostObject = await this.getForeignObjectAsync(`system.host.${this.host}`);
+                        const addresses = (hostObject?.common.address ?? []).filter(
+                            address => typeof address === 'string',
+                        );
+                        const options = [...addresses.filter(isIPv4), ...addresses.filter(isIPv6)].map(address => ({
+                            label: address,
+                            value: address,
+                        }));
+                        this.sendTo(obj.from, obj.command, options, obj.callback);
                     }
                     break;
 
@@ -1630,27 +1613,18 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
     }
 
     /**
-     * Add a new device or reconnect a known one with new credentials
+     * Add a new device or reconnect a known one with new credentials.
+     * The result of the connection attempt is reported to the device manager (onConnectResult()).
      *
-     * @param ip - IP address of the device
+     * @param ip - IP address or host name of the device
      * @param apiPassword - API password, empty if not used
      * @param encryptionKey - Encryption key, empty if not used
-     * @param respond - Called once with the result of the first connection attempt
      */
     async addOrUpdateDevice(
-        ip: string | undefined,
+        ip: string,
         apiPassword: string | undefined,
         encryptionKey: string | undefined,
-        respond: (response: DeviceActionResult) => void,
     ): Promise<void> {
-        // IP input validation
-        if (!ip) {
-            respond({ error: 'Please enter the IP address of the device' });
-            return;
-        } else if (!this.validateIPAddress(ip)) {
-            respond({ error: 'The IP address %s is not valid, please enter an IPv4 address', args: [ip] });
-            return;
-        }
         const password = apiPassword || '';
         const encryptionKeyUsed = !!encryptionKey;
 
@@ -1663,7 +1637,6 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                 this.encrypt(password),
                 encryptionKeyUsed ? this.encrypt(encryptionKey) : null,
             );
-            this.messageResponse[ip] = respond;
             delete newlyDiscoveredClient[ip];
             this.connectDevices(ip);
         };
@@ -1713,25 +1686,9 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
 
         // Clean memory data
         delete clientDetails[ip];
-        delete this.messageResponse[ip];
         await this.updateConnectionState();
-        await this.deviceManagement.refreshDeviceList();
 
         return { result: 'OK - Device successfully removed' };
-    }
-
-    /**
-     * Answer a pending add / modify request of a device, if any
-     *
-     * @param host - IP address of the device
-     * @param response - Result of the connection attempt
-     */
-    respondDeviceResult(host: string, response: DeviceActionResult): void {
-        const respond = this.messageResponse[host];
-        if (respond) {
-            delete this.messageResponse[host];
-            respond(response);
-        }
     }
 
     hexToRgb(hex: string): { red: number; green: number; blue: number } | null {

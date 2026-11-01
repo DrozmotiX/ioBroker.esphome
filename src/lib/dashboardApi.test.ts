@@ -7,7 +7,9 @@
  */
 
 import { expect } from 'chai';
+import { readFileSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
+import * as path from 'node:path';
 import { WebSocketServer } from 'ws';
 import * as dashboardApi from './dashboardApi';
 
@@ -262,6 +264,32 @@ describe('Dashboard API – streamLogs() / compile() / upload()', () => {
             expect.fail('Expected an error to be thrown');
         } catch (err) {
             expect(err).to.have.property('message').that.includes('/compile');
+        }
+    });
+});
+
+describe('Dashboard API – buildDashboardUrl()', () => {
+    it('builds the URL from host name or IP address and port', () => {
+        expect(dashboardApi.buildDashboardUrl('192.168.0.2', 6052)).to.equal('http://192.168.0.2:6052');
+        expect(dashboardApi.buildDashboardUrl('iobroker.local', '6052')).to.equal('http://iobroker.local:6052');
+    });
+
+    it('puts an IPv6 address in brackets, once', () => {
+        expect(dashboardApi.buildDashboardUrl('fd00::2', 6052)).to.equal('http://[fd00::2]:6052');
+        expect(dashboardApi.buildDashboardUrl('[fd00::2]', 6052)).to.equal('http://[fd00::2]:6052');
+    });
+
+    it('matches the calculateFunc of ESPHomeDashboardUrl in jsonConfig.json5', () => {
+        const jsonConfig = readFileSync(path.join(__dirname, '../../admin/jsonConfig.json5'), 'utf8');
+        const calculateFunc = JSON.parse(
+            /"ESPHomeDashboardUrl":[\s\S]*?"calculateFunc": ("(?:[^"\\]|\\.)*")/.exec(jsonConfig)![1],
+        ) as string;
+        // Evaluated by admin the same way, with the form data as "data"
+        const calculate = new Function('data', `return ${calculateFunc};`) as (data: object) => string;
+        for (const address of ['192.168.0.2', 'iobroker.local', 'fd00::2', '[fd00::2]']) {
+            expect(calculate({ ESPHomeDashboardIP: address, ESPHomeDashboardPort: 6052 }), address).to.equal(
+                dashboardApi.buildDashboardUrl(address, 6052),
+            );
         }
     });
 });
