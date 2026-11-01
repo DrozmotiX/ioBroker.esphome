@@ -19,7 +19,8 @@ const { isDashboardReachable } = require('./dashboard_tests');
 
 const execFileAsync = promisify(execFile);
 
-const DASHBOARD_PORT = 6052;
+// Not the default port 6052 of the image, so the healthcheck has to follow the configuration
+const DASHBOARD_PORT = 6062;
 // A fixed version keeps the test reproducible, the image tag is the ESPHome version
 const DASHBOARD_VERSION = '2026.10.1';
 const IMAGE = `ghcr.io/esphome/esphome:${DASHBOARD_VERSION}`;
@@ -131,6 +132,15 @@ exports.runTests = function (suite) {
                 expect(container.HostConfig.NetworkMode).to.equal('host');
                 expect(container.HostConfig.RestartPolicy.Name).to.equal('no');
                 expect(container.Config.Labels.iobroker).to.equal('esphome.0');
+                // the healthcheck of the image would ask port 6052
+                expect(container.Config.Healthcheck.Test).to.deep.equal([
+                    'CMD',
+                    'curl',
+                    '--fail',
+                    `http://localhost:${DASHBOARD_PORT}/version`,
+                    '-A',
+                    'HealthCheck',
+                ]);
 
                 const config = container.Mounts.find(mount => mount.Destination === '/config');
                 expect(config.Type).to.equal('bind');

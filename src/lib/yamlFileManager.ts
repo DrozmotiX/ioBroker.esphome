@@ -168,7 +168,9 @@ class YamlFileManager {
                 // e.g. EXDEV: the data directory is on another file system, copied below
             }
         }
-        cpSync(from, to, { recursive: true, force: false, errorOnExist: false });
+        // verbatimSymlinks: a relative link (e.g. secrets.yaml -> common/secrets.yaml) keeps pointing into the
+        // copied tree, by default it would become an absolute link into the legacy directory renamed below
+        cpSync(from, to, { recursive: true, force: false, errorOnExist: false, verbatimSymlinks: true });
         renameSync(from, `${from}.migrated`);
         return { result: 'merged', from, to };
     }

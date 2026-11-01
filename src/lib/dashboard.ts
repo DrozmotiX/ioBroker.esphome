@@ -107,6 +107,8 @@ class Dashboard {
     private stopping = false;
     /** Whether the dashboard container was handed to Docker, see startDockerContainer() */
     private containerStarted = false;
+    /** Docker manager of the docker plugin and name of the container, to check that it runs */
+    private dockerContainer: { manager: ReturnType<DockerPlugin['getDockerManager']>; name: string } | undefined;
     /** startDockerContainer() while it runs, the unload waits for it */
     private dockerStart: Promise<void> | undefined;
     /** Memory cache of all available ESPHome Dashboard versions */
@@ -630,6 +632,7 @@ class Dashboard {
             // info.connection (green instance) only lists devices once it does, like with the process. Also
             // checked when the container does not run yet, the docker plugin starts it again.
             this.containerStarted = true;
+            this.dockerContainer = { manager, name };
             this.scheduleReadyCheck(String(this.adapter.config.ESPHomeDashboardPort));
         } catch (error) {
             this.adapter.errorHandler(`[espHomeDashboard-Docker]`, error);
@@ -959,7 +962,9 @@ class Dashboard {
             if (!this.isStarted()) {
                 return;
             }
-            const reachable = await this.isReachable(port);
+            // Host network: when the container cannot bind the port because something else holds it, that
+            // answers instead, so the container itself has to run as well
+            const reachable = (await this.isReachable(port)) && (await this.isContainerRunning());
             if (!this.isStarted()) {
                 return;
             }
@@ -978,6 +983,24 @@ class Dashboard {
             }
             await this.adapter.updateConnectionState();
         }, readyCheckIntervalMs);
+    }
+
+    /**
+     * Whether the dashboard container runs, always true for the dashboard process
+     *
+     * @returns false when the container stopped or Docker cannot tell
+     */
+    private async isContainerRunning(): Promise<boolean> {
+        if (!this.dockerContainer) {
+            return true;
+        }
+        const { manager, name } = this.dockerContainer;
+        try {
+            const state = (await manager?.containerList(true))?.find(info => info.names === name);
+            return state?.status === 'running';
+        } catch {
+            return false;
+        }
     }
 
     /**

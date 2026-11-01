@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { existsSync, readFileSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import YamlFileManager from './yamlFileManager';
@@ -92,6 +92,27 @@ describe('YAML File Management', () => {
             expect(existsSync(legacy)).to.equal(false);
             expect(await readFile(path.join(`${legacy}.migrated`, 'a.yaml'), 'utf8')).to.equal('legacy a');
             expect(YamlFileManager.migrateLegacyDirectory(dataDir, 0).result).to.equal('none');
+        });
+
+        it('keeps relative symlinks pointing into the merged directory', async function () {
+            const dataDir = path.join(root, 'iob-data');
+            const legacy = `${dataDir}esphome.0`;
+            const target = path.join(dataDir, 'esphome.0');
+            await mkdir(path.join(legacy, 'common'), { recursive: true });
+            await mkdir(target, { recursive: true });
+            await writeFile(path.join(legacy, 'common', 'secrets.yaml'), 'secret');
+            try {
+                await symlink(path.join('common', 'secrets.yaml'), path.join(legacy, 'secrets.yaml'));
+            } catch {
+                // creating symlinks needs extra rights on Windows
+                this.skip();
+            }
+
+            expect(YamlFileManager.migrateLegacyDirectory(dataDir, 0).result).to.equal('merged');
+
+            // the legacy directory is renamed, the link still works
+            expect(await readlink(path.join(target, 'secrets.yaml'))).to.equal(path.join('common', 'secrets.yaml'));
+            expect(await readFile(path.join(target, 'secrets.yaml'), 'utf8')).to.equal('secret');
         });
     });
 

@@ -19,6 +19,19 @@ services:
         # The entrypoint of the image runs ESPHome Device Builder for "dashboard" since ESPHome 2026.6.0,
         # older images run "esphome dashboard"
         command: ['dashboard', '--port=${config.ESPHomeDashboardPort:-6052}', '/config']
+        # The healthcheck of the image always asks port 6052, the dashboard listens on the configured one
+        healthcheck:
+            test:
+                [
+                    'CMD',
+                    'curl',
+                    '--fail',
+                    'http://localhost:${config.ESPHomeDashboardPort:-6052}/version',
+                    '-A',
+                    'HealthCheck',
+                ]
+            interval: 30s
+            timeout: 30s
         volumes:
             # Source replaced by the adapter with the YAML directory of the instance
             - './esphome-config:/config'

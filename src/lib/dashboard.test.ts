@@ -30,6 +30,8 @@ type TestDockerPlugin = DockerPlugin & {
     stopped: string[];
     /** Run inside instanceIsReady(), before it resolves */
     onReady?: () => void;
+    /** Status of the container the stubbed docker manager reports, null if it was not created */
+    status: string | null;
 };
 
 /** Silent logger of the docker plugin */
@@ -66,6 +68,7 @@ async function createDockerPlugin(
     plugin.getObject = (() => Promise.resolve({ native: config })) as unknown as DockerPlugin['getObject'];
     plugin.readyCalls = 0;
     plugin.stopped = [];
+    plugin.status = containerStatus;
     plugin.instanceIsReady = async (): Promise<void> => {
         plugin.readyCalls++;
         await Promise.resolve();
@@ -74,8 +77,8 @@ async function createDockerPlugin(
     const manager = {
         containerList: () =>
             Promise.resolve(
-                containerStatus
-                    ? plugin.configurations.map(container => ({ names: container.name, status: containerStatus }))
+                plugin.status
+                    ? plugin.configurations.map(container => ({ names: container.name, status: plugin.status }))
                     : [],
             ),
         containerStop: (name: string) => {
@@ -174,6 +177,15 @@ describe('ESPHome Dashboard in Docker', () => {
         expect(container.iobMonitoringEnabled).to.equal(true);
         expect(container.networkMode).to.equal('host');
         expect(container.command).to.deep.equal(['dashboard', '--port=6060', '/config']);
+        // the healthcheck of the image asks port 6052
+        expect(container.healthcheck?.test).to.deep.equal([
+            'CMD',
+            'curl',
+            '--fail',
+            'http://localhost:6060/version',
+            '-A',
+            'HealthCheck',
+        ]);
         // Docker does not start it while the instance is stopped
         expect(container.restart).to.deep.equal({ policy: 'no' });
         // not started by the plugin itself
@@ -339,6 +351,27 @@ describe('ESPHome Dashboard in Docker', () => {
         await dashboard.stop();
         await check();
         expect(logs.timers).to.have.length(5);
+    });
+
+    it('is not ready while the container does not run, although something answers on its port', async () => {
+        const config = { ...native, ESPHomeDashboardEnabled: true, ESPHomeDashboardDocker: true };
+        const plugin = await createDockerPlugin(config);
+        const dashboard = createDashboard(config, plugin);
+        // e.g. another dashboard holds the port, the container of this instance cannot bind it
+        (dashboard as unknown as { isReachable: () => Promise<boolean> }).isReachable = () => Promise.resolve(true);
+        await dashboard.startDockerContainer('2026.6.5');
+        const check = (): Promise<void> => logs.callbacks[logs.callbacks.length - 1]();
+
+        plugin.status = 'exited';
+        await check();
+        expect(dashboard.isReady()).to.equal(false);
+        expect(logs.connectionUpdates).to.equal(0);
+
+        // started again by the docker plugin
+        plugin.status = 'running';
+        await check();
+        expect(dashboard.isReady()).to.equal(true);
+        expect(logs.connectionUpdates).to.equal(1);
     });
 
     it('reports an error and starts nothing without the docker plugin', async () => {
