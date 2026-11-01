@@ -85,5 +85,8 @@
     "hlpDashboardUsername": "用户名和密码留空则无需登录即可使用仪表板（默认）",
     "lblDashboardPassword": "ESPHome 仪表板密码",
     "hlpDashboardPassword": "加密存储。在仪表板下次启动时生效",
-    "errDashboardLogin": "请同时设置用户名和密码，或将两者都留空"
+    "errDashboardLogin": "请同时设置用户名和密码，或将两者都留空",
+    "lblPythonVersion": "Python 版本",
+    "hlpPythonVersion": "仪表板环境的 Python，可以是版本 (3.13.2) 或范围 (3.12 = 最新的 3.12.x)。更改版本后，下次启动时会重新创建环境。默认值：3.13.2",
+    "errPythonVersion": "无效的 Python 版本，例如 3.13.2 或 3.12"
 }

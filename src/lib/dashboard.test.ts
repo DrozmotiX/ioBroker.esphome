@@ -3,7 +3,13 @@ import { expect } from 'chai';
 import { mkdtemp, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
-import Dashboard, { type DashboardAdapter, dashboardCredentials, ownContainerName } from './dashboard';
+import Dashboard, {
+    DEFAULT_PYTHON_VERSION,
+    type DashboardAdapter,
+    dashboardCredentials,
+    ownContainerName,
+    pythonVersion,
+} from './dashboard';
 import { native } from '../../io-package.json';
 
 /** Root directory of the adapter, docker-compose.yaml lives there */
@@ -662,5 +668,24 @@ describe('dashboardCredentials', () => {
             USERNAME: 'admin',
             PASSWORD: ' secret ',
         });
+    });
+});
+
+describe('pythonVersion', () => {
+    it('keeps Python 3.13.2 by default', () => {
+        expect(native.PythonVersion).to.equal(DEFAULT_PYTHON_VERSION);
+        expect(pythonVersion(native)).to.equal('3.13.2');
+    });
+
+    it('accepts versions and ranges', () => {
+        for (const version of ['3.12', '3.14.1', '~3.12.0', '^3', '3.13.x']) {
+            expect(pythonVersion({ PythonVersion: ` ${version} ` })).to.equal(version);
+        }
+    });
+
+    it('falls back to the default for empty or invalid values', () => {
+        for (const version of ['', '   ', 'latest', '3.12; rm -rf /', '>=3.11']) {
+            expect(pythonVersion({ PythonVersion: version })).to.equal(DEFAULT_PYTHON_VERSION);
+        }
     });
 });

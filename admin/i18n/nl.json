@@ -85,5 +85,8 @@
     "hlpDashboardUsername": "Laat gebruikersnaam en wachtwoord leeg om het dashboard zonder login te gebruiken (standaard)",
     "lblDashboardPassword": "Wachtwoord van ESPHome Dashboard",
     "hlpDashboardPassword": "Versleuteld opgeslagen. Geldt vanaf de volgende start van het dashboard",
-    "errDashboardLogin": "Stel zowel gebruikersnaam als wachtwoord in, of laat beide leeg"
+    "errDashboardLogin": "Stel zowel gebruikersnaam als wachtwoord in, of laat beide leeg",
+    "lblPythonVersion": "Python-versie",
+    "hlpPythonVersion": "Python van de dashboardomgeving, een versie (3.13.2) of een bereik (3.12 = nieuwste 3.12.x). Een andere versie maakt de omgeving bij de volgende start opnieuw aan. Standaard: 3.13.2",
+    "errPythonVersion": "Ongeldige Python-versie, bijv. 3.13.2 of 3.12"
 }
