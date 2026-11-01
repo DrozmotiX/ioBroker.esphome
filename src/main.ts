@@ -1308,6 +1308,9 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
             common.type = (value == null ? 'string' : typeof value) as ioBroker.CommonType;
 
             common.role = stateAttr[name] !== undefined ? stateAttr[name].role || 'state' : 'state';
+            if (stateAttr[name]?.states) {
+                common.states = stateAttr[name].states;
+            }
             common.read = true;
             common.unit = unit !== undefined ? unit || '' : '';
             // common.write = stateAttr[name] !== undefined ? stateAttr[name].write || false : false;
@@ -1324,7 +1327,8 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                         common.role !== this.createdStatesDetails[objName].role ||
                         common.read !== this.createdStatesDetails[objName].read ||
                         common.unit !== this.createdStatesDetails[objName].unit ||
-                        common.write !== this.createdStatesDetails[objName].write))
+                        common.write !== this.createdStatesDetails[objName].write ||
+                        JSON.stringify(common.states) !== JSON.stringify(this.createdStatesDetails[objName].states)))
             ) {
                 // console.log(`An attribute has changed : ${state}`);
                 await this.extendObjectAsync(objName, {

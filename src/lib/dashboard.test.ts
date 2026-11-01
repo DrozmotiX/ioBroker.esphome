@@ -5,12 +5,14 @@ import { mkdtemp, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import Dashboard, {
+    DASHBOARD_STATUSES,
     DEFAULT_PYTHON_VERSION,
     type DashboardAdapter,
     dashboardCredentials,
     ownContainerName,
     pythonVersion,
 } from './dashboard';
+import stateAttr from './stateAttr';
 import { native } from '../../io-package.json';
 
 /** Root directory of the adapter, docker-compose.yaml lives there */
@@ -521,6 +523,10 @@ describe('ESPHome Dashboard in Docker', () => {
                 expect(log).to.include(text);
             }
             expect(log).not.to.include('debug message');
+        });
+
+        it('labels every status value in common.states of the status state', () => {
+            expect(Object.keys(stateAttr.dashboardStatus.states ?? {})).to.deep.equal([...DASHBOARD_STATUSES]);
         });
 
         it('reports a stopped dashboard process as failed', async () => {

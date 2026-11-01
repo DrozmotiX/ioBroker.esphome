@@ -161,7 +161,9 @@ const startLogLines = 60;
  * - failed: the dashboard could not be started or stopped
  * - stopped: the instance was stopped
  */
-export type DashboardStatus = 'disabled' | 'starting' | 'running' | 'failed' | 'stopped';
+export const DASHBOARD_STATUSES = ['disabled', 'starting', 'running', 'failed', 'stopped'] as const;
+/** One of {@link DASHBOARD_STATUSES}, labels in common.states of "dashboardStatus" in stateAttr.ts */
+export type DashboardStatus = (typeof DASHBOARD_STATUSES)[number];
 
 /**
  * ESPHome Dashboard class, one instance per adapter instance

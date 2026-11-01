@@ -1,6 +1,6 @@
 /**
  * Metadata of a state, looked up by the state name in stateSetCreate() of main.ts.
- * Only name and role are used there, the type is derived from the value itself.
+ * Only name, role and states are used there, the type is derived from the value itself.
  */
 interface StateAttribute {
     /** Readable name / description of the state */
@@ -10,6 +10,8 @@ interface StateAttribute {
     write: boolean;
     /** State role, see https://www.iobroker.net/#en/documentation/dev/stateroles.md */
     role: string;
+    /** Possible values of an enum-like state with their labels (common.states) */
+    states?: Record<string, string>;
 }
 
 const stateAttrb: Record<string, StateAttribute> = {
@@ -109,11 +111,19 @@ const stateAttrb: Record<string, StateAttribute> = {
         role: 'text',
     },
     dashboardStatus: {
-        name: 'ESPHome Dashboard status (disabled, starting, running, failed, stopped), shown in the dashboard tab',
+        name: 'ESPHome Dashboard status, shown in the dashboard tab',
         type: 'string',
         read: true,
         write: false,
         role: 'text',
+        // Values of DashboardStatus in dashboard.ts
+        states: {
+            disabled: 'Disabled',
+            starting: 'Starting',
+            running: 'Running',
+            failed: 'Failed',
+            stopped: 'Stopped',
+        },
     },
     dashboardStartLog: {
         name: 'Last lines of the ESPHome Dashboard start, shown in the dashboard tab until it answers',
