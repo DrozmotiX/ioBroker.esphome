@@ -358,6 +358,10 @@ describe('ESPHome Dashboard in Docker', () => {
             removeError: string;
             /** containerRemove() throws, like with the Docker API */
             removeThrows?: boolean;
+            /** containerList() throws, like the Docker API when the daemon cannot be reached */
+            listThrows?: boolean;
+            /** Result of getDockerDaemonInfo(), driver "socket" (Docker API) if not set */
+            daemon?: { driver: string; daemonRunning: boolean };
             destroyed?: number;
         }
 
@@ -374,7 +378,12 @@ describe('ESPHome Dashboard in Docker', () => {
                 created.count++;
                 return {
                     isReady: () => Promise.resolve(),
-                    containerList: () => Promise.resolve(manager.containers),
+                    containerList: () =>
+                        manager.listThrows
+                            ? Promise.reject(new Error('connect ENOENT /var/run/docker.sock'))
+                            : Promise.resolve(manager.containers),
+                    getDockerDaemonInfo: () =>
+                        Promise.resolve(manager.daemon ?? { driver: 'socket', daemonRunning: true }),
                     containerRemove: (name: string) => {
                         manager.removed.push(name);
                         if (manager.removeThrows) {
@@ -427,6 +436,50 @@ describe('ESPHome Dashboard in Docker', () => {
             await createCleanupDashboard(manager, created).removeLeftoverContainer();
 
             expect(manager.removed).to.deep.equal([]);
+            expect(logs.states['_ESPHomeDashboard.dockerContainer']).to.equal('');
+        });
+
+        it('keeps the container name when the Docker API cannot be reached', async () => {
+            const created = { count: 0 };
+            const manager: TestManager = { containers: [], removed: [], removeError: '', listThrows: true };
+            logs.states['_ESPHomeDashboard.dockerContainer'] = 'iob_esphome_0_esphome';
+
+            await createCleanupDashboard(manager, created).removeLeftoverContainer();
+
+            expect(logs.states['_ESPHomeDashboard.dockerContainer']).to.equal('iob_esphome_0_esphome');
+            // no error (Sentry) for a stopped Docker
+            expect(logs.error).to.deep.equal([]);
+            expect(manager.destroyed).to.equal(1);
+        });
+
+        it('keeps the container name when the docker CLI lists nothing because Docker does not run', async () => {
+            const created = { count: 0 };
+            const manager: TestManager = {
+                containers: [],
+                removed: [],
+                removeError: '',
+                daemon: { driver: 'cli', daemonRunning: false },
+            };
+            logs.states['_ESPHomeDashboard.dockerContainer'] = 'iob_esphome_0_esphome';
+
+            await createCleanupDashboard(manager, created).removeLeftoverContainer();
+
+            expect(logs.states['_ESPHomeDashboard.dockerContainer']).to.equal('iob_esphome_0_esphome');
+            expect(logs.error).to.deep.equal([]);
+        });
+
+        it('forgets the container when the running Docker of the CLI lists no containers', async () => {
+            const created = { count: 0 };
+            const manager: TestManager = {
+                containers: [],
+                removed: [],
+                removeError: '',
+                daemon: { driver: 'cli', daemonRunning: true },
+            };
+            logs.states['_ESPHomeDashboard.dockerContainer'] = 'iob_esphome_0_esphome';
+
+            await createCleanupDashboard(manager, created).removeLeftoverContainer();
+
             expect(logs.states['_ESPHomeDashboard.dockerContainer']).to.equal('');
         });
 

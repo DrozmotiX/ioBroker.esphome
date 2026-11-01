@@ -266,6 +266,10 @@ class Dashboard {
      */
     async start(): Promise<void> {
         try {
+            // YAML files the native dashboard of version 1.0.0 kept next to the data directory (IOBROKER_DATA_DIR
+            // without trailing slash), before anything uses the directory
+            YamlFileManager.migrateDirectory(this.adapter.log, this.adapter.instance ?? 0);
+
             // Create Channel to store ESPHomeDashboard related Data
             await this.adapter.extendObjectAsync('_ESPHomeDashboard', {
                 type: 'channel',
@@ -702,7 +706,27 @@ class Dashboard {
             const manager = this.createDockerManager();
             try {
                 await manager.isReady();
-                const container = (await manager.containerList(true)).find(info => info.names === name);
+                // The name is only forgotten when Docker answered: the Docker API throws when the daemon cannot be
+                // reached, the docker CLI returns an empty list then
+                let containers: Awaited<ReturnType<typeof manager.containerList>>;
+                try {
+                    containers = await manager.containerList(true);
+                } catch (error) {
+                    this.adapter.log.debug(
+                        `Docker cannot be reached, container ${name} is checked again on the next start: ${String(error)}`,
+                    );
+                    return;
+                }
+                const container = containers.find(info => info.names === name);
+                if (!containers.length) {
+                    const info = await manager.getDockerDaemonInfo();
+                    if (info.driver === 'cli' && !info.daemonRunning) {
+                        this.adapter.log.debug(
+                            `Docker does not seem to run, container ${name} is checked again on the next start`,
+                        );
+                        return;
+                    }
+                }
                 if (container) {
                     this.adapter.log.info(
                         `Removing ESPHome Dashboard container ${name}, "Use Docker Integration" or the dashboard is disabled`,

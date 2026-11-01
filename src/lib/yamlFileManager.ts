@@ -6,7 +6,7 @@
 
 import type * as AdapterCore from '@iobroker/adapter-core';
 import * as I18n from '@iobroker/adapter-core/i18n';
-import { constants } from 'node:fs';
+import { constants, cpSync, existsSync, mkdirSync, renameSync } from 'node:fs';
 import { access, mkdir, readdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 
@@ -88,8 +88,9 @@ function translateLabel(key: string): string {
 
 /**
  * ESPHome config directory of one adapter instance: `{dataDir}/esphome.{instance}`.
- * getAbsoluteDefaultDataDir() has no trailing slash (path.join), so concatenating
- * `dataDir + "esphome." + instance` looks in the wrong place.
+ * getAbsoluteDefaultDataDir() ends with a slash in a default installation (`../../iobroker-data/`), but not
+ * when IOBROKER_DATA_DIR is set without one. Concatenating `dataDir + "esphome." + instance`, as the native
+ * dashboard did up to 1.0.0, then looks in the wrong place, see migrateLegacyDirectory().
  *
  * @param dataDir - Result of getAbsoluteDefaultDataDir()
  * @param instance - Adapter instance number
@@ -128,15 +129,77 @@ class YamlFileManager {
     }
 
     /**
-     * ESPHome config directory of one adapter instance, `{dataDir}/esphome.{instance}`.
-     * getAbsoluteDefaultDataDir() has no trailing slash (path.join), so concatenating
-     * `dataDir + "esphome." + instance` looks in the wrong place.
+     * ESPHome config directory of one adapter instance, `{dataDir}/esphome.{instance}`, also when
+     * getAbsoluteDefaultDataDir() has no trailing slash (IOBROKER_DATA_DIR set without one).
      *
      * @param dataDir - Result of getAbsoluteDefaultDataDir()
      * @param instance - Adapter instance number
      */
     static resolveDirectory(dataDir: string, instance: number | string): string {
         return resolveESPHomeDirectory(dataDir, instance);
+    }
+
+    /**
+     * Move the YAML files of the native dashboard to the directory of the instance. Up to 1.0.0 the dashboard
+     * concatenated `dataDir + "esphome." + instance`: the same directory in a default installation, but next to the
+     * data directory (e.g. `/srv/iob-dataesphome.0`) when IOBROKER_DATA_DIR is set without a trailing slash.
+     * Files already in the directory of the instance are never overwritten; the legacy directory is kept as
+     * `<legacy>.migrated` when it could not be moved as a whole.
+     *
+     * @param dataDir - Result of getAbsoluteDefaultDataDir()
+     * @param instance - Adapter instance number
+     * @returns what was done: nothing, the directory was moved, or its files were copied into the existing one
+     */
+    static migrateLegacyDirectory(
+        dataDir: string,
+        instance: number | string,
+    ): { result: 'none' | 'moved' | 'merged'; from: string; to: string } {
+        const from = path.resolve(`${dataDir}esphome.${instance}`);
+        const to = path.resolve(resolveESPHomeDirectory(dataDir, instance));
+        if (from === to || !existsSync(from)) {
+            return { result: 'none', from, to };
+        }
+        if (!existsSync(to)) {
+            mkdirSync(path.dirname(to), { recursive: true });
+            try {
+                renameSync(from, to);
+                return { result: 'moved', from, to };
+            } catch {
+                // e.g. EXDEV: the data directory is on another file system, copied below
+            }
+        }
+        cpSync(from, to, { recursive: true, force: false, errorOnExist: false });
+        renameSync(from, `${from}.migrated`);
+        return { result: 'merged', from, to };
+    }
+
+    /**
+     * ESPHome config directory of this installation and instance, after moving the YAML files from where
+     * versions up to 1.0.0 kept them (see migrateLegacyDirectory())
+     *
+     * @param log - logger of the adapter
+     * @param instance - Adapter instance number
+     * @returns The absolute path to the ESPHome directory
+     */
+    static migrateDirectory(log: ioBroker.Logger, instance: number | string): string {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const utils = require('@iobroker/adapter-core') as typeof AdapterCore;
+        const dataDir = utils.getAbsoluteDefaultDataDir();
+        try {
+            const { result, from, to } = YamlFileManager.migrateLegacyDirectory(dataDir, instance);
+            if (result === 'moved') {
+                log.info(`Moved the ESPHome configuration files from ${from} to ${to}`);
+            } else if (result === 'merged') {
+                log.warn(
+                    `Copied the ESPHome configuration files from ${from} to ${to}, files already there were kept. The old directory was renamed to ${from}.migrated, delete it once everything is in place`,
+                );
+            }
+        } catch (error) {
+            log.warn(
+                `ESPHome configuration files could not be moved to the directory of the instance: ${String(error)}`,
+            );
+        }
+        return YamlFileManager.resolveDirectory(dataDir, instance);
     }
 
     /**
