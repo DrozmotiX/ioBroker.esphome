@@ -469,7 +469,9 @@ class Dashboard {
 
     /**
      * Get the directory of the YAML configuration files of this instance, the same directory the YAML
-     * file management of the adapter configuration uses
+     * file management of the adapter configuration uses. Built as the dashboard always did, which #419
+     * deliberately left unchanged (the YAML file management uses path.join, same result for the default
+     * data directory, which ends with a slash)
      *
      * @returns absolute path of the directory
      */
