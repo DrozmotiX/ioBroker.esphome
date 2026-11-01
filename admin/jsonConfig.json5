@@ -377,8 +377,23 @@
 					"xl": 4,
 					"label": "chkEnableESPHome"
 				},
+				// Run the dashboard as container of the official ESPHome image (docker-compose.yaml, @iobroker/plugin-docker) instead of a Python environment.
+				// Beta: only shown in expert mode
+				"ESPHomeDashboardDocker": {
+					"type": "checkDocker",
+					"expertMode": true,
+					"xs": 12,
+					"sm": 8,
+					"md": 8,
+					"lg": 8,
+					"xl": 8,
+					"hidden": "!data.ESPHomeDashboardEnabled",
+					"label": "lblUseDockerIntegration",
+					"help": "hlpUseDockerIntegration"
+				},
 				"ESPHomeDashboardVersion": {
 					"type": "autocompleteSendTo",
+					"newLine": true,
 					"xs": 12,
 					"sm": 6,
 					"md": 6,
@@ -455,7 +470,7 @@
 					"variant": "outlined",
 					"color": "primary",
 					"showProcess": true,
-					"hidden": "!_alive",
+					"hidden": "!_alive || (data.ESPHomeDashboardEnabled && data.ESPHomeDashboardDocker)",
 					"command": "clearAutopyCache",
 					"jsonData": "{}",
 					"xs": 12,
@@ -492,7 +507,8 @@
 							"xl": 2,
 							"label": "lblESPHomePort"
 						},
-						// Versions installed next to ESPHome, "Auto Detect" leaves them to pip (#479)
+						// Versions installed next to ESPHome, "Auto Detect" leaves them to pip (#479).
+						// The ESPHome Docker image brings its own Pillow and Device Builder
 						"PillowVersion": {
 							"newLine": true,
 							"type": "autocompleteSendTo",
@@ -503,6 +519,7 @@
 							"xl": 6,
 							"label": "lblPillowVersion",
 							"help": "hlpPillowVersion",
+							"hidden": "data.ESPHomeDashboardEnabled && data.ESPHomeDashboardDocker",
 							"command": "getPillowVersion"
 						},
 						"DeviceBuilderVersion": {
@@ -514,6 +531,7 @@
 							"xl": 6,
 							"label": "lblDeviceBuilderVersion",
 							"help": "hlpDeviceBuilderVersion",
+							"hidden": "data.ESPHomeDashboardEnabled && data.ESPHomeDashboardDocker",
 							"command": "getDeviceBuilderVersion"
 						},
 						"ESPHomeDashboardUrl": {

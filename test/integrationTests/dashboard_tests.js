@@ -177,6 +177,8 @@ Check the adapter logs above for more details`;
     });
 }
 
+exports.isDashboardReachable = isDashboardReachable;
+
 exports.runTests = function (suite) {
     dashboardSuite(suite, 'ESPHome Dashboard Integration', DASHBOARD_VERSION, PILLOW_VERSION);
     dashboardSuite(

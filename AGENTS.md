@@ -88,7 +88,7 @@ npm run test:integration                      # starts the adapter in a test ioB
 
 > `npm run lint` locally does NOT enforce `--max-warnings 0` but CI does — always run the eslint command above directly.
 
-Unit tests live next to the code they test as `src/**/*.test.ts` (e.g. `src/lib/dashboardApi.test.ts`) and run via `npm run test:unit`. The integration test suite lives in `test/integrationTests/` (index, dashboard_tests, version_fetch_tests, version_migration_tests, e2e_device_tests, known_device_tests, settings_cleanup_tests) and is imported by `test/integration.js`.
+Unit tests live next to the code they test as `src/**/*.test.ts` (e.g. `src/lib/dashboardApi.test.ts`) and run via `npm run test:unit`. The integration test suite lives in `test/integrationTests/` (index, dashboard_tests, docker_dashboard_tests, version_fetch_tests, version_migration_tests, e2e_device_tests, known_device_tests, settings_cleanup_tests) and is imported by `test/integration.js`.
 
 ### End-to-end test with a real ESPHome device
 
@@ -163,6 +163,19 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
   `src/main.ts`). With the dashboard enabled it stays empty until `Dashboard.scheduleReadyCheck()` gets an HTTP
   2xx/3xx from `http://localhost:<port>/` (`Dashboard.isReady()`), and again when the dashboard process exits or
   cannot be started.
+- With `config.ESPHomeDashboardDocker` ("Use Docker Integration", beta: `expertMode: true` in `jsonConfig.json5`) it runs as the official `ghcr.io/esphome/esphome` container
+  instead: `docker-compose.yaml` (shipped in `files` of package.json) is managed by `@iobroker/plugin-docker`
+  (`common.plugins.docker` in `io-package.json`). The service has `iobWaitForReady`, so the plugin starts nothing by itself;
+  `startDockerContainer()` in `src/lib/dashboard.ts` sets the image tag and the `/config` bind mount on `plugin.configurations`
+  and calls `instanceIsReady()`, only when the dashboard is enabled. That also resolves when the pull or start failed (the plugin
+  only warns), so the container state is checked with `containerList()` afterwards; the ready check keeps polling the container.
+  The image entrypoint runs ESPHome Device Builder for `dashboard` since 2026.6.0. Toolchains go to the named volume `/cache`.
+  The container name (`ownContainerName()`, the name the plugin gives it) is kept in `_ESPHomeDashboard.dockerContainer` before
+  `instanceIsReady()`; a start without Docker mode removes that container
+  (`removeLeftoverContainer()`, own `DockerManager`, as the plugin manages nothing then). `stop()` waits up to 4 s for a pending
+  container start during unload (adapter timers do not work while unloading). Unit tests: `src/lib/dashboard.test.ts`.
+- The dashboard port is registered with js-controller >= 8 (`registerDashboardPort()`, `common.declareUsedResources: true`),
+  duck-typed like ioBroker.influxdb, as the adapter types of js-controller 7 do not have `registerUsedResource()`.
 - "Clear Autopy Cache" button triggers `clearAutopyCache()` → `fs.rmSync(~/.cache/autopy, recursive)`.
 - Config migration: `migrateConfig()` converts legacy `ESPHomeDashboardIP` + port → `ESPHomeDashboardUrl`.
 
@@ -183,6 +196,10 @@ delete that directory, otherwise the cleanup restarts the adapter in every suite
   They run in `.github/workflows/dashboard-integration.yml` (every PR, pushes to main/v2 and manual;
   not part of the release pipeline) or locally with
   `ESPHOME_RUN_DASHBOARD_TESTS=true npm run test:integration`.
+- The same workflow has a second job (matrix `mode: [native, docker]`) for the dashboard in Docker:
+  `test/integrationTests/docker_dashboard_tests.js` runs the real container through the docker plugin against the Docker
+  daemon of the runner (image pulled, dashboard reachable on the host port, stopped with the instance, leftover container
+  removed). Skipped by default, locally: `ESPHOME_RUN_DOCKER_TESTS=true npm run test:integration -- --grep "Docker"`.
 - `.github/workflows/e2e.yml` runs the end-to-end device test for PRs and pushes to main/v2 with the pinned ESPHome
   version (`test/e2e/requirements.txt`). Dependabot bumps that version, so new ESPHome releases are tested in its PRs.
 - Releases via `@alcalzone/release-script`; changelog placeholder: `## **WORK IN PROGRESS**`.
