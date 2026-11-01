@@ -76,6 +76,8 @@ The Dashboard IP setting in the adapter configuration serves different purposes:
 
 ![ESPHome Dashboard IP Configuration](admin/img/ESPhomeDashboardIP.png)
 
+**Dashboard tab:** The integrated dashboard needs some time to start, installing ESPHome takes several minutes on the first start or after a version change. Until it answers, the tab shows a hint and the start log instead of an empty page and then switches to the dashboard by itself, there is no need to reload the page or restart the instance (admin 8.0.12 or newer).
+
 **Note:** You can use this adapter to control ESPHome devices without configuring the Dashboard IP. The Dashboard IP is only needed if you want to integrate the ESPHome Dashboard interface into ioBroker's admin panel.
 
 ### Do I need the ESPHome Dashboard to use this adapter?
@@ -503,6 +505,7 @@ If you like my work, please consider a personal donation
 
 ### **WORK IN PROGRESS**
 
+- (@SimonFischer04) **ENHANCED**: The ESPHome Dashboard tab of admin waits for the dashboard: while it starts (installing ESPHome takes several minutes on the first start or after a version change), the tab shows a hint and the start log, and switches to the dashboard by itself as soon as it answers. It also tells when the dashboard is disabled, could not be started or the instance is not running. The status is in the states `_ESPHomeDashboard.status` and `_ESPHomeDashboard.startLog`. Needs admin 8.0.12 or newer, older versions show the dashboard with a hint to wait
 - (@SimonFischer04) **NEW**: Any ESPHome Dashboard version can be typed into the version field of the adapter configuration, e.g. a beta release or a version not (yet) in the list
 - (@SimonFischer04) **ENHANCED**: Devices can be added by host name (e.g. `kitchen.local`) or IPv6 address, the device manager no longer only accepts IPv4 addresses
 - (@SimonFischer04) **ENHANCED**: The address field of the ESPHome Dashboard also suggests the IPv6 addresses of the host, an IPv6 address is put in brackets in the dashboard URL

@@ -1558,6 +1558,11 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     this.sendTo(obj.from, obj.command, this.dashboard.getDashboardVersionDropDown(), obj.callback);
                     break;
 
+                // Dashboard tab of admin (admin/jsonTab.json5): URL of the dashboard shown in its iframe
+                case 'getDashboardTab':
+                    this.sendTo(obj.from, obj.command, this.dashboard.getTabData(), obj.callback);
+                    break;
+
                 // Front End message handler to load Pillow version dropdown with available versions
                 case 'getPillowVersion':
                     this.sendTo(obj.from, obj.command, this.dashboard.getPillowVersionDropDown(), obj.callback);

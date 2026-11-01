@@ -80,5 +80,12 @@
     "maxRetry": "Maximum connection retry before considering device as offline",
     "reConInterval": "Setting between ioBroker tries to reconnect this device",
     "templateKeyTip": "This value is provided by the adapter.",
-    "yamlUploadContentPlaceholder": "# Example configuration\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2"
+    "yamlUploadContentPlaceholder": "# Example configuration\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2",
+    "tabInstanceNotRunning": "The instance is not running. Start it to use the ESPHome Dashboard.",
+    "tabDashboardDisabled": "The ESPHome Dashboard is not enabled. Enable it in the instance settings, tab \"ESPHome Dashboard\".",
+    "tabDashboardStarting": "The ESPHome Dashboard is starting, please wait. On the first start or after a version change ESPHome is installed first, which can take several minutes. The dashboard is shown here automatically as soon as it is ready, there is no need to reload the page or to restart the instance.",
+    "tabDashboardFailed": "The ESPHome Dashboard could not be started or has stopped. See the log below and the log of the instance for the reason.",
+    "tabDashboardStartLog": "Start log",
+    "tabDashboardNoUrl": "No URL of the ESPHome Dashboard is configured. Enter it in the instance settings, tab \"ESPHome Dashboard\".",
+    "tabDashboardLegacyHint": "The ESPHome Dashboard needs some minutes to start, on the first start or after a version change even longer. If an error is shown below, wait a moment and reload the page. Update admin to 8.0.12 or newer to see the start progress here."
 }

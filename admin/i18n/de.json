@@ -80,5 +80,12 @@
     "maxRetry": "Maximale Verbindungswiederholung, bevor das Gerät als offline betrachtet wird",
     "reConInterval": "Einstellung zwischen ioBroker versucht, dieses Gerät erneut zu verbinden",
     "templateKeyTip": "Dieser Wert wird vom Adapter bereitgestellt.",
-    "yamlUploadContentPlaceholder": "# Beispielkonfiguration\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2"
+    "yamlUploadContentPlaceholder": "# Beispielkonfiguration\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2",
+    "tabInstanceNotRunning": "Die Instanz läuft nicht. Starte sie, um das ESPHome Dashboard zu verwenden.",
+    "tabDashboardDisabled": "Das ESPHome Dashboard ist nicht aktiviert. Aktiviere es in den Instanzeinstellungen, Reiter „ESPHome Dashboard“.",
+    "tabDashboardStarting": "Das ESPHome Dashboard wird gestartet, bitte warten. Beim ersten Start oder nach einem Versionswechsel wird ESPHome zuerst installiert, das kann mehrere Minuten dauern. Das Dashboard wird hier automatisch angezeigt, sobald es bereit ist. Die Seite muss nicht neu geladen und die Instanz nicht neu gestartet werden.",
+    "tabDashboardFailed": "Das ESPHome Dashboard konnte nicht gestartet werden oder wurde beendet. Den Grund zeigen das Log unten und das Log der Instanz.",
+    "tabDashboardStartLog": "Startprotokoll",
+    "tabDashboardNoUrl": "Es ist keine URL des ESPHome Dashboards konfiguriert. Trage sie in den Instanzeinstellungen ein, Reiter „ESPHome Dashboard“.",
+    "tabDashboardLegacyHint": "Das ESPHome Dashboard braucht einige Minuten zum Starten, beim ersten Start oder nach einem Versionswechsel auch länger. Wird unten ein Fehler angezeigt, kurz warten und die Seite neu laden. Mit admin 8.0.12 oder neuer wird hier der Startfortschritt angezeigt."
 }

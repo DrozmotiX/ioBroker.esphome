@@ -108,6 +108,20 @@ const stateAttrb: Record<string, StateAttribute> = {
         write: false,
         role: 'text',
     },
+    dashboardStatus: {
+        name: 'ESPHome Dashboard status (disabled, starting, running, failed, stopped), shown in the dashboard tab',
+        type: 'string',
+        read: true,
+        write: false,
+        role: 'text',
+    },
+    dashboardStartLog: {
+        name: 'Last lines of the ESPHome Dashboard start, shown in the dashboard tab until it answers',
+        type: 'string',
+        read: true,
+        write: false,
+        role: 'text',
+    },
     versionPinMigrationDone: {
         name: 'Migration to pinned dashboard versions applied',
         type: 'boolean',

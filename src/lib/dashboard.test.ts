@@ -1,5 +1,6 @@
 import DockerPlugin from '@iobroker/plugin-docker';
 import { expect } from 'chai';
+import { readFileSync } from 'node:fs';
 import { mkdtemp, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
@@ -8,6 +9,11 @@ import { native } from '../../io-package.json';
 
 /** Root directory of the adapter, docker-compose.yaml lives there */
 const adapterDir = path.join(__dirname, '..', '..');
+
+/** Let pending writes of the start log finish, see Dashboard.writeStartLog() */
+function settle(): Promise<void> {
+    return new Promise(resolve => setImmediate(resolve));
+}
 
 interface Logs {
     info: string[];
@@ -241,7 +247,11 @@ describe('ESPHome Dashboard in Docker', () => {
         expect(logs.error[0]).to.include('Docker is not installed or not running');
         expect(logs.timers).to.have.length(0);
         // Recorded before the start, a later start without Docker Integration finds nothing to remove then
-        expect(logs.states).to.deep.equal({ '_ESPHomeDashboard.dockerContainer': 'iob_esphome_0_esphome' });
+        expect(logs.states['_ESPHomeDashboard.dockerContainer']).to.equal('iob_esphome_0_esphome');
+        // The dashboard tab of admin shows the error instead of waiting
+        expect(logs.states['_ESPHomeDashboard.status']).to.equal('failed');
+        await settle();
+        expect(logs.states['_ESPHomeDashboard.startLog']).to.include('was not created');
     });
 
     it('records the container before it can exist, so a container created while the process ends is removed later', async () => {
@@ -381,6 +391,113 @@ describe('ESPHome Dashboard in Docker', () => {
 
         expect(logs.error).to.have.length(1);
         expect(logs.error[0]).to.include('docker plugin of ioBroker is not loaded');
+    });
+
+    describe('dashboard tab of admin', () => {
+        it('shows the start log while the dashboard starts and the dashboard once it answers', async () => {
+            const config = { ...native, ESPHomeDashboardEnabled: true, ESPHomeDashboardDocker: true };
+            const plugin = await createDockerPlugin(config);
+            const dashboard = createDashboard(config, plugin);
+            let reachable = false;
+            (dashboard as unknown as { isReachable: () => Promise<boolean> }).isReachable = () =>
+                Promise.resolve(reachable);
+            await dashboard.startDockerContainer('2026.6.5');
+            const check = (): Promise<void> => logs.callbacks[logs.callbacks.length - 1]();
+            await settle();
+
+            const log = String(logs.states['_ESPHomeDashboard.startLog']);
+            expect(log).to.include('Pulling the image takes several minutes');
+            expect(log).to.include('is running, waiting for the dashboard to answer');
+            // checked often until it answers, the tab waits for it
+            expect(logs.timers).to.deep.equal([5000]);
+
+            await check();
+            reachable = true;
+            await check();
+            expect(dashboard.getStatus()).to.equal('running');
+            expect(logs.states['_ESPHomeDashboard.status']).to.equal('running');
+            expect(logs.timers).to.deep.equal([5000, 5000, 60000]);
+
+            reachable = false;
+            await check();
+            expect(logs.states['_ESPHomeDashboard.status']).to.equal('starting');
+            await settle();
+            expect(logs.states['_ESPHomeDashboard.startLog']).to.include('not reachable on port 6052 any more');
+            expect(logs.timers[logs.timers.length - 1]).to.equal(5000);
+
+            await dashboard.stop();
+            expect(logs.states['_ESPHomeDashboard.status']).to.equal('stopped');
+        });
+
+        it('keeps only the last lines of the start log and stores none while the dashboard answers', async () => {
+            const config = { ...native, ESPHomeDashboardEnabled: true, ESPHomeDashboardDocker: true };
+            const dashboard = createDashboard(config, null);
+            const internal = dashboard as unknown as {
+                appendStartLog: (text: string) => void;
+                setStatus: (status: string) => Promise<void>;
+            };
+
+            internal.appendStartLog(Array.from({ length: 100 }, (_, i) => `line ${i}`).join('\n'));
+            await settle();
+            const lines = String(logs.states['_ESPHomeDashboard.startLog']).split('\n');
+            expect(lines).to.have.length(60);
+            expect(lines[0]).to.match(/^\d\d:\d\d:\d\d line 40$/);
+            expect(lines[59]).to.match(/ line 99$/);
+
+            await internal.setStatus('running');
+            internal.appendStartLog('GET /devices 200');
+            await settle();
+            expect(logs.states['_ESPHomeDashboard.startLog']).not.to.include('GET /devices');
+
+            // shown again as soon as the dashboard stops answering
+            await internal.setStatus('failed');
+            await settle();
+            expect(logs.states['_ESPHomeDashboard.startLog']).to.include('GET /devices');
+        });
+
+        it('reports a stopped dashboard process as failed', async () => {
+            const config = { ...native, ESPHomeDashboardEnabled: true };
+            const dashboard = createDashboard(config, null);
+            (dashboard as unknown as { onDashboardStopped: () => void }).onDashboardStopped();
+            await settle();
+            expect(logs.states['_ESPHomeDashboard.status']).to.equal('failed');
+            expect(logs.connectionUpdates).to.equal(1);
+        });
+
+        it('answers the tab with the URL of the dashboard', () => {
+            const config = { ...native, ESPHomeDashboardUrl: 'http://192.168.1.2:6052' };
+            expect(createDashboard(config, null).getTabData()).to.deep.equal({
+                data: { dashboardUrl: 'http://192.168.1.2:6052' },
+            });
+        });
+
+        it('defines a tab that shows the dashboard only once it answers', () => {
+            const tab = readFileSync(path.join(adapterDir, 'admin', 'jsonTab.json5'), 'utf8');
+            expect(tab).to.include('"command": "getDashboardTab"');
+            const iframe = /"dashboardUrl": \{[\s\S]*?\n\t\t\}/.exec(tab)![0];
+            expect(iframe).to.include('"type": "iframe"');
+            expect(iframe).to.include('"dependsOnStates": { "status": "._ESPHomeDashboard.status" }');
+            expect(iframe).to.include("_states.status?.val !== 'running'");
+            const ioPackage = JSON.parse(readFileSync(path.join(adapterDir, 'io-package.json'), 'utf8')) as {
+                common: { adminTab: { link: string }; adminUI: { tab: string } };
+            };
+            expect(ioPackage.common.adminTab.link).to.equal('jsonTab.json5');
+            expect(ioPackage.common.adminUI.tab).to.equal('json');
+        });
+
+        it('has a translation of every text of the tab', () => {
+            const tab = readFileSync(path.join(adapterDir, 'admin', 'jsonTab.json5'), 'utf8');
+            const keys = [...tab.matchAll(/"text": "([^"]+)"/g)].map(match => match[1]);
+            expect(keys).to.have.length.greaterThan(5);
+            for (const lang of ['en', 'de', 'ru', 'pt', 'nl', 'fr', 'it', 'es', 'pl', 'uk', 'zh-cn']) {
+                const words = JSON.parse(
+                    readFileSync(path.join(adapterDir, 'admin', 'i18n', `${lang}.json`), 'utf8'),
+                ) as Record<string, string>;
+                for (const key of keys) {
+                    expect(words[key], `${key} in ${lang}`).to.be.a('string').and.not.equal('');
+                }
+            }
+        });
     });
 
     describe('container left behind', () => {

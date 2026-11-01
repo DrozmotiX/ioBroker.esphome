@@ -80,5 +80,12 @@
     "maxRetry": "将设备视为离线之前的最大连接重试次数",
     "reConInterval": "ioBroker 尝试重新连接此设备之间的设置",
     "templateKeyTip": "该值由适配器提供。",
-    "yamlUploadContentPlaceholder": "# 示例配置\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2"
+    "yamlUploadContentPlaceholder": "# 示例配置\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2",
+    "tabInstanceNotRunning": "实例未运行。请启动实例以使用 ESPHome 仪表板。",
+    "tabDashboardDisabled": "ESPHome 仪表板未启用。请在实例设置的“ESPHome Dashboard”选项卡中启用它。",
+    "tabDashboardStarting": "ESPHome 仪表板正在启动，请稍候。首次启动或更换版本后会先安装 ESPHome，这可能需要几分钟。仪表板准备就绪后会自动显示在此处，无需刷新页面或重启实例。",
+    "tabDashboardFailed": "ESPHome 仪表板无法启动或已停止。原因请查看下方日志和实例日志。",
+    "tabDashboardStartLog": "启动日志",
+    "tabDashboardNoUrl": "未配置 ESPHome 仪表板的 URL。请在实例设置的“ESPHome Dashboard”选项卡中填写。",
+    "tabDashboardLegacyHint": "ESPHome 仪表板需要几分钟才能启动，首次启动或更换版本后需要更长时间。如果下方显示错误，请稍等片刻后刷新页面。将 admin 更新到 8.0.12 或更高版本即可在此查看启动进度。"
 }

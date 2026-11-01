@@ -80,5 +80,12 @@
     "maxRetry": "Nombre maximal de tentatives de connexion avant de considérer l'appareil comme hors ligne",
     "reConInterval": "Paramètres entre ioBroker essayant de reconnecter cet appareil",
     "templateKeyTip": "Cette valeur est fournie par l'adaptateur.",
-    "yamlUploadContentPlaceholder": "# Exemple de configuration\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2"
+    "yamlUploadContentPlaceholder": "# Exemple de configuration\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2",
+    "tabInstanceNotRunning": "L'instance n'est pas en cours d'exécution. Démarrez-la pour utiliser le tableau de bord ESPHome.",
+    "tabDashboardDisabled": "Le tableau de bord ESPHome n'est pas activé. Activez-le dans les paramètres de l'instance, onglet « ESPHome Dashboard ».",
+    "tabDashboardStarting": "Le tableau de bord ESPHome démarre, veuillez patienter. Au premier démarrage ou après un changement de version, ESPHome est d'abord installé, ce qui peut prendre plusieurs minutes. Le tableau de bord s'affiche ici automatiquement dès qu'il est prêt, inutile de recharger la page ou de redémarrer l'instance.",
+    "tabDashboardFailed": "Le tableau de bord ESPHome n'a pas pu être démarré ou s'est arrêté. Consultez le journal ci-dessous et le journal de l'instance pour en connaître la raison.",
+    "tabDashboardStartLog": "Journal de démarrage",
+    "tabDashboardNoUrl": "Aucune URL du tableau de bord ESPHome n'est configurée. Saisissez-la dans les paramètres de l'instance, onglet « ESPHome Dashboard ».",
+    "tabDashboardLegacyHint": "Le tableau de bord ESPHome a besoin de quelques minutes pour démarrer, encore plus au premier démarrage ou après un changement de version. Si une erreur s'affiche ci-dessous, patientez un instant et rechargez la page. Mettez admin à jour vers la version 8.0.12 ou plus récente pour voir ici la progression du démarrage."
 }

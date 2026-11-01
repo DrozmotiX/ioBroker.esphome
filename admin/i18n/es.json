@@ -80,5 +80,12 @@
     "maxRetry": "Reintento máximo de conexión antes de considerar el dispositivo como fuera de línea",
     "reConInterval": "Configuración entre intentos de ioBroker para volver a conectar este dispositivo",
     "templateKeyTip": "Este valor lo proporciona el adaptador.",
-    "yamlUploadContentPlaceholder": "# Configuración de ejemplo\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2"
+    "yamlUploadContentPlaceholder": "# Configuración de ejemplo\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2",
+    "tabInstanceNotRunning": "La instancia no se está ejecutando. Iníciela para usar el panel de ESPHome.",
+    "tabDashboardDisabled": "El panel de ESPHome no está activado. Actívelo en la configuración de la instancia, pestaña \"ESPHome Dashboard\".",
+    "tabDashboardStarting": "El panel de ESPHome se está iniciando, espere. En el primer inicio o tras un cambio de versión, primero se instala ESPHome, lo que puede tardar varios minutos. El panel se muestra aquí automáticamente en cuanto esté listo; no es necesario recargar la página ni reiniciar la instancia.",
+    "tabDashboardFailed": "No se pudo iniciar el panel de ESPHome o se ha detenido. Consulte el registro de abajo y el registro de la instancia para conocer el motivo.",
+    "tabDashboardStartLog": "Registro de inicio",
+    "tabDashboardNoUrl": "No hay ninguna URL del panel de ESPHome configurada. Introdúzcala en la configuración de la instancia, pestaña \"ESPHome Dashboard\".",
+    "tabDashboardLegacyHint": "El panel de ESPHome necesita unos minutos para iniciarse, en el primer inicio o tras un cambio de versión incluso más. Si abajo se muestra un error, espere un momento y recargue la página. Actualice admin a la versión 8.0.12 o posterior para ver aquí el progreso del inicio."
 }

@@ -95,9 +95,30 @@ const defaultDashboardVersion = '2026.6.5';
 const versionMigrationState = '_ESPHomeDashboard.versionPinMigrationDone';
 const pillowMigrationState = '_ESPHomeDashboard.pillowAutoDetectMigrationDone';
 
-// Interval and per-request timeout of the check whether the started dashboard answers
+// Interval and per-request timeout of the check whether the started dashboard answers. Checked more often
+// until it answers: the dashboard tab of admin waits for it.
 const readyCheckIntervalMs = 60000;
+const startingCheckIntervalMs = 5000;
 const readyCheckTimeoutMs = 5000;
+
+/**
+ * States the dashboard tab of admin (admin/jsonTab.json5) shows: while the dashboard is not ready a hint and
+ * the start log, the dashboard itself once it answers
+ */
+const statusState = '_ESPHomeDashboard.status';
+const startLogState = '_ESPHomeDashboard.startLog';
+/** Number of lines of the start log shown in the dashboard tab */
+const startLogLines = 60;
+
+/**
+ * Status of the dashboard for the dashboard tab of admin:
+ * - disabled: the dashboard is not enabled in the instance settings
+ * - starting: the Python environment / the container is prepared or the dashboard does not answer yet
+ * - running: the dashboard answers
+ * - failed: the dashboard could not be started or stopped
+ * - stopped: the instance was stopped
+ */
+export type DashboardStatus = 'disabled' | 'starting' | 'running' | 'failed' | 'stopped';
 
 /**
  * ESPHome Dashboard class, one instance per adapter instance
@@ -118,6 +139,14 @@ class Dashboard {
     private dockerContainer: { manager: ReturnType<DockerPlugin['getDockerManager']>; name: string } | undefined;
     /** startDockerContainer() while it runs, the unload waits for it */
     private dockerStart: Promise<void> | undefined;
+    /** Status shown in the dashboard tab, see setStatus() */
+    private status: DashboardStatus | undefined;
+    /** Last lines of the start log, see appendStartLog() */
+    private readonly startLog: string[] = [];
+    /** Write of the start log state while it runs, see writeStartLog() */
+    private startLogWrite: Promise<void> | undefined;
+    /** The start log changed while it was written */
+    private startLogChanged = false;
     /** Memory cache of all available ESPHome Dashboard versions */
     private readonly dashboardVersions: string[] = [];
     /** Memory cache for available Pillow versions */
@@ -291,6 +320,16 @@ class Dashboard {
                 native: {},
             });
 
+            // The dashboard tab of admin shows a hint and the start log until the dashboard answers
+            this.startLog.length = 0;
+            if (this.adapter.config.ESPHomeDashboardEnabled) {
+                this.appendStartLog('Preparing the ESPHome Dashboard');
+                await this.setStatus('starting');
+            } else {
+                this.writeStartLog();
+                await this.setStatus('disabled');
+            }
+
             // Get all current available ESPHome Dashboard versions
             /** GitHub releases by index, only the name is used */
             let content: Record<string, { name: string }> | undefined;
@@ -415,6 +454,9 @@ class Dashboard {
                             this.adapter.config.DeviceBuilderVersion,
                         );
                         this.adapter.log.debug(`Python requirements: ${JSON.stringify(requirements)}`);
+                        this.appendStartLog(
+                            `Preparing the Python environment: ${requirements.map(requirement => `${requirement.name}${requirement.version}`).join(', ')}. Installing them takes several minutes on the first start or after a version change.`,
+                        );
                         // Create a virtual environment with esphome installed. upgrade: as soon as something
                         // has to be installed (e.g. another ESPHome version), pip may also upgrade the
                         // installed packages, otherwise it keeps the Device Builder installed for the
@@ -428,6 +470,8 @@ class Dashboard {
                     } catch (error) {
                         const stack = error instanceof Error ? error.stack : undefined;
                         this.adapter.log.error(`Fatal error starting ESPHomeDashboard | ${String(error)} | ${stack}`);
+                        this.appendStartLog(`The Python environment could not be prepared: ${String(error)}`);
+                        await this.setStatus('failed');
                         return;
                     }
 
@@ -462,9 +506,9 @@ class Dashboard {
                     const deviceBuilderInfo = useDeviceBuilder
                         ? `, ESPHome Device Builder version: ${installed['esphome-device-builder'] || 'unknown'}`
                         : '';
-                    this.adapter.log.info(
-                        `Starting ESPHome Dashboard. ESPHome version: ${installed.esphome || useDashBoardVersion || 'latest'}, Pillow version: ${installed.pillow || 'unknown'}${deviceBuilderInfo}`,
-                    );
+                    const startMessage = `Starting ESPHome Dashboard. ESPHome version: ${installed.esphome || useDashBoardVersion || 'latest'}, Pillow version: ${installed.pillow || 'unknown'}${deviceBuilderInfo}`;
+                    this.adapter.log.info(startMessage);
+                    this.appendStartLog(startMessage);
                     // buffer: false, the output is only logged below and would otherwise be kept in memory
                     // for as long as the dashboard runs. NO_COLOR keeps color codes out of the log.
                     this.dashboardProcess = python(command, args, { buffer: false, env: { NO_COLOR: '1' } });
@@ -473,9 +517,11 @@ class Dashboard {
 
                     this.dashboardProcess.stdout?.on('data', data => {
                         this.adapter.log.info(`[this.dashboardProcess - Data] ${data}`);
+                        this.appendStartLog(String(data));
                     });
 
                     this.dashboardProcess.stderr?.on('data', data => {
+                        this.appendStartLog(String(data));
                         if (data.includes('ERROR')) {
                             // e.g. the reason why the dashboard stops right after the start
                             this.adapter.log.error(`[ESPHome - Console] ${data}`);
@@ -490,6 +536,7 @@ class Dashboard {
 
                     void this.dashboardProcess.on('exit', (code, signal) => {
                         this.adapter.log.warn(`ESPHome Dashboard stopped (exit code ${code}, signal ${signal})`);
+                        this.appendStartLog(`ESPHome Dashboard stopped (exit code ${code}, signal ${signal})`);
                         this.onDashboardStopped();
                     });
 
@@ -507,6 +554,7 @@ class Dashboard {
                         }
                         this.onDashboardStopped();
                         const reason = error instanceof Error && error.message ? error.message : String(error);
+                        this.appendStartLog(`ESPHome Dashboard could not be started: ${reason}`);
                         if (code === 'ENOENT') {
                             this.adapter.log.error(
                                 `ESPHome Dashboard could not be started, "${command}" is missing in the Python environment. Reset the Python environment in the adapter configuration and restart the adapter to install it again: ${reason}`,
@@ -520,12 +568,18 @@ class Dashboard {
                     this.scheduleReadyCheck(port);
                 } catch (error) {
                     this.adapter.errorHandler(`[espHomeDashboard-Process]`, error);
+                    this.appendStartLog(`ESPHome Dashboard could not be started: ${String(error)}`);
+                    await this.setStatus('failed');
                 }
             } else {
                 this.adapter.log.info(`Native Integration of ESPHome Dashboard disabled `);
             }
         } catch (error) {
             this.adapter.errorHandler(`[espHomeDashboard-Function]`, error);
+            if (this.adapter.config.ESPHomeDashboardEnabled) {
+                this.appendStartLog(`ESPHome Dashboard could not be started: ${String(error)}`);
+                await this.setStatus('failed');
+            }
         }
     }
 
@@ -560,18 +614,20 @@ class Dashboard {
         try {
             const plugin = this.adapter.getPluginInstance('docker') as DockerPlugin | null;
             if (!plugin) {
-                this.adapter.log.error(
-                    `Docker Integration of the ESPHome Dashboard is enabled, but the docker plugin of ioBroker is not loaded. Disable "Use Docker Integration" to run the dashboard without Docker.`,
-                );
+                const message = `Docker Integration of the ESPHome Dashboard is enabled, but the docker plugin of ioBroker is not loaded. Disable "Use Docker Integration" to run the dashboard without Docker.`;
+                this.adapter.log.error(message);
+                this.appendStartLog(message);
+                await this.setStatus('failed');
                 return;
             }
             const container = plugin.configurations.find(config =>
                 config.mounts?.some(mount => mount.target === dockerConfigDir),
             );
             if (!container) {
-                this.adapter.log.error(
-                    `Docker Integration of the ESPHome Dashboard is enabled, but docker-compose.yaml of the adapter declares no ESPHome Dashboard container for the docker plugin. Restart the instance, reinstall the adapter if this persists.`,
-                );
+                const message = `Docker Integration of the ESPHome Dashboard is enabled, but docker-compose.yaml of the adapter declares no ESPHome Dashboard container for the docker plugin. Restart the instance, reinstall the adapter if this persists.`;
+                this.adapter.log.error(message);
+                this.appendStartLog(message);
+                await this.setStatus('failed');
                 return;
             }
 
@@ -592,6 +648,9 @@ class Dashboard {
 
             this.adapter.log.info(
                 `Docker Integration (beta) of ESPHome Dashboard enabled, starting container. Image: ${container.image}, configuration directory: ${configDir}`,
+            );
+            this.appendStartLog(
+                `Starting the container of image ${container.image}. Pulling the image takes several minutes on the first start or after a version change.`,
             );
             // Recorded before the container can exist: when the process ends while it is being created,
             // removeLeftoverContainer() still knows it
@@ -620,9 +679,10 @@ class Dashboard {
 
             const state = name ? (await manager?.containerList(true))?.find(info => info.names === name) : undefined;
             if (!name || !state) {
-                this.adapter.log.error(
-                    `ESPHome Dashboard container ${name ?? ''} was not created: Docker is not installed or not running, or the image ${container.image} could not be pulled, see the warnings of the docker plugin above. Disable "Use Docker Integration" to run the dashboard without Docker.`,
-                );
+                const message = `ESPHome Dashboard container ${name ?? ''} was not created: Docker is not installed or not running, or the image ${container.image} could not be pulled, see the warnings of the docker plugin in the log. Disable "Use Docker Integration" to run the dashboard without Docker.`;
+                this.adapter.log.error(message);
+                this.appendStartLog(message);
+                await this.setStatus('failed');
                 return;
             }
             // Removed by the next start of the instance without Docker Integration, also when the instance
@@ -630,7 +690,11 @@ class Dashboard {
             await this.adapter.stateSetCreate(dockerContainerState, 'dockerContainer', name);
             if (state.status === 'running' || state.status === 'restarting') {
                 this.adapter.log.info(`ESPHome Dashboard container ${name} is running`);
+                this.appendStartLog(`Container ${name} is running, waiting for the dashboard to answer`);
             } else {
+                this.appendStartLog(
+                    `Container ${name} is not running (${state.status}), the docker plugin tries to start it again every minute`,
+                );
                 this.adapter.log.error(
                     `ESPHome Dashboard container ${name} is not running (${state.status}), see the warnings of the docker plugin above. The docker plugin tries to start it again every minute.`,
                 );
@@ -643,6 +707,8 @@ class Dashboard {
             this.scheduleReadyCheck(String(this.adapter.config.ESPHomeDashboardPort));
         } catch (error) {
             this.adapter.errorHandler(`[espHomeDashboard-Docker]`, error);
+            this.appendStartLog(`ESPHome Dashboard container could not be started: ${String(error)}`);
+            await this.setStatus('failed');
         }
     }
 
@@ -927,6 +993,10 @@ class Dashboard {
         this.stopping = true;
         this.adapter.clearTimeout(this.readyCheckTimer);
         this.readyCheckTimer = undefined;
+        if (this.status && this.status !== 'disabled') {
+            // Not awaited, the unload must not wait for the database
+            void this.setStatus('stopped');
+        }
         try {
             if (this.dashboardProcess) {
                 this.dashboardProcess.kill('SIGTERM', {
@@ -964,32 +1034,40 @@ class Dashboard {
      * @param port - port the dashboard listens on
      */
     private scheduleReadyCheck(port: string): void {
-        this.readyCheckTimer = this.adapter.setTimeout(async () => {
-            this.readyCheckTimer = undefined;
-            if (!this.isStarted()) {
-                return;
-            }
-            // Host network: when the container cannot bind the port because something else holds it, that
-            // answers instead, so the container itself has to run as well
-            const reachable = (await this.isReachable(port)) && (await this.isContainerRunning());
-            if (!this.isStarted()) {
-                return;
-            }
-            // The process reports its exit, the container does not: it is checked as long as it runs
-            if (!reachable || this.containerStarted) {
-                this.scheduleReadyCheck(port);
-            }
-            if (reachable === this.ready) {
-                return;
-            }
-            this.ready = reachable;
-            if (reachable) {
-                this.adapter.log.info(`ESPHome Dashboard is reachable on port ${port}`);
-            } else {
-                this.adapter.log.warn(`ESPHome Dashboard is not reachable on port ${port} any more`);
-            }
-            await this.adapter.updateConnectionState();
-        }, readyCheckIntervalMs);
+        this.readyCheckTimer = this.adapter.setTimeout(
+            async () => {
+                this.readyCheckTimer = undefined;
+                if (!this.isStarted()) {
+                    return;
+                }
+                // Host network: when the container cannot bind the port because something else holds it, that
+                // answers instead, so the container itself has to run as well
+                const reachable = (await this.isReachable(port)) && (await this.isContainerRunning());
+                if (!this.isStarted()) {
+                    return;
+                }
+                const changed = reachable !== this.ready;
+                this.ready = reachable;
+                // The process reports its exit, the container does not: it is checked as long as it runs
+                if (!reachable || this.containerStarted) {
+                    this.scheduleReadyCheck(port);
+                }
+                if (!changed) {
+                    return;
+                }
+                if (reachable) {
+                    this.adapter.log.info(`ESPHome Dashboard is reachable on port ${port}`);
+                    this.appendStartLog(`ESPHome Dashboard is reachable on port ${port}`);
+                    await this.setStatus('running');
+                } else {
+                    this.adapter.log.warn(`ESPHome Dashboard is not reachable on port ${port} any more`);
+                    this.appendStartLog(`ESPHome Dashboard is not reachable on port ${port} any more`);
+                    await this.setStatus('starting');
+                }
+                await this.adapter.updateConnectionState();
+            },
+            this.ready ? readyCheckIntervalMs : startingCheckIntervalMs,
+        );
     }
 
     /**
@@ -1050,7 +1128,84 @@ class Dashboard {
         if (this.stopping) {
             return;
         }
+        void this.setStatus('failed');
         void this.adapter.updateConnectionState();
+    }
+
+    /**
+     * Status of the dashboard shown in the dashboard tab of admin
+     *
+     * @returns undefined before start()
+     */
+    getStatus(): DashboardStatus | undefined {
+        return this.status;
+    }
+
+    /**
+     * Data of the dashboard tab of admin (command of admin/jsonTab.json5)
+     *
+     * @returns URL of the dashboard shown in the iframe of the tab
+     */
+    getTabData(): { data: { dashboardUrl: string } } {
+        return { data: { dashboardUrl: this.adapter.config.ESPHomeDashboardUrl || '' } };
+    }
+
+    /**
+     * Update the status shown in the dashboard tab of admin
+     *
+     * @param status - new status
+     */
+    private async setStatus(status: DashboardStatus): Promise<void> {
+        if (status === this.status) {
+            return;
+        }
+        this.status = status;
+        await this.adapter.stateSetCreate(statusState, 'dashboardStatus', status);
+        if (status !== 'running') {
+            // Output written while the dashboard answered was not stored, see appendStartLog()
+            this.writeStartLog();
+        }
+    }
+
+    /**
+     * Add output of the dashboard start to the log shown in the dashboard tab of admin until the dashboard
+     * answers. Only the last lines are kept.
+     *
+     * @param text - one or more lines
+     */
+    private appendStartLog(text: string): void {
+        const time = new Date().toTimeString().slice(0, 8);
+        for (const line of text.split(/\r?\n/)) {
+            if (line.trim()) {
+                this.startLog.push(`${time} ${line.trimEnd()}`);
+            }
+        }
+        if (this.startLog.length > startLogLines) {
+            this.startLog.splice(0, this.startLog.length - startLogLines);
+        }
+        // Not shown while the dashboard answers, the dashboard logs every request
+        if (this.status !== 'running') {
+            this.writeStartLog();
+        }
+    }
+
+    /**
+     * Write the start log to its state. A change made while it is written is written right afterwards, so
+     * a burst of output only causes a few writes.
+     */
+    private writeStartLog(): void {
+        this.startLogChanged = true;
+        if (this.startLogWrite || this.stopping) {
+            return;
+        }
+        this.startLogWrite = (async () => {
+            while (this.startLogChanged && !this.stopping) {
+                this.startLogChanged = false;
+                await this.adapter.stateSetCreate(startLogState, 'dashboardStartLog', this.startLog.join('\n'));
+            }
+        })().finally(() => {
+            this.startLogWrite = undefined;
+        });
     }
 
     /**

@@ -178,6 +178,13 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
   container start during unload (adapter timers do not work while unloading). Unit tests: `src/lib/dashboard.test.ts`.
 - The dashboard port is registered with js-controller >= 8 (`registerDashboardPort()`, `common.declareUsedResources: true`),
   duck-typed like ioBroker.influxdb, as the adapter types of js-controller 7 do not have `registerUsedResource()`.
+- The admin tab of the instance (`adminTab.link` / `adminUI.tab: "json"` in `io-package.json`) is `admin/jsonTab.json5`, not
+  a plain link to the dashboard: users took the empty page of a dashboard still installing for a broken one. Its items
+  watch `_ESPHomeDashboard.status` (`DashboardStatus`: disabled / starting / running / failed / stopped, `setStatus()`) with
+  `dependsOnStates` and show a hint plus `_ESPHomeDashboard.startLog` (last 60 lines, `appendStartLog()`, not written while
+  running) until the dashboard answers, then only the `iframe` with the URL from the `getDashboardTab` command (`getTabData()`).
+  The ready check polls every 5 s until the dashboard answers, then every 60 s. `_states` needs admin >= 8.0.12, so every
+  `hidden` checks `typeof _states` and older admins get the iframe with a hint. Texts: `tab*` keys in `admin/i18n`.
 - "Clear Autopy Cache" button triggers `clearAutopyCache()` → `fs.rmSync(~/.cache/autopy, recursive)`.
 - Config migration: `migrateConfig()` converts legacy `ESPHomeDashboardIP` + port → `ESPHomeDashboardUrl`.
 
