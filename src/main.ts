@@ -1550,7 +1550,9 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
             if (this.yamlFileManager.isAdminCommand(obj.command)) {
                 // "YAML Files" tab of the instance configuration
                 const response = await this.yamlFileManager.handleAdminMessage(obj.command, obj.message);
-                this.sendTo(obj.from, obj.command, response, obj.callback);
+                if (obj.callback) {
+                    this.sendTo(obj.from, obj.command, response, obj.callback);
+                }
                 return;
             }
             switch (obj.command) {
