@@ -69,6 +69,36 @@ function escapeHtml(text: string): string {
 }
 
 /**
+ * Translates a key of src/i18n, or returns the English key if I18n.init() has not finished.
+ * DeviceManagement starts init() in onReady() and does not await it; the YAML tab of admin
+ * can send getYamlFileList before that, and I18n.translate() then throws.
+ *
+ * @param key - English text, also the key in src/i18n
+ */
+// I18n.translate, replaced in unit tests to simulate init() not having finished
+let lookupTranslation: (key: string) => string = (key: string): string => I18n.translate(key);
+
+function translateLabel(key: string): string {
+    try {
+        return lookupTranslation(key);
+    } catch {
+        return key;
+    }
+}
+
+/**
+ * ESPHome config directory of one adapter instance: `{dataDir}/esphome.{instance}`.
+ * getAbsoluteDefaultDataDir() has no trailing slash (path.join), so concatenating
+ * `dataDir + "esphome." + instance` looks in the wrong place.
+ *
+ * @param dataDir - Result of getAbsoluteDefaultDataDir()
+ * @param instance - Adapter instance number
+ */
+function resolveESPHomeDirectory(dataDir: string, instance: number | string): string {
+    return path.join(dataDir, `esphome.${instance}`);
+}
+
+/**
  * Reads a string property of the message admin sent, undefined if it is missing or not a string
  *
  * @param message - The message of the sendTo control
@@ -98,6 +128,27 @@ class YamlFileManager {
     }
 
     /**
+     * ESPHome config directory of one adapter instance, `{dataDir}/esphome.{instance}`.
+     * getAbsoluteDefaultDataDir() has no trailing slash (path.join), so concatenating
+     * `dataDir + "esphome." + instance` looks in the wrong place.
+     *
+     * @param dataDir - Result of getAbsoluteDefaultDataDir()
+     * @param instance - Adapter instance number
+     */
+    static resolveDirectory(dataDir: string, instance: number | string): string {
+        return resolveESPHomeDirectory(dataDir, instance);
+    }
+
+    /**
+     * Replaces I18n.translate for unit tests, or restores it when fn is omitted
+     *
+     * @param fn - Function that throws like I18n.translate before init(), or undefined to restore
+     */
+    static setTranslationLookupForTests(fn?: (key: string) => string): void {
+        lookupTranslation = fn ?? ((key: string): string => I18n.translate(key));
+    }
+
+    /**
      * Get the ESPHome directory path
      *
      * @returns The absolute path to the ESPHome directory
@@ -107,8 +158,7 @@ class YamlFileManager {
         // is installed, e.g. in the unit tests of this module
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const utils = require('@iobroker/adapter-core') as typeof AdapterCore;
-        const dataDir = utils.getAbsoluteDefaultDataDir();
-        return `${dataDir}esphome.${this.adapter.instance}`;
+        return YamlFileManager.resolveDirectory(utils.getAbsoluteDefaultDataDir(), this.adapter.instance ?? 0);
     }
 
     /**
@@ -346,10 +396,10 @@ class YamlFileManager {
     async renderFileList(): Promise<string> {
         const files = await this.listYamlFiles();
         if (!files.length) {
-            return `<i>${escapeHtml(I18n.translate('No YAML files found'))}</i>`;
+            return `<i>${escapeHtml(translateLabel('No YAML files found'))}</i>`;
         }
         const cell = 'text-align: left; padding: 4px 16px 4px 0';
-        const header = [I18n.translate('File name'), I18n.translate('Size'), I18n.translate('Modified')]
+        const header = [translateLabel('File name'), translateLabel('Size'), translateLabel('Modified')]
             .map(title => `<th style="${cell}">${escapeHtml(title)}</th>`)
             .join('');
         const rows = files
