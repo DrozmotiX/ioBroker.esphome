@@ -497,6 +497,32 @@ describe('ESPHome Dashboard in Docker', () => {
             expect(logs.states['_ESPHomeDashboard.startLog']).to.include('GET /devices');
         });
 
+        it('shows every info, warning and error of the dashboard in the start log, but no debug messages', async () => {
+            const config = { ...native, ESPHomeDashboardEnabled: true };
+            const dashboard = createDashboard(config, null);
+            const internal = dashboard as unknown as {
+                log: ioBroker.Logger;
+                errorHandler: (codepart: string, error: unknown) => void;
+            };
+            internal.log.info('info message');
+            internal.log.warn('warn message');
+            internal.log.error('error message');
+            internal.log.debug('debug message');
+            internal.errorHandler('[codepart]', new Error('boom'));
+            await settle();
+
+            // also in the log of the instance
+            expect(logs.info).to.include('info message');
+            expect(logs.warn).to.include('warn message');
+            expect(logs.error).to.include('error message');
+            expect(logs.error).to.include('[codepart] Error: boom');
+            const log = String(logs.states['_ESPHomeDashboard.startLog']);
+            for (const text of ['info message', 'warn message', 'error message', '[codepart] Error: boom']) {
+                expect(log).to.include(text);
+            }
+            expect(log).not.to.include('debug message');
+        });
+
         it('reports a stopped dashboard process as failed', async () => {
             const config = { ...native, ESPHomeDashboardEnabled: true };
             const dashboard = createDashboard(config, null);

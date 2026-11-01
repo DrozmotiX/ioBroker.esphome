@@ -189,6 +189,9 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
   running) until the dashboard answers, then only the `iframe` with the URL from the `getDashboardTab` command (`getTabData()`).
   The ready check polls every 5 s until the dashboard answers, then every 60 s. `_states` needs admin >= 8.0.12, so every
   `hidden` checks `typeof _states` and older admins get the iframe with a hint. Texts: `tab*` keys in `admin/i18n`.
+  Inside `Dashboard`, log with `this.log` / `this.errorHandler()`, not `this.adapter.log` / `this.adapter.errorHandler()`:
+  info, warn and error then also land in the start log (debug only in the instance log). Only the raw output of the
+  dashboard process calls `appendStartLog()` directly.
 - Optional login (advanced settings `ESPHomeDashboardUsername` / `ESPHomeDashboardPassword`, password in
   `encryptedNative`): `dashboardCredentials()` in `src/lib/dashboard.ts` passes it as environment variables to the process
   and the container, `ESPHOME_USERNAME` / `ESPHOME_PASSWORD` for Device Builder, `USERNAME` / `PASSWORD` for older ESPHome.
