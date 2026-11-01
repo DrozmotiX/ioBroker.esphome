@@ -1,4 +1,5 @@
 const dashboard_tests = require('./dashboard_tests');
+const docker_dashboard_tests = require('./docker_dashboard_tests');
 const e2e_device_tests = require('./e2e_device_tests');
 const known_device_tests = require('./known_device_tests');
 const settings_cleanup_tests = require('./settings_cleanup_tests');
@@ -25,6 +26,15 @@ exports.runTests = function (suite) {
 
     dashboard_tests.runTests(dashboardSuite);
     version_fetch_tests.runTests(dashboardSuite);
+
+    // The dashboard in Docker ("Use Docker Integration", beta) needs a Docker daemon and pulls the ESPHome
+    // image (about 1 GB). Executed by the "Dashboard Integration" workflow as its own job, or locally via:
+    //   ESPHOME_RUN_DOCKER_TESTS=true npm run test:integration -- --grep "Docker"
+    const runDockerTests = process.env.ESPHOME_RUN_DOCKER_TESTS === 'true';
+    if (!runDockerTests) {
+        console.log('Skipping ESPHome dashboard Docker suites, set ESPHOME_RUN_DOCKER_TESTS=true to run them');
+    }
+    docker_dashboard_tests.runTests(runDockerTests ? suite : suite.skip);
 
     // The end-to-end suite needs a compiled ESPHome host-platform device (Python, ESPHome and a C++
     // toolchain), see test/integrationTests/e2e_device_tests.js. Executed by the "E2E" workflow.

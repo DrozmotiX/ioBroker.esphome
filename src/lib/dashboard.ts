@@ -659,7 +659,12 @@ class Dashboard {
         try {
             await registry.registerUsedResource('tcpPort', { port });
         } catch (error) {
-            this.adapter.log.warn(`Cannot register port ${port} of the ESPHome Dashboard as used: ${String(error)}`);
+            // A registration still waiting for the host when the instance unloads is rejected, nothing to report
+            if (!this.stopping) {
+                this.adapter.log.warn(
+                    `Cannot register port ${port} of the ESPHome Dashboard as used: ${String(error)}`,
+                );
+            }
         }
     }
 
