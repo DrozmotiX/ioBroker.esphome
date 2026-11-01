@@ -85,5 +85,8 @@
     "hlpDashboardUsername": "Deje el nombre de usuario y la contraseña vacíos para usar el panel sin inicio de sesión (predeterminado)",
     "lblDashboardPassword": "Contraseña del panel de ESPHome",
     "hlpDashboardPassword": "Se guarda cifrada. Se aplica en el próximo inicio del panel",
-    "errDashboardLogin": "Establezca el nombre de usuario y la contraseña, o deje ambos vacíos"
+    "errDashboardLogin": "Establezca el nombre de usuario y la contraseña, o deje ambos vacíos",
+    "lblPythonVersion": "Versión de Python",
+    "hlpPythonVersion": "Python del entorno del panel, una versión (3.13.2) o un rango (3.12 = la 3.12.x más reciente). Otra versión vuelve a crear el entorno en el próximo inicio. Predeterminado: 3.13.2",
+    "errPythonVersion": "Versión de Python no válida, p. ej. 3.13.2 o 3.12"
 }

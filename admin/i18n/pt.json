@@ -85,5 +85,8 @@
     "hlpDashboardUsername": "Deixe o nome de utilizador e a palavra-passe vazios para usar o painel sem login (padrão)",
     "lblDashboardPassword": "Palavra-passe do ESPHome Dashboard",
     "hlpDashboardPassword": "Guardada encriptada. Aplicada no próximo arranque do painel",
-    "errDashboardLogin": "Defina o nome de utilizador e a palavra-passe, ou deixe ambos vazios"
+    "errDashboardLogin": "Defina o nome de utilizador e a palavra-passe, ou deixe ambos vazios",
+    "lblPythonVersion": "Versão do Python",
+    "hlpPythonVersion": "Python do ambiente do painel, uma versão (3.13.2) ou um intervalo (3.12 = a 3.12.x mais recente). Outra versão recria o ambiente na próxima inicialização. Padrão: 3.13.2",
+    "errPythonVersion": "Versão do Python inválida, p. ex. 3.13.2 ou 3.12"
 }

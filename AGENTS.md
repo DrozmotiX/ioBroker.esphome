@@ -152,12 +152,16 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
 
 - Managed via `autopy` (Python venv); cache at `~/.cache/autopy`.
 - `autopy` is the fork `@simonfischer04/autopy` from npm, installed under the alias `autopy`
-  (`npm:@simonfischer04/autopy@^1.3.0`, source: github.com/SimonFischer04/autopy). 1.3.0 added the `upgrade`
+  (`npm:@simonfischer04/autopy@^1.3.1`, source: github.com/SimonFischer04/autopy). 1.3.0 added the `upgrade`
   option of `getVenv()` and checks the extras of installed requirements.
 - From ESPHome 2026.7.0 on the dashboard is ESPHome Device Builder (`esphome dashboard` only exits with an error).
   `buildRequirements()` (`src/lib/dashboardRequirements.ts`) installs it as `esphome-device-builder[esphome]`: its
   `esphome` extra holds the minimum ESPHome version, so pip picks the matching release. `getVenv()` runs with
   `upgrade: true`, otherwise pip keeps the Device Builder of a previously selected ESPHome version.
+- Python version: advanced setting `PythonVersion` (semver version or range, default `3.13.2` =
+  `DEFAULT_PYTHON_VERSION`), validated by `pythonVersion()` in `src/lib/dashboard.ts` and passed to `getVenv()`; autopy
+  recreates an environment with a non-matching Python. autopy 1.3.1 reads the `SHA256SUMS` file newer
+  python-build-standalone releases ship instead of one `.sha256` per asset (needed for newer Python versions).
 - Pillow is not installed separately by default ("Auto Detect"): ESPHome pins the version it needs since 2024.12,
   any other version makes pip fail. Pillow / Device Builder versions for the dropDowns are fetched from PyPI and
   cached in `_ESPHomeDashboard.pillowVersionCache` / `deviceBuilderVersionCache`.

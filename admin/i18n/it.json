@@ -85,5 +85,8 @@
     "hlpDashboardUsername": "Lasciare vuoti nome utente e password per usare la dashboard senza login (predefinito)",
     "lblDashboardPassword": "Password della dashboard ESPHome",
     "hlpDashboardPassword": "Memorizzata crittografata. Applicata al prossimo avvio della dashboard",
-    "errDashboardLogin": "Impostare sia il nome utente che la password, oppure lasciarli entrambi vuoti"
+    "errDashboardLogin": "Impostare sia il nome utente che la password, oppure lasciarli entrambi vuoti",
+    "lblPythonVersion": "Versione di Python",
+    "hlpPythonVersion": "Python dell'ambiente della dashboard, una versione (3.13.2) o un intervallo (3.12 = la 3.12.x più recente). Un'altra versione ricrea l'ambiente al prossimo avvio. Predefinito: 3.13.2",
+    "errPythonVersion": "Versione di Python non valida, ad es. 3.13.2 o 3.12"
 }

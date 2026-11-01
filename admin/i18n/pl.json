@@ -85,5 +85,8 @@
     "hlpDashboardUsername": "Pozostaw nazwę użytkownika i hasło puste, aby korzystać z panelu bez logowania (domyślnie)",
     "lblDashboardPassword": "Hasło panelu ESPHome",
     "hlpDashboardPassword": "Przechowywane w postaci zaszyfrowanej. Obowiązuje od następnego uruchomienia panelu",
-    "errDashboardLogin": "Ustaw nazwę użytkownika i hasło lub pozostaw oba pola puste"
+    "errDashboardLogin": "Ustaw nazwę użytkownika i hasło lub pozostaw oba pola puste",
+    "lblPythonVersion": "Wersja Pythona",
+    "hlpPythonVersion": "Python środowiska panelu, wersja (3.13.2) lub zakres (3.12 = najnowsza 3.12.x). Inna wersja tworzy środowisko ponownie przy następnym uruchomieniu. Domyślnie: 3.13.2",
+    "errPythonVersion": "Nieprawidłowa wersja Pythona, np. 3.13.2 lub 3.12"
 }

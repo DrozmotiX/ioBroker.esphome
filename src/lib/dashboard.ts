@@ -120,6 +120,24 @@ export function dashboardCredentials(
     return { ESPHOME_USERNAME: username, ESPHOME_PASSWORD: password, USERNAME: username, PASSWORD: password };
 }
 
+/** Python version of the dashboard environment while none is configured (the version used before it was selectable) */
+export const DEFAULT_PYTHON_VERSION = '3.13.2';
+
+/**
+ * Python version autopy installs the dashboard environment with (advanced settings, "PythonVersion").
+ *
+ * A semver version or range, matched against the releases of python-build-standalone: "3.12" or "~3.12.0" takes the
+ * newest 3.12.x. Anything else falls back to {@link DEFAULT_PYTHON_VERSION}. When the environment was created with a
+ * Python version not matching it, autopy creates the environment again.
+ *
+ * @param config - instance configuration
+ * @returns version or range passed to autopy's getVenv()
+ */
+export function pythonVersion(config: Pick<ioBroker.AdapterConfig, 'PythonVersion'>): string {
+    const configured = String(config.PythonVersion ?? '').trim();
+    return /^[~^]?\d+(\.(\d+|x|\*)){0,2}$/.test(configured) ? configured : DEFAULT_PYTHON_VERSION;
+}
+
 // Interval and per-request timeout of the check whether the started dashboard answers
 const readyCheckIntervalMs = 60000;
 const readyCheckTimeoutMs = 5000;
@@ -440,13 +458,22 @@ class Dashboard {
                             this.adapter.config.DeviceBuilderVersion,
                         );
                         this.adapter.log.debug(`Python requirements: ${JSON.stringify(requirements)}`);
+                        const usePythonVersion = pythonVersion(this.adapter.config);
+                        const configuredPythonVersion = String(this.adapter.config.PythonVersion ?? '').trim();
+                        if (configuredPythonVersion && usePythonVersion !== configuredPythonVersion) {
+                            this.adapter.log.warn(
+                                `Invalid Python version "${this.adapter.config.PythonVersion}" in the advanced dashboard settings, using ${usePythonVersion}`,
+                            );
+                        }
+                        this.adapter.log.info(`Python version of the dashboard environment: ${usePythonVersion}`);
                         // Create a virtual environment with esphome installed. upgrade: as soon as something
                         // has to be installed (e.g. another ESPHome version), pip may also upgrade the
                         // installed packages, otherwise it keeps the Device Builder installed for the
                         // previous ESPHome version.
                         python = await getVenv({
                             name: VENV_NAME,
-                            pythonVersion: '3.13.2', // Use any Python 3.13.x version.
+                            // An environment with another Python version is created again by autopy
+                            pythonVersion: usePythonVersion,
                             requirements,
                             upgrade: true,
                         });
