@@ -13,13 +13,15 @@
 
 const { expect } = require('chai');
 const { mkdir, writeFile, readFile } = require('node:fs/promises');
+const os = require('node:os');
 const path = require('node:path');
 const { sendToAdapter } = require('./deviceManagerHelpers');
 
-// Same installation @iobroker/testing uses (see AGENTS.md). Do not call
-// getAbsoluteDefaultDataDir() here: requiring adapter-core in the mocha process
-// exits with "Cannot find js-controller".
-const ESPHOME_DIR = path.join('/tmp/test-iobroker.esphome', 'iobroker-data', 'esphome.0');
+// Same installation @iobroker/testing uses (`path.join(os.tmpdir(), 'test-iobroker.esphome')`).
+// Do not call getAbsoluteDefaultDataDir() here: requiring adapter-core in the mocha
+// process exits with "Cannot find js-controller". Hardcoding /tmp only works on Linux;
+// macOS and Windows put os.tmpdir() elsewhere (see CI adapter-tests).
+const ESPHOME_DIR = path.join(os.tmpdir(), 'test-iobroker.esphome', 'iobroker-data', 'esphome.0');
 
 exports.runTests = function (suite) {
     suite('YAML file management - sendTo of the YAML Files tab', getHarness => {
