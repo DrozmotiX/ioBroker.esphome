@@ -16,7 +16,7 @@ import {
 } from '@2colors/esphome-native-api';
 import * as utils from '@iobroker/adapter-core';
 import { format } from 'node:util';
-import { connectedDeviceNames, isDeviceOnline } from './lib/connectionState';
+import { connectionStateValue, isDeviceOnline } from './lib/connectionState';
 import Dashboard from './lib/dashboard';
 import EsphomeDeviceManagement, {
     type DeviceActionResult,
@@ -2203,10 +2203,15 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
      * Lists the connected devices in info.connection, comma-separated like other multi-device adapters (e.g. sonoff)
      * do: the admin shows the instance green while the list is not empty, and shows the list itself. Green needs just
      * one connected device - requiring all would turn it yellow whenever a single device is switched off.
+     * With the ESPHome Dashboard enabled the list stays empty until the dashboard answers, see Dashboard.isReady().
      * The list is computed and remembered synchronously, so concurrent calls write it in the order they were made.
      */
     async updateConnectionState(): Promise<void> {
-        const list = connectedDeviceNames(Object.entries(clientDetails)).join(',');
+        const list = connectionStateValue(
+            Object.entries(clientDetails),
+            this.config.ESPHomeDashboardEnabled,
+            this.dashboard.isReady(),
+        );
         if (list === this.connectedDevicesList) {
             return;
         }

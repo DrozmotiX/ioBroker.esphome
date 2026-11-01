@@ -32,6 +32,8 @@ export interface DashboardAdapter extends ioBroker.Adapter {
     ): Promise<void>;
     /** Log an error and send it to Sentry, see Esphome.errorHandler() */
     errorHandler(codepart: string, error: unknown): void;
+    /** Write info.connection again, it depends on isReady(), see Esphome.updateConnectionState() */
+    updateConnectionState(): Promise<void>;
 }
 
 // ESPHome version installations are pinned to. ESPHome 2026.7.x failed to install for a part of our
@@ -47,6 +49,10 @@ const defaultDashboardVersion = '2026.6.5';
 const versionMigrationState = '_ESPHomeDashboard.versionPinMigrationDone';
 const pillowMigrationState = '_ESPHomeDashboard.pillowAutoDetectMigrationDone';
 
+// Interval and per-request timeout of the check whether the started dashboard answers
+const readyCheckIntervalMs = 3000;
+const readyCheckTimeoutMs = 5000;
+
 /**
  * ESPHome Dashboard class, one instance per adapter instance
  */
@@ -54,6 +60,12 @@ class Dashboard {
     private readonly adapter: DashboardAdapter;
     /** The running dashboard process, if started */
     private dashboardProcess: DashboardProcess | undefined;
+    /** Timer of the next check whether the started dashboard answers */
+    private readyCheckTimer: ioBroker.Timeout | undefined;
+    /** Whether the started dashboard answers requests */
+    private ready = false;
+    /** Set by stop(), no checks or state changes after that */
+    private stopping = false;
     /** Memory cache of all available ESPHome Dashboard versions */
     private readonly dashboardVersions: string[] = [];
     /** Memory cache for available Pillow versions */
@@ -407,6 +419,7 @@ class Dashboard {
 
                     void this.dashboardProcess.on('exit', (code, signal) => {
                         this.adapter.log.warn(`ESPHome Dashboard stopped (exit code ${code}, signal ${signal})`);
+                        this.onDashboardStopped();
                     });
 
                     // The process is also a promise, which rejects when it cannot be started, exits with an
@@ -421,6 +434,7 @@ class Dashboard {
                             // Exited or stopped, already logged by the exit handler
                             return;
                         }
+                        this.onDashboardStopped();
                         const reason = error instanceof Error && error.message ? error.message : String(error);
                         if (code === 'ENOENT') {
                             this.adapter.log.error(
@@ -430,6 +444,9 @@ class Dashboard {
                             this.adapter.log.error(`ESPHome Dashboard could not be started: ${reason}`);
                         }
                     });
+
+                    // info.connection (green instance) only lists devices once the dashboard answers
+                    this.scheduleReadyCheck(port);
                 } catch (error) {
                     this.adapter.errorHandler(`[espHomeDashboard-Process]`, error);
                 }
@@ -605,6 +622,9 @@ class Dashboard {
      * Stop the dashboard process, if running
      */
     stop(): void {
+        this.stopping = true;
+        this.adapter.clearTimeout(this.readyCheckTimer);
+        this.readyCheckTimer = undefined;
         try {
             if (this.dashboardProcess) {
                 this.dashboardProcess.kill('SIGTERM', {
@@ -614,6 +634,77 @@ class Dashboard {
         } catch (e) {
             this.adapter.log.error(`[onUnload - dashboardProcess] ${JSON.stringify(e)}`);
         }
+    }
+
+    /**
+     * Whether the started dashboard answers requests. info.connection (green instance) waits for it while the
+     * dashboard is enabled.
+     *
+     * @returns true once the dashboard answered, false again when it stopped
+     */
+    isReady(): boolean {
+        return this.ready;
+    }
+
+    /**
+     * Check repeatedly whether the started dashboard answers and update info.connection once it does.
+     * Ends when the dashboard answers, stops or the adapter unloads.
+     *
+     * @param port - port the dashboard listens on
+     */
+    private scheduleReadyCheck(port: string): void {
+        this.readyCheckTimer = this.adapter.setTimeout(async () => {
+            this.readyCheckTimer = undefined;
+            if (this.stopping || this.dashboardProcess === undefined) {
+                return;
+            }
+            if (!(await this.isReachable(port))) {
+                if (!this.stopping && this.dashboardProcess !== undefined) {
+                    this.scheduleReadyCheck(port);
+                }
+                return;
+            }
+            if (this.stopping || this.dashboardProcess === undefined) {
+                return;
+            }
+            this.ready = true;
+            this.adapter.log.info(`ESPHome Dashboard is reachable on port ${port}`);
+            await this.adapter.updateConnectionState();
+        }, readyCheckIntervalMs);
+    }
+
+    /**
+     * Whether the dashboard answers HTTP requests on the given port of this host
+     *
+     * @param port - port the dashboard listens on
+     * @returns true for a successful response or a redirect
+     */
+    private async isReachable(port: string): Promise<boolean> {
+        try {
+            const response = await fetch(`http://localhost:${port}/`, {
+                redirect: 'manual',
+                signal: AbortSignal.timeout(readyCheckTimeoutMs),
+            });
+            return response.status >= 200 && response.status < 400;
+        } catch {
+            // Not listening (yet)
+            return false;
+        }
+    }
+
+    /**
+     * The dashboard process exited or could not be started: no more checks and, unless the adapter
+     * unloads, info.connection is updated so the instance no longer shows green
+     */
+    private onDashboardStopped(): void {
+        this.dashboardProcess = undefined;
+        this.ready = false;
+        this.adapter.clearTimeout(this.readyCheckTimer);
+        this.readyCheckTimer = undefined;
+        if (this.stopping) {
+            return;
+        }
+        void this.adapter.updateConnectionState();
     }
 
     /**

@@ -32,3 +32,22 @@ export function connectedDeviceNames(devices: [string, DeviceConnection][]): str
         )
         .sort((a, b) => a.localeCompare(b));
 }
+
+/**
+ * Value of info.connection: the connected devices, comma-separated. The admin shows the instance green while it is not
+ * empty, so with the ESPHome Dashboard enabled nothing is listed until the dashboard answers.
+ *
+ * @param devices - connection details of all devices by IP address
+ * @param dashboardEnabled - whether the integrated ESPHome Dashboard is enabled
+ * @param dashboardReady - whether the dashboard answers requests
+ */
+export function connectionStateValue(
+    devices: [string, DeviceConnection][],
+    dashboardEnabled: boolean,
+    dashboardReady: boolean,
+): string {
+    if (dashboardEnabled && !dashboardReady) {
+        return '';
+    }
+    return connectedDeviceNames(devices).join(',');
+}

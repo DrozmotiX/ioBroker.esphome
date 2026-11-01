@@ -159,6 +159,10 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
 - Pillow is not installed separately by default ("Auto Detect"): ESPHome pins the version it needs since 2024.12,
   any other version makes pip fail. Pillow / Device Builder versions for the dropDowns are fetched from PyPI and
   cached in `_ESPHomeDashboard.pillowVersionCache` / `deviceBuilderVersionCache`.
+- `info.connection` lists the connected devices (green instance while not empty, `updateConnectionState()` in
+  `src/main.ts`). With the dashboard enabled it stays empty until `Dashboard.scheduleReadyCheck()` gets an HTTP
+  2xx/3xx from `http://localhost:<port>/` (`Dashboard.isReady()`), and again when the dashboard process exits or
+  cannot be started.
 - "Clear Autopy Cache" button triggers `clearAutopyCache()` → `fs.rmSync(~/.cache/autopy, recursive)`.
 - Config migration: `migrateConfig()` converts legacy `ESPHomeDashboardIP` + port → `ESPHomeDashboardUrl`.
 
