@@ -80,5 +80,10 @@
     "maxRetry": "Numero massimo di tentativi di connessione prima di considerare il dispositivo offline",
     "reConInterval": "Impostazione tra i tentativi di ioBroker di riconnettere questo dispositivo",
     "templateKeyTip": "Questo valore è fornito dall'adattatore.",
-    "yamlUploadContentPlaceholder": "# Configurazione di esempio\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2"
+    "yamlUploadContentPlaceholder": "# Configurazione di esempio\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2",
+    "lblDashboardUsername": "Nome utente della dashboard ESPHome",
+    "hlpDashboardUsername": "Lasciare vuoti nome utente e password per usare la dashboard senza login (predefinito)",
+    "lblDashboardPassword": "Password della dashboard ESPHome",
+    "hlpDashboardPassword": "Memorizzata crittografata. Applicata al prossimo avvio della dashboard",
+    "errDashboardLogin": "Impostare sia il nome utente che la password, oppure lasciarli entrambi vuoti"
 }

@@ -80,5 +80,10 @@
     "maxRetry": "将设备视为离线之前的最大连接重试次数",
     "reConInterval": "ioBroker 尝试重新连接此设备之间的设置",
     "templateKeyTip": "该值由适配器提供。",
-    "yamlUploadContentPlaceholder": "# 示例配置\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2"
+    "yamlUploadContentPlaceholder": "# 示例配置\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2",
+    "lblDashboardUsername": "ESPHome 仪表板用户名",
+    "hlpDashboardUsername": "用户名和密码留空则无需登录即可使用仪表板（默认）",
+    "lblDashboardPassword": "ESPHome 仪表板密码",
+    "hlpDashboardPassword": "加密存储。在仪表板下次启动时生效",
+    "errDashboardLogin": "请同时设置用户名和密码，或将两者都留空"
 }

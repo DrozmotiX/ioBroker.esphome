@@ -80,5 +80,10 @@
     "maxRetry": "Максимальна кількість повторних спроб з'єднання, перш ніж пристрій вважатиметься офлайн",
     "reConInterval": "Інтервал, через який ioBroker намагається повторно підключити цей пристрій",
     "templateKeyTip": "Це значення забезпечує адаптер.",
-    "yamlUploadContentPlaceholder": "# Приклад конфігурації\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2"
+    "yamlUploadContentPlaceholder": "# Приклад конфігурації\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2",
+    "lblDashboardUsername": "Ім'я користувача ESPHome Dashboard",
+    "hlpDashboardUsername": "Залиште ім'я користувача та пароль порожніми, щоб використовувати панель без входу (за замовчуванням)",
+    "lblDashboardPassword": "Пароль ESPHome Dashboard",
+    "hlpDashboardPassword": "Зберігається в зашифрованому вигляді. Застосовується під час наступного запуску панелі",
+    "errDashboardLogin": "Вкажіть і ім'я користувача, і пароль, або залиште обидва поля порожніми"
 }
