@@ -6,13 +6,13 @@
  * through autopy, or the dashboard container started through the docker plugin of ioBroker.
  */
 
-import type * as AdapterCore from '@iobroker/adapter-core';
 import type DockerPlugin from '@iobroker/plugin-docker';
 import type { getVenv } from 'autopy' with { 'resolution-mode': 'import' };
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { autoDetect, buildRequirements, compareVersions, usesDeviceBuilder } from './dashboardRequirements';
+import YamlFileManager from './yamlFileManager';
 
 /** The ESPHome dashboard process started through autopy */
 type DashboardProcess = ReturnType<Awaited<ReturnType<typeof getVenv>>>;
@@ -469,18 +469,12 @@ class Dashboard {
 
     /**
      * Get the directory of the YAML configuration files of this instance, the same directory the YAML
-     * file management of the adapter configuration uses. Built as the dashboard always did, which #419
-     * deliberately left unchanged (the YAML file management uses path.join, same result for the default
-     * data directory, which ends with a slash)
+     * file management of the adapter configuration uses
      *
      * @returns absolute path of the directory
      */
     getConfigDirectory(): string {
-        // Loaded on demand: loading adapter-core throws "Cannot find js-controller" where none is
-        // installed, e.g. in the unit tests of this module
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const utils = require('@iobroker/adapter-core') as typeof AdapterCore;
-        return `${utils.getAbsoluteDefaultDataDir()}esphome.${this.adapter.instance}`;
+        return YamlFileManager.getDirectory(this.adapter.instance ?? 0);
     }
 
     /**
@@ -495,17 +489,26 @@ class Dashboard {
      *
      * Not awaited by start(): on the first start the image is pulled, which takes a while.
      *
+     * The command is `dashboard` for every version: the entrypoint of the image runs ESPHome Device Builder
+     * for it since ESPHome 2026.6.0, older images still have `esphome dashboard`.
+     *
      * @param version - ESPHome version (image tag) to run, the newest stable release if empty
      */
     async startDockerContainer(version: string): Promise<void> {
         try {
             const plugin = this.adapter.getPluginInstance('docker') as DockerPlugin | null;
-            const container = plugin?.configurations.find(config =>
+            if (!plugin) {
+                this.adapter.log.error(
+                    `Docker Integration of the ESPHome Dashboard is enabled, but the docker plugin of ioBroker is not loaded. Disable "Use Docker Integration" to run the dashboard without Docker.`,
+                );
+                return;
+            }
+            const container = plugin.configurations.find(config =>
                 config.mounts?.some(mount => mount.target === dockerConfigDir),
             );
-            if (!plugin || !container) {
+            if (!container) {
                 this.adapter.log.error(
-                    `Docker Integration of the ESPHome Dashboard is enabled, but the docker plugin of ioBroker is not available. Disable "Use Docker Integration" to run the dashboard without Docker.`,
+                    `Docker Integration of the ESPHome Dashboard is enabled, but docker-compose.yaml of the adapter declares no ESPHome Dashboard container for the docker plugin. Restart the instance, reinstall the adapter if this persists.`,
                 );
                 return;
             }
@@ -515,6 +518,9 @@ class Dashboard {
             fs.mkdirSync(configDir, { recursive: true });
 
             container.image = `${dockerImage}:${version || 'stable'}`;
+            // A version tag never changes, "stable" does: pull it again on every start, otherwise the image
+            // of the first start would be used for good
+            container.iobAutoImageUpdate = !version;
             for (const mount of container.mounts ?? []) {
                 if (mount.target === dockerConfigDir) {
                     mount.type = 'bind';
@@ -525,18 +531,33 @@ class Dashboard {
             this.adapter.log.info(
                 `Docker Integration of ESPHome Dashboard enabled, starting container. Image: ${container.image}, configuration directory: ${configDir}`,
             );
-            await plugin.instanceIsReady();
+            const ready = plugin.instanceIsReady();
+            // Created by instanceIsReady() right away. Kept here, as the plugin drops it on unload.
+            const manager = plugin.getDockerManager();
+            // Resolves also when the image could not be pulled or the container not started, the plugin
+            // only logs a warning then
+            await ready;
 
-            const dockerInfo = await plugin.getDockerManager()?.getDockerDaemonInfo();
-            if (dockerInfo?.daemonRunning) {
-                this.adapter.log.info(`ESPHome Dashboard container is managed by Docker ${dockerInfo.version}`);
+            const name = container.name;
+            if (this.stopping) {
+                // The instance unloaded while the image was pulled: the plugin stopped the container before
+                // it existed, so it is stopped here
+                if (manager && name) {
+                    await manager.containerStop(name).catch(() => undefined);
+                }
+                return;
+            }
+
+            const state = name ? (await manager?.containerList(true))?.find(info => info.names === name) : undefined;
+            if (state?.status === 'running' || state?.status === 'restarting') {
+                this.adapter.log.info(`ESPHome Dashboard container ${name} is running`);
                 // Host network: the dashboard of the container answers on the configured port of this host.
                 // info.connection (green instance) only lists devices once it does, like with the process.
                 this.containerStarted = true;
                 this.scheduleReadyCheck(String(this.adapter.config.ESPHomeDashboardPort));
             } else {
                 this.adapter.log.error(
-                    `ESPHome Dashboard cannot be started: Docker is not installed or not running. Install Docker or disable "Use Docker Integration" to run the dashboard without Docker.`,
+                    `ESPHome Dashboard container ${name ?? ''} is not running (${state?.status ?? 'not created'}): Docker is not installed or not running, or the image ${container.image} could not be pulled, see the warnings of the docker plugin above. Disable "Use Docker Integration" to run the dashboard without Docker.`,
                 );
             }
         } catch (error) {
@@ -734,7 +755,8 @@ class Dashboard {
 
     /**
      * Check repeatedly whether the started dashboard answers and update info.connection once it does.
-     * Ends when the dashboard answers, stops or the adapter unloads.
+     * For the process this ends when it answers, stops or the adapter unloads. The container is checked
+     * until the adapter unloads, info.connection is updated again when it stops answering.
      *
      * @param port - port the dashboard listens on
      */
@@ -744,17 +766,23 @@ class Dashboard {
             if (!this.isStarted()) {
                 return;
             }
-            if (!(await this.isReachable(port))) {
-                if (this.isStarted()) {
-                    this.scheduleReadyCheck(port);
-                }
-                return;
-            }
+            const reachable = await this.isReachable(port);
             if (!this.isStarted()) {
                 return;
             }
-            this.ready = true;
-            this.adapter.log.info(`ESPHome Dashboard is reachable on port ${port}`);
+            // The process reports its exit, the container does not: it is checked as long as it runs
+            if (!reachable || this.containerStarted) {
+                this.scheduleReadyCheck(port);
+            }
+            if (reachable === this.ready) {
+                return;
+            }
+            this.ready = reachable;
+            if (reachable) {
+                this.adapter.log.info(`ESPHome Dashboard is reachable on port ${port}`);
+            } else {
+                this.adapter.log.warn(`ESPHome Dashboard is not reachable on port ${port} any more`);
+            }
             await this.adapter.updateConnectionState();
         }, readyCheckIntervalMs);
     }

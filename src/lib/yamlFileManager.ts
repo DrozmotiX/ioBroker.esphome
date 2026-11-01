@@ -154,11 +154,22 @@ class YamlFileManager {
      * @returns The absolute path to the ESPHome directory
      */
     getESPHomeDirectory(): string {
+        return YamlFileManager.getDirectory(this.adapter.instance ?? 0);
+    }
+
+    /**
+     * ESPHome config directory of one adapter instance in the data directory of this ioBroker
+     * installation. Also used by the dashboard (process and container), so all of them share one directory.
+     *
+     * @param instance - Adapter instance number
+     * @returns The absolute path to the ESPHome directory
+     */
+    static getDirectory(instance: number | string): string {
         // Loaded on demand like before: loading adapter-core throws "Cannot find js-controller" where none
         // is installed, e.g. in the unit tests of this module
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const utils = require('@iobroker/adapter-core') as typeof AdapterCore;
-        return YamlFileManager.resolveDirectory(utils.getAbsoluteDefaultDataDir(), this.adapter.instance ?? 0);
+        return YamlFileManager.resolveDirectory(utils.getAbsoluteDefaultDataDir(), instance);
     }
 
     /**

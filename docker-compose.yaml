@@ -16,9 +16,13 @@ services:
             - 'iobMonitoringEnabled=true'
         # Host network, as recommended by ESPHome: the dashboard needs mDNS to show the online status of the devices
         network_mode: host
+        # The entrypoint of the image runs ESPHome Device Builder for "dashboard" since ESPHome 2026.6.0,
+        # older images run "esphome dashboard"
         command: ['dashboard', '--port=${config.ESPHomeDashboardPort:-6052}', '/config']
         volumes:
             # Source replaced by the adapter with the YAML directory of the instance
             - './esphome-config:/config'
         stop_grace_period: 5s
-        restart: unless-stopped
+        # Not restarted by Docker itself: it would also start the container while the instance is stopped.
+        # While the instance runs, the docker plugin restarts it (iobMonitoringEnabled).
+        restart: 'no'

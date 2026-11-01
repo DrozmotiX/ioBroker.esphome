@@ -167,7 +167,9 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
   instead: `docker-compose.yaml` (shipped in `files` of package.json) is managed by `@iobroker/plugin-docker`
   (`common.plugins.docker` in `io-package.json`). The service has `iobWaitForReady`, so the plugin starts nothing by itself;
   `startDockerContainer()` in `src/lib/dashboard.ts` sets the image tag and the `/config` bind mount on `plugin.configurations`
-  and calls `instanceIsReady()`, only when the dashboard is enabled. Unit tests: `src/lib/dashboard.test.ts`.
+  and calls `instanceIsReady()`, only when the dashboard is enabled. That also resolves when the pull or start failed (the plugin
+  only warns), so the container state is checked with `containerList()` afterwards; the ready check keeps polling the container.
+  The image entrypoint runs ESPHome Device Builder for `dashboard` since 2026.6.0. Unit tests: `src/lib/dashboard.test.ts`.
 - "Clear Autopy Cache" button triggers `clearAutopyCache()` → `fs.rmSync(~/.cache/autopy, recursive)`.
 - Config migration: `migrateConfig()` converts legacy `ESPHomeDashboardIP` + port → `ESPHomeDashboardUrl`.
 
