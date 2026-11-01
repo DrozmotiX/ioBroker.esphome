@@ -11,7 +11,13 @@ import type * as DockerPluginModule from '@iobroker/plugin-docker';
 import type { getVenv } from 'autopy' with { 'resolution-mode': 'import' };
 import * as fs from 'node:fs';
 import { buildDashboardUrl } from './dashboardApi';
-import { autoDetect, buildRequirements, compareVersions, usesDeviceBuilder } from './dashboardRequirements';
+import {
+    autoDetect,
+    buildRequirements,
+    compareVersions,
+    normalizeVersion,
+    usesDeviceBuilder,
+} from './dashboardRequirements';
 import YamlFileManager from './yamlFileManager';
 
 /** Name of the autopy virtual environment the dashboard is installed in */
@@ -339,14 +345,11 @@ class Dashboard {
                 }
             }
 
-            // Use latest available version
-            if (
-                this.adapter.config.ESPHomeDashboardVersion &&
-                this.adapter.config.ESPHomeDashboardVersion !== '' &&
-                this.adapter.config.ESPHomeDashboardVersion !== 'Always last available'
-            ) {
-                useDashBoardVersion = this.adapter.config.ESPHomeDashboardVersion;
-            } else if (this.adapter.config.ESPHomeDashboardVersion === 'Always last available') {
+            // The version can also be typed in the adapter configuration (e.g. a beta release)
+            const configuredVersion = normalizeVersion(this.adapter.config.ESPHomeDashboardVersion);
+            if (configuredVersion !== '' && configuredVersion !== 'Always last available') {
+                useDashBoardVersion = configuredVersion;
+            } else if (configuredVersion === 'Always last available') {
                 if (content) {
                     useDashBoardVersion = content[0].name;
                 } else if (this.dashboardVersions.length > 0) {

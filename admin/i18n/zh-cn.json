@@ -28,7 +28,7 @@
     "hlpConfigStates": "为每个实体创建配置状态以显示设备配置详细信息",
     "hlpDeviceBuilderVersion": "ESPHome Device Builder 的版本，自 ESPHome 2026.7.0 起由它提供仪表板。\"Auto Detect\" 会安装支持所选 ESPHome 版本的最新版本",
     "hlpDiscoveryListeningAddress": "只发现该接口上的设备",
-    "hlpESPHomeDashboardVersion": "选择必须使用哪个版本的 ESPHome Dashboard",
+    "hlpESPHomeDashboardVersion": "从列表中选择版本，或输入任意 ESPHome 版本（例如测试版 2026.7.0b1）",
     "hlpPillowVersion": "仅旧版 ESPHome 需要。\"Auto Detect\" 会安装 ESPHome 所需的 Pillow 版本，对于当前的 ESPHome 版本，任何其他版本都会导致安装失败",
     "hlpPingAttempts": "在设备被视为离线之前连续失败的 Ping 次数（默认：1）",
     "hlpPingInterval": "对已连接设备执行 Ping 以检查其是否仍在线的频率（默认：5）",

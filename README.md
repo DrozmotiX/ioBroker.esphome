@@ -503,6 +503,7 @@ If you like my work, please consider a personal donation
 
 ### **WORK IN PROGRESS**
 
+- (@SimonFischer04) **NEW**: Any ESPHome Dashboard version can be typed into the version field of the adapter configuration, e.g. a beta release or a version not (yet) in the list
 - (@SimonFischer04) **ENHANCED**: Devices can be added by host name (e.g. `kitchen.local`) or IPv6 address, the device manager no longer only accepts IPv4 addresses
 - (@SimonFischer04) **ENHANCED**: The address field of the ESPHome Dashboard also suggests the IPv6 addresses of the host, an IPv6 address is put in brackets in the dashboard URL
 - (@SimonFischer04) **ENHANCED**: The listening address of the auto discovery can be an IPv6 address, the discovery then listens for devices on the network interface of this address. Devices announcing only an IPv6 address are discovered as well
