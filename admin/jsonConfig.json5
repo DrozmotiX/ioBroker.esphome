@@ -459,12 +459,12 @@
 					"xl": 12
 				},
 
-				// Clear Autopy Cache Button
+				// Reset Python Environment Button (command and state id kept from the former "Clear Autopy Cache" button)
 				"clearAutopyCacheButton": {
 					"newLine": true,
 					"type": "sendTo",
-					"label": "lblClearAutopyCache",
-					"help": "hlpClearAutopyCache",
+					"label": "lblResetPythonEnv",
+					"help": "hlpResetPythonEnv",
 					"variant": "outlined",
 					"color": "primary",
 					"showProcess": true,
@@ -477,10 +477,10 @@
 					"lg": 6,
 					"xl": 6,
 					"confirm": {
-						"text": "cnfClearCacheText",
-						"title": "cnfClearCacheTitle",
-						"ok": "cnfClearCacheOk",
-						"cancel": "cnfClearCacheCancel",
+						"text": "cnfResetPythonEnvText",
+						"title": "cnfResetPythonEnvTitle",
+						"ok": "cnfResetPythonEnvOk",
+						"cancel": "cnfResetPythonEnvCancel",
 						"type": "warning"
 					}
 				},
