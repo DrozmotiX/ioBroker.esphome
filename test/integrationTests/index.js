@@ -4,6 +4,7 @@ const known_device_tests = require('./known_device_tests');
 const settings_cleanup_tests = require('./settings_cleanup_tests');
 const version_fetch_tests = require('./version_fetch_tests');
 const version_migration_tests = require('./version_migration_tests');
+const yaml_file_tests = require('./yaml_file_tests');
 
 // The dashboard suites enable the ESPHome dashboard, which makes the adapter build a real Python 3.13
 // virtual environment via autopy and pip-install esphome + pillow from PyPI. That is far too slow
@@ -41,4 +42,7 @@ exports.runTests = function (suite) {
 
     // Runs always: the dashboard integration stays disabled and no device is involved
     settings_cleanup_tests.runTests(suite);
+
+    // Runs always: YAML files are written to the instance data directory, no Python
+    yaml_file_tests.runTests(suite);
 };

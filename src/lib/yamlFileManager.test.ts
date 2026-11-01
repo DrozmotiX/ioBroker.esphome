@@ -14,6 +14,23 @@ function createAdapter(): ioBroker.Adapter {
 describe('YAML File Management', () => {
     const manager = new YamlFileManager(createAdapter());
 
+    describe('resolveDirectory()', () => {
+        it('joins the data directory and the instance folder when the data directory has no trailing slash', () => {
+            expect(YamlFileManager.resolveDirectory('/opt/iobroker/iobroker-data', 0)).to.equal(
+                path.join('/opt/iobroker/iobroker-data', 'esphome.0'),
+            );
+            expect(YamlFileManager.resolveDirectory('/opt/iobroker/iobroker-data', 0)).to.not.equal(
+                '/opt/iobroker/iobroker-dataesphome.0',
+            );
+        });
+
+        it('does not duplicate the separator when the data directory already ends with one', () => {
+            expect(YamlFileManager.resolveDirectory(`/opt/iobroker/iobroker-data${path.sep}`, '0')).to.equal(
+                path.join('/opt/iobroker/iobroker-data', 'esphome.0'),
+            );
+        });
+    });
+
     describe('validateFilename()', () => {
         it('accepts .yaml and .yml file names', () => {
             for (const name of ['test.yaml', 'device.yml', 'my-config.yaml']) {
@@ -171,6 +188,20 @@ describe('YAML File Management', () => {
             const list = await fileManager.handleAdminMessage('getYamlFileList', null);
             expect((list as { text: string }).text).to.include('No YAML files found');
             expect(await fileManager.handleAdminMessage('getYamlFileOptions', null)).to.deep.equal([]);
+        });
+
+        it('still lists files when I18n.translate throws because init() has not finished', async () => {
+            await writeFile(path.join(dir, 'kitchen.yaml'), 'x');
+            YamlFileManager.setTranslationLookupForTests(() => {
+                throw new Error("i18n not initialized. Please call 'init(__dirname, adapter)' before");
+            });
+            try {
+                const list = await fileManager.handleAdminMessage('getYamlFileList', null);
+                expect(list).to.have.property('text').that.includes('kitchen.yaml');
+                expect(list).to.not.have.property('error');
+            } finally {
+                YamlFileManager.setTranslationLookupForTests();
+            }
         });
 
         it('reloads list and selection after upload, refresh and delete', async () => {
