@@ -327,6 +327,9 @@ class Dashboard {
                 const useDeviceBuilder = usesDeviceBuilder(useDashBoardVersion);
 
                 try {
+                    // This environment is adapter-managed; suppress pip's manual upgrade notices.
+                    // Autopy's setup commands and later Python processes inherit this setting.
+                    process.env.PIP_DISABLE_PIP_VERSION_CHECK = '1';
                     const { getVenv } = await import('autopy');
                     let python;
                     try {
