@@ -273,6 +273,16 @@ is enabled, the devices found on the network that are not added yet.
 > [!NOTE]
 > The device manager is only available while the adapter is running.
 
+The card of a device shows its Wi-Fi signal strength (RSSI) when the device has a
+[`wifi_signal`](https://esphome.io/components/sensor/wifi_signal.html) sensor in dBm (the default unit):
+
+```
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+```
+
 - Add device
     - Enter the IP address and the encryption key (or API password of older firmware) of the device,
       the adapter connects and reports whether the connection succeeded
