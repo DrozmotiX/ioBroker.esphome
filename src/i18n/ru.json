@@ -35,7 +35,6 @@
     "Please enter the IP address of the device": "Введите IP-адрес устройства",
     "Project": "Проект",
     "Size": "Размер",
-    "The IP address %s is not valid, please enter an IPv4 address": "IP-адрес %s недействителен, введите адрес IPv4",
     "The device did not answer yet, the adapter keeps trying to connect in the background.": "Устройство ещё не ответило, адаптер продолжает попытки подключения в фоновом режиме.",
     "Timeout connecting to device %s, the adapter reconnects automatically when the device is available": "Тайм-аут подключения к устройству %s, адаптер автоматически переподключится, когда устройство станет доступно",
     "Unknown device %s": "Неизвестное устройство %s"

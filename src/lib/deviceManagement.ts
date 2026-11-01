@@ -1,6 +1,7 @@
 import type { AdapterInstance } from '@iobroker/adapter-core';
 // Not from the package root: that loads js-controller, which the unit tests do not have
 import * as I18n from '@iobroker/adapter-core/i18n';
+import { isIPv6 } from 'node:net';
 import * as path from 'node:path';
 import {
     type ActionContext,
@@ -49,14 +50,9 @@ export interface EsphomeDeviceSource {
     discoveredDevices(): Record<string, DiscoveredDevice>;
     /**
      * Add a new device or reconnect a known one with new credentials.
-     * respond is called once the connection succeeded or failed.
+     * The adapter reports the outcome of the connection attempt with onConnectResult().
      */
-    addOrUpdateDevice(
-        ip: string,
-        apiPassword: string | undefined,
-        encryptionKey: string | undefined,
-        respond: (response: DeviceActionResult) => void,
-    ): Promise<void>;
+    addOrUpdateDevice(ip: string, apiPassword: string | undefined, encryptionKey: string | undefined): Promise<void>;
     /** Disconnect a device and delete all its objects */
     removeDevice(ip: string): Promise<DeviceActionResult>;
 }
@@ -124,6 +120,8 @@ export function isWifiSignalSensor(
 export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAdapter> {
     /** Loading the texts in the system language (src/i18n), awaited before answering the GUI */
     private readonly translationsLoaded: Promise<void>;
+    /** Open add / edit dialogs waiting for the first connection result of a device, by IP */
+    private readonly pendingConnects: Record<string, (response: DeviceActionResult) => void> = {};
 
     /**
      * Listens for "dm:" messages right away, create it before onReady() awaits anything,
@@ -147,6 +145,16 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
         } catch (error) {
             this.log.debug(`[deviceManagement] Cannot notify device manager: ${String(error)}`);
         }
+    }
+
+    /**
+     * Result of a connection attempt, answers an add / edit dialog waiting for this device, if any
+     *
+     * @param ip - IP address of the device
+     * @param response - Result of the connection attempt
+     */
+    onConnectResult(ip: string, response: DeviceActionResult): void {
+        this.pendingConnects[ip]?.(response);
     }
 
     protected override async getInstanceInfo(): Promise<InstanceDetails> {
@@ -282,7 +290,7 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
                 id: 'web',
                 icon: 'web',
                 description: I18n.getTranslatedObject('Open web server of the device'),
-                url: `http://${ip}:${device.deviceInfo.webserverPort}`,
+                url: `http://${isIPv6(ip) ? `[${ip}]` : ip}:${device.deviceInfo.webserverPort}`,
             });
         }
 
@@ -443,6 +451,7 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
             await context.showMessage(translateWithArgs(response.error, ...(response.args ?? [])));
             return false;
         }
+        await this.refreshDeviceList();
         return true;
     }
 
@@ -450,7 +459,7 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
      * Connect a device while showing a progress dialog, then show the result
      *
      * @param context - Action context to talk to the user
-     * @param ip - IP address of the device
+     * @param ip - IP address or host name of the device, any string the ESPHome client can connect to
      * @param apiPassword - API password, empty if not used
      * @param encryptionKey - Encryption key, empty if not used
      * @returns true if the device is known to the adapter afterwards
@@ -461,6 +470,10 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
         apiPassword: string | undefined,
         encryptionKey: string | undefined,
     ): Promise<boolean> {
+        if (!ip) {
+            await context.showMessage(I18n.getTranslatedObject('Please enter the IP address of the device'));
+            return false;
+        }
         const progress = await context.openProgress(I18n.getTranslatedObject('Connecting to device...'), {
             indeterminate: true,
             label: ip,
@@ -468,22 +481,26 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
         let response: DeviceActionResult;
         try {
             response = await new Promise<DeviceActionResult>(resolve => {
-                const timeout = this.adapter.setTimeout(
+                let timeout: ioBroker.Timeout | undefined = undefined;
+                const finish = (result: DeviceActionResult): void => {
+                    this.adapter.clearTimeout(timeout);
+                    // A later dialog for the same device replaces this one, keep waiting for its result
+                    if (this.pendingConnects[ip] === finish) {
+                        delete this.pendingConnects[ip];
+                    }
+                    resolve(result);
+                };
+                timeout = this.adapter.setTimeout(
                     () =>
-                        resolve({
+                        finish({
                             result: 'The device did not answer yet, the adapter keeps trying to connect in the background.',
                         }),
                     CONNECT_TIMEOUT,
                 );
+                this.pendingConnects[ip] = finish;
                 this.adapter
-                    .addOrUpdateDevice(ip, apiPassword || undefined, encryptionKey || undefined, result => {
-                        this.adapter.clearTimeout(timeout);
-                        resolve(result);
-                    })
-                    .catch((error: unknown) => {
-                        this.adapter.clearTimeout(timeout);
-                        resolve({ error: String(error) });
-                    });
+                    .addOrUpdateDevice(ip, apiPassword || undefined, encryptionKey || undefined)
+                    .catch((error: unknown) => finish({ error: String(error) }));
             });
         } finally {
             await progress.close();

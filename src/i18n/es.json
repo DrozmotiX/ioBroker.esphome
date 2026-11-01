@@ -35,7 +35,6 @@
     "Please enter the IP address of the device": "Introduzca la dirección IP del dispositivo",
     "Project": "Proyecto",
     "Size": "Tamaño",
-    "The IP address %s is not valid, please enter an IPv4 address": "La dirección IP %s no es válida, introduzca una dirección IPv4",
     "The device did not answer yet, the adapter keeps trying to connect in the background.": "El dispositivo aún no ha respondido, el adaptador sigue intentando conectarse en segundo plano.",
     "Timeout connecting to device %s, the adapter reconnects automatically when the device is available": "Tiempo de espera agotado al conectar con el dispositivo %s, el adaptador se reconecta automáticamente cuando el dispositivo esté disponible",
     "Unknown device %s": "Dispositivo desconocido %s"

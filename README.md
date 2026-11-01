@@ -479,6 +479,7 @@ If you like my work, please consider a personal donation
 
 ### **WORK IN PROGRESS**
 
+- (@SimonFischer04) **ENHANCED**: Devices can be added by host name (e.g. `kitchen.local`) or IPv6 address, the device manager no longer only accepts IPv4 addresses
 - (@SimonFischer04) **ENHANCED**: `info.connection` lists the connected devices by name (comma-separated, like the sonoff and miner adapters do) instead of always being `true`. The admin shows the instance green while at least one device is connected and shows which ones, an instance without a connected device is shown yellow
 - (@SimonFischer04) **FIXED**: The "Clear Autopy Cache" button did nothing on macOS, on Windows and on Linux with `XDG_CACHE_HOME` set: it always deleted `~/.cache/autopy`, autopy stores its files elsewhere there. The button is renamed to "Reset Python environment" and removes the Python environment of the dashboard through autopy now, wherever autopy stores it. The downloaded Python is kept, so the reinstallation is faster
 - (@SimonFischer04) **ENHANCED**: README: FAQ entry explaining the "Reset Python environment" button, when to use it and what happens afterwards

@@ -2,15 +2,19 @@ import type { ActionContext, DeviceInfo, DeviceLoadContext, InstanceDetails, Jso
 import { expect } from 'chai';
 import { readdirSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import EsphomeDeviceManagement, {
-    type DeviceActionResult,
-    type DiscoveredDevice,
-    isWifiSignalSensor,
-} from './deviceManagement';
+import EsphomeDeviceManagement, { type DiscoveredDevice, isWifiSignalSensor } from './deviceManagement';
 import ClientDetails from './helpers';
+
+/** Device management of the running test, the fake adapter reports its connection results there */
+let current: EsphomeDeviceManagement | undefined;
 
 /** Exposes the protected methods of the device management */
 class TestDeviceManagement extends EsphomeDeviceManagement {
+    constructor(adapter: ConstructorParameters<typeof EsphomeDeviceManagement>[0]) {
+        super(adapter);
+        current = this;
+    }
+
     async load(): Promise<DeviceInfo<string>[]> {
         const devices: DeviceInfo<string>[] = [];
         const context: DeviceLoadContext<string> = {
@@ -63,17 +67,14 @@ function createAdapter(): {
         decrypt: (value: string) => value.replace(/^enc:/, ''),
         knownDevices: () => known,
         discoveredDevices: () => discovered,
-        addOrUpdateDevice: (
-            ip: string,
-            apiPassword: string | undefined,
-            encryptionKey: string | undefined,
-            respond: (response: DeviceActionResult) => void,
-        ) => {
+        addOrUpdateDevice: (ip: string, apiPassword: string | undefined, encryptionKey: string | undefined) => {
             added.push({ ip, apiPassword, encryptionKey });
             const device = new ClientDetails();
             device.storeConnectDetails(ip, !!encryptionKey);
             known[ip] = device;
-            respond({ result: 'OK' });
+            // A result for another device must not answer the dialog
+            current?.onConnectResult('192.0.2.1', { error: 'other device' });
+            current?.onConnectResult(ip, { result: 'OK' });
             return Promise.resolve();
         },
         removeDevice: (ip: string) => {
@@ -147,9 +148,9 @@ describe('Device Management', () => {
             // Results and errors of main.ts the add / edit / delete dialogs show
             const main = readFileSync(path.join(__dirname, '..', 'main.ts'), 'utf8');
             for (const match of main.matchAll(
-                /respond\(\{ error: '([^']+)'|respondDeviceResult\(host, \{\s*result: '([^']+)'|optimisedError = '([^']+)'|return \{ error: '([^']+)', args/g,
+                /onConnectResult\(host, \{\s*result: '([^']+)'|optimisedError = '([^']+)'|return \{ error: '([^']+)', args/g,
             )) {
-                used.add(match[1] ?? match[2] ?? match[3] ?? match[4]);
+                used.add(match[1] ?? match[2] ?? match[3]);
             }
             expect(used.size).to.be.greaterThan(30);
             expect([...used].filter(text => !(text in english))).to.deep.equal([]);
@@ -240,6 +241,18 @@ describe('Device Management', () => {
             });
         });
 
+        it('puts an IPv6 address of the web server in brackets', async () => {
+            const { adapter, known } = createAdapter();
+            known['fd00::10'] = knownDevice('fd00::10');
+            known['fd00::10'].deviceInfo = { webserverPort: 80 } as ClientDetails['deviceInfo'];
+
+            const [entry] = await new TestDeviceManagement(adapter).load();
+
+            expect(entry.actions?.find(action => action.id === 'web')).to.deep.include({
+                url: 'http://[fd00::10]:80',
+            });
+        });
+
         it('shows the Wi-Fi signal sensor as RSSI', async () => {
             const { adapter, known } = createAdapter();
             known['192.168.0.10'] = knownDevice('192.168.0.10');
@@ -312,6 +325,27 @@ describe('Device Management', () => {
             expect(messages).to.deep.equal([{ en: 'OK' }]);
         });
 
+        it('accepts host names and IPv6 addresses', async () => {
+            const { adapter, added } = createAdapter();
+            const dm = new TestDeviceManagement(adapter);
+
+            expect(await dm.addDevice(createContext({ ip: 'kitchen.local' }).context)).to.be.true;
+            expect(await dm.addDevice(createContext({ ip: 'fd00::10' }).context)).to.be.true;
+
+            expect(added.map(device => device.ip)).to.deep.equal(['kitchen.local', 'fd00::10']);
+        });
+
+        it('asks for the IP address when none was entered', async () => {
+            const { adapter, added } = createAdapter();
+            const { context, messages } = createContext({ ip: '  ', encryptionKey: 'key' });
+
+            expect(await new TestDeviceManagement(adapter).addDevice(context)).to.be.false;
+
+            expect(added).to.be.empty;
+            expect(messages).to.have.lengthOf(1);
+            expect(messages[0]).to.deep.include({ en: 'Please enter the IP address of the device' });
+        });
+
         it('adopts a discovered device under its IP address', async () => {
             const { adapter, added } = createAdapter();
             const { context } = createContext({ ip: 'ignored', encryptionKey: 'key' });
@@ -354,7 +388,7 @@ describe('Device Management', () => {
         });
 
         it('deletes a device only after confirmation', async () => {
-            const { adapter, known, removed } = createAdapter();
+            const { adapter, known, removed, states } = createAdapter();
             known['192.168.0.10'] = knownDevice('192.168.0.10');
             const dm = new TestDeviceManagement(adapter);
 
@@ -363,6 +397,8 @@ describe('Device Management', () => {
 
             expect(await dm.confirmRemoveDevice('192.168.0.10', createContext(undefined, true).context)).to.be.true;
             expect(removed).to.deep.equal(['192.168.0.10']);
+            // An open device manager reloads the list
+            expect(states['info.deviceManager']).to.equal(JSON.stringify({ command: 'all' }));
         });
 
         it('asks an open device manager to reload the list', async () => {

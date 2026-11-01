@@ -35,7 +35,6 @@
     "Please enter the IP address of the device": "请输入设备的 IP 地址",
     "Project": "项目",
     "Size": "大小",
-    "The IP address %s is not valid, please enter an IPv4 address": "IP 地址 %s 无效，请输入 IPv4 地址",
     "The device did not answer yet, the adapter keeps trying to connect in the background.": "设备尚未响应，适配器将继续在后台尝试连接。",
     "Timeout connecting to device %s, the adapter reconnects automatically when the device is available": "连接设备 %s 超时，设备可用时适配器会自动重新连接",
     "Unknown device %s": "未知设备 %s"

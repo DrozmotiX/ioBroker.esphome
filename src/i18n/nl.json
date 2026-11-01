@@ -35,7 +35,6 @@
     "Please enter the IP address of the device": "Voer het IP-adres van het apparaat in",
     "Project": "Project",
     "Size": "Grootte",
-    "The IP address %s is not valid, please enter an IPv4 address": "Het IP-adres %s is ongeldig, voer een IPv4-adres in",
     "The device did not answer yet, the adapter keeps trying to connect in the background.": "Het apparaat heeft nog niet geantwoord, de adapter blijft op de achtergrond proberen verbinding te maken.",
     "Timeout connecting to device %s, the adapter reconnects automatically when the device is available": "Time-out bij verbinden met apparaat %s, de adapter maakt automatisch opnieuw verbinding zodra het apparaat beschikbaar is",
     "Unknown device %s": "Onbekend apparaat %s"

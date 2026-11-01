@@ -154,21 +154,21 @@ exports.runTests = function (suite) {
             expect(device.actions.map(action => action.id)).to.deep.equal(['edit', 'delete']);
         });
 
-        it('walks through the add dialog of the device manager and reports an invalid IP address', async function () {
+        it('walks through the add dialog of the device manager and asks for a missing IP address', async function () {
             this.timeout(60000);
 
             // Same dialog sequence the E2E test uses to add its device, which needs a compiled ESPHome device
             const { messages, result } = await addDeviceWithDeviceManager(harness, {
-                ip: 'not-an-ip',
+                ip: '',
                 encryptionKey: '',
                 apiPassword: '',
             });
 
-            // Translated by the device manager (src/i18n, copied to build/i18n), with the IP address filled in
+            // Translated by the device manager (src/i18n, copied to build/i18n)
             expect(messages).to.have.lengthOf(1);
             expect(messages[0]).to.deep.include({
-                en: 'The IP address not-an-ip is not valid, please enter an IPv4 address',
-                de: 'Die IP-Adresse not-an-ip ist ungültig, bitte eine IPv4-Adresse eingeben',
+                en: 'Please enter the IP address of the device',
+                de: 'Bitte die IP-Adresse des Geräts eingeben',
             });
             expect(result).to.deep.equal({ refresh: false });
         });
