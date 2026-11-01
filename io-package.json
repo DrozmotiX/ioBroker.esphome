@@ -187,6 +187,7 @@
     "ESPHomeDashboardVersion": "2026.6.5",
     "PillowVersion": "Auto Detect",
     "DeviceBuilderVersion": "Auto Detect",
+    "PythonVersion": "3.13.2",
     "reconnectInterval": 30,
     "pingInterval": 5,
     "pingAttempts": 1,
@@ -198,6 +199,8 @@
     "ESPHomeDashboardPort": 6052,
     "ESPHomeDashboardIP": "",
     "ESPHomeDashboardUrl": "",
+    "ESPHomeDashboardUsername": "",
+    "ESPHomeDashboardPassword": "",
     "ignoredDevices": [
       {
         "IP-Address": "192.168.0.1",
@@ -206,6 +209,12 @@
       }
     ]
   },
+  "encryptedNative": [
+    "ESPHomeDashboardPassword"
+  ],
+  "protectedNative": [
+    "ESPHomeDashboardPassword"
+  ],
   "objects": [],
   "instanceObjects": [
     {

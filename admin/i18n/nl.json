@@ -87,5 +87,13 @@
     "tabDashboardFailed": "Het ESPHome-dashboard kon niet worden gestart of is gestopt. Zie het logboek hieronder en het logboek van de instantie voor de reden.",
     "tabDashboardStartLog": "Opstartlogboek",
     "tabDashboardNoUrl": "Er is geen URL van het ESPHome-dashboard geconfigureerd. Vul deze in bij de instantie-instellingen, tabblad \"ESPHome Dashboard\".",
-    "tabDashboardLegacyHint": "Het ESPHome-dashboard heeft enkele minuten nodig om te starten, bij de eerste start of na een versiewijziging nog langer. Als hieronder een fout wordt getoond, wacht even en herlaad de pagina. Werk admin bij naar 8.0.12 of nieuwer om hier de voortgang van het starten te zien."
+    "tabDashboardLegacyHint": "Het ESPHome-dashboard heeft enkele minuten nodig om te starten, bij de eerste start of na een versiewijziging nog langer. Als hieronder een fout wordt getoond, wacht even en herlaad de pagina. Werk admin bij naar 8.0.12 of nieuwer om hier de voortgang van het starten te zien.",
+    "lblDashboardUsername": "Gebruikersnaam van ESPHome Dashboard",
+    "hlpDashboardUsername": "Laat gebruikersnaam en wachtwoord leeg om het dashboard zonder login te gebruiken (standaard)",
+    "lblDashboardPassword": "Wachtwoord van ESPHome Dashboard",
+    "hlpDashboardPassword": "Versleuteld opgeslagen. Geldt vanaf de volgende start van het dashboard",
+    "errDashboardLogin": "Stel zowel gebruikersnaam als wachtwoord in, of laat beide leeg",
+    "lblPythonVersion": "Python-versie",
+    "hlpPythonVersion": "Python van de dashboardomgeving, een versie (3.13.2) of een bereik (3.12 = nieuwste 3.12.x). Een andere versie maakt de omgeving bij de volgende start opnieuw aan. Standaard: 3.13.2",
+    "errPythonVersion": "Ongeldige Python-versie, bijv. 3.13.2 of 3.12"
 }

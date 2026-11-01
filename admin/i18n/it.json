@@ -87,5 +87,13 @@
     "tabDashboardFailed": "Non è stato possibile avviare la dashboard di ESPHome oppure si è arrestata. Consulta il log qui sotto e il log dell'istanza per il motivo.",
     "tabDashboardStartLog": "Log di avvio",
     "tabDashboardNoUrl": "Nessun URL della dashboard di ESPHome configurato. Inseriscilo nelle impostazioni dell'istanza, scheda \"ESPHome Dashboard\".",
-    "tabDashboardLegacyHint": "La dashboard di ESPHome impiega alcuni minuti per avviarsi, al primo avvio o dopo un cambio di versione anche di più. Se qui sotto viene mostrato un errore, attendi un momento e ricarica la pagina. Aggiorna admin alla versione 8.0.12 o successiva per vedere qui l'avanzamento dell'avvio."
+    "tabDashboardLegacyHint": "La dashboard di ESPHome impiega alcuni minuti per avviarsi, al primo avvio o dopo un cambio di versione anche di più. Se qui sotto viene mostrato un errore, attendi un momento e ricarica la pagina. Aggiorna admin alla versione 8.0.12 o successiva per vedere qui l'avanzamento dell'avvio.",
+    "lblDashboardUsername": "Nome utente della dashboard ESPHome",
+    "hlpDashboardUsername": "Lasciare vuoti nome utente e password per usare la dashboard senza login (predefinito)",
+    "lblDashboardPassword": "Password della dashboard ESPHome",
+    "hlpDashboardPassword": "Memorizzata crittografata. Applicata al prossimo avvio della dashboard",
+    "errDashboardLogin": "Impostare sia il nome utente che la password, oppure lasciarli entrambi vuoti",
+    "lblPythonVersion": "Versione di Python",
+    "hlpPythonVersion": "Python dell'ambiente della dashboard, una versione (3.13.2) o un intervallo (3.12 = la 3.12.x più recente). Un'altra versione ricrea l'ambiente al prossimo avvio. Predefinito: 3.13.2",
+    "errPythonVersion": "Versione di Python non valida, ad es. 3.13.2 o 3.12"
 }

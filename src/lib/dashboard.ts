@@ -95,6 +95,49 @@ const defaultDashboardVersion = '2026.6.5';
 const versionMigrationState = '_ESPHomeDashboard.versionPinMigrationDone';
 const pillowMigrationState = '_ESPHomeDashboard.pillowAutoDetectMigrationDone';
 
+/**
+ * Environment variables with the login of the dashboard ("Username" / "Password" in the advanced dashboard
+ * settings). Without both, the dashboard is not protected, as before.
+ *
+ * Passed as environment variables, not as arguments, so they do not show up in the process list. ESPHome
+ * Device Builder (ESPHome >= 2026.7.0 and the Docker image since 2026.6.0) reads ESPHOME_USERNAME /
+ * ESPHOME_PASSWORD, the dashboard of older ESPHome versions USERNAME / PASSWORD. The variables are always
+ * set, so values inherited from the environment of ioBroker never protect the dashboard by accident.
+ * USERNAME is only set with a login: it is the name of the OS user otherwise, which both ignore
+ * without PASSWORD.
+ *
+ * @param config - instance configuration, the password already decrypted by adapter-core
+ * @returns environment variables for the dashboard process or container
+ */
+export function dashboardCredentials(
+    config: Pick<ioBroker.AdapterConfig, 'ESPHomeDashboardUsername' | 'ESPHomeDashboardPassword'>,
+): Record<string, string> {
+    const username = (config.ESPHomeDashboardUsername ?? '').trim();
+    const password = config.ESPHomeDashboardPassword ?? '';
+    if (!username || !password) {
+        return { ESPHOME_USERNAME: '', ESPHOME_PASSWORD: '', PASSWORD: '' };
+    }
+    return { ESPHOME_USERNAME: username, ESPHOME_PASSWORD: password, USERNAME: username, PASSWORD: password };
+}
+
+/** Python version of the dashboard environment while none is configured (the version used before it was selectable) */
+export const DEFAULT_PYTHON_VERSION = '3.13.2';
+
+/**
+ * Python version autopy installs the dashboard environment with (advanced settings, "PythonVersion").
+ *
+ * A semver version or range, matched against the releases of python-build-standalone: "3.12" or "~3.12.0" takes the
+ * newest 3.12.x. Anything else falls back to {@link DEFAULT_PYTHON_VERSION}. When the environment was created with a
+ * Python version not matching it, autopy creates the environment again.
+ *
+ * @param config - instance configuration
+ * @returns version or range passed to autopy's getVenv()
+ */
+export function pythonVersion(config: Pick<ioBroker.AdapterConfig, 'PythonVersion'>): string {
+    const configured = String(config.PythonVersion ?? '').trim();
+    return /^[~^]?\d+(\.(\d+|x|\*)){0,2}$/.test(configured) ? configured : DEFAULT_PYTHON_VERSION;
+}
+
 // Interval and per-request timeout of the check whether the started dashboard answers. Checked more often
 // until it answers: the dashboard tab of admin waits for it.
 const readyCheckIntervalMs = 60000;
@@ -454,8 +497,16 @@ class Dashboard {
                             this.adapter.config.DeviceBuilderVersion,
                         );
                         this.adapter.log.debug(`Python requirements: ${JSON.stringify(requirements)}`);
+                        const usePythonVersion = pythonVersion(this.adapter.config);
+                        const configuredPythonVersion = String(this.adapter.config.PythonVersion ?? '').trim();
+                        if (configuredPythonVersion && usePythonVersion !== configuredPythonVersion) {
+                            this.adapter.log.warn(
+                                `Invalid Python version "${this.adapter.config.PythonVersion}" in the advanced dashboard settings, using ${usePythonVersion}`,
+                            );
+                        }
+                        this.adapter.log.info(`Python version of the dashboard environment: ${usePythonVersion}`);
                         this.appendStartLog(
-                            `Preparing the Python environment: ${requirements.map(requirement => `${requirement.name}${requirement.version}`).join(', ')}. Installing them takes several minutes on the first start or after a version change.`,
+                            `Preparing the Python environment (Python ${usePythonVersion}): ${requirements.map(requirement => `${requirement.name}${requirement.version}`).join(', ')}. Installing them takes several minutes on the first start or after a version change.`,
                         );
                         // Create a virtual environment with esphome installed. upgrade: as soon as something
                         // has to be installed (e.g. another ESPHome version), pip may also upgrade the
@@ -463,7 +514,8 @@ class Dashboard {
                         // previous ESPHome version.
                         python = await getVenv({
                             name: VENV_NAME,
-                            pythonVersion: '3.13.2', // Use any Python 3.13.x version.
+                            // An environment with another Python version is created again by autopy
+                            pythonVersion: usePythonVersion,
                             requirements,
                             upgrade: true,
                         });
@@ -511,7 +563,11 @@ class Dashboard {
                     this.appendStartLog(startMessage);
                     // buffer: false, the output is only logged below and would otherwise be kept in memory
                     // for as long as the dashboard runs. NO_COLOR keeps color codes out of the log.
-                    this.dashboardProcess = python(command, args, { buffer: false, env: { NO_COLOR: '1' } });
+                    this.logLogin();
+                    this.dashboardProcess = python(command, args, {
+                        buffer: false,
+                        env: { NO_COLOR: '1', ...dashboardCredentials(this.adapter.config) },
+                    });
 
                     this.adapter.log.debug(`espHomeDashboard_Process ${JSON.stringify(this.dashboardProcess)}`);
 
@@ -639,6 +695,9 @@ class Dashboard {
             // A version tag never changes, "stable" does: pull it again on every start, otherwise the image
             // of the first start would be used for good
             container.iobAutoImageUpdate = !version;
+            // Login of the dashboard, see dashboardCredentials()
+            container.environment = { ...container.environment, ...dashboardCredentials(this.adapter.config) };
+            this.logLogin();
             for (const mount of container.mounts ?? []) {
                 if (mount.target === dockerConfigDir) {
                     mount.type = 'bind';
@@ -709,6 +768,21 @@ class Dashboard {
             this.adapter.errorHandler(`[espHomeDashboard-Docker]`, error);
             this.appendStartLog(`ESPHome Dashboard container could not be started: ${String(error)}`);
             await this.setStatus('failed');
+        }
+    }
+
+    /**
+     * Log whether the dashboard asks for a login, and warn when only one of username and password is set
+     */
+    private logLogin(): void {
+        const username = (this.adapter.config.ESPHomeDashboardUsername ?? '').trim();
+        const password = this.adapter.config.ESPHomeDashboardPassword ?? '';
+        if (username && password) {
+            this.adapter.log.info(`ESPHome Dashboard is protected by a login, username: ${username}`);
+        } else if (username || password) {
+            this.adapter.log.warn(
+                `ESPHome Dashboard is NOT protected: only the ${username ? 'username' : 'password'} of the login is set in the advanced dashboard settings, both are needed`,
+            );
         }
     }
 

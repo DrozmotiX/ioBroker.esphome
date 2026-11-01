@@ -87,5 +87,13 @@
     "tabDashboardFailed": "Le tableau de bord ESPHome n'a pas pu être démarré ou s'est arrêté. Consultez le journal ci-dessous et le journal de l'instance pour en connaître la raison.",
     "tabDashboardStartLog": "Journal de démarrage",
     "tabDashboardNoUrl": "Aucune URL du tableau de bord ESPHome n'est configurée. Saisissez-la dans les paramètres de l'instance, onglet « ESPHome Dashboard ».",
-    "tabDashboardLegacyHint": "Le tableau de bord ESPHome a besoin de quelques minutes pour démarrer, encore plus au premier démarrage ou après un changement de version. Si une erreur s'affiche ci-dessous, patientez un instant et rechargez la page. Mettez admin à jour vers la version 8.0.12 ou plus récente pour voir ici la progression du démarrage."
+    "tabDashboardLegacyHint": "Le tableau de bord ESPHome a besoin de quelques minutes pour démarrer, encore plus au premier démarrage ou après un changement de version. Si une erreur s'affiche ci-dessous, patientez un instant et rechargez la page. Mettez admin à jour vers la version 8.0.12 ou plus récente pour voir ici la progression du démarrage.",
+    "lblDashboardUsername": "Nom d'utilisateur du tableau de bord ESPHome",
+    "hlpDashboardUsername": "Laissez le nom d'utilisateur et le mot de passe vides pour utiliser le tableau de bord sans connexion (par défaut)",
+    "lblDashboardPassword": "Mot de passe du tableau de bord ESPHome",
+    "hlpDashboardPassword": "Stocké chiffré. Appliqué au prochain démarrage du tableau de bord",
+    "errDashboardLogin": "Définissez le nom d'utilisateur et le mot de passe, ou laissez les deux vides",
+    "lblPythonVersion": "Version de Python",
+    "hlpPythonVersion": "Python de l'environnement du tableau de bord, une version (3.13.2) ou une plage (3.12 = la 3.12.x la plus récente). Une autre version recrée l'environnement au prochain démarrage. Par défaut : 3.13.2",
+    "errPythonVersion": "Version de Python invalide, par ex. 3.13.2 ou 3.12"
 }

@@ -87,5 +87,13 @@
     "tabDashboardFailed": "ESPHome 仪表板无法启动或已停止。原因请查看下方日志和实例日志。",
     "tabDashboardStartLog": "启动日志",
     "tabDashboardNoUrl": "未配置 ESPHome 仪表板的 URL。请在实例设置的“ESPHome Dashboard”选项卡中填写。",
-    "tabDashboardLegacyHint": "ESPHome 仪表板需要几分钟才能启动，首次启动或更换版本后需要更长时间。如果下方显示错误，请稍等片刻后刷新页面。将 admin 更新到 8.0.12 或更高版本即可在此查看启动进度。"
+    "tabDashboardLegacyHint": "ESPHome 仪表板需要几分钟才能启动，首次启动或更换版本后需要更长时间。如果下方显示错误，请稍等片刻后刷新页面。将 admin 更新到 8.0.12 或更高版本即可在此查看启动进度。",
+    "lblDashboardUsername": "ESPHome 仪表板用户名",
+    "hlpDashboardUsername": "用户名和密码留空则无需登录即可使用仪表板（默认）",
+    "lblDashboardPassword": "ESPHome 仪表板密码",
+    "hlpDashboardPassword": "加密存储。在仪表板下次启动时生效",
+    "errDashboardLogin": "请同时设置用户名和密码，或将两者都留空",
+    "lblPythonVersion": "Python 版本",
+    "hlpPythonVersion": "仪表板环境的 Python，可以是版本 (3.13.2) 或范围 (3.12 = 最新的 3.12.x)。更改版本后，下次启动时会重新创建环境。默认值：3.13.2",
+    "errPythonVersion": "无效的 Python 版本，例如 3.13.2 或 3.12"
 }

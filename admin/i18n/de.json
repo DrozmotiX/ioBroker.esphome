@@ -87,5 +87,13 @@
     "tabDashboardFailed": "Das ESPHome Dashboard konnte nicht gestartet werden oder wurde beendet. Den Grund zeigen das Log unten und das Log der Instanz.",
     "tabDashboardStartLog": "Startprotokoll",
     "tabDashboardNoUrl": "Es ist keine URL des ESPHome Dashboards konfiguriert. Trage sie in den Instanzeinstellungen ein, Reiter „ESPHome Dashboard“.",
-    "tabDashboardLegacyHint": "Das ESPHome Dashboard braucht einige Minuten zum Starten, beim ersten Start oder nach einem Versionswechsel auch länger. Wird unten ein Fehler angezeigt, kurz warten und die Seite neu laden. Mit admin 8.0.12 oder neuer wird hier der Startfortschritt angezeigt."
+    "tabDashboardLegacyHint": "Das ESPHome Dashboard braucht einige Minuten zum Starten, beim ersten Start oder nach einem Versionswechsel auch länger. Wird unten ein Fehler angezeigt, kurz warten und die Seite neu laden. Mit admin 8.0.12 oder neuer wird hier der Startfortschritt angezeigt.",
+    "lblDashboardUsername": "Benutzername des ESPHome-Dashboards",
+    "hlpDashboardUsername": "Benutzername und Passwort leer lassen, um das Dashboard ohne Anmeldung zu nutzen (Standard)",
+    "lblDashboardPassword": "Passwort des ESPHome-Dashboards",
+    "hlpDashboardPassword": "Wird verschlüsselt gespeichert. Gilt ab dem nächsten Start des Dashboards",
+    "errDashboardLogin": "Benutzername und Passwort beide setzen oder beide leer lassen",
+    "lblPythonVersion": "Python-Version",
+    "hlpPythonVersion": "Python der Dashboard-Umgebung, eine Version (3.13.2) oder ein Bereich (3.12 = neueste 3.12.x). Eine andere Version erstellt die Umgebung beim nächsten Start neu. Standard: 3.13.2",
+    "errPythonVersion": "Ungültige Python-Version, z. B. 3.13.2 oder 3.12"
 }

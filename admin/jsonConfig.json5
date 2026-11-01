@@ -507,6 +507,32 @@
 							"xl": 2,
 							"label": "lblESPHomePort"
 						},
+						// Login of the dashboard, not protected while empty (default). Password stored encrypted
+						// (encryptedNative in io-package.json), passed as environment variables, see dashboardCredentials()
+						"ESPHomeDashboardUsername": {
+							"type": "text",
+							"xs": 12,
+							"sm": 5,
+							"md": 5,
+							"lg": 5,
+							"xl": 5,
+							"label": "lblDashboardUsername",
+							"help": "hlpDashboardUsername"
+						},
+						"ESPHomeDashboardPassword": {
+							"type": "password",
+							"xs": 12,
+							"sm": 5,
+							"md": 5,
+							"lg": 5,
+							"xl": 5,
+							"label": "lblDashboardPassword",
+							"help": "hlpDashboardPassword",
+							"visible": true,
+							"validator": "!data.ESPHomeDashboardUsername === !data.ESPHomeDashboardPassword",
+							"validatorErrorText": "errDashboardLogin",
+							"validatorNoSaveOnError": true
+						},
 						// Versions installed next to ESPHome, "Auto Detect" leaves them to pip (#479).
 						// The ESPHome Docker image brings its own Pillow and Device Builder
 						"PillowVersion": {
@@ -533,6 +559,25 @@
 							"help": "hlpDeviceBuilderVersion",
 							"hidden": "data.ESPHomeDashboardEnabled && data.ESPHomeDashboardDocker",
 							"command": "getDeviceBuilderVersion"
+						},
+						// Python of the autopy environment (semver version or range), see pythonVersion() in src/lib/dashboard.ts.
+						// The ESPHome Docker image brings its own Python
+						"PythonVersion": {
+							"newLine": true,
+							"type": "autocomplete",
+							"freeSolo": true,
+							"options": ["3.13.2", "3.11", "3.12", "3.13", "3.14"],
+							"xs": 12,
+							"sm": 6,
+							"md": 6,
+							"lg": 6,
+							"xl": 6,
+							"label": "lblPythonVersion",
+							"help": "hlpPythonVersion",
+							"hidden": "data.ESPHomeDashboardEnabled && data.ESPHomeDashboardDocker",
+							"validator": "!data.PythonVersion || /^\\s*[~^]?\\d+(\\.(\\d+|x|\\*)){0,2}\\s*$/.test(data.PythonVersion || '')",
+							"validatorErrorText": "errPythonVersion",
+							"validatorNoSaveOnError": true
 						},
 						"ESPHomeDashboardUrl": {
 							"type": "text",

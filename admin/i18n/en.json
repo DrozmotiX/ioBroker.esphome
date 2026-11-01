@@ -87,5 +87,13 @@
     "tabDashboardFailed": "The ESPHome Dashboard could not be started or has stopped. See the log below and the log of the instance for the reason.",
     "tabDashboardStartLog": "Start log",
     "tabDashboardNoUrl": "No URL of the ESPHome Dashboard is configured. Enter it in the instance settings, tab \"ESPHome Dashboard\".",
-    "tabDashboardLegacyHint": "The ESPHome Dashboard needs some minutes to start, on the first start or after a version change even longer. If an error is shown below, wait a moment and reload the page. Update admin to 8.0.12 or newer to see the start progress here."
+    "tabDashboardLegacyHint": "The ESPHome Dashboard needs some minutes to start, on the first start or after a version change even longer. If an error is shown below, wait a moment and reload the page. Update admin to 8.0.12 or newer to see the start progress here.",
+    "lblDashboardUsername": "Username of ESPHome Dashboard",
+    "hlpDashboardUsername": "Leave username and password empty to use the dashboard without login (default)",
+    "lblDashboardPassword": "Password of ESPHome Dashboard",
+    "hlpDashboardPassword": "Stored encrypted. Applied on the next start of the dashboard",
+    "errDashboardLogin": "Set both username and password, or leave both empty",
+    "lblPythonVersion": "Python version",
+    "hlpPythonVersion": "Python of the dashboard environment, a version (3.13.2) or range (3.12 = newest 3.12.x). Another version creates the environment again on the next start. Default: 3.13.2",
+    "errPythonVersion": "Invalid Python version, e.g. 3.13.2 or 3.12"
 }

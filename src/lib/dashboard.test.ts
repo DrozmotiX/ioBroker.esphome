@@ -4,7 +4,13 @@ import { readFileSync } from 'node:fs';
 import { mkdtemp, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
-import Dashboard, { type DashboardAdapter, ownContainerName } from './dashboard';
+import Dashboard, {
+    DEFAULT_PYTHON_VERSION,
+    type DashboardAdapter,
+    dashboardCredentials,
+    ownContainerName,
+    pythonVersion,
+} from './dashboard';
 import { native } from '../../io-package.json';
 
 /** Root directory of the adapter, docker-compose.yaml lives there */
@@ -222,6 +228,42 @@ describe('ESPHome Dashboard in Docker', () => {
         expect(dashboard.isReady()).to.equal(false);
         // removed by the next start without Docker Integration
         expect(logs.states['_ESPHomeDashboard.dockerContainer']).to.equal(container.name);
+    });
+
+    it('starts the container without login by default', async () => {
+        const config = { ...native, ESPHomeDashboardEnabled: true, ESPHomeDashboardDocker: true };
+        const plugin = await createDockerPlugin(config);
+
+        await createDashboard(config, plugin).startDockerContainer('2026.6.5');
+
+        expect(plugin.configurations[0].environment).to.deep.equal({
+            ESPHOME_USERNAME: '',
+            ESPHOME_PASSWORD: '',
+            PASSWORD: '',
+        });
+    });
+
+    it('passes the login to the container', async () => {
+        const config = {
+            ...native,
+            ESPHomeDashboardEnabled: true,
+            ESPHomeDashboardDocker: true,
+            ESPHomeDashboardUsername: 'admin',
+            ESPHomeDashboardPassword: 'secret',
+        };
+        const plugin = await createDockerPlugin(config);
+
+        await createDashboard(config, plugin).startDockerContainer('2026.6.5');
+
+        // ESPHOME_* for ESPHome Device Builder (image >= 2026.6.0), USERNAME / PASSWORD for older images
+        expect(plugin.configurations[0].environment).to.deep.equal({
+            ESPHOME_USERNAME: 'admin',
+            ESPHOME_PASSWORD: 'secret',
+            USERNAME: 'admin',
+            PASSWORD: 'secret',
+        });
+        expect(logs.info.some(msg => msg.includes('protected by a login, username: admin'))).to.equal(true);
+        expect(logs.info.some(msg => msg.includes('secret'))).to.equal(false);
     });
 
     it('uses the newest stable image when no version is known', async () => {
@@ -709,5 +751,58 @@ describe('ESPHome Dashboard in Docker', () => {
             expect(logs.error).to.deep.equal([]);
             expect(logs.warn).to.have.length(1);
         });
+    });
+});
+
+describe('dashboardCredentials', () => {
+    it('leaves the dashboard unprotected by default', () => {
+        expect(native.ESPHomeDashboardUsername).to.equal('');
+        expect(native.ESPHomeDashboardPassword).to.equal('');
+        // USERNAME is the OS user, it is kept; the empty PASSWORD disables the login of both dashboards
+        expect(dashboardCredentials(native)).to.deep.equal({
+            ESPHOME_USERNAME: '',
+            ESPHOME_PASSWORD: '',
+            PASSWORD: '',
+        });
+    });
+
+    it('needs both username and password', () => {
+        const unprotected = { ESPHOME_USERNAME: '', ESPHOME_PASSWORD: '', PASSWORD: '' };
+        expect(dashboardCredentials({ ESPHomeDashboardUsername: 'admin', ESPHomeDashboardPassword: '' })).to.deep.equal(
+            unprotected,
+        );
+        expect(
+            dashboardCredentials({ ESPHomeDashboardUsername: ' ', ESPHomeDashboardPassword: 'secret' }),
+        ).to.deep.equal(unprotected);
+    });
+
+    it('sets the variables of ESPHome Device Builder and of the older dashboard', () => {
+        expect(
+            dashboardCredentials({ ESPHomeDashboardUsername: ' admin ', ESPHomeDashboardPassword: ' secret ' }),
+        ).to.deep.equal({
+            ESPHOME_USERNAME: 'admin',
+            ESPHOME_PASSWORD: ' secret ',
+            USERNAME: 'admin',
+            PASSWORD: ' secret ',
+        });
+    });
+});
+
+describe('pythonVersion', () => {
+    it('keeps Python 3.13.2 by default', () => {
+        expect(native.PythonVersion).to.equal(DEFAULT_PYTHON_VERSION);
+        expect(pythonVersion(native)).to.equal('3.13.2');
+    });
+
+    it('accepts versions and ranges', () => {
+        for (const version of ['3.12', '3.14.1', '~3.12.0', '^3', '3.13.x']) {
+            expect(pythonVersion({ PythonVersion: ` ${version} ` })).to.equal(version);
+        }
+    });
+
+    it('falls back to the default for empty or invalid values', () => {
+        for (const version of ['', '   ', 'latest', '3.12; rm -rf /', '>=3.11']) {
+            expect(pythonVersion({ PythonVersion: version })).to.equal(DEFAULT_PYTHON_VERSION);
+        }
     });
 });
