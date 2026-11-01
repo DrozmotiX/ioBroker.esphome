@@ -1,0 +1,95 @@
+// Admin tab of the ESPHome Dashboard (adminTab.link in io-package.json).
+// The dashboard needs some minutes to start (Python environment or Docker image), so the tab shows a hint and
+// the start log until it answers, and only then the dashboard itself in an iframe. The status comes from the
+// state _ESPHomeDashboard.status (see DashboardStatus in src/lib/dashboard.ts), the log from
+// _ESPHomeDashboard.startLog. "dependsOnStates" / "_states" need admin >= 8.0.12: older versions do not know
+// "_states", so the functions check "typeof _states" and show the hint "tabDashboardLegacyHint" and the
+// dashboard instead.
+{
+	"i18n": true,
+	// Answered by getTabData() of src/lib/dashboard.ts: { dashboardUrl }
+	"command": "getDashboardTab",
+	"type": "panel",
+	"items": {
+		"_notAlive": {
+			"type": "staticText",
+			"text": "tabInstanceNotRunning",
+			"xs": 12,
+			"style": { "fontSize": "1.1rem", "padding": 16 },
+			"hidden": "_alive"
+		},
+		"_legacyHint": {
+			"type": "staticText",
+			"text": "tabDashboardLegacyHint",
+			"xs": 12,
+			"style": { "padding": "8px 16px" },
+			"hidden": "!_alive || typeof _states !== 'undefined'"
+		},
+		"_disabled": {
+			"type": "staticText",
+			"text": "tabDashboardDisabled",
+			"xs": 12,
+			"style": { "fontSize": "1.1rem", "padding": 16 },
+			"dependsOnStates": { "status": "._ESPHomeDashboard.status" },
+			"hidden": "!_alive || typeof _states === 'undefined' || _states.status?.val !== 'disabled'"
+		},
+		"_starting": {
+			"type": "staticText",
+			"text": "tabDashboardStarting",
+			"xs": 12,
+			"style": { "fontSize": "1.1rem", "padding": 16 },
+			"dependsOnStates": { "status": "._ESPHomeDashboard.status" },
+			"hidden": "!_alive || typeof _states === 'undefined' || !['starting', 'stopped'].includes(_states.status?.val)"
+		},
+		"_failed": {
+			"type": "staticText",
+			"text": "tabDashboardFailed",
+			"xs": 12,
+			"style": { "fontSize": "1.1rem", "padding": 16, "color": "#d32f2f" },
+			"dependsOnStates": { "status": "._ESPHomeDashboard.status" },
+			"hidden": "!_alive || typeof _states === 'undefined' || _states.status?.val !== 'failed'"
+		},
+		"_startLogHeader": {
+			"type": "header",
+			"text": "tabDashboardStartLog",
+			"size": 5,
+			"newLine": true,
+			"dependsOnStates": { "status": "._ESPHomeDashboard.status" },
+			"hidden": "!_alive || typeof _states === 'undefined' || !['starting', 'stopped', 'failed'].includes(_states.status?.val)"
+		},
+		"_startLog": {
+			"type": "state",
+			"oid": "_ESPHomeDashboard.startLog",
+			"control": "text",
+			"narrow": true,
+			"xs": 12,
+			"style": {
+				"whiteSpace": "pre-wrap",
+				"wordBreak": "break-word",
+				"fontFamily": "monospace",
+				"fontSize": "0.85rem",
+				"padding": "0 16px 16px 16px"
+			},
+			"dependsOnStates": { "status": "._ESPHomeDashboard.status" },
+			"hidden": "!_alive || typeof _states === 'undefined' || !['starting', 'stopped', 'failed'].includes(_states.status?.val)"
+		},
+		"_noUrl": {
+			"type": "staticText",
+			"text": "tabDashboardNoUrl",
+			"xs": 12,
+			"style": { "fontSize": "1.1rem", "padding": 16 },
+			"dependsOnStates": { "status": "._ESPHomeDashboard.status" },
+			"hidden": "!_alive || !!data.dashboardUrl || (typeof _states !== 'undefined' && _states.status?.val !== 'running')"
+		},
+		// Only rendered once the dashboard answers, so it loads the dashboard and not an error page
+		"dashboardUrl": {
+			"type": "iframe",
+			"xs": 12,
+			"newLine": true,
+			"lazyLoad": "eager",
+			"style": { "height": "calc(100vh - 120px)", "minHeight": 400 },
+			"dependsOnStates": { "status": "._ESPHomeDashboard.status" },
+			"hidden": "!_alive || !data.dashboardUrl || (typeof _states !== 'undefined' && _states.status?.val !== 'running')"
+		}
+	}
+}

@@ -145,7 +145,8 @@
     "connectionType": "local",
     "dataSource": "push",
     "adminUI": {
-      "config": "json"
+      "config": "json",
+      "tab": "json"
     },
     "tier": 2,
     "nogit": true,
@@ -165,7 +166,7 @@
       "_default": "%ESPHomeDashboardUrl%"
     },
     "adminTab": {
-      "link": "%ESPHomeDashboardUrl%"
+      "link": "jsonTab.json5"
     },
     "dependencies": [
       {

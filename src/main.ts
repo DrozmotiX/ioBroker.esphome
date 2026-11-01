@@ -1308,6 +1308,9 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
             common.type = (value == null ? 'string' : typeof value) as ioBroker.CommonType;
 
             common.role = stateAttr[name] !== undefined ? stateAttr[name].role || 'state' : 'state';
+            if (stateAttr[name]?.states) {
+                common.states = stateAttr[name].states;
+            }
             common.read = true;
             common.unit = unit !== undefined ? unit || '' : '';
             // common.write = stateAttr[name] !== undefined ? stateAttr[name].write || false : false;
@@ -1324,7 +1327,8 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                         common.role !== this.createdStatesDetails[objName].role ||
                         common.read !== this.createdStatesDetails[objName].read ||
                         common.unit !== this.createdStatesDetails[objName].unit ||
-                        common.write !== this.createdStatesDetails[objName].write))
+                        common.write !== this.createdStatesDetails[objName].write ||
+                        JSON.stringify(common.states) !== JSON.stringify(this.createdStatesDetails[objName].states)))
             ) {
                 // console.log(`An attribute has changed : ${state}`);
                 await this.extendObjectAsync(objName, {
@@ -1556,6 +1560,11 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                 // Front End message handler to load ESPHome Dashboard dropDown with all available versions
                 case 'getESPHomeDashboardVersion':
                     this.sendTo(obj.from, obj.command, this.dashboard.getDashboardVersionDropDown(), obj.callback);
+                    break;
+
+                // Dashboard tab of admin (admin/jsonTab.json5): URL of the dashboard shown in its iframe
+                case 'getDashboardTab':
+                    this.sendTo(obj.from, obj.command, this.dashboard.getTabData(), obj.callback);
                     break;
 
                 // Front End message handler to load Pillow version dropdown with available versions

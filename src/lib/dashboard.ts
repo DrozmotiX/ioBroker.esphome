@@ -138,9 +138,32 @@ export function pythonVersion(config: Pick<ioBroker.AdapterConfig, 'PythonVersio
     return /^[~^]?\d+(\.(\d+|x|\*)){0,2}$/.test(configured) ? configured : DEFAULT_PYTHON_VERSION;
 }
 
-// Interval and per-request timeout of the check whether the started dashboard answers
+// Interval and per-request timeout of the check whether the started dashboard answers. Checked more often
+// until it answers: the dashboard tab of admin waits for it.
 const readyCheckIntervalMs = 60000;
+const startingCheckIntervalMs = 5000;
 const readyCheckTimeoutMs = 5000;
+
+/**
+ * States the dashboard tab of admin (admin/jsonTab.json5) shows: while the dashboard is not ready a hint and
+ * the start log, the dashboard itself once it answers
+ */
+const statusState = '_ESPHomeDashboard.status';
+const startLogState = '_ESPHomeDashboard.startLog';
+/** Number of lines of the start log shown in the dashboard tab */
+const startLogLines = 60;
+
+/**
+ * Status of the dashboard for the dashboard tab of admin:
+ * - disabled: the dashboard is not enabled in the instance settings
+ * - starting: the Python environment / the container is prepared or the dashboard does not answer yet
+ * - running: the dashboard answers
+ * - failed: the dashboard could not be started or stopped
+ * - stopped: the instance was stopped
+ */
+export const DASHBOARD_STATUSES = ['disabled', 'starting', 'running', 'failed', 'stopped'] as const;
+/** One of {@link DASHBOARD_STATUSES}, labels in common.states of "dashboardStatus" in stateAttr.ts */
+export type DashboardStatus = (typeof DASHBOARD_STATUSES)[number];
 
 /**
  * ESPHome Dashboard class, one instance per adapter instance
@@ -161,6 +184,20 @@ class Dashboard {
     private dockerContainer: { manager: ReturnType<DockerPlugin['getDockerManager']>; name: string } | undefined;
     /** startDockerContainer() while it runs, the unload waits for it */
     private dockerStart: Promise<void> | undefined;
+    /**
+     * Log of the dashboard: info, warn and error go to the log of the instance and to the start log shown in the
+     * dashboard tab of admin (appendStartLog()), debug only to the log of the instance. Use it instead of
+     * adapter.log, so no message about the start is missing in the tab.
+     */
+    private readonly log: Pick<ioBroker.Logger, 'debug' | 'info' | 'warn' | 'error'>;
+    /** Status shown in the dashboard tab, see setStatus() */
+    private status: DashboardStatus | undefined;
+    /** Last lines of the start log, see appendStartLog() */
+    private readonly startLog: string[] = [];
+    /** Write of the start log state while it runs, see writeStartLog() */
+    private startLogWrite: Promise<void> | undefined;
+    /** The start log changed while it was written */
+    private startLogChanged = false;
     /** Memory cache of all available ESPHome Dashboard versions */
     private readonly dashboardVersions: string[] = [];
     /** Memory cache for available Pillow versions */
@@ -175,6 +212,32 @@ class Dashboard {
      */
     constructor(adapter: DashboardAdapter) {
         this.adapter = adapter;
+        this.log = {
+            debug: message => adapter.log.debug(message),
+            info: message => {
+                adapter.log.info(message);
+                this.appendStartLog(message);
+            },
+            warn: message => {
+                adapter.log.warn(message);
+                this.appendStartLog(message);
+            },
+            error: message => {
+                adapter.log.error(message);
+                this.appendStartLog(message);
+            },
+        };
+    }
+
+    /**
+     * Log an error and send it to Sentry (Esphome.errorHandler()), also shown in the start log of the dashboard tab
+     *
+     * @param codepart - part of the code the error occurred in
+     * @param error - the caught error
+     */
+    private errorHandler(codepart: string, error: unknown): void {
+        this.adapter.errorHandler(codepart, error);
+        this.appendStartLog(`${codepart} ${String(error)}`);
     }
 
     /**
@@ -191,17 +254,17 @@ class Dashboard {
                     this.adapter.config.ESPHomeDashboardPort,
                 );
 
-                this.adapter.log.info(`Migrating configuration: Setting ESPHomeDashboardUrl to ${calculatedUrl}`);
+                this.log.info(`Migrating configuration: Setting ESPHomeDashboardUrl to ${calculatedUrl}`);
 
                 const adapterObj = await this.adapter.getForeignObjectAsync(`system.adapter.${this.adapter.namespace}`);
                 if (!adapterObj) {
-                    this.adapter.log.error(
+                    this.log.error(
                         `Configuration migration failed: Could not retrieve adapter configuration object for ${this.adapter.namespace}`,
                     );
                     return;
                 }
                 if (!adapterObj.native) {
-                    this.adapter.log.error(
+                    this.log.error(
                         `Configuration migration failed: Adapter configuration object has no native property`,
                     );
                     return;
@@ -209,15 +272,13 @@ class Dashboard {
                 adapterObj.native.ESPHomeDashboardUrl = calculatedUrl;
                 await this.adapter.setForeignObject(adapterObj._id, adapterObj);
 
-                this.adapter.log.info(
-                    `Configuration migrated successfully. ESPHomeDashboardUrl set to: ${calculatedUrl}`,
-                );
+                this.log.info(`Configuration migrated successfully. ESPHomeDashboardUrl set to: ${calculatedUrl}`);
 
                 // adapter will restart
             }
         } catch (error) {
             const reason = error instanceof Error && error.message ? error.message : String(error);
-            this.adapter.log.error(
+            this.log.error(
                 `Error during configuration migration from ESPHomeDashboardIP to ESPHomeDashboardUrl: ${reason}`,
             );
         }
@@ -264,19 +325,19 @@ class Dashboard {
             if (Object.keys(migrated).length) {
                 const adapterObj = await this.adapter.getForeignObjectAsync(`system.adapter.${this.adapter.namespace}`);
                 if (!adapterObj || !adapterObj.native) {
-                    this.adapter.log.error(
+                    this.log.error(
                         `Migration of the dashboard versions failed: could not read the configuration object of ${this.adapter.namespace}. Please select a fixed ESPHome Dashboard version and "${autoDetect}" as Pillow version in the adapter configuration.`,
                     );
                     return;
                 }
 
                 if (migrated.ESPHomeDashboardVersion) {
-                    this.adapter.log.info(
+                    this.log.info(
                         `Not every ESPHome release can be installed on every system, so your configuration has been migrated once from "Always last available" to the last version known to work: ESPHomeDashboardVersion = ${migrated.ESPHomeDashboardVersion}. Select "Always last available" again in the adapter configuration if you prefer to follow the newest release, this migration only runs once.`,
                     );
                 }
                 if (migrated.PillowVersion) {
-                    this.adapter.log.info(
+                    this.log.info(
                         `ESPHome installs the Pillow version it needs itself, so the Pillow version has been changed once from ${this.adapter.config.PillowVersion || 'none'} to "${autoDetect}". A different version makes the installation fail. You can still select one in the advanced dashboard settings, this migration only runs once.`,
                     );
                 }
@@ -296,7 +357,7 @@ class Dashboard {
             await this.adapter.stateSetCreate(versionMigrationState, 'versionPinMigrationDone', true);
             await this.adapter.stateSetCreate(pillowMigrationState, 'pillowAutoDetectMigrationDone', true);
         } catch (error) {
-            this.adapter.errorHandler(`[migratePinnedVersions]`, error);
+            this.errorHandler(`[migratePinnedVersions]`, error);
         }
     }
 
@@ -310,7 +371,7 @@ class Dashboard {
      */
     warnUnpinnedVersions(useDashBoardVersion: string): void {
         if (this.adapter.config.ESPHomeDashboardVersion === 'Always last available') {
-            this.adapter.log.warn(
+            this.log.warn(
                 `ESPHome Dashboard version is set to "Always last available" and resolves to ${useDashBoardVersion || 'the newest release'}. Not every ESPHome release can be installed on every system. If the dashboard does not start, select a fixed version in the adapter configuration, ${defaultDashboardVersion} is known to work.`,
             );
         }
@@ -333,6 +394,15 @@ class Dashboard {
                 },
                 native: {},
             });
+
+            // The dashboard tab of admin shows a hint and the start log until the dashboard answers
+            this.startLog.length = 0;
+            if (this.adapter.config.ESPHomeDashboardEnabled) {
+                await this.setStatus('starting');
+            } else {
+                this.writeStartLog();
+                await this.setStatus('disabled');
+            }
 
             // Get all current available ESPHome Dashboard versions
             /** GitHub releases by index, only the name is used */
@@ -360,7 +430,7 @@ class Dashboard {
                 }
                 content = (await response.json()) as Record<string, { name: string }>;
             } catch (error) {
-                this.adapter.errorHandler(`[espHomeDashboard-VersionCall]`, error);
+                this.errorHandler(`[espHomeDashboard-VersionCall]`, error);
             }
 
             // If the response was successful, write versions names to a memory array
@@ -376,7 +446,7 @@ class Dashboard {
                 await this.adapter.stateSetCreate(`_ESPHomeDashboard.newestVersion`, 'newestVersion', content[0].name);
             } else {
                 // Not possible to load latest versions, use fallback
-                this.adapter.log.warn(
+                this.log.warn(
                     `Unable to retrieve current Dashboard release versions, using cached values. Check your internet connection`,
                 );
                 const cachedState = await this.adapter.getStateAsync(`_ESPHomeDashboard.versionCache`);
@@ -432,7 +502,7 @@ class Dashboard {
             // Before the process starts: a container left running would keep its port
             await this.removeLeftoverContainer();
             if (this.adapter.config.ESPHomeDashboardEnabled) {
-                this.adapter.log.info(`Native Integration of ESPHome Dashboard enabled, making environment ready`);
+                this.log.info(`Native Integration of ESPHome Dashboard enabled, making environment ready`);
 
                 this.warnUnpinnedVersions(useDashBoardVersion);
 
@@ -446,7 +516,7 @@ class Dashboard {
                     let python;
                     try {
                         if (!useDashBoardVersion) {
-                            this.adapter.log.warn(
+                            this.log.warn(
                                 `Unable to determine a specific ESPHome dashboard version. Falling back to latest available version from PyPI`,
                             );
                         }
@@ -457,15 +527,17 @@ class Dashboard {
                             this.adapter.config.PillowVersion,
                             this.adapter.config.DeviceBuilderVersion,
                         );
-                        this.adapter.log.debug(`Python requirements: ${JSON.stringify(requirements)}`);
+                        this.log.debug(`Python requirements: ${JSON.stringify(requirements)}`);
                         const usePythonVersion = pythonVersion(this.adapter.config);
                         const configuredPythonVersion = String(this.adapter.config.PythonVersion ?? '').trim();
                         if (configuredPythonVersion && usePythonVersion !== configuredPythonVersion) {
-                            this.adapter.log.warn(
+                            this.log.warn(
                                 `Invalid Python version "${this.adapter.config.PythonVersion}" in the advanced dashboard settings, using ${usePythonVersion}`,
                             );
                         }
-                        this.adapter.log.info(`Python version of the dashboard environment: ${usePythonVersion}`);
+                        this.log.info(
+                            `Preparing the Python environment of the dashboard (Python ${usePythonVersion}): ${requirements.map(requirement => `${requirement.name}${requirement.version}`).join(', ')}. Installing them takes several minutes on the first start or after a version change.`,
+                        );
                         // Create a virtual environment with esphome installed. upgrade: as soon as something
                         // has to be installed (e.g. another ESPHome version), pip may also upgrade the
                         // installed packages, otherwise it keeps the Device Builder installed for the
@@ -479,7 +551,8 @@ class Dashboard {
                         });
                     } catch (error) {
                         const stack = error instanceof Error ? error.stack : undefined;
-                        this.adapter.log.error(`Fatal error starting ESPHomeDashboard | ${String(error)} | ${stack}`);
+                        this.log.error(`Fatal error starting ESPHomeDashboard | ${String(error)} | ${stack}`);
+                        await this.setStatus('failed');
                         return;
                     }
 
@@ -496,7 +569,7 @@ class Dashboard {
                         // );
                     } catch (error) {
                         // Directory has issues reading/writing data, iob fix should be executed
-                        this.adapter.log.warn(
+                        this.log.warn(
                             `ESPHome DDashboard is unable to access directory to store YAML configuration data, please run ioBroker fix: ${String(error)}`,
                         );
                     }
@@ -514,7 +587,7 @@ class Dashboard {
                     const deviceBuilderInfo = useDeviceBuilder
                         ? `, ESPHome Device Builder version: ${installed['esphome-device-builder'] || 'unknown'}`
                         : '';
-                    this.adapter.log.info(
+                    this.log.info(
                         `Starting ESPHome Dashboard. ESPHome version: ${installed.esphome || useDashBoardVersion || 'latest'}, Pillow version: ${installed.pillow || 'unknown'}${deviceBuilderInfo}`,
                     );
                     // buffer: false, the output is only logged below and would otherwise be kept in memory
@@ -525,13 +598,16 @@ class Dashboard {
                         env: { NO_COLOR: '1', ...dashboardCredentials(this.adapter.config) },
                     });
 
-                    this.adapter.log.debug(`espHomeDashboard_Process ${JSON.stringify(this.dashboardProcess)}`);
+                    this.log.debug(`espHomeDashboard_Process ${JSON.stringify(this.dashboardProcess)}`);
 
+                    // Output of the dashboard: shown in the tab as it is, in the log of the instance by its level
                     this.dashboardProcess.stdout?.on('data', data => {
+                        this.appendStartLog(String(data));
                         this.adapter.log.info(`[this.dashboardProcess - Data] ${data}`);
                     });
 
                     this.dashboardProcess.stderr?.on('data', data => {
+                        this.appendStartLog(String(data));
                         if (data.includes('ERROR')) {
                             // e.g. the reason why the dashboard stops right after the start
                             this.adapter.log.error(`[ESPHome - Console] ${data}`);
@@ -545,7 +621,7 @@ class Dashboard {
                     });
 
                     void this.dashboardProcess.on('exit', (code, signal) => {
-                        this.adapter.log.warn(`ESPHome Dashboard stopped (exit code ${code}, signal ${signal})`);
+                        this.log.warn(`ESPHome Dashboard stopped (exit code ${code}, signal ${signal})`);
                         this.onDashboardStopped();
                     });
 
@@ -564,24 +640,28 @@ class Dashboard {
                         this.onDashboardStopped();
                         const reason = error instanceof Error && error.message ? error.message : String(error);
                         if (code === 'ENOENT') {
-                            this.adapter.log.error(
+                            this.log.error(
                                 `ESPHome Dashboard could not be started, "${command}" is missing in the Python environment. Reset the Python environment in the adapter configuration and restart the adapter to install it again: ${reason}`,
                             );
                         } else {
-                            this.adapter.log.error(`ESPHome Dashboard could not be started: ${reason}`);
+                            this.log.error(`ESPHome Dashboard could not be started: ${reason}`);
                         }
                     });
 
                     // info.connection (green instance) only lists devices once the dashboard answers
                     this.scheduleReadyCheck(port);
                 } catch (error) {
-                    this.adapter.errorHandler(`[espHomeDashboard-Process]`, error);
+                    this.errorHandler(`[espHomeDashboard-Process]`, error);
+                    await this.setStatus('failed');
                 }
             } else {
-                this.adapter.log.info(`Native Integration of ESPHome Dashboard disabled `);
+                this.log.info(`Native Integration of ESPHome Dashboard disabled `);
             }
         } catch (error) {
-            this.adapter.errorHandler(`[espHomeDashboard-Function]`, error);
+            this.errorHandler(`[espHomeDashboard-Function]`, error);
+            if (this.adapter.config.ESPHomeDashboardEnabled) {
+                await this.setStatus('failed');
+            }
         }
     }
 
@@ -616,18 +696,20 @@ class Dashboard {
         try {
             const plugin = this.adapter.getPluginInstance('docker') as DockerPlugin | null;
             if (!plugin) {
-                this.adapter.log.error(
+                this.log.error(
                     `Docker Integration of the ESPHome Dashboard is enabled, but the docker plugin of ioBroker is not loaded. Disable "Use Docker Integration" to run the dashboard without Docker.`,
                 );
+                await this.setStatus('failed');
                 return;
             }
             const container = plugin.configurations.find(config =>
                 config.mounts?.some(mount => mount.target === dockerConfigDir),
             );
             if (!container) {
-                this.adapter.log.error(
+                this.log.error(
                     `Docker Integration of the ESPHome Dashboard is enabled, but docker-compose.yaml of the adapter declares no ESPHome Dashboard container for the docker plugin. Restart the instance, reinstall the adapter if this persists.`,
                 );
+                await this.setStatus('failed');
                 return;
             }
 
@@ -649,8 +731,8 @@ class Dashboard {
                 }
             }
 
-            this.adapter.log.info(
-                `Docker Integration (beta) of ESPHome Dashboard enabled, starting container. Image: ${container.image}, configuration directory: ${configDir}`,
+            this.log.info(
+                `Docker Integration (beta) of ESPHome Dashboard enabled, starting container. Image: ${container.image}, configuration directory: ${configDir}. Pulling the image takes several minutes on the first start or after a version change.`,
             );
             // Recorded before the container can exist: when the process ends while it is being created,
             // removeLeftoverContainer() still knows it
@@ -679,18 +761,19 @@ class Dashboard {
 
             const state = name ? (await manager?.containerList(true))?.find(info => info.names === name) : undefined;
             if (!name || !state) {
-                this.adapter.log.error(
-                    `ESPHome Dashboard container ${name ?? ''} was not created: Docker is not installed or not running, or the image ${container.image} could not be pulled, see the warnings of the docker plugin above. Disable "Use Docker Integration" to run the dashboard without Docker.`,
+                this.log.error(
+                    `ESPHome Dashboard container ${name ?? ''} was not created: Docker is not installed or not running, or the image ${container.image} could not be pulled, see the warnings of the docker plugin in the log. Disable "Use Docker Integration" to run the dashboard without Docker.`,
                 );
+                await this.setStatus('failed');
                 return;
             }
             // Removed by the next start of the instance without Docker Integration, also when the instance
             // ended without stopping it. Normally the name recorded above already.
             await this.adapter.stateSetCreate(dockerContainerState, 'dockerContainer', name);
             if (state.status === 'running' || state.status === 'restarting') {
-                this.adapter.log.info(`ESPHome Dashboard container ${name} is running`);
+                this.log.info(`ESPHome Dashboard container ${name} is running, waiting for the dashboard to answer`);
             } else {
-                this.adapter.log.error(
+                this.log.error(
                     `ESPHome Dashboard container ${name} is not running (${state.status}), see the warnings of the docker plugin above. The docker plugin tries to start it again every minute.`,
                 );
             }
@@ -701,7 +784,8 @@ class Dashboard {
             this.dockerContainer = { manager, name };
             this.scheduleReadyCheck(String(this.adapter.config.ESPHomeDashboardPort));
         } catch (error) {
-            this.adapter.errorHandler(`[espHomeDashboard-Docker]`, error);
+            this.errorHandler(`[espHomeDashboard-Docker]`, error);
+            await this.setStatus('failed');
         }
     }
 
@@ -712,9 +796,9 @@ class Dashboard {
         const username = (this.adapter.config.ESPHomeDashboardUsername ?? '').trim();
         const password = this.adapter.config.ESPHomeDashboardPassword ?? '';
         if (username && password) {
-            this.adapter.log.info(`ESPHome Dashboard is protected by a login, username: ${username}`);
+            this.log.info(`ESPHome Dashboard is protected by a login, username: ${username}`);
         } else if (username || password) {
-            this.adapter.log.warn(
+            this.log.warn(
                 `ESPHome Dashboard is NOT protected: only the ${username ? 'username' : 'password'} of the login is set in the advanced dashboard settings, both are needed`,
             );
         }
@@ -736,12 +820,12 @@ class Dashboard {
             try {
                 const holders = await registry.checkUsedResource('tcpPort', { port });
                 if (holders.length) {
-                    this.adapter.log.warn(
+                    this.log.warn(
                         `Port ${port} of the ESPHome Dashboard is already used by ${holders.map(holder => holder.instance).join(', ')}. The dashboard will probably not start, select another port in the dashboard settings.`,
                     );
                 }
             } catch (error) {
-                this.adapter.log.debug(`Cannot check whether port ${port} is free: ${String(error)}`);
+                this.log.debug(`Cannot check whether port ${port} is free: ${String(error)}`);
             }
         }
         try {
@@ -749,9 +833,7 @@ class Dashboard {
         } catch (error) {
             // A registration still waiting for the host when the instance unloads is rejected, nothing to report
             if (!this.stopping) {
-                this.adapter.log.warn(
-                    `Cannot register port ${port} of the ESPHome Dashboard as used: ${String(error)}`,
-                );
+                this.log.warn(`Cannot register port ${port} of the ESPHome Dashboard as used: ${String(error)}`);
             }
         }
     }
@@ -796,7 +878,7 @@ class Dashboard {
                 try {
                     containers = await manager.containerList(true);
                 } catch (error) {
-                    this.adapter.log.debug(
+                    this.log.debug(
                         `Docker cannot be reached, container ${name} is checked again on the next start: ${String(error)}`,
                     );
                     return;
@@ -805,14 +887,14 @@ class Dashboard {
                 if (!containers.length) {
                     const info = await manager.getDockerDaemonInfo();
                     if (info.driver === 'cli' && !info.daemonRunning) {
-                        this.adapter.log.debug(
+                        this.log.debug(
                             `Docker does not seem to run, container ${name} is checked again on the next start`,
                         );
                         return;
                     }
                 }
                 if (container) {
-                    this.adapter.log.info(
+                    this.log.info(
                         `Removing ESPHome Dashboard container ${name}, "Use Docker Integration" or the dashboard is disabled`,
                     );
                     // The Docker API reports a failure by throwing, the docker CLI in stderr
@@ -824,7 +906,7 @@ class Dashboard {
                     }
                     if (failure) {
                         // Kept in the state, tried again on the next start
-                        this.adapter.log.warn(`ESPHome Dashboard container ${name} could not be removed: ${failure}`);
+                        this.log.warn(`ESPHome Dashboard container ${name} could not be removed: ${failure}`);
                         return;
                     }
                 }
@@ -833,7 +915,7 @@ class Dashboard {
                 await manager.destroy().catch(() => undefined);
             }
         } catch (error) {
-            this.adapter.errorHandler(`[espHomeDashboard-DockerCleanup]`, error);
+            this.errorHandler(`[espHomeDashboard-DockerCleanup]`, error);
         }
     }
 
@@ -880,22 +962,16 @@ class Dashboard {
                         'newestPillowVersion',
                         versions[0],
                     );
-                    this.adapter.log.debug(
-                        `Fetched ${versions.length} Pillow versions from PyPI, newest: ${versions[0]}`,
-                    );
+                    this.log.debug(`Fetched ${versions.length} Pillow versions from PyPI, newest: ${versions[0]}`);
                     return versions;
                 }
-                this.adapter.log.warn('No stable Pillow versions found on PyPI, using cached or fallback versions');
+                this.log.warn('No stable Pillow versions found on PyPI, using cached or fallback versions');
             } else {
-                this.adapter.log.warn(
-                    `Unable to fetch Pillow versions from PyPI: ${response.status}, using cached values`,
-                );
+                this.log.warn(`Unable to fetch Pillow versions from PyPI: ${response.status}, using cached values`);
             }
         } catch (error) {
             const reason = error instanceof Error && error.message ? error.message : String(error);
-            this.adapter.log.warn(
-                `Error fetching Pillow versions from PyPI: ${reason}, using cached or fallback versions`,
-            );
+            this.log.warn(`Error fetching Pillow versions from PyPI: ${reason}, using cached or fallback versions`);
         }
 
         // Try to load from cache
@@ -903,7 +979,7 @@ class Dashboard {
             const cachedPillowVersions = await this.adapter.getStateAsync(`_ESPHomeDashboard.pillowVersionCache`);
             if (cachedPillowVersions && cachedPillowVersions.val) {
                 const versions = JSON.parse(String(cachedPillowVersions.val));
-                this.adapter.log.info(`Loaded ${versions.length} Pillow versions from cache`);
+                this.log.info(`Loaded ${versions.length} Pillow versions from cache`);
                 return versions;
             }
         } catch {
@@ -911,7 +987,7 @@ class Dashboard {
         }
 
         // Use fallback versions
-        this.adapter.log.info(`Using ${fallbackVersions.length} fallback Pillow versions`);
+        this.log.info(`Using ${fallbackVersions.length} fallback Pillow versions`);
         return fallbackVersions;
     }
 
@@ -938,7 +1014,7 @@ class Dashboard {
             return versions;
         } catch (error) {
             const reason = error instanceof Error && error.message ? error.message : String(error);
-            this.adapter.log.debug(`Unable to fetch ESPHome Device Builder versions from PyPI: ${reason}`);
+            this.log.debug(`Unable to fetch ESPHome Device Builder versions from PyPI: ${reason}`);
         }
 
         try {
@@ -967,7 +1043,7 @@ class Dashboard {
             return Object.fromEntries(packages.map(({ name, version }) => [name.toLowerCase(), version]));
         } catch (error) {
             const reason = error instanceof Error && error.message ? error.message : String(error);
-            this.adapter.log.debug(`Unable to list the installed Python packages: ${reason}`);
+            this.log.debug(`Unable to list the installed Python packages: ${reason}`);
             return {};
         }
     }
@@ -979,15 +1055,15 @@ class Dashboard {
      */
     async resetPythonEnvironment(): Promise<void> {
         try {
-            this.adapter.log.info('Removing the Python environment of the ESPHome Dashboard');
+            this.log.info('Removing the Python environment of the ESPHome Dashboard');
             const { removeVenv } = await import('autopy');
             await removeVenv(VENV_NAME);
-            this.adapter.log.info(
+            this.log.info(
                 'Python environment of the ESPHome Dashboard removed, restart the adapter to install it again',
             );
         } catch (error) {
             const reason = error instanceof Error && error.message ? error.message : String(error);
-            this.adapter.log.error(`Error removing the Python environment of the ESPHome Dashboard: ${reason}`);
+            this.log.error(`Error removing the Python environment of the ESPHome Dashboard: ${reason}`);
             throw error;
         }
     }
@@ -1001,6 +1077,10 @@ class Dashboard {
         this.stopping = true;
         this.adapter.clearTimeout(this.readyCheckTimer);
         this.readyCheckTimer = undefined;
+        if (this.status && this.status !== 'disabled') {
+            // Not awaited, the unload must not wait for the database
+            void this.setStatus('stopped');
+        }
         try {
             if (this.dashboardProcess) {
                 this.dashboardProcess.kill('SIGTERM', {
@@ -1008,7 +1088,7 @@ class Dashboard {
                 });
             }
         } catch (e) {
-            this.adapter.log.error(`[onUnload - dashboardProcess] ${JSON.stringify(e)}`);
+            this.log.error(`[onUnload - dashboardProcess] ${JSON.stringify(e)}`);
         }
         if (this.dockerStart) {
             // The timers of the adapter cannot be used any more while it unloads
@@ -1038,32 +1118,38 @@ class Dashboard {
      * @param port - port the dashboard listens on
      */
     private scheduleReadyCheck(port: string): void {
-        this.readyCheckTimer = this.adapter.setTimeout(async () => {
-            this.readyCheckTimer = undefined;
-            if (!this.isStarted()) {
-                return;
-            }
-            // Host network: when the container cannot bind the port because something else holds it, that
-            // answers instead, so the container itself has to run as well
-            const reachable = (await this.isReachable(port)) && (await this.isContainerRunning());
-            if (!this.isStarted()) {
-                return;
-            }
-            // The process reports its exit, the container does not: it is checked as long as it runs
-            if (!reachable || this.containerStarted) {
-                this.scheduleReadyCheck(port);
-            }
-            if (reachable === this.ready) {
-                return;
-            }
-            this.ready = reachable;
-            if (reachable) {
-                this.adapter.log.info(`ESPHome Dashboard is reachable on port ${port}`);
-            } else {
-                this.adapter.log.warn(`ESPHome Dashboard is not reachable on port ${port} any more`);
-            }
-            await this.adapter.updateConnectionState();
-        }, readyCheckIntervalMs);
+        this.readyCheckTimer = this.adapter.setTimeout(
+            async () => {
+                this.readyCheckTimer = undefined;
+                if (!this.isStarted()) {
+                    return;
+                }
+                // Host network: when the container cannot bind the port because something else holds it, that
+                // answers instead, so the container itself has to run as well
+                const reachable = (await this.isReachable(port)) && (await this.isContainerRunning());
+                if (!this.isStarted()) {
+                    return;
+                }
+                const changed = reachable !== this.ready;
+                this.ready = reachable;
+                // The process reports its exit, the container does not: it is checked as long as it runs
+                if (!reachable || this.containerStarted) {
+                    this.scheduleReadyCheck(port);
+                }
+                if (!changed) {
+                    return;
+                }
+                if (reachable) {
+                    this.log.info(`ESPHome Dashboard is reachable on port ${port}`);
+                    await this.setStatus('running');
+                } else {
+                    this.log.warn(`ESPHome Dashboard is not reachable on port ${port} any more`);
+                    await this.setStatus('starting');
+                }
+                await this.adapter.updateConnectionState();
+            },
+            this.ready ? readyCheckIntervalMs : startingCheckIntervalMs,
+        );
     }
 
     /**
@@ -1124,7 +1210,84 @@ class Dashboard {
         if (this.stopping) {
             return;
         }
+        void this.setStatus('failed');
         void this.adapter.updateConnectionState();
+    }
+
+    /**
+     * Status of the dashboard shown in the dashboard tab of admin
+     *
+     * @returns undefined before start()
+     */
+    getStatus(): DashboardStatus | undefined {
+        return this.status;
+    }
+
+    /**
+     * Data of the dashboard tab of admin (command of admin/jsonTab.json5)
+     *
+     * @returns URL of the dashboard shown in the iframe of the tab
+     */
+    getTabData(): { data: { dashboardUrl: string } } {
+        return { data: { dashboardUrl: this.adapter.config.ESPHomeDashboardUrl || '' } };
+    }
+
+    /**
+     * Update the status shown in the dashboard tab of admin
+     *
+     * @param status - new status
+     */
+    private async setStatus(status: DashboardStatus): Promise<void> {
+        if (status === this.status) {
+            return;
+        }
+        this.status = status;
+        await this.adapter.stateSetCreate(statusState, 'dashboardStatus', status);
+        if (status !== 'running') {
+            // Output written while the dashboard answered was not stored, see appendStartLog()
+            this.writeStartLog();
+        }
+    }
+
+    /**
+     * Add output of the dashboard start to the log shown in the dashboard tab of admin until the dashboard
+     * answers. Only the last lines are kept.
+     *
+     * @param text - one or more lines
+     */
+    private appendStartLog(text: string): void {
+        const time = new Date().toTimeString().slice(0, 8);
+        for (const line of text.split(/\r?\n/)) {
+            if (line.trim()) {
+                this.startLog.push(`${time} ${line.trimEnd()}`);
+            }
+        }
+        if (this.startLog.length > startLogLines) {
+            this.startLog.splice(0, this.startLog.length - startLogLines);
+        }
+        // Not shown while the dashboard answers, the dashboard logs every request
+        if (this.status !== 'running') {
+            this.writeStartLog();
+        }
+    }
+
+    /**
+     * Write the start log to its state. A change made while it is written is written right afterwards, so
+     * a burst of output only causes a few writes.
+     */
+    private writeStartLog(): void {
+        this.startLogChanged = true;
+        if (this.startLogWrite || this.stopping) {
+            return;
+        }
+        this.startLogWrite = (async () => {
+            while (this.startLogChanged && !this.stopping) {
+                this.startLogChanged = false;
+                await this.adapter.stateSetCreate(startLogState, 'dashboardStartLog', this.startLog.join('\n'));
+            }
+        })().finally(() => {
+            this.startLogWrite = undefined;
+        });
     }
 
     /**
@@ -1168,7 +1331,7 @@ class Dashboard {
             }
         } else {
             // Fallback versions if cache is empty
-            this.adapter.log.info('No cached Pillow versions available, using fallback versions');
+            this.log.info('No cached Pillow versions available, using fallback versions');
             const fallbackVersions = ['12.2.0', '12.1.1', '12.0.0', '11.3.0', '11.2.0', '11.1.0'];
             for (const version of fallbackVersions) {
                 dropDownEntry.push({
