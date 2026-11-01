@@ -163,16 +163,19 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
   `src/main.ts`). With the dashboard enabled it stays empty until `Dashboard.scheduleReadyCheck()` gets an HTTP
   2xx/3xx from `http://localhost:<port>/` (`Dashboard.isReady()`), and again when the dashboard process exits or
   cannot be started.
-- With `config.ESPHomeDashboardDocker` ("Use Docker Integration") it runs as the official `ghcr.io/esphome/esphome` container
+- With `config.ESPHomeDashboardDocker` ("Use Docker Integration", beta: `expertMode: true` in `jsonConfig.json5`) it runs as the official `ghcr.io/esphome/esphome` container
   instead: `docker-compose.yaml` (shipped in `files` of package.json) is managed by `@iobroker/plugin-docker`
   (`common.plugins.docker` in `io-package.json`). The service has `iobWaitForReady`, so the plugin starts nothing by itself;
   `startDockerContainer()` in `src/lib/dashboard.ts` sets the image tag and the `/config` bind mount on `plugin.configurations`
   and calls `instanceIsReady()`, only when the dashboard is enabled. That also resolves when the pull or start failed (the plugin
   only warns), so the container state is checked with `containerList()` afterwards; the ready check keeps polling the container.
   The image entrypoint runs ESPHome Device Builder for `dashboard` since 2026.6.0. Toolchains go to the named volume `/cache`.
-  The created container name is kept in `_ESPHomeDashboard.dockerContainer`; a start without Docker mode removes that container
+  The container name (`ownContainerName()`, the name the plugin gives it) is kept in `_ESPHomeDashboard.dockerContainer` before
+  `instanceIsReady()`; a start without Docker mode removes that container
   (`removeLeftoverContainer()`, own `DockerManager`, as the plugin manages nothing then). `stop()` waits up to 4 s for a pending
   container start during unload (adapter timers do not work while unloading). Unit tests: `src/lib/dashboard.test.ts`.
+- The dashboard port is registered with js-controller >= 8 (`registerDashboardPort()`, `common.declareUsedResources: true`),
+  duck-typed like ioBroker.influxdb, as the adapter types of js-controller 7 do not have `registerUsedResource()`.
 - "Clear Autopy Cache" button triggers `clearAutopyCache()` → `fs.rmSync(~/.cache/autopy, recursive)`.
 - Config migration: `migrateConfig()` converts legacy `ESPHomeDashboardIP` + port → `ESPHomeDashboardUrl`.
 

@@ -31,6 +31,30 @@ const dockerContainerState = '_ESPHomeDashboard.dockerContainer';
  */
 const dockerUnloadWaitMs = 4000;
 
+/**
+ * Name the docker plugin gives a container of this instance (DockerManagerOfOwnContainers prefixes the
+ * name of the service with iob_<adapter>_<instance>), known before the plugin renamed it
+ *
+ * @param namespace - namespace of the instance, e.g. esphome.0
+ * @param name - container name of docker-compose.yaml (service name)
+ * @returns the name of the container in Docker
+ */
+export function ownContainerName(namespace: string, name: string | undefined): string {
+    const prefix = `iob_${namespace.replace(/[-.]/g, '_')}`;
+    if (!name || name === prefix || name.startsWith(`${prefix}_`)) {
+        return name || prefix;
+    }
+    return `${prefix}_${name}`;
+}
+
+/** TCP port in the used resources registry of js-controller */
+type TcpPortResource = { port: number; bind?: string };
+/** Used resources registry of js-controller >= 8, not part of the adapter types of js-controller 7 */
+interface ResourceRegistry {
+    registerUsedResource(type: 'tcpPort', data: TcpPortResource): Promise<void>;
+    checkUsedResource?(type: 'tcpPort', data?: Partial<TcpPortResource>): Promise<{ instance: string }[]>;
+}
+
 /** One entry of a version dropDown in the adapter configuration */
 type VersionDropDownEntry = string | { label: string; value: string };
 
@@ -337,6 +361,11 @@ class Dashboard {
             this.deviceBuilderVersions.length = 0;
             this.deviceBuilderVersions.push(...(await this.fetchAndCacheDeviceBuilderVersions()));
 
+            if (this.adapter.config.ESPHomeDashboardEnabled) {
+                // Not awaited: only a hint, an older host answers only after a timeout
+                void this.registerDashboardPort();
+            }
+
             // Start Dashboard Process
             if (this.adapter.config.ESPHomeDashboardEnabled && this.adapter.config.ESPHomeDashboardDocker) {
                 this.dockerStart = this.startDockerContainer(useDashBoardVersion).finally(() => {
@@ -549,7 +578,14 @@ class Dashboard {
             }
 
             this.adapter.log.info(
-                `Docker Integration of ESPHome Dashboard enabled, starting container. Image: ${container.image}, configuration directory: ${configDir}`,
+                `Docker Integration (beta) of ESPHome Dashboard enabled, starting container. Image: ${container.image}, configuration directory: ${configDir}`,
+            );
+            // Recorded before the container can exist: when the process ends while it is being created,
+            // removeLeftoverContainer() still knows it
+            await this.adapter.stateSetCreate(
+                dockerContainerState,
+                'dockerContainer',
+                ownContainerName(this.adapter.namespace, container.name),
             );
             const ready = plugin.instanceIsReady();
             // Created by instanceIsReady() right away. Kept here, as the plugin drops it on unload.
@@ -562,7 +598,7 @@ class Dashboard {
             if (this.stopping) {
                 // The instance unloaded while the image was pulled: the plugin stopped the container before
                 // it existed, so it is stopped here. The unload waits a moment for this (stop()); if the
-                // process ended before, removeLeftoverContainer() or the next start takes care of it.
+                // process ended before, the next start reuses it or removeLeftoverContainer() removes it.
                 if (manager && name) {
                     await manager.containerStop(name).catch(() => undefined);
                 }
@@ -577,7 +613,7 @@ class Dashboard {
                 return;
             }
             // Removed by the next start of the instance without Docker Integration, also when the instance
-            // ended without stopping it
+            // ended without stopping it. Normally the name recorded above already.
             await this.adapter.stateSetCreate(dockerContainerState, 'dockerContainer', name);
             if (state.status === 'running' || state.status === 'restarting') {
                 this.adapter.log.info(`ESPHome Dashboard container ${name} is running`);
@@ -593,6 +629,37 @@ class Dashboard {
             this.scheduleReadyCheck(String(this.adapter.config.ESPHomeDashboardPort));
         } catch (error) {
             this.adapter.errorHandler(`[espHomeDashboard-Docker]`, error);
+        }
+    }
+
+    /**
+     * Report the port of the dashboard (process or container, both on the host network and all interfaces)
+     * to js-controller >= 8 as used by this instance (common.declareUsedResources), so it shows up as
+     * occupied. Before, warn when another instance holds it: the dashboard would not start then.
+     */
+    async registerDashboardPort(): Promise<void> {
+        const registry = this.adapter as unknown as Partial<ResourceRegistry>;
+        if (typeof registry.registerUsedResource !== 'function') {
+            // js-controller < 8
+            return;
+        }
+        const port = Number(this.adapter.config.ESPHomeDashboardPort) || 6052;
+        if (typeof registry.checkUsedResource === 'function') {
+            try {
+                const holders = await registry.checkUsedResource('tcpPort', { port });
+                if (holders.length) {
+                    this.adapter.log.warn(
+                        `Port ${port} of the ESPHome Dashboard is already used by ${holders.map(holder => holder.instance).join(', ')}. The dashboard will probably not start, select another port in the dashboard settings.`,
+                    );
+                }
+            } catch (error) {
+                this.adapter.log.debug(`Cannot check whether port ${port} is free: ${String(error)}`);
+            }
+        }
+        try {
+            await registry.registerUsedResource('tcpPort', { port });
+        } catch (error) {
+            this.adapter.log.warn(`Cannot register port ${port} of the ESPHome Dashboard as used: ${String(error)}`);
         }
     }
 
@@ -628,21 +695,30 @@ class Dashboard {
                 return;
             }
             const manager = this.createDockerManager();
-            await manager.isReady();
-            const container = (await manager.containerList(true)).find(info => info.names === name);
-            if (container) {
-                this.adapter.log.info(
-                    `Removing ESPHome Dashboard container ${name}, "Use Docker Integration" or the dashboard is disabled`,
-                );
-                const result = await manager.containerRemove(name);
-                if (result.stderr) {
-                    // Kept in the state, tried again on the next start
-                    this.adapter.log.warn(`ESPHome Dashboard container ${name} could not be removed: ${result.stderr}`);
-                    return;
+            try {
+                await manager.isReady();
+                const container = (await manager.containerList(true)).find(info => info.names === name);
+                if (container) {
+                    this.adapter.log.info(
+                        `Removing ESPHome Dashboard container ${name}, "Use Docker Integration" or the dashboard is disabled`,
+                    );
+                    // The Docker API reports a failure by throwing, the docker CLI in stderr
+                    let failure: string;
+                    try {
+                        failure = (await manager.containerRemove(name)).stderr;
+                    } catch (error) {
+                        failure = error instanceof Error ? error.message : String(error);
+                    }
+                    if (failure) {
+                        // Kept in the state, tried again on the next start
+                        this.adapter.log.warn(`ESPHome Dashboard container ${name} could not be removed: ${failure}`);
+                        return;
+                    }
                 }
+                await this.adapter.stateSetCreate(dockerContainerState, 'dockerContainer', '');
+            } finally {
+                await manager.destroy().catch(() => undefined);
             }
-            await this.adapter.stateSetCreate(dockerContainerState, 'dockerContainer', '');
-            await manager.destroy();
         } catch (error) {
             this.adapter.errorHandler(`[espHomeDashboard-DockerCleanup]`, error);
         }

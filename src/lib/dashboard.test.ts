@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { mkdtemp, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
-import Dashboard, { type DashboardAdapter } from './dashboard';
+import Dashboard, { type DashboardAdapter, ownContainerName } from './dashboard';
 import { native } from '../../io-package.json';
 
 /** Root directory of the adapter, docker-compose.yaml lives there */
@@ -100,6 +100,7 @@ function createAdapter(config: Record<string, unknown>, plugin: DockerPlugin | n
     const noop = (): void => {};
     return {
         instance: 0,
+        namespace: 'esphome.0',
         config,
         log: {
             info: (msg: string) => logs.info.push(msg),
@@ -227,7 +228,28 @@ describe('ESPHome Dashboard in Docker', () => {
         expect(logs.error[0]).to.include('was not created');
         expect(logs.error[0]).to.include('Docker is not installed or not running');
         expect(logs.timers).to.have.length(0);
-        expect(logs.states).to.deep.equal({});
+        // Recorded before the start, a later start without Docker Integration finds nothing to remove then
+        expect(logs.states).to.deep.equal({ '_ESPHomeDashboard.dockerContainer': 'iob_esphome_0_esphome' });
+    });
+
+    it('records the container before it can exist, so a container created while the process ends is removed later', async () => {
+        const config = { ...native, ESPHomeDashboardEnabled: true, ESPHomeDashboardDocker: true };
+        const plugin = await createDockerPlugin(config);
+        let recorded: unknown;
+        plugin.onReady = () => (recorded = logs.states['_ESPHomeDashboard.dockerContainer']);
+
+        await createDashboard(config, plugin).startDockerContainer('2026.6.5');
+
+        // the name the docker plugin gives the service "esphome" of instance 0
+        expect(recorded).to.equal('iob_esphome_0_esphome');
+    });
+
+    it('knows the container name the docker plugin uses', () => {
+        expect(ownContainerName('esphome.0', 'esphome')).to.equal('iob_esphome_0_esphome');
+        expect(ownContainerName('esphome.12', 'esphome')).to.equal('iob_esphome_12_esphome');
+        // already renamed by the docker plugin
+        expect(ownContainerName('esphome.0', 'iob_esphome_0_esphome')).to.equal('iob_esphome_0_esphome');
+        expect(ownContainerName('esphome.0', undefined)).to.equal('iob_esphome_0');
     });
 
     it('reports an error when the container does not run, but keeps checking it', async () => {
@@ -334,6 +356,9 @@ describe('ESPHome Dashboard in Docker', () => {
             containers: { names: string; status: string }[];
             removed: string[];
             removeError: string;
+            /** containerRemove() throws, like with the Docker API */
+            removeThrows?: boolean;
+            destroyed?: number;
         }
 
         /**
@@ -352,9 +377,15 @@ describe('ESPHome Dashboard in Docker', () => {
                     containerList: () => Promise.resolve(manager.containers),
                     containerRemove: (name: string) => {
                         manager.removed.push(name);
+                        if (manager.removeThrows) {
+                            return Promise.reject(new Error(manager.removeError));
+                        }
                         return Promise.resolve({ stdout: '', stderr: manager.removeError });
                     },
-                    destroy: () => Promise.resolve(),
+                    destroy: () => {
+                        manager.destroyed = (manager.destroyed ?? 0) + 1;
+                        return Promise.resolve();
+                    },
                 } as unknown as ReturnType<Dashboard['createDockerManager']>;
             };
             return dashboard;
@@ -401,7 +432,7 @@ describe('ESPHome Dashboard in Docker', () => {
 
         it('tries again on the next start when the container could not be removed', async () => {
             const created = { count: 0 };
-            const manager = {
+            const manager: TestManager = {
                 containers: [{ names: 'iob_esphome_0_esphome', status: 'running' }],
                 removed: [],
                 removeError: 'permission denied',
@@ -412,6 +443,68 @@ describe('ESPHome Dashboard in Docker', () => {
 
             expect(logs.warn).to.have.length(1);
             expect(logs.states['_ESPHomeDashboard.dockerContainer']).to.equal('iob_esphome_0_esphome');
+            expect(manager.destroyed).to.equal(1);
+        });
+
+        it('only warns when the Docker API refuses to remove the container', async () => {
+            const created = { count: 0 };
+            const manager: TestManager = {
+                containers: [{ names: 'iob_esphome_0_esphome', status: 'running' }],
+                removed: [],
+                removeError: 'permission denied',
+                removeThrows: true,
+            };
+            logs.states['_ESPHomeDashboard.dockerContainer'] = 'iob_esphome_0_esphome';
+
+            await createCleanupDashboard(manager, created).removeLeftoverContainer();
+
+            // not reported as error (Sentry), tried again on the next start
+            expect(logs.error).to.deep.equal([]);
+            expect(logs.warn).to.have.length(1);
+            expect(logs.warn[0]).to.include('permission denied');
+            expect(logs.states['_ESPHomeDashboard.dockerContainer']).to.equal('iob_esphome_0_esphome');
+            expect(manager.destroyed).to.equal(1);
+        });
+    });
+
+    describe('port of the dashboard', () => {
+        it('does nothing with js-controller < 8', async () => {
+            await createDashboard({ ...native, ESPHomeDashboardEnabled: true }, null).registerDashboardPort();
+            expect(logs.warn).to.deep.equal([]);
+        });
+
+        it('registers the port and warns when another instance holds it (js-controller >= 8)', async () => {
+            const dashboard = createDashboard(
+                { ...native, ESPHomeDashboardEnabled: true, ESPHomeDashboardPort: 6060 },
+                null,
+            );
+            const registered: unknown[] = [];
+            const adapter = (dashboard as unknown as { adapter: Record<string, unknown> }).adapter;
+            adapter.checkUsedResource = (_type: string, data: unknown) => {
+                expect(data).to.deep.equal({ port: 6060 });
+                return Promise.resolve([{ instance: 'system.adapter.other.0' }]);
+            };
+            adapter.registerUsedResource = (type: string, data: unknown) => {
+                registered.push({ type, data });
+                return Promise.resolve();
+            };
+
+            await dashboard.registerDashboardPort();
+
+            expect(registered).to.deep.equal([{ type: 'tcpPort', data: { port: 6060 } }]);
+            expect(logs.warn).to.have.length(1);
+            expect(logs.warn[0]).to.include('system.adapter.other.0');
+        });
+
+        it('only warns when the host refuses the registration', async () => {
+            const dashboard = createDashboard({ ...native, ESPHomeDashboardEnabled: true }, null);
+            const adapter = (dashboard as unknown as { adapter: Record<string, unknown> }).adapter;
+            adapter.registerUsedResource = () => Promise.reject(new Error('refused'));
+
+            await dashboard.registerDashboardPort();
+
+            expect(logs.error).to.deep.equal([]);
+            expect(logs.warn).to.have.length(1);
         });
     });
 });

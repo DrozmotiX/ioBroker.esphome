@@ -377,9 +377,11 @@
 					"xl": 4,
 					"label": "chkEnableESPHome"
 				},
-				// Run the dashboard as container of the official ESPHome image (docker-compose.yaml, @iobroker/plugin-docker) instead of a Python environment
+				// Run the dashboard as container of the official ESPHome image (docker-compose.yaml, @iobroker/plugin-docker) instead of a Python environment.
+				// Beta: only shown in expert mode
 				"ESPHomeDashboardDocker": {
 					"type": "checkDocker",
+					"expertMode": true,
 					"xs": 12,
 					"sm": 8,
 					"md": 8,

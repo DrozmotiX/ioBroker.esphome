@@ -218,9 +218,10 @@ This adapter can optionally integrate the ESPHome Dashboard into ioBroker's admi
 - Dashboard runs on port 6052 by default
 - Set Dashboard IP to `127.0.0.1:6052` for admin integration
 
-**Option 1b: Built-in Dashboard in Docker**
+**Option 1b: Built-in Dashboard in Docker (beta)**
 
-- Enable the dashboard and "Use Docker Integration" in the "ESPHome Dashboard" tab of the adapter settings
+- Beta: the option "Use Docker Integration (Beta)" is only shown in the expert mode of admin. Enable the expert mode, then the dashboard
+  and "Use Docker Integration" in the "ESPHome Dashboard" tab of the adapter settings. To switch it off again, the expert mode is needed as well
 - Instead of a Python environment, the dashboard runs in the official ESPHome container (`ghcr.io/esphome/esphome`),
   started and stopped together with the instance by the [docker plugin of ioBroker](https://github.com/ioBroker/plugin-docker)
 - Requires Docker on the ioBroker host (the checkbox is only available when Docker is found), not available e.g. on Windows without Docker.
@@ -509,7 +510,8 @@ If you like my work, please consider a personal donation
 - (@SimonFischer04) **NEW**: The Pillow and ESPHome Device Builder versions can be selected in the "Advanced" section of the dashboard settings, "Auto Detect" (default) leaves them to ESPHome and pip
 - (@SimonFischer04) **FIXED**: The adapter no longer terminates when the ESPHome Dashboard cannot be started (`spawn esphome ENOENT`), an error with the reason is logged instead. Errors of the dashboard, like the reason why it stops right after the start, are logged as well
 - (@SimonFischer04) **ENHANCED**: With the ESPHome Dashboard enabled, the instance only shows green once the dashboard is reachable, `info.connection` lists no devices before that and again when the dashboard stops or cannot be installed
-- (@copilot) **NEW**: The integrated ESPHome Dashboard can run in the official ESPHome Docker container instead of a Python environment, enable "Use Docker Integration" in the ESPHome Dashboard settings. Requires Docker on the ioBroker host (#493)
+- (@copilot) **NEW**: Beta: the integrated ESPHome Dashboard can run in the official ESPHome Docker container instead of a Python environment, enable "Use Docker Integration (Beta)" in the ESPHome Dashboard settings (expert mode only). Requires Docker on the ioBroker host (#493)
+- (@SimonFischer04) **ENHANCED**: With js-controller 8, the port of the ESPHome Dashboard is registered as used by the instance, a warning is logged when another instance holds it
 - (@SimonFischer04) **FIXED**: Discovered devices show their MAC address with ":" separators again
 - (@SimonFischer04) **NEW**: Support for the ioBroker device manager (#203). ESPHome devices are listed with their online status and details, can be added, adopted after discovery, given new credentials and deleted there
 - (@SimonFischer04) **NEW**: The device manager shows the Wi-Fi signal strength (RSSI) of devices with a `wifi_signal` sensor
