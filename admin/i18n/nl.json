@@ -28,7 +28,7 @@
     "hlpConfigStates": "Maak configuratiestatussen voor elke entiteit om configuratiedetails van het apparaat te tonen",
     "hlpDeviceBuilderVersion": "Versie van ESPHome Device Builder, die het dashboard vanaf ESPHome 2026.7.0 levert. \"Auto Detect\" installeert de nieuwste versie die de gekozen ESPHome-versie ondersteunt",
     "hlpDiscoveryListeningAddress": "Ontdek alleen apparaten op deze interface",
-    "hlpESPHomeDashboardVersion": "Kies welke versie van ESPHome Dashboard gebruikt moet worden",
+    "hlpESPHomeDashboardVersion": "Kies een versie uit de lijst of voer een willekeurige ESPHome-versie in (bijv. een bèta zoals 2026.7.0b1)",
     "hlpPillowVersion": "Alleen nodig voor oude ESPHome-versies. \"Auto Detect\" installeert de Pillow-versie die ESPHome vereist, elke andere versie laat de installatie mislukken bij huidige ESPHome-versies",
     "hlpPingAttempts": "Aantal opeenvolgende mislukte pings voordat het apparaat als offline wordt beschouwd (standaard: 1)",
     "hlpPingInterval": "Hoe vaak een verbonden apparaat wordt gepingd om te controleren of het nog online is (standaard: 5)",

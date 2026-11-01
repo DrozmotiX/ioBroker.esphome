@@ -391,9 +391,11 @@
 					"label": "lblUseDockerIntegration",
 					"help": "hlpUseDockerIntegration"
 				},
+				// freeSolo: any version can be typed in, e.g. a beta or a release missing in the list
 				"ESPHomeDashboardVersion": {
 					"type": "autocompleteSendTo",
 					"newLine": true,
+					"freeSolo": true,
 					"xs": 12,
 					"sm": 6,
 					"md": 6,

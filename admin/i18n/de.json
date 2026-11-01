@@ -28,7 +28,7 @@
     "hlpConfigStates": "Konfigurationszustände für jede Entität erstellen, um Gerätekonfigurationsdetails anzuzeigen",
     "hlpDeviceBuilderVersion": "Version von ESPHome Device Builder, der das Dashboard ab ESPHome 2026.7.0 bereitstellt. \"Auto Detect\" installiert die neueste Version, die die gewählte ESPHome-Version unterstützt",
     "hlpDiscoveryListeningAddress": "Nur Geräte auf dieser Schnittstelle erkennen",
-    "hlpESPHomeDashboardVersion": "Auswählen welche Version von ESPHome Dashboard verwendet werden soll",
+    "hlpESPHomeDashboardVersion": "Version aus der Liste auswählen oder eine beliebige ESPHome-Version eingeben (z. B. eine Beta wie 2026.7.0b1)",
     "hlpPillowVersion": "Nur für alte ESPHome-Versionen nötig. \"Auto Detect\" installiert die Pillow-Version, die ESPHome benötigt, jede andere Version lässt die Installation bei aktuellen ESPHome-Versionen fehlschlagen",
     "hlpPingAttempts": "Anzahl aufeinanderfolgender fehlgeschlagener Pings, bevor das Gerät als offline gilt (Standard: 1)",
     "hlpPingInterval": "Wie oft ein verbundenes Gerät angepingt wird, um zu prüfen, ob es noch online ist (Standard: 5)",

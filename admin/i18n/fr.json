@@ -28,7 +28,7 @@
     "hlpConfigStates": "Créer des états de configuration pour chaque entité afin d'afficher les détails de configuration de l'appareil",
     "hlpDeviceBuilderVersion": "Version d'ESPHome Device Builder, qui fournit le tableau de bord à partir d'ESPHome 2026.7.0. \"Auto Detect\" installe la version la plus récente compatible avec la version d'ESPHome sélectionnée",
     "hlpDiscoveryListeningAddress": "Découvrez uniquement les appareils sur cette interface",
-    "hlpESPHomeDashboardVersion": "Choisissez quelle version d'ESPHome Dashboard doit être utilisée",
+    "hlpESPHomeDashboardVersion": "Sélectionnez une version dans la liste ou saisissez n'importe quelle version d'ESPHome (par ex. une bêta comme 2026.7.0b1)",
     "hlpPillowVersion": "Nécessaire uniquement pour les anciennes versions d'ESPHome. \"Auto Detect\" installe la version de Pillow requise par ESPHome, toute autre version fait échouer l'installation avec les versions actuelles d'ESPHome",
     "hlpPingAttempts": "Nombre de pings échoués consécutifs avant que l'appareil soit considéré hors ligne (par défaut : 1)",
     "hlpPingInterval": "Fréquence à laquelle un appareil connecté est pingé pour vérifier qu'il est toujours en ligne (par défaut : 5)",
