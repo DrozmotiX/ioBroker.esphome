@@ -223,14 +223,22 @@ This adapter can optionally integrate the ESPHome Dashboard into ioBroker's admi
 - Enable the dashboard and "Use Docker Integration" in the "ESPHome Dashboard" tab of the adapter settings
 - Instead of a Python environment, the dashboard runs in the official ESPHome container (`ghcr.io/esphome/esphome`),
   started and stopped together with the instance by the [docker plugin of ioBroker](https://github.com/ioBroker/plugin-docker)
-- Requires Docker on the ioBroker host (the checkbox is only available when Docker is found), not available e.g. on Windows without Docker
-- The image tag is the selected ESPHome Dashboard version ("Always last available" uses the `stable` image, pulled again on every start), the Pillow and ESPHome Device Builder versions are not used, the image brings its own
+- Requires Docker on the ioBroker host (the checkbox is only available when Docker is found), not available e.g. on Windows without Docker.
+  In a multihost installation the checkbox checks Docker on the host of the admin instance showing the settings, which is not
+  necessarily the host of the ESPHome instance: the log of the instance reports when Docker is missing there
+- The image tag is the selected ESPHome Dashboard version ("Always last available" uses the newest ESPHome release, which can be a beta).
+  Only when no version is known at all (no release list from GitHub, nothing cached), the `stable` image is used and pulled again on every start.
+  The Pillow and ESPHome Device Builder versions are not used, the image brings its own
 - The container uses the host network (needed for the online status of the devices) and the port configured in the advanced settings.
   Docker Desktop (Windows, macOS) does not support the host network by default, use a Linux host or the dashboard without Docker there
 - While the instance runs, a stopped container is started again within a minute. Docker itself does not restart it, e.g. after a reboot
-  it only runs once the instance starts it
+  it only runs once the instance starts it. When the instance starts without "Use Docker Integration" (or with the dashboard disabled),
+  a container it left behind is removed
 - The YAML files stay in `iobroker-data/esphome.<instance>`, the same directory as without Docker. When ioBroker itself runs in
   a container, this path has to exist on the Docker host as well
+- PlatformIO, ESP-IDF and the other toolchains needed to compile (several GB) are kept in the Docker volume
+  `iob_esphome_<instance>_esphome_cache`, not in `iobroker-data`. It stays when Docker Integration is disabled, remove it with
+  `docker volume rm iob_esphome_<instance>_esphome_cache` if you do not need it any more
 - Files created by the container belong to `root`, run `iob fix` if the YAML file management cannot change them
 
 **Option 2: External Dashboard**

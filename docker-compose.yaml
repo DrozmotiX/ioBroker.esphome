@@ -22,7 +22,14 @@ services:
         volumes:
             # Source replaced by the adapter with the YAML directory of the instance
             - './esphome-config:/config'
+            # PlatformIO, ESP-IDF and the other toolchains (several GB): the entrypoint of the image keeps them
+            # in /cache when it exists, otherwise in /config/.esphome, i.e. in iobroker-data.
+            # Named volume, prefixed by the docker plugin: iob_esphome_<instance>_esphome_cache
+            - 'esphome_cache:/cache'
         stop_grace_period: 5s
         # Not restarted by Docker itself: it would also start the container while the instance is stopped.
         # While the instance runs, the docker plugin restarts it (iobMonitoringEnabled).
         restart: 'no'
+
+volumes:
+    esphome_cache:

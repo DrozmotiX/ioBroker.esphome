@@ -169,7 +169,10 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
   `startDockerContainer()` in `src/lib/dashboard.ts` sets the image tag and the `/config` bind mount on `plugin.configurations`
   and calls `instanceIsReady()`, only when the dashboard is enabled. That also resolves when the pull or start failed (the plugin
   only warns), so the container state is checked with `containerList()` afterwards; the ready check keeps polling the container.
-  The image entrypoint runs ESPHome Device Builder for `dashboard` since 2026.6.0. Unit tests: `src/lib/dashboard.test.ts`.
+  The image entrypoint runs ESPHome Device Builder for `dashboard` since 2026.6.0. Toolchains go to the named volume `/cache`.
+  The created container name is kept in `_ESPHomeDashboard.dockerContainer`; a start without Docker mode removes that container
+  (`removeLeftoverContainer()`, own `DockerManager`, as the plugin manages nothing then). `stop()` waits up to 4 s for a pending
+  container start during unload (adapter timers do not work while unloading). Unit tests: `src/lib/dashboard.test.ts`.
 - "Clear Autopy Cache" button triggers `clearAutopyCache()` → `fs.rmSync(~/.cache/autopy, recursive)`.
 - Config migration: `migrateConfig()` converts legacy `ESPHomeDashboardIP` + port → `ESPHomeDashboardUrl`.
 

@@ -7,6 +7,7 @@
  */
 
 import type DockerPlugin from '@iobroker/plugin-docker';
+import type * as DockerPluginModule from '@iobroker/plugin-docker';
 import type { getVenv } from 'autopy' with { 'resolution-mode': 'import' };
 import * as fs from 'node:fs';
 import { autoDetect, buildRequirements, compareVersions, usesDeviceBuilder } from './dashboardRequirements';
@@ -22,6 +23,13 @@ type DashboardProcess = ReturnType<Awaited<ReturnType<typeof getVenv>>>;
 const dockerImage = 'ghcr.io/esphome/esphome';
 /** Directory of the container the YAML configuration files are mounted to, see docker-compose.yaml */
 const dockerConfigDir = '/config';
+/** State with the name of the container of this instance, while one may exist, see removeLeftoverContainer() */
+const dockerContainerState = '_ESPHomeDashboard.dockerContainer';
+/**
+ * How long the unload waits for a container that is being started (stopTimeout in io-package.json is 10 s,
+ * the docker plugin stops the container afterwards)
+ */
+const dockerUnloadWaitMs = 4000;
 
 /** One entry of a version dropDown in the adapter configuration */
 type VersionDropDownEntry = string | { label: string; value: string };
@@ -75,6 +83,8 @@ class Dashboard {
     private stopping = false;
     /** Whether the dashboard container was handed to Docker, see startDockerContainer() */
     private containerStarted = false;
+    /** startDockerContainer() while it runs, the unload waits for it */
+    private dockerStart: Promise<void> | undefined;
     /** Memory cache of all available ESPHome Dashboard versions */
     private readonly dashboardVersions: string[] = [];
     /** Memory cache for available Pillow versions */
@@ -329,8 +339,14 @@ class Dashboard {
 
             // Start Dashboard Process
             if (this.adapter.config.ESPHomeDashboardEnabled && this.adapter.config.ESPHomeDashboardDocker) {
-                void this.startDockerContainer(useDashBoardVersion);
-            } else if (this.adapter.config.ESPHomeDashboardEnabled) {
+                this.dockerStart = this.startDockerContainer(useDashBoardVersion).finally(() => {
+                    this.dockerStart = undefined;
+                });
+                return;
+            }
+            // Before the process starts: a container left running would keep its port
+            await this.removeLeftoverContainer();
+            if (this.adapter.config.ESPHomeDashboardEnabled) {
                 this.adapter.log.info(`Native Integration of ESPHome Dashboard enabled, making environment ready`);
 
                 this.warnUnpinnedVersions(useDashBoardVersion);
@@ -545,7 +561,8 @@ class Dashboard {
             const name = container.name;
             if (this.stopping) {
                 // The instance unloaded while the image was pulled: the plugin stopped the container before
-                // it existed, so it is stopped here
+                // it existed, so it is stopped here. The unload waits a moment for this (stop()); if the
+                // process ended before, removeLeftoverContainer() or the next start takes care of it.
                 if (manager && name) {
                     await manager.containerStop(name).catch(() => undefined);
                 }
@@ -553,19 +570,81 @@ class Dashboard {
             }
 
             const state = name ? (await manager?.containerList(true))?.find(info => info.names === name) : undefined;
-            if (state?.status === 'running' || state?.status === 'restarting') {
+            if (!name || !state) {
+                this.adapter.log.error(
+                    `ESPHome Dashboard container ${name ?? ''} was not created: Docker is not installed or not running, or the image ${container.image} could not be pulled, see the warnings of the docker plugin above. Disable "Use Docker Integration" to run the dashboard without Docker.`,
+                );
+                return;
+            }
+            // Removed by the next start of the instance without Docker Integration, also when the instance
+            // ended without stopping it
+            await this.adapter.stateSetCreate(dockerContainerState, 'dockerContainer', name);
+            if (state.status === 'running' || state.status === 'restarting') {
                 this.adapter.log.info(`ESPHome Dashboard container ${name} is running`);
-                // Host network: the dashboard of the container answers on the configured port of this host.
-                // info.connection (green instance) only lists devices once it does, like with the process.
-                this.containerStarted = true;
-                this.scheduleReadyCheck(String(this.adapter.config.ESPHomeDashboardPort));
             } else {
                 this.adapter.log.error(
-                    `ESPHome Dashboard container ${name ?? ''} is not running (${state?.status ?? 'not created'}): Docker is not installed or not running, or the image ${container.image} could not be pulled, see the warnings of the docker plugin above. Disable "Use Docker Integration" to run the dashboard without Docker.`,
+                    `ESPHome Dashboard container ${name} is not running (${state.status}), see the warnings of the docker plugin above. The docker plugin tries to start it again every minute.`,
                 );
             }
+            // Host network: the dashboard of the container answers on the configured port of this host.
+            // info.connection (green instance) only lists devices once it does, like with the process. Also
+            // checked when the container does not run yet, the docker plugin starts it again.
+            this.containerStarted = true;
+            this.scheduleReadyCheck(String(this.adapter.config.ESPHomeDashboardPort));
         } catch (error) {
             this.adapter.errorHandler(`[espHomeDashboard-Docker]`, error);
+        }
+    }
+
+    /**
+     * Create a docker manager for this instance, without the docker plugin, which only manages the container
+     * while "Use Docker Integration" and the dashboard are enabled
+     *
+     * @returns the docker manager
+     */
+    createDockerManager(): DockerPluginModule.DockerManager {
+        // Loaded on demand: only needed when a container was left behind
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { DockerManager } = require('@iobroker/plugin-docker') as typeof DockerPluginModule;
+        return new DockerManager({
+            logger: this.adapter.log,
+            namespace: `esphome.${this.adapter.instance ?? 0}`,
+            quiet: true,
+        });
+    }
+
+    /**
+     * Remove the dashboard container of this instance when the dashboard runs without Docker or is disabled.
+     * Normally the docker plugin stops it on unload, but not when the instance ended without unload (crash,
+     * killed after stopTimeout) or while the image was pulled. Then it would keep running, serving the YAML
+     * directory and blocking the port of the dashboard process. Docker is only contacted when a container
+     * was created before (dockerContainerState).
+     */
+    async removeLeftoverContainer(): Promise<void> {
+        try {
+            const state = await this.adapter.getStateAsync(dockerContainerState);
+            const name = state?.val ? String(state.val) : '';
+            if (!name) {
+                return;
+            }
+            const manager = this.createDockerManager();
+            await manager.isReady();
+            const container = (await manager.containerList(true)).find(info => info.names === name);
+            if (container) {
+                this.adapter.log.info(
+                    `Removing ESPHome Dashboard container ${name}, "Use Docker Integration" or the dashboard is disabled`,
+                );
+                const result = await manager.containerRemove(name);
+                if (result.stderr) {
+                    // Kept in the state, tried again on the next start
+                    this.adapter.log.warn(`ESPHome Dashboard container ${name} could not be removed: ${result.stderr}`);
+                    return;
+                }
+            }
+            await this.adapter.stateSetCreate(dockerContainerState, 'dockerContainer', '');
+            await manager.destroy();
+        } catch (error) {
+            this.adapter.errorHandler(`[espHomeDashboard-DockerCleanup]`, error);
         }
     }
 
@@ -725,9 +804,11 @@ class Dashboard {
     }
 
     /**
-     * Stop the dashboard process, if running
+     * Stop the dashboard process, if running. The container is stopped by the docker plugin; while it is
+     * being started, this waits a moment, so a container created meanwhile is stopped by startDockerContainer()
+     * before the adapter process ends.
      */
-    stop(): void {
+    async stop(): Promise<void> {
         this.stopping = true;
         this.adapter.clearTimeout(this.readyCheckTimer);
         this.readyCheckTimer = undefined;
@@ -739,6 +820,14 @@ class Dashboard {
             }
         } catch (e) {
             this.adapter.log.error(`[onUnload - dashboardProcess] ${JSON.stringify(e)}`);
+        }
+        if (this.dockerStart) {
+            // The timers of the adapter cannot be used any more while it unloads
+            const timeout = AbortSignal.timeout(dockerUnloadWaitMs);
+            await Promise.race([
+                this.dockerStart,
+                new Promise<void>(resolve => timeout.addEventListener('abort', () => resolve())),
+            ]);
         }
     }
 

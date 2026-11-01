@@ -101,6 +101,13 @@ const stateAttrb: Record<string, StateAttribute> = {
         write: true,
         role: 'switch',
     },
+    dockerContainer: {
+        name: 'ESPHome Dashboard container, removed when Docker Integration is disabled',
+        type: 'string',
+        read: true,
+        write: false,
+        role: 'text',
+    },
     versionPinMigrationDone: {
         name: 'Migration to pinned dashboard versions applied',
         type: 'boolean',

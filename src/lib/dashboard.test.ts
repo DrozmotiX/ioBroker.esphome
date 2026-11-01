@@ -19,6 +19,8 @@ interface Logs {
     error: string[];
     /** Calls of updateConnectionState() */
     connectionUpdates: number;
+    /** Values of the states written by stateSetCreate(), by id */
+    states: Record<string, unknown>;
 }
 
 /** Docker plugin of the tests, with what the stubbed docker manager was asked */
@@ -117,6 +119,11 @@ function createAdapter(config: Record<string, unknown>, plugin: DockerPlugin | n
             logs.connectionUpdates++;
             return Promise.resolve();
         },
+        stateSetCreate: (id: string, _name: string, value: unknown) => {
+            logs.states[id] = value;
+            return Promise.resolve();
+        },
+        getStateAsync: (id: string) => Promise.resolve(id in logs.states ? { val: logs.states[id], ack: true } : null),
         errorHandler: (codepart: string, error: unknown) => logs.error.push(`${codepart} ${String(error)}`),
     } as unknown as DashboardAdapter;
 }
@@ -127,7 +134,7 @@ describe('ESPHome Dashboard in Docker', () => {
 
     beforeEach(async () => {
         dir = await mkdtemp(path.join(tmpdir(), 'esphome-docker-'));
-        logs = { info: [], timers: [], callbacks: [], warn: [], error: [], connectionUpdates: 0 };
+        logs = { info: [], timers: [], callbacks: [], warn: [], error: [], connectionUpdates: 0, states: {} };
     });
 
     afterEach(async () => {
@@ -184,6 +191,8 @@ describe('ESPHome Dashboard in Docker', () => {
         expect(container.iobAutoImageUpdate).to.equal(false);
         expect(container.mounts).to.deep.equal([
             { type: 'bind', source: path.join(dir, 'esphome.0'), target: '/config' },
+            // toolchains are kept out of the YAML directory, which is in iobroker-data
+            { type: 'volume', source: 'esphome_cache', target: '/cache' },
         ]);
         expect((await stat(path.join(dir, 'esphome.0'))).isDirectory()).to.equal(true);
         expect(plugin.readyCalls).to.equal(1);
@@ -192,6 +201,8 @@ describe('ESPHome Dashboard in Docker', () => {
         // info.connection waits until the dashboard of the container answers, like with the process
         expect(logs.timers).to.have.length(1);
         expect(dashboard.isReady()).to.equal(false);
+        // removed by the next start without Docker Integration
+        expect(logs.states['_ESPHomeDashboard.dockerContainer']).to.equal(container.name);
     });
 
     it('uses the newest stable image when no version is known', async () => {
@@ -213,12 +224,13 @@ describe('ESPHome Dashboard in Docker', () => {
         await createDashboard(config, plugin).startDockerContainer('2026.6.5');
 
         expect(logs.error).to.have.length(1);
-        expect(logs.error[0]).to.include('is not running (not created)');
+        expect(logs.error[0]).to.include('was not created');
         expect(logs.error[0]).to.include('Docker is not installed or not running');
         expect(logs.timers).to.have.length(0);
+        expect(logs.states).to.deep.equal({});
     });
 
-    it('reports an error when the container does not run', async () => {
+    it('reports an error when the container does not run, but keeps checking it', async () => {
         const config = { ...native, ESPHomeDashboardEnabled: true, ESPHomeDashboardDocker: true };
         const plugin = await createDockerPlugin(config, 'exited');
 
@@ -226,7 +238,9 @@ describe('ESPHome Dashboard in Docker', () => {
 
         expect(logs.error).to.have.length(1);
         expect(logs.error[0]).to.include('is not running (exited)');
-        expect(logs.timers).to.have.length(0);
+        // the docker plugin starts it again, info.connection follows once the dashboard answers
+        expect(logs.timers).to.have.length(1);
+        expect(logs.states['_ESPHomeDashboard.dockerContainer']).to.equal(plugin.configurations[0].name);
     });
 
     it('stops the container when the instance unloaded while it was started', async () => {
@@ -234,13 +248,39 @@ describe('ESPHome Dashboard in Docker', () => {
         const plugin = await createDockerPlugin(config);
         const dashboard = createDashboard(config, plugin);
         // The plugin already stopped its containers on unload, before this one existed
-        plugin.onReady = () => dashboard.stop();
+        plugin.onReady = () => void dashboard.stop();
 
         await dashboard.startDockerContainer('2026.6.5');
 
         expect(plugin.stopped).to.deep.equal([plugin.configurations[0].name]);
         expect(logs.error).to.deep.equal([]);
         expect(logs.timers).to.have.length(0);
+    });
+
+    it('unloads only after a pending container start stopped the container', async () => {
+        const config = { ...native, ESPHomeDashboardEnabled: true, ESPHomeDashboardDocker: true };
+        const plugin = await createDockerPlugin(config);
+        const dashboard = createDashboard(config, plugin);
+        // The image is still being pulled when the instance unloads
+        let pulled: () => void = () => {};
+        plugin.instanceIsReady = (): Promise<void> => new Promise(resolve => (pulled = resolve));
+        (dashboard as unknown as { dockerStart: Promise<void> }).dockerStart =
+            dashboard.startDockerContainer('2026.6.5');
+
+        let unloaded = false;
+        const stopped = dashboard.stop().then(() => (unloaded = true));
+        await new Promise(resolve => setImmediate(resolve));
+        expect(unloaded).to.equal(false);
+
+        pulled();
+        await stopped;
+        expect(plugin.stopped).to.deep.equal([plugin.configurations[0].name]);
+    });
+
+    it('does not wait on unload when no container is being started', async () => {
+        const dashboard = createDashboard({ ...native }, null);
+        await dashboard.stop();
+        expect(logs.error).to.deep.equal([]);
     });
 
     it('updates info.connection whenever the dashboard of the container starts or stops answering', async () => {
@@ -274,7 +314,7 @@ describe('ESPHome Dashboard in Docker', () => {
         expect(logs.warn).to.have.length(1);
         expect(logs.timers).to.have.length(5);
 
-        dashboard.stop();
+        await dashboard.stop();
         await check();
         expect(logs.timers).to.have.length(5);
     });
@@ -286,5 +326,92 @@ describe('ESPHome Dashboard in Docker', () => {
 
         expect(logs.error).to.have.length(1);
         expect(logs.error[0]).to.include('docker plugin of ioBroker is not loaded');
+    });
+
+    describe('container left behind', () => {
+        /** Docker manager created by removeLeftoverContainer(), with what it was asked */
+        interface TestManager {
+            containers: { names: string; status: string }[];
+            removed: string[];
+            removeError: string;
+        }
+
+        /**
+         * Dashboard with a stubbed docker manager
+         *
+         * @param manager - what the docker manager knows and records
+         * @param created - counts the created docker managers
+         * @param created.count - number of created docker managers
+         */
+        function createCleanupDashboard(manager: TestManager, created: { count: number }): Dashboard {
+            const dashboard = createDashboard({ ...native }, null);
+            dashboard.createDockerManager = () => {
+                created.count++;
+                return {
+                    isReady: () => Promise.resolve(),
+                    containerList: () => Promise.resolve(manager.containers),
+                    containerRemove: (name: string) => {
+                        manager.removed.push(name);
+                        return Promise.resolve({ stdout: '', stderr: manager.removeError });
+                    },
+                    destroy: () => Promise.resolve(),
+                } as unknown as ReturnType<Dashboard['createDockerManager']>;
+            };
+            return dashboard;
+        }
+
+        it('does not contact Docker when no container was created before', async () => {
+            const created = { count: 0 };
+            await createCleanupDashboard(
+                { containers: [], removed: [], removeError: '' },
+                created,
+            ).removeLeftoverContainer();
+            expect(created.count).to.equal(0);
+        });
+
+        it('removes the container of the instance', async () => {
+            const created = { count: 0 };
+            const manager = {
+                containers: [
+                    { names: 'other', status: 'running' },
+                    { names: 'iob_esphome_0_esphome', status: 'running' },
+                ],
+                removed: [],
+                removeError: '',
+            };
+            logs.states['_ESPHomeDashboard.dockerContainer'] = 'iob_esphome_0_esphome';
+
+            await createCleanupDashboard(manager, created).removeLeftoverContainer();
+
+            expect(manager.removed).to.deep.equal(['iob_esphome_0_esphome']);
+            expect(logs.states['_ESPHomeDashboard.dockerContainer']).to.equal('');
+            expect(logs.error).to.deep.equal([]);
+        });
+
+        it('forgets a container which no longer exists', async () => {
+            const created = { count: 0 };
+            const manager = { containers: [], removed: [], removeError: '' };
+            logs.states['_ESPHomeDashboard.dockerContainer'] = 'iob_esphome_0_esphome';
+
+            await createCleanupDashboard(manager, created).removeLeftoverContainer();
+
+            expect(manager.removed).to.deep.equal([]);
+            expect(logs.states['_ESPHomeDashboard.dockerContainer']).to.equal('');
+        });
+
+        it('tries again on the next start when the container could not be removed', async () => {
+            const created = { count: 0 };
+            const manager = {
+                containers: [{ names: 'iob_esphome_0_esphome', status: 'running' }],
+                removed: [],
+                removeError: 'permission denied',
+            };
+            logs.states['_ESPHomeDashboard.dockerContainer'] = 'iob_esphome_0_esphome';
+
+            await createCleanupDashboard(manager, created).removeLeftoverContainer();
+
+            expect(logs.warn).to.have.length(1);
+            expect(logs.states['_ESPHomeDashboard.dockerContainer']).to.equal('iob_esphome_0_esphome');
+        });
     });
 });
