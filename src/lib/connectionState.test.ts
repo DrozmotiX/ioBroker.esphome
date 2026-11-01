@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { connectedDeviceNames, type DeviceConnection, isDeviceOnline } from './connectionState';
+import { connectedDeviceNames, connectionStateValue, type DeviceConnection, isDeviceOnline } from './connectionState';
 
 /**
  * Connection details of a connected device, with the given changes
@@ -62,6 +62,30 @@ describe('connection state', () => {
         it('is empty without connected devices', () => {
             expect(connectedDeviceNames([])).to.deep.equal([]);
             expect(connectedDeviceNames([['192.0.2.1', device({ connected: false })]])).to.deep.equal([]);
+        });
+    });
+
+    describe('connectionStateValue()', () => {
+        const devices: [string, DeviceConnection][] = [
+            ['192.0.2.1', device({ deviceFriendlyName: 'living-room' })],
+            ['192.0.2.2', device({ deviceFriendlyName: 'garage-door' })],
+        ];
+
+        it('lists the connected devices, comma-separated, when the dashboard is disabled', () => {
+            expect(connectionStateValue(devices, false, false)).to.equal('garage-door,living-room');
+        });
+
+        it('lists no device while the enabled dashboard does not answer', () => {
+            expect(connectionStateValue(devices, true, false)).to.equal('');
+        });
+
+        it('lists the connected devices once the enabled dashboard answers', () => {
+            expect(connectionStateValue(devices, true, true)).to.equal('garage-door,living-room');
+        });
+
+        it('is empty without connected devices, also with the dashboard ready', () => {
+            expect(connectionStateValue([], true, true)).to.equal('');
+            expect(connectionStateValue([], false, false)).to.equal('');
         });
     });
 });
