@@ -45,6 +45,19 @@ export function compareVersions(a: string, b: string): number {
 }
 
 /**
+ * Clean up a version typed in the adapter configuration: the version fields also accept free text, so
+ * surrounding whitespace and a leading "v" (as in the GitHub tag "v2026.7.0") would otherwise end up
+ * in the pip requirement or the Docker image tag.
+ *
+ * @param setting - configured version, may be undefined for an old instance configuration
+ * @returns the trimmed version without leading "v", empty when nothing is configured
+ */
+export function normalizeVersion(setting: string | undefined | null): string {
+    const version = (setting ?? '').trim();
+    return /^v\d/i.test(version) ? version.slice(1) : version;
+}
+
+/**
  * Whether an ESPHome version needs ESPHome Device Builder for the dashboard
  *
  * @param esphomeVersion - ESPHome version, empty when the newest release is installed

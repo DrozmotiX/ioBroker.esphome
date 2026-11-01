@@ -28,7 +28,7 @@
     "hlpConfigStates": "Utwórz stany konfiguracji dla każdej encji, aby wyświetlić szczegóły konfiguracji urządzenia",
     "hlpDeviceBuilderVersion": "Wersja ESPHome Device Builder, który udostępnia panel od ESPHome 2026.7.0. \"Auto Detect\" instaluje najnowszą wersję obsługującą wybraną wersję ESPHome",
     "hlpDiscoveryListeningAddress": "Odkrywaj tylko urządzenia na tym interfejsie",
-    "hlpESPHomeDashboardVersion": "Wybierz, która wersja panelu ESPHome ma być używana",
+    "hlpESPHomeDashboardVersion": "Wybierz wersję z listy lub wpisz dowolną wersję ESPHome (np. wersję beta, taką jak 2026.7.0b1)",
     "hlpPillowVersion": "Potrzebne tylko dla starych wersji ESPHome. \"Auto Detect\" instaluje wersję Pillow wymaganą przez ESPHome, każda inna wersja powoduje błąd instalacji w aktualnych wersjach ESPHome",
     "hlpPingAttempts": "Liczba kolejnych nieudanych pingów, zanim urządzenie zostanie uznane za offline (domyślnie: 1)",
     "hlpPingInterval": "Jak często połączone urządzenie jest pingowane, aby sprawdzić, czy nadal jest online (domyślnie: 5)",
