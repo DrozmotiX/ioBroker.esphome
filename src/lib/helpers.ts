@@ -23,6 +23,8 @@ class DeviceInfo {
     initialized = false;
     ip: string | null = null;
     mac: string | null = null;
+    /** Key of the Wi-Fi signal sensor of the device (ESPHome wifi_signal), shown as RSSI in the device manager */
+    rssiEntityId: number | null = null;
 }
 
 /**

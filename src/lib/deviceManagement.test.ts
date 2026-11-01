@@ -2,7 +2,11 @@ import type { ActionContext, DeviceInfo, DeviceLoadContext, InstanceDetails, Jso
 import { expect } from 'chai';
 import { readdirSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import EsphomeDeviceManagement, { type DeviceActionResult, type DiscoveredDevice } from './deviceManagement';
+import EsphomeDeviceManagement, {
+    type DeviceActionResult,
+    type DiscoveredDevice,
+    isWifiSignalSensor,
+} from './deviceManagement';
 import ClientDetails from './helpers';
 
 /** Exposes the protected methods of the device management */
@@ -234,6 +238,37 @@ describe('Device Management', () => {
             expect(entry.actions?.find(action => action.id === 'web')).to.deep.include({
                 url: 'http://192.168.0.10:80',
             });
+        });
+
+        it('shows the Wi-Fi signal sensor as RSSI', async () => {
+            const { adapter, known } = createAdapter();
+            known['192.168.0.10'] = knownDevice('192.168.0.10');
+            known['192.168.0.11'] = knownDevice('192.168.0.11');
+            known['192.168.0.10'].rssiEntityId = 1234;
+
+            const [withSensor, withoutSensor] = await new TestDeviceManagement(adapter).load();
+
+            expect(withSensor.status).to.deep.include({
+                rssi: { stateId: 'esphome.0.AABBCCDDEEFF.Sensor.1234.state' },
+            });
+            expect(withoutSensor.status).to.not.have.property('rssi');
+        });
+    });
+
+    describe('isWifiSignalSensor()', () => {
+        const wifiSignal = { deviceClass: 'signal_strength', unitOfMeasurement: 'dBm', entityCategory: 2 };
+
+        it('detects the wifi_signal sensor', () => {
+            expect(isWifiSignalSensor('Sensor', wifiSignal)).to.equal(true);
+        });
+
+        it('ignores other sensors', () => {
+            // ble_rssi: RSSI of another device, no entity category
+            expect(isWifiSignalSensor('Sensor', { ...wifiSignal, entityCategory: 0 })).to.equal(false);
+            // wifi_signal converted to percent
+            expect(isWifiSignalSensor('Sensor', { ...wifiSignal, unitOfMeasurement: '%' })).to.equal(false);
+            expect(isWifiSignalSensor('Sensor', { ...wifiSignal, deviceClass: 'voltage' })).to.equal(false);
+            expect(isWifiSignalSensor('TextSensor', wifiSignal)).to.equal(false);
         });
     });
 
