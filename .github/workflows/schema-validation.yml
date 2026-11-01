@@ -1,0 +1,33 @@
+name: Schema Validation
+
+on:
+    pull_request: {}
+    workflow_dispatch: {}
+
+permissions:
+    contents: read
+
+concurrency:
+    group: schema-validation-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    validate-schemas:
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: '24.x'
+                  cache: 'npm'
+
+            - run: npm ci
+
+            # Reuse @iobroker/testing's validators and current upstream schemas for
+            # io-package.json and the admin JSON/JSON5 config, custom config and tabs.
+            # --fail-zero prevents a renamed/removed test from silently passing CI.
+            - name: Validate ioBroker schemas
+              run: npm run test:package -- --grep 'matches its schema|Check JSON (config|custom config|tab) file' --fail-zero
