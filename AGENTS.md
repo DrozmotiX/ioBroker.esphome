@@ -176,6 +176,10 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
   container start during unload (adapter timers do not work while unloading). Unit tests: `src/lib/dashboard.test.ts`.
 - The dashboard port is registered with js-controller >= 8 (`registerDashboardPort()`, `common.declareUsedResources: true`),
   duck-typed like ioBroker.influxdb, as the adapter types of js-controller 7 do not have `registerUsedResource()`.
+- Optional login (advanced settings `ESPHomeDashboardUsername` / `ESPHomeDashboardPassword`, password in
+  `encryptedNative`): `dashboardCredentials()` in `src/lib/dashboard.ts` passes it as environment variables to the process
+  and the container, `ESPHOME_USERNAME` / `ESPHOME_PASSWORD` for Device Builder, `USERNAME` / `PASSWORD` for older ESPHome.
+  Only applied with both set, the dashboard is unprotected by default.
 - "Clear Autopy Cache" button triggers `clearAutopyCache()` → `fs.rmSync(~/.cache/autopy, recursive)`.
 - Config migration: `migrateConfig()` converts legacy `ESPHomeDashboardIP` + port → `ESPHomeDashboardUrl`.
 

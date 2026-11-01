@@ -197,6 +197,8 @@
     "ESPHomeDashboardPort": 6052,
     "ESPHomeDashboardIP": "",
     "ESPHomeDashboardUrl": "",
+    "ESPHomeDashboardUsername": "",
+    "ESPHomeDashboardPassword": "",
     "ignoredDevices": [
       {
         "IP-Address": "192.168.0.1",
@@ -205,6 +207,12 @@
       }
     ]
   },
+  "encryptedNative": [
+    "ESPHomeDashboardPassword"
+  ],
+  "protectedNative": [
+    "ESPHomeDashboardPassword"
+  ],
   "objects": [],
   "instanceObjects": [
     {

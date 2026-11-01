@@ -94,6 +94,31 @@ const defaultDashboardVersion = '2026.6.5';
 const versionMigrationState = '_ESPHomeDashboard.versionPinMigrationDone';
 const pillowMigrationState = '_ESPHomeDashboard.pillowAutoDetectMigrationDone';
 
+/**
+ * Environment variables with the login of the dashboard ("Username" / "Password" in the advanced dashboard
+ * settings). Without both, the dashboard is not protected, as before.
+ *
+ * Passed as environment variables, not as arguments, so they do not show up in the process list. ESPHome
+ * Device Builder (ESPHome >= 2026.7.0 and the Docker image since 2026.6.0) reads ESPHOME_USERNAME /
+ * ESPHOME_PASSWORD, the dashboard of older ESPHome versions USERNAME / PASSWORD. The variables are always
+ * set, so values inherited from the environment of ioBroker never protect the dashboard by accident.
+ * USERNAME is only set with a login: it is the name of the OS user otherwise, which both ignore
+ * without PASSWORD.
+ *
+ * @param config - instance configuration, the password already decrypted by adapter-core
+ * @returns environment variables for the dashboard process or container
+ */
+export function dashboardCredentials(
+    config: Pick<ioBroker.AdapterConfig, 'ESPHomeDashboardUsername' | 'ESPHomeDashboardPassword'>,
+): Record<string, string> {
+    const username = (config.ESPHomeDashboardUsername ?? '').trim();
+    const password = config.ESPHomeDashboardPassword ?? '';
+    if (!username || !password) {
+        return { ESPHOME_USERNAME: '', ESPHOME_PASSWORD: '', PASSWORD: '' };
+    }
+    return { ESPHOME_USERNAME: username, ESPHOME_PASSWORD: password, USERNAME: username, PASSWORD: password };
+}
+
 // Interval and per-request timeout of the check whether the started dashboard answers
 const readyCheckIntervalMs = 60000;
 const readyCheckTimeoutMs = 5000;
@@ -463,7 +488,11 @@ class Dashboard {
                     );
                     // buffer: false, the output is only logged below and would otherwise be kept in memory
                     // for as long as the dashboard runs. NO_COLOR keeps color codes out of the log.
-                    this.dashboardProcess = python(command, args, { buffer: false, env: { NO_COLOR: '1' } });
+                    this.logLogin();
+                    this.dashboardProcess = python(command, args, {
+                        buffer: false,
+                        env: { NO_COLOR: '1', ...dashboardCredentials(this.adapter.config) },
+                    });
 
                     this.adapter.log.debug(`espHomeDashboard_Process ${JSON.stringify(this.dashboardProcess)}`);
 
@@ -579,6 +608,9 @@ class Dashboard {
             // A version tag never changes, "stable" does: pull it again on every start, otherwise the image
             // of the first start would be used for good
             container.iobAutoImageUpdate = !version;
+            // Login of the dashboard, see dashboardCredentials()
+            container.environment = { ...container.environment, ...dashboardCredentials(this.adapter.config) };
+            this.logLogin();
             for (const mount of container.mounts ?? []) {
                 if (mount.target === dockerConfigDir) {
                     mount.type = 'bind';
@@ -639,6 +671,21 @@ class Dashboard {
             this.scheduleReadyCheck(String(this.adapter.config.ESPHomeDashboardPort));
         } catch (error) {
             this.adapter.errorHandler(`[espHomeDashboard-Docker]`, error);
+        }
+    }
+
+    /**
+     * Log whether the dashboard asks for a login, and warn when only one of username and password is set
+     */
+    private logLogin(): void {
+        const username = (this.adapter.config.ESPHomeDashboardUsername ?? '').trim();
+        const password = this.adapter.config.ESPHomeDashboardPassword ?? '';
+        if (username && password) {
+            this.adapter.log.info(`ESPHome Dashboard is protected by a login, username: ${username}`);
+        } else if (username || password) {
+            this.adapter.log.warn(
+                `ESPHome Dashboard is NOT protected: only the ${username ? 'username' : 'password'} of the login is set in the advanced dashboard settings, both are needed`,
+            );
         }
     }
 

@@ -503,6 +503,7 @@ If you like my work, please consider a personal donation
 
 ### **WORK IN PROGRESS**
 
+- (@SimonFischer04) **NEW**: Optional login for the ESPHome Dashboard (username and password in the advanced dashboard settings, the password is stored encrypted). Without both, the dashboard stays unprotected as before. Works for the dashboard process and the Docker Integration
 - (@SimonFischer04) **NEW**: Any ESPHome Dashboard version can be typed into the version field of the adapter configuration, e.g. a beta release or a version not (yet) in the list
 - (@SimonFischer04) **ENHANCED**: `info.connection` lists the connected devices by name (comma-separated, like the sonoff and miner adapters do) instead of always being `true`. The admin shows the instance green while at least one device is connected and shows which ones, an instance without a connected device is shown yellow
 - (@SimonFischer04) **FIXED**: The "Clear Autopy Cache" button did nothing on macOS, on Windows and on Linux with `XDG_CACHE_HOME` set: it always deleted `~/.cache/autopy`, autopy stores its files elsewhere there. The button is renamed to "Reset Python environment" and removes the Python environment of the dashboard through autopy now, wherever autopy stores it. The downloaded Python is kept, so the reinstallation is faster

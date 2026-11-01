@@ -509,6 +509,32 @@
 							"xl": 2,
 							"label": "lblESPHomePort"
 						},
+						// Login of the dashboard, not protected while empty (default). Password stored encrypted
+						// (encryptedNative in io-package.json), passed as environment variables, see dashboardCredentials()
+						"ESPHomeDashboardUsername": {
+							"type": "text",
+							"xs": 12,
+							"sm": 5,
+							"md": 5,
+							"lg": 5,
+							"xl": 5,
+							"label": "lblDashboardUsername",
+							"help": "hlpDashboardUsername"
+						},
+						"ESPHomeDashboardPassword": {
+							"type": "password",
+							"xs": 12,
+							"sm": 5,
+							"md": 5,
+							"lg": 5,
+							"xl": 5,
+							"label": "lblDashboardPassword",
+							"help": "hlpDashboardPassword",
+							"visible": true,
+							"validator": "!data.ESPHomeDashboardUsername === !data.ESPHomeDashboardPassword",
+							"validatorErrorText": "errDashboardLogin",
+							"validatorNoSaveOnError": true
+						},
 						// Versions installed next to ESPHome, "Auto Detect" leaves them to pip (#479).
 						// The ESPHome Docker image brings its own Pillow and Device Builder
 						"PillowVersion": {
