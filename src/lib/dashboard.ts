@@ -9,9 +9,10 @@
 import * as utils from '@iobroker/adapter-core';
 import type { getVenv } from 'autopy' with { 'resolution-mode': 'import' };
 import * as fs from 'node:fs';
-import * as os from 'node:os';
-import * as path from 'node:path';
 import { autoDetect, buildRequirements, compareVersions, usesDeviceBuilder } from './dashboardRequirements';
+
+/** Name of the autopy virtual environment the dashboard is installed in */
+const VENV_NAME = 'esphome';
 
 /** The ESPHome dashboard process started through autopy */
 type DashboardProcess = ReturnType<Awaited<ReturnType<typeof getVenv>>>;
@@ -351,7 +352,7 @@ class Dashboard {
                         // installed packages, otherwise it keeps the Device Builder installed for the
                         // previous ESPHome version.
                         python = await getVenv({
-                            name: 'esphome',
+                            name: VENV_NAME,
                             pythonVersion: '3.13.2', // Use any Python 3.13.x version.
                             requirements,
                             upgrade: true,
@@ -441,7 +442,7 @@ class Dashboard {
                         const reason = error instanceof Error && error.message ? error.message : String(error);
                         if (code === 'ENOENT') {
                             this.adapter.log.error(
-                                `ESPHome Dashboard could not be started, "${command}" is missing in the Python environment. Clear the autopy cache in the adapter configuration and restart the adapter to install it again: ${reason}`,
+                                `ESPHome Dashboard could not be started, "${command}" is missing in the Python environment. Reset the Python environment in the adapter configuration and restart the adapter to install it again: ${reason}`,
                             );
                         } else {
                             this.adapter.log.error(`ESPHome Dashboard could not be started: ${reason}`);
@@ -597,30 +598,25 @@ class Dashboard {
     }
 
     /**
-     * Clear the autopy cache directory
+     * Remove the Python virtual environment of the dashboard (ESPHome, ESPHome Device Builder, Pillow and their
+     * dependencies). autopy creates it again on the next start of the dashboard. The Python downloaded by autopy is
+     * kept. autopy decides where it stores the environment, the location depends on the platform.
      */
-    // eslint-disable-next-line @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
-    async clearAutopyCache(): Promise<void> {
+    async resetPythonEnvironment(): Promise<void> {
         try {
-            const homeDir = os.homedir();
-            const autopyCache = path.join(homeDir, '.cache', 'autopy');
-
-            this.adapter.log.info(`Attempting to clear autopy cache at: ${autopyCache}`);
-
-            // Check if directory exists
-            if (fs.existsSync(autopyCache)) {
-                // Use recursive removal
-                fs.rmSync(autopyCache, { recursive: true, force: true });
-                this.adapter.log.info('Autopy cache cleared successfully');
-            } else {
-                this.adapter.log.info('Autopy cache directory does not exist');
-            }
+            this.adapter.log.info('Removing the Python environment of the ESPHome Dashboard');
+            const { removeVenv } = await import('autopy');
+            await removeVenv(VENV_NAME);
+            this.adapter.log.info(
+                'Python environment of the ESPHome Dashboard removed, restart the adapter to install it again',
+            );
         } catch (error) {
             const reason = error instanceof Error && error.message ? error.message : String(error);
-            this.adapter.log.error(`Error clearing autopy cache: ${reason}`);
+            this.adapter.log.error(`Error removing the Python environment of the ESPHome Dashboard: ${reason}`);
             throw error;
         }
     }
+
     /**
      * Stop the dashboard process, if running
      */
