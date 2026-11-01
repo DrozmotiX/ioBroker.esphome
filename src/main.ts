@@ -202,12 +202,13 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
             });
             this.subscribeStates('info.deviceCleanup');
 
-            // Create & Subscribe to button for clearing autopy cache
+            // Create & Subscribe to button for resetting the Python environment of the dashboard, the
+            // state id is kept from the former "Clear Autopy Cache" button
             void this.extendObject('info.clearAutopyCache', {
                 type: 'state',
                 common: {
                     role: 'button',
-                    name: 'Clear Autopy Cache',
+                    name: 'Reset ESPHome Dashboard Python environment',
                     type: 'boolean',
                     read: false,
                     write: true,
@@ -1598,14 +1599,14 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     }
                     break;
 
-                // Handle clearing autopy cache
+                // Handle resetting the Python environment of the dashboard
                 case 'clearAutopyCache':
                     {
-                        await this.dashboard.clearAutopyCache();
+                        await this.dashboard.resetPythonEnvironment();
                         this.sendTo(
                             obj.from,
                             obj.command,
-                            { success: true, message: 'Cache clearing triggered' },
+                            { success: true, message: 'Python environment removed' },
                             obj.callback,
                         );
                     }
@@ -1773,9 +1774,9 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                         return;
                     }
 
-                    // Verify if trigger is related to clearing autopy cache
+                    // Verify if trigger is related to resetting the Python environment of the dashboard
                     if (id.split('.')[3] === 'clearAutopyCache') {
-                        await this.dashboard.clearAutopyCache();
+                        await this.dashboard.resetPythonEnvironment();
                         void this.setState(id, { val: false, ack: true });
                         return;
                     }

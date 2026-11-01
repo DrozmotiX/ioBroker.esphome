@@ -139,14 +139,17 @@ TLDR: You don't!
 
 The adapter does not care about your system's python installation. It will install and create its own python environment with the correct versions anyway. So please don't mess around with python commands on your system if you don't know what you are doing.
 
-### What does the "Clear Autopy Cache" button do?
+### What does the "Reset Python environment" button do?
 
-The built-in ESPHome Dashboard runs in its own Python environment, which the adapter sets up with [autopy](https://github.com/tweaselORG/autopy). autopy keeps everything in one cache directory, `~/.cache/autopy` in the home directory of the user running ioBroker (usually `/home/iobroker/.cache/autopy`):
+The built-in ESPHome Dashboard runs in its own Python environment, which the adapter sets up with [autopy](https://github.com/tweaselORG/autopy). autopy stores it in its cache directory, which depends on the platform (in the home directory of the user running ioBroker):
 
-- `python/`: the Python version downloaded by autopy
-- `venv/esphome/`: the virtual environment with ESPHome, ESPHome Device Builder, Pillow and their dependencies
+- Linux: `~/.cache/autopy` (usually `/home/iobroker/.cache/autopy`), or `$XDG_CACHE_HOME/autopy` if `XDG_CACHE_HOME` is set
+- macOS: `~/Library/Caches/autopy`
+- Windows: `%LOCALAPPDATA%\autopy\Cache`
 
-The button "Clear Autopy Cache" (adapter settings, ESPHome Dashboard tab, only shown while the instance is running) deletes this whole directory. The state `esphome.X.info.clearAutopyCache` does the same, for example from a script.
+In there, `python/` holds the Python version downloaded by autopy and `venv/esphome/` the virtual environment with ESPHome, ESPHome Device Builder, Pillow and their dependencies.
+
+The button "Reset Python environment" (adapter settings, ESPHome Dashboard tab, only shown while the instance is running) removes the virtual environment `venv/esphome/`. The downloaded Python is kept. The state `esphome.X.info.clearAutopyCache` does the same, for example from a script (its id is kept from the former "Clear Autopy Cache" button).
 
 **When to use it:** only when the built-in dashboard does not start or does not load, and the log points to a broken Python environment, for example:
 
@@ -157,10 +160,12 @@ It is not needed to change the ESPHome version: the adapter updates the environm
 
 **What happens:**
 
-1. Restart the adapter instance after clearing the cache. The running dashboard keeps using the deleted files until then and may fail.
-2. On the next start the adapter downloads Python and installs ESPHome and its dependencies again. This takes several minutes (longer on a Raspberry Pi) and needs internet access, the dashboard is not available until it is finished. Follow the progress in the log.
+1. Restart the adapter instance after the reset. The running dashboard keeps using the removed files until then and may fail.
+2. On the next start the adapter installs ESPHome and its dependencies again. This takes several minutes (longer on a Raspberry Pi) and needs internet access, the dashboard is not available until it is finished. Follow the progress in the log.
 
-Your device configurations (YAML files) are **not** affected, they are stored in the ioBroker data directory, not in the autopy cache. Devices connected to the adapter keep working, only the dashboard is affected.
+Your device configurations (YAML files) are **not** affected, they are stored in the ioBroker data directory, not in the Python environment. Devices connected to the adapter keep working, only the dashboard is affected.
+
+If the downloaded Python itself is broken (rare, e.g. an interrupted download), stop the adapter and delete the whole autopy cache directory listed above by hand.
 
 <!--
 ## [Documentation](https://DrozmotiX.github.io/languages/en/Adapter/ESPHome/)
@@ -475,7 +480,8 @@ If you like my work, please consider a personal donation
 ### **WORK IN PROGRESS**
 
 - (@SimonFischer04) **ENHANCED**: `info.connection` lists the connected devices by name (comma-separated, like the sonoff and miner adapters do) instead of always being `true`. The admin shows the instance green while at least one device is connected and shows which ones, an instance without a connected device is shown yellow
-- (@SimonFischer04) **ENHANCED**: README: FAQ entry explaining the "Clear Autopy Cache" button, when to use it and what happens afterwards
+- (@SimonFischer04) **FIXED**: The "Clear Autopy Cache" button did nothing on macOS, on Windows and on Linux with `XDG_CACHE_HOME` set: it always deleted `~/.cache/autopy`, autopy stores its files elsewhere there. The button is renamed to "Reset Python environment" and removes the Python environment of the dashboard through autopy now, wherever autopy stores it. The downloaded Python is kept, so the reinstallation is faster
+- (@SimonFischer04) **ENHANCED**: README: FAQ entry explaining the "Reset Python environment" button, when to use it and what happens afterwards
 - (@SimonFischer04) **FIXED**: ESPHome Dashboard versions 2026.7.0 and newer work again (#479). ESPHome removed the built-in dashboard in 2026.7.0, from this version on ESPHome Device Builder is installed and started in its place, by default in the newest version supporting the selected ESPHome version. Pillow is no longer installed separately: ESPHome installs the version it requires itself, a different selected version made the installation fail. The Pillow version is set to "Auto Detect" once
 - (@SimonFischer04) **NEW**: The Pillow and ESPHome Device Builder versions can be selected in the "Advanced" section of the dashboard settings, "Auto Detect" (default) leaves them to ESPHome and pip
 - (@SimonFischer04) **FIXED**: The adapter no longer terminates when the ESPHome Dashboard cannot be started (`spawn esphome ENOENT`), an error with the reason is logged instead. Errors of the dashboard, like the reason why it stops right after the start, are logged as well
