@@ -22,6 +22,7 @@ import EsphomeDeviceManagement, {
     type DeviceActionResult,
     type DiscoveredDevice,
     type EsphomeDeviceSource,
+    isWifiSignalSensor,
 } from './lib/deviceManagement';
 import ClientDetails from './lib/helpers';
 import stateAttr from './lib/stateAttr'; // Load attribute library
@@ -494,6 +495,8 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     clientDetails[host].deviceName = deviceName;
                     clientDetails[host].deviceFriendlyName = deviceInfo.name;
                     clientDetails[host].deviceInfo = deviceInfo;
+                    // Announced again with the entities, the firmware may have changed
+                    clientDetails[host].rssiEntityId = null;
 
                     this.deviceStateRelation[deviceName] = { ip: host };
 
@@ -666,6 +669,12 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     }
 
                     await this.createNonStateDevices(host, entity);
+
+                    // Show the Wi-Fi signal as RSSI in the device manager
+                    if (clientDetails[host].rssiEntityId == null && isWifiSignalSensor(entity.type, entity.config)) {
+                        clientDetails[host].rssiEntityId = entity.id;
+                        await this.deviceManagement.refreshDeviceList();
+                    }
 
                     // Request current state values. If the connection dropped while entities were
                     // still being announced, `newEntity` fires again on the stale connection and
