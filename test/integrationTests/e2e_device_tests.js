@@ -38,6 +38,7 @@ const ENCRYPTION_KEY = '4lNKgD7rXHge2t304JyBOw4qVOF4rY8dphuqyHuDnu4=';
 
 const DEVICE_PREFIX = `${NAMESPACE}.${DEVICE_ID}`;
 const ONLINE_STATE = `${DEVICE_PREFIX}.info._online`;
+const CONNECTION_STATE = `${NAMESPACE}.info.connection`;
 
 /**
  * Sleeps for the given time
@@ -329,6 +330,16 @@ exports.runTests = function (suite) {
                 );
             });
 
+            it('lists the device by name in info.connection', async () => {
+                // A non-empty list is what turns the instance green in the admin
+                await waitForAckedState(
+                    harness,
+                    CONNECTION_STATE,
+                    val => val === DEVICE_NAME,
+                    `to be "${DEVICE_NAME}"`,
+                );
+            });
+
             it('reports a Sensor value with unit and rounding', async () => {
                 const entity = await findEntity(harness, 'Sensor', 'E2E Temperature');
                 const state = await waitForAckedState(harness, `${entity}.state`, val => val === 21.5, 'to be 21.5');
@@ -480,11 +491,19 @@ exports.runTests = function (suite) {
 
                 await device.stop();
                 await waitForAckedState(harness, ONLINE_STATE, val => val === false, 'to be false', 30000);
+                await waitForAckedState(harness, CONNECTION_STATE, val => val === '', 'to be empty', 10000);
 
                 const entity = await findEntity(harness, 'Switch', 'E2E Switch');
                 const restartedAt = Date.now();
                 await device.start();
                 await waitForAckedState(harness, ONLINE_STATE, val => val === true, 'to be true again', 60000);
+                await waitForAckedState(
+                    harness,
+                    CONNECTION_STATE,
+                    val => val === DEVICE_NAME,
+                    `to be "${DEVICE_NAME}" again`,
+                    10000,
+                );
 
                 // _online turns true with the device info, before the entities are announced again.
                 // Wait until the device reported the switch on the new connection, then commands must work again.

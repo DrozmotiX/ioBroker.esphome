@@ -16,6 +16,7 @@ import {
 } from '@2colors/esphome-native-api';
 import * as utils from '@iobroker/adapter-core';
 import { format } from 'node:util';
+import { connectedDeviceNames, isDeviceOnline } from './lib/connectionState';
 import Dashboard from './lib/dashboard';
 import EsphomeDeviceManagement, {
     type DeviceActionResult,
@@ -101,6 +102,8 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
     declare private yamlFileManager: YamlFileManager;
     declare private dashboard: Dashboard;
     declare private deviceManagement: EsphomeDeviceManagement;
+    /** Last value written to info.connection, see updateConnectionState() */
+    declare private connectedDevicesList: string | undefined;
 
     /**
      * @param [options] - Adapter configuration options
@@ -135,7 +138,12 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
         // Created here as it accesses the objects database right away.
         this.deviceManagement = new EsphomeDeviceManagement(this);
 
-        await this.setStateAsync('info.connection', { val: true, ack: true });
+        // info.connection lists the connected devices. Up to 1.0.0 it was a boolean: existing instances keep their
+        // object from the old version, so bring its type in line with the list it holds now
+        await this.extendObjectAsync('info.connection', {
+            common: { type: 'string', role: 'info.status', name: 'List of connected devices', def: '' },
+        });
+        await this.updateConnectionState();
         try {
             // Settings earlier versions stored and nothing reads any more, the adapter restarts if some were removed
             if (await this.removeObsoleteSettings()) {
@@ -1496,6 +1504,8 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
 
             this.dashboard.stop();
 
+            void this.setState('info.connection', { val: '', ack: true });
+
             callback();
         } catch (error) {
             this.errorHandler(`[onUnload]`, error);
@@ -1663,6 +1673,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
             }
             resetTimers[ip] = this.setTimeout(async () => {
                 delete clientDetails[ip];
+                await this.updateConnectionState();
                 await initiateNDevice();
             }, 2000);
         }
@@ -1689,6 +1700,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
         // Clean memory data
         delete clientDetails[ip];
         delete this.messageResponse[ip];
+        await this.updateConnectionState();
         await this.deviceManagement.refreshDeviceList();
 
         return { result: 'OK - Device successfully removed' };
@@ -2161,13 +2173,12 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
             }
 
             // Update device connection indicator
-            if (!connected || connectionError || connecting) {
-                // Device not connected or initializing, set _online state to false
-                await this.stateSetCreate(`${clientDetails[host].deviceName}.info._online`, `Online state`, false);
-            } else {
-                // Device connected, set _online state to true
-                await this.stateSetCreate(`${clientDetails[host].deviceName}.info._online`, `Online state`, true);
-            }
+            await this.stateSetCreate(
+                `${clientDetails[host].deviceName}.info._online`,
+                `Online state`,
+                isDeviceOnline(clientDetails[host]),
+            );
+            await this.updateConnectionState();
             // Write connection status to info channel
             await this.stateSetCreate(
                 `${clientDetails[host].deviceName}.info._connectionStatus`,
@@ -2176,6 +2187,25 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
             );
         } catch (error) {
             this.errorHandler(`[updateConnectionStatus]`, error);
+        }
+    }
+
+    /**
+     * Lists the connected devices in info.connection, comma-separated like other multi-device adapters (e.g. sonoff)
+     * do: the admin shows the instance green while the list is not empty, and shows the list itself. Green needs just
+     * one connected device - requiring all would turn it yellow whenever a single device is switched off.
+     * The list is computed and remembered synchronously, so concurrent calls write it in the order they were made.
+     */
+    async updateConnectionState(): Promise<void> {
+        const list = connectedDeviceNames(Object.entries(clientDetails)).join(',');
+        if (list === this.connectedDevicesList) {
+            return;
+        }
+        this.connectedDevicesList = list;
+        try {
+            await this.setStateAsync('info.connection', { val: list, ack: true });
+        } catch (error) {
+            this.errorHandler(`[updateConnectionState]`, error);
         }
     }
 }
