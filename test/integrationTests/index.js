@@ -5,7 +5,7 @@ const settings_cleanup_tests = require('./settings_cleanup_tests');
 const version_fetch_tests = require('./version_fetch_tests');
 const version_migration_tests = require('./version_migration_tests');
 
-// The two dashboard suites enable the ESPHome dashboard, which makes the adapter build a real Python 3.13
+// The dashboard suites enable the ESPHome dashboard, which makes the adapter build a real Python 3.13
 // virtual environment via autopy and pip-install esphome + pillow from PyPI. That is far too slow
 // and too network dependent for the regular CI matrix (it wedges shared GitHub runners and is
 // subject to GitHub API rate limiting). They are executed by the dedicated

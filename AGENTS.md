@@ -8,14 +8,15 @@ Single-file adapter (`src/main.ts`, ~2700 lines) extending `@iobroker/adapter-co
 
 > All sources are TypeScript and fully type checked; there is no `// @ts-nocheck` and no per-file lint exception. Keep it that way: type new code properly instead of adding `any`, `@ts-nocheck` or broad eslint overrides. The types of `@2colors/esphome-native-api` are completed in `src/lib/esphome-native-api.d.ts`.
 
-| File                          | Purpose                                                                            |
-| ----------------------------- | ---------------------------------------------------------------------------------- |
-| `src/lib/helpers.ts`          | `DeviceInfo` / `ClientDetails` classes – one instance per ESP device               |
-| `src/lib/stateAttr.ts`        | Human-readable metadata for ioBroker state objects (name, role, type)              |
-| `src/lib/yamlFileManager.ts`  | Upload/download/delete YAML config files for the ESPHome directory                 |
-| `src/lib/dashboardApi.ts`     | Dashboard API helpers                                                              |
-| `src/lib/dashboard.ts`        | ESPHome Dashboard: versions, config migration, process start / stop                |
-| `src/lib/deviceManagement.ts` | ioBroker device manager (`@iobroker/dm-utils`): list / add / edit / delete devices |
+| File                               | Purpose                                                                            |
+| ---------------------------------- | ---------------------------------------------------------------------------------- |
+| `src/lib/helpers.ts`               | `DeviceInfo` / `ClientDetails` classes – one instance per ESP device               |
+| `src/lib/stateAttr.ts`             | Human-readable metadata for ioBroker state objects (name, role, type)              |
+| `src/lib/yamlFileManager.ts`       | Upload/download/delete YAML config files for the ESPHome directory                 |
+| `src/lib/dashboardApi.ts`          | Dashboard API helpers                                                              |
+| `src/lib/dashboard.ts`             | ESPHome Dashboard: versions, config migration, process start / stop                |
+| `src/lib/dashboardRequirements.ts` | Python requirements of the dashboard (ESPHome, Pillow, ESPHome Device Builder)     |
+| `src/lib/deviceManagement.ts`      | ioBroker device manager (`@iobroker/dm-utils`): list / add / edit / delete devices |
 
 **Two optional subsystems run in-process alongside device connections:**
 
@@ -148,14 +149,25 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
 ## ESPHome Dashboard Specifics
 
 - Managed via `autopy` (Python venv); cache at `~/.cache/autopy`.
+- `autopy` is the fork `@simonfischer04/autopy` from npm, installed under the alias `autopy`
+  (`npm:@simonfischer04/autopy@^1.3.0`, source: github.com/SimonFischer04/autopy). 1.3.0 added the `upgrade`
+  option of `getVenv()` and checks the extras of installed requirements.
+- From ESPHome 2026.7.0 on the dashboard is ESPHome Device Builder (`esphome dashboard` only exits with an error).
+  `buildRequirements()` (`src/lib/dashboardRequirements.ts`) installs it as `esphome-device-builder[esphome]`: its
+  `esphome` extra holds the minimum ESPHome version, so pip picks the matching release. `getVenv()` runs with
+  `upgrade: true`, otherwise pip keeps the Device Builder of a previously selected ESPHome version.
+- Pillow is not installed separately by default ("Auto Detect"): ESPHome pins the version it needs since 2024.12,
+  any other version makes pip fail. Pillow / Device Builder versions for the dropDowns are fetched from PyPI and
+  cached in `_ESPHomeDashboard.pillowVersionCache` / `deviceBuilderVersionCache`.
+- `info.connection` lists the connected devices (green instance while not empty, `updateConnectionState()` in
+  `src/main.ts`). With the dashboard enabled it stays empty until `Dashboard.scheduleReadyCheck()` gets an HTTP
+  2xx/3xx from `http://localhost:<port>/` (`Dashboard.isReady()`), and again when the dashboard process exits or
+  cannot be started.
 - With `config.ESPHomeDashboardDocker` ("Use Docker Integration") it runs as the official `ghcr.io/esphome/esphome` container
   instead: `docker-compose.yaml` (shipped in `files` of package.json) is managed by `@iobroker/plugin-docker`
   (`common.plugins.docker` in `io-package.json`). The service has `iobWaitForReady`, so the plugin starts nothing by itself;
   `startDockerContainer()` in `src/lib/dashboard.ts` sets the image tag and the `/config` bind mount on `plugin.configurations`
   and calls `instanceIsReady()`, only when the dashboard is enabled. Unit tests: `src/lib/dashboard.test.ts`.
-- `autopy` is intentionally pinned to a commit of `github:SimonFischer04/autopy` — the fork is not published
-  to npm, and the commit pin is deliberate. The repo checker flags this as S0047; it is a known won't-fix.
-- Pillow versions fetched from PyPI; cached in state `_ESPHomeDashboard.pillowVersionCache`.
 - "Clear Autopy Cache" button triggers `clearAutopyCache()` → `fs.rmSync(~/.cache/autopy, recursive)`.
 - Config migration: `migrateConfig()` converts legacy `ESPHomeDashboardIP` + port → `ESPHomeDashboardUrl`.
 

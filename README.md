@@ -196,7 +196,7 @@ This adapter can optionally integrate the ESPHome Dashboard into ioBroker's admi
 - Instead of a Python environment, the dashboard runs in the official ESPHome container (`ghcr.io/esphome/esphome`),
   started and stopped together with the instance by the [docker plugin of ioBroker](https://github.com/ioBroker/plugin-docker)
 - Requires Docker on the ioBroker host (the checkbox is only available when Docker is found), not available e.g. on Windows without Docker
-- The image tag is the selected ESPHome Dashboard version ("Always last available" uses the newest release), the Pillow version is not used
+- The image tag is the selected ESPHome Dashboard version ("Always last available" uses the newest release), the Pillow and ESPHome Device Builder versions are not used, the image brings its own
 - The container uses the host network (needed for the online status of the devices) and the port configured in the advanced settings
 - The YAML files stay in `iobroker-data/esphome.<instance>`, the same directory as without Docker. When ioBroker itself runs in
   a container, this path has to exist on the Docker host as well
@@ -285,6 +285,16 @@ is enabled, the devices found on the network that are not added yet.
 > [!NOTE]
 > The device manager is only available while the adapter is running.
 
+The card of a device shows its Wi-Fi signal strength (RSSI) when the device has a
+[`wifi_signal`](https://esphome.io/components/sensor/wifi_signal.html) sensor in dBm (the default unit):
+
+```
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+```
+
 - Add device
     - Enter the IP address and the encryption key (or API password of older firmware) of the device,
       the adapter connects and reports whether the connection succeeded
@@ -313,20 +323,25 @@ The adapter provides a convenient interface for managing YAML configuration file
 
 - **Upload YAML Files**: Paste your YAML configuration content directly into the admin interface and upload it to the ESPHome directory
 - **View File List**: See all YAML files currently stored in the ESPHome directory with file size and modification date
-- **Download Files**: Retrieve the content of any YAML file for editing or backup
+- **Edit Files**: Load the content of any YAML file into the editor, change it and upload it again
 - **Delete Files**: Remove YAML files that are no longer needed
 
 #### How to Use
 
-1. **Navigate to the "YAML Files" tab** in the adapter configuration
+The adapter instance must be running, the tab shows a note otherwise.
+
+1. **Navigate to the "YAML Files" tab** in the adapter configuration, the file list is loaded automatically
+   ("Refresh File List" reloads it, e.g. after files were changed in the ESPHome Dashboard)
 2. **Upload a new file**:
     - Enter a filename (must end with .yaml or .yml)
     - Paste your YAML configuration content
-    - Click "Upload File"
-3. **Refresh the file list** to see all available YAML files
-4. **Download or delete files**:
-    - Enter the filename in the "Select file" field
-    - Click "Download File" to view the content or "Delete File" to remove it
+    - Click "Upload File". An existing file with the same name is overwritten
+3. **Edit or delete a file**:
+    - Pick the file in the "YAML file" dropdown
+    - Click "Open in Editor" to load it into the upload fields, change it and click "Upload File" to save it,
+      or click "Delete File" to remove it
+
+The filename and content fields are only used to transfer files, they are not stored in the adapter settings.
 
 > [!NOTE]
 > Files are stored in the ESPHome directory: `/opt/iobroker/iobroker-data/esphome.<instance>/`
@@ -448,9 +463,15 @@ If you like my work, please consider a personal donation
 
 ### **WORK IN PROGRESS**
 
+- (@SimonFischer04) **ENHANCED**: `info.connection` lists the connected devices by name (comma-separated, like the sonoff and miner adapters do) instead of always being `true`. The admin shows the instance green while at least one device is connected and shows which ones, an instance without a connected device is shown yellow
+- (@SimonFischer04) **FIXED**: ESPHome Dashboard versions 2026.7.0 and newer work again (#479). ESPHome removed the built-in dashboard in 2026.7.0, from this version on ESPHome Device Builder is installed and started in its place, by default in the newest version supporting the selected ESPHome version. Pillow is no longer installed separately: ESPHome installs the version it requires itself, a different selected version made the installation fail. The Pillow version is set to "Auto Detect" once
+- (@SimonFischer04) **NEW**: The Pillow and ESPHome Device Builder versions can be selected in the "Advanced" section of the dashboard settings, "Auto Detect" (default) leaves them to ESPHome and pip
+- (@SimonFischer04) **FIXED**: The adapter no longer terminates when the ESPHome Dashboard cannot be started (`spawn esphome ENOENT`), an error with the reason is logged instead. Errors of the dashboard, like the reason why it stops right after the start, are logged as well
+- (@SimonFischer04) **ENHANCED**: With the ESPHome Dashboard enabled, the instance only shows green once the dashboard is reachable, `info.connection` lists no devices before that and again when the dashboard stops or cannot be installed
 - (@copilot) **NEW**: The integrated ESPHome Dashboard can run in the official ESPHome Docker container instead of a Python environment, enable "Use Docker Integration" in the ESPHome Dashboard settings. Requires Docker on the ioBroker host (#493)
 - (@SimonFischer04) **FIXED**: Discovered devices show their MAC address with ":" separators again
 - (@SimonFischer04) **NEW**: Support for the ioBroker device manager (#203). ESPHome devices are listed with their online status and details, can be added, adopted after discovery, given new credentials and deleted there
+- (@SimonFischer04) **NEW**: The device manager shows the Wi-Fi signal strength (RSSI) of devices with a `wifi_signal` sensor
 - (@SimonFischer04) **BREAKING**: The device tables and the add / delete buttons were removed from the adapter settings. The device manager is shown in their place as the second tab ("Devices") of the adapter settings, the discovery settings and the ignore list (previously its own tab) moved to a section "Discovery" of the main settings, where the listening address and the ignore list are only shown while device discovery is enabled, followed by a section "Connection behavior for known devices" with the configuration states, reconnect and ping settings
 - (@SimonFischer04) **BREAKING**: Requires admin 7.8.20 or newer, the first version with the current device manager
 - (@SimonFischer04) **BREAKING**: Removed the default credentials (encryption key and API password) from the main settings. They have not been used since version 0.6, when discovered devices stopped being connected automatically. Settings no longer used are removed from the instance configuration once, the adapter restarts after that
@@ -461,6 +482,7 @@ If you like my work, please consider a personal donation
 - (@SimonFischer04) **FIXED**: When the ESPHome Dashboard stops, the log shows its exit code and signal. A handler that was meant to log them listened to an event the dashboard process never sends
 - (@SimonFischer04) **FIXED**: The debug log for rounded values showed "[object Object]" instead of the entity name
 - (@SimonFischer04) **FIXED**: Known devices were listed as "undefined" in the device table until they connected, because the device name was not stored in the device object any more
+- (@SimonFischer04) **FIXED**: YAML file management works again (fixes #419). The file list loads when the "YAML Files" tab is opened, files are picked from a dropdown, "Open in Editor" loads a file into the upload fields, and uploading YAML with several lines no longer fails with "Filename and content are required". The upload fields are no longer stored in the adapter settings
 - (@SimonFischer04) **FIXED**: The adapter requires Node.js 22.12 or newer. The ESPHome Dashboard could not start on Node.js 22.0 to 22.11, because the build loads the ESM-only autopy package with require(), which those versions do not support
 - (@SimonFischer04) **ENHANCED**: Adapter rebuilt on the current create-adapter template and moved to TypeScript, all code is type checked now
 - (@SimonFischer04) **FIXED**: Fan speed level could not be changed, current ESPHome reports `supportedSpeedCount` instead of `supportedSpeedLevels`, so `speedLevel` was created read-only

@@ -93,6 +93,29 @@ function translateWithArgs(text: string, ...args: string[]): ioBroker.Translated
 }
 
 /**
+ * Whether an entity is the Wi-Fi signal sensor of the device (ESPHome platform wifi_signal).
+ * It is the only diagnostic signal strength sensor in dBm, a ble_rssi sensor has no entity category.
+ *
+ * @param type - Entity type, e.g. "Sensor"
+ * @param config - Entity configuration as announced by the device
+ * @param config.deviceClass - Device class, "signal_strength" for RSSI sensors
+ * @param config.unitOfMeasurement - Unit of the value
+ * @param config.entityCategory - Entity category, 2 for diagnostic
+ */
+export function isWifiSignalSensor(
+    type: string,
+    config: { deviceClass?: unknown; unitOfMeasurement?: unknown; entityCategory?: unknown },
+): boolean {
+    return (
+        type === 'Sensor' &&
+        config.deviceClass === 'signal_strength' &&
+        config.unitOfMeasurement === 'dBm' &&
+        // EntityCategory.Diagnostic, the enum only exists in the type declarations
+        config.entityCategory === 2
+    );
+}
+
+/**
  * Integration with the ioBroker device manager (https://github.com/ioBroker/ioBroker.device-manager).
  *
  * Every device is identified by its IP address, the key all connection handling in main.ts uses.
@@ -226,6 +249,13 @@ export default class EsphomeDeviceManagement extends DeviceManagement<EsphomeAda
                       mapping: { true: 'connected', false: 'disconnected' },
                   },
                   warning: device.connectionError ? device.connectStatus : false,
+                  ...(device.rssiEntityId != null
+                      ? {
+                            rssi: {
+                                stateId: `${this.adapter.namespace}.${deviceName}.Sensor.${device.rssiEntityId}.state`,
+                            },
+                        }
+                      : {}),
               }
             : 'disconnected';
 

@@ -183,7 +183,8 @@
   },
   "native": {
     "ESPHomeDashboardVersion": "2026.6.5",
-    "PillowVersion": "12.2.0",
+    "PillowVersion": "Auto Detect",
+    "DeviceBuilderVersion": "Auto Detect",
     "reconnectInterval": 30,
     "pingInterval": 5,
     "pingAttempts": 1,
@@ -217,12 +218,12 @@
       "_id": "info.connection",
       "type": "state",
       "common": {
-        "role": "indicator.connected",
-        "name": "Device or service connected",
-        "type": "boolean",
+        "role": "info.status",
+        "name": "List of connected devices",
+        "type": "string",
         "read": true,
         "write": false,
-        "def": false
+        "def": ""
       },
       "native": {}
     }

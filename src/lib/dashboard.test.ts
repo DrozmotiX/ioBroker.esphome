@@ -11,6 +11,8 @@ const adapterDir = path.join(__dirname, '..', '..');
 
 interface Logs {
     info: string[];
+    /** Delays of the timers started through the adapter */
+    timers: number[];
     error: string[];
 }
 
@@ -79,6 +81,12 @@ function createAdapter(config: Record<string, unknown>, plugin: DockerPlugin | n
             debug: noop,
         },
         getPluginInstance: (name: string) => (name === 'docker' ? plugin : null),
+        // The check whether the dashboard answers is only recorded, never run
+        setTimeout: (_callback: () => void, ms: number) => {
+            logs.timers.push(ms);
+            return undefined;
+        },
+        clearTimeout: noop,
         errorHandler: (codepart: string, error: unknown) => logs.error.push(`${codepart} ${String(error)}`),
     } as unknown as DashboardAdapter;
 }
@@ -89,7 +97,7 @@ describe('ESPHome Dashboard in Docker', () => {
 
     beforeEach(async () => {
         dir = await mkdtemp(path.join(tmpdir(), 'esphome-docker-'));
-        logs = { info: [], error: [] };
+        logs = { info: [], timers: [], error: [] };
     });
 
     afterEach(async () => {
@@ -147,6 +155,9 @@ describe('ESPHome Dashboard in Docker', () => {
         expect(plugin.readyCalls).to.equal(1);
         expect(logs.error).to.deep.equal([]);
         expect(logs.info.some(msg => msg.includes('Docker 27.0.0'))).to.equal(true);
+        // info.connection waits until the dashboard of the container answers, like with the process
+        expect(logs.timers).to.have.length(1);
+        expect(dashboard.isReady()).to.equal(false);
     });
 
     it('uses the newest stable image when no version is known', async () => {
@@ -167,6 +178,7 @@ describe('ESPHome Dashboard in Docker', () => {
 
         expect(logs.error).to.have.length(1);
         expect(logs.error[0]).to.include('Docker is not installed or not running');
+        expect(logs.timers).to.have.length(0);
     });
 
     it('reports an error and starts nothing without the docker plugin', async () => {

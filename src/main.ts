@@ -16,11 +16,13 @@ import {
 } from '@2colors/esphome-native-api';
 import * as utils from '@iobroker/adapter-core';
 import { format } from 'node:util';
+import { connectionStateValue, isDeviceOnline } from './lib/connectionState';
 import Dashboard from './lib/dashboard';
 import EsphomeDeviceManagement, {
     type DeviceActionResult,
     type DiscoveredDevice,
     type EsphomeDeviceSource,
+    isWifiSignalSensor,
 } from './lib/deviceManagement';
 import ClientDetails from './lib/helpers';
 import stateAttr from './lib/stateAttr'; // Load attribute library
@@ -44,7 +46,8 @@ interface EntityDetails {
 /**
  * Settings of earlier versions nothing reads any more, removed once by removeObsoleteSettings():
  * the device tab of 1.0.0 (deviceIP, the device tables and the unsaved apiPassword input, whose default
- * was still seeded) and the default credentials, unused since 0.6
+ * was still seeded), the default credentials, unused since 0.6, and the inputs of the YAML Files tab, whose
+ * values (including the pasted YAML) were saved with the configuration
  */
 const OBSOLETE_SETTINGS = [
     'deviceIP',
@@ -53,6 +56,10 @@ const OBSOLETE_SETTINGS = [
     'apiPassword',
     'apiPass',
     'encryptionKey',
+    'uploadFilename',
+    'uploadContent',
+    'selectedFilename',
+    'yamlFilesTable',
 ];
 
 const disableSentry = false; // Ensure to set to true during development!
@@ -96,6 +103,8 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
     declare private yamlFileManager: YamlFileManager;
     declare private dashboard: Dashboard;
     declare private deviceManagement: EsphomeDeviceManagement;
+    /** Last value written to info.connection, see updateConnectionState() */
+    declare private connectedDevicesList: string | undefined;
 
     /**
      * @param [options] - Adapter configuration options
@@ -130,7 +139,12 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
         // Created here as it accesses the objects database right away.
         this.deviceManagement = new EsphomeDeviceManagement(this);
 
-        await this.setStateAsync('info.connection', { val: true, ack: true });
+        // info.connection lists the connected devices. Up to 1.0.0 it was a boolean: existing instances keep their
+        // object from the old version, so bring its type in line with the list it holds now
+        await this.extendObjectAsync('info.connection', {
+            common: { type: 'string', role: 'info.status', name: 'List of connected devices', def: '' },
+        });
+        await this.updateConnectionState();
         try {
             // Settings earlier versions stored and nothing reads any more, the adapter restarts if some were removed
             if (await this.removeObsoleteSettings()) {
@@ -481,6 +495,8 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     clientDetails[host].deviceName = deviceName;
                     clientDetails[host].deviceFriendlyName = deviceInfo.name;
                     clientDetails[host].deviceInfo = deviceInfo;
+                    // Announced again with the entities, the firmware may have changed
+                    clientDetails[host].rssiEntityId = null;
 
                     this.deviceStateRelation[deviceName] = { ip: host };
 
@@ -653,6 +669,12 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                     }
 
                     await this.createNonStateDevices(host, entity);
+
+                    // Show the Wi-Fi signal as RSSI in the device manager
+                    if (clientDetails[host].rssiEntityId == null && isWifiSignalSensor(entity.type, entity.config)) {
+                        clientDetails[host].rssiEntityId = entity.id;
+                        await this.deviceManagement.refreshDeviceList();
+                    }
 
                     // Request current state values. If the connection dropped while entities were
                     // still being announced, `newEntity` fires again on the stale connection and
@@ -1491,6 +1513,8 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
 
             this.dashboard.stop();
 
+            void this.setState('info.connection', { val: '', ack: true });
+
             callback();
         } catch (error) {
             this.errorHandler(`[onUnload]`, error);
@@ -1523,6 +1547,12 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
         }
         this.log.debug(`Data from configuration received : ${JSON.stringify(obj)}`);
         try {
+            if (this.yamlFileManager.isAdminCommand(obj.command)) {
+                // "YAML Files" tab of the instance configuration
+                const response = await this.yamlFileManager.handleAdminMessage(obj.command, obj.message);
+                this.sendTo(obj.from, obj.command, response, obj.callback);
+                return;
+            }
             switch (obj.command) {
                 // Front End message handler to load ESPHome Dashboard dropDown with all available versions
                 case 'getESPHomeDashboardVersion':
@@ -1532,6 +1562,11 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                 // Front End message handler to load Pillow version dropdown with available versions
                 case 'getPillowVersion':
                     this.sendTo(obj.from, obj.command, this.dashboard.getPillowVersionDropDown(), obj.callback);
+                    break;
+
+                // Front End message handler to load ESPHome Device Builder version dropdown with available versions
+                case 'getDeviceBuilderVersion':
+                    this.sendTo(obj.from, obj.command, this.dashboard.getDeviceBuilderVersionDropDown(), obj.callback);
                     break;
 
                 // Front End message handler to host IP-Address(es)
@@ -1558,83 +1593,6 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                         // console.log(`IP4 List ${ip4List}`);
 
                         this.sendTo(obj.from, obj.command, ip4List, obj.callback);
-                    }
-                    break;
-
-                // Handle YAML file upload
-                case 'uploadYamlFile':
-                    {
-                        if (!obj.message || !obj.message.filename || !obj.message.content) {
-                            this.sendTo(
-                                obj.from,
-                                obj.command,
-                                { error: 'Filename and content are required' },
-                                obj.callback,
-                            );
-                            return;
-                        }
-
-                        const result = await this.yamlFileManager.uploadYamlFile(
-                            obj.message.filename,
-                            obj.message.content,
-                        );
-                        this.sendTo(obj.from, obj.command, result, obj.callback);
-                    }
-                    break;
-
-                // Handle listing YAML files
-                case 'listYamlFiles':
-                    {
-                        const files = await this.yamlFileManager.listYamlFiles();
-                        this.sendTo(
-                            obj.from,
-                            obj.command,
-                            {
-                                native: {
-                                    yamlFilesTable: files,
-                                },
-                            },
-                            obj.callback,
-                        );
-                    }
-                    break;
-
-                // Handle YAML file download
-                case 'downloadYamlFile':
-                    {
-                        if (!obj.message || !obj.message.filename) {
-                            this.sendTo(obj.from, obj.command, { error: 'Filename is required' }, obj.callback);
-                            return;
-                        }
-
-                        const result = await this.yamlFileManager.downloadYamlFile(obj.message.filename);
-
-                        // Format the response to show file content in a user-friendly way
-                        if (result.success) {
-                            this.sendTo(
-                                obj.from,
-                                obj.command,
-                                {
-                                    result: `File content (copy to use):\n\n${result.content}`,
-                                },
-                                obj.callback,
-                            );
-                        } else {
-                            this.sendTo(obj.from, obj.command, result, obj.callback);
-                        }
-                    }
-                    break;
-
-                // Handle YAML file deletion
-                case 'deleteYamlFile':
-                    {
-                        if (!obj.message || !obj.message.filename) {
-                            this.sendTo(obj.from, obj.command, { error: 'Filename is required' }, obj.callback);
-                            return;
-                        }
-
-                        const result = await this.yamlFileManager.deleteYamlFile(obj.message.filename);
-                        this.sendTo(obj.from, obj.command, result, obj.callback);
                     }
                     break;
 
@@ -1724,6 +1682,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
             }
             resetTimers[ip] = this.setTimeout(async () => {
                 delete clientDetails[ip];
+                await this.updateConnectionState();
                 await initiateNDevice();
             }, 2000);
         }
@@ -1750,6 +1709,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
         // Clean memory data
         delete clientDetails[ip];
         delete this.messageResponse[ip];
+        await this.updateConnectionState();
         await this.deviceManagement.refreshDeviceList();
 
         return { result: 'OK - Device successfully removed' };
@@ -2222,13 +2182,12 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
             }
 
             // Update device connection indicator
-            if (!connected || connectionError || connecting) {
-                // Device not connected or initializing, set _online state to false
-                await this.stateSetCreate(`${clientDetails[host].deviceName}.info._online`, `Online state`, false);
-            } else {
-                // Device connected, set _online state to true
-                await this.stateSetCreate(`${clientDetails[host].deviceName}.info._online`, `Online state`, true);
-            }
+            await this.stateSetCreate(
+                `${clientDetails[host].deviceName}.info._online`,
+                `Online state`,
+                isDeviceOnline(clientDetails[host]),
+            );
+            await this.updateConnectionState();
             // Write connection status to info channel
             await this.stateSetCreate(
                 `${clientDetails[host].deviceName}.info._connectionStatus`,
@@ -2237,6 +2196,30 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
             );
         } catch (error) {
             this.errorHandler(`[updateConnectionStatus]`, error);
+        }
+    }
+
+    /**
+     * Lists the connected devices in info.connection, comma-separated like other multi-device adapters (e.g. sonoff)
+     * do: the admin shows the instance green while the list is not empty, and shows the list itself. Green needs just
+     * one connected device - requiring all would turn it yellow whenever a single device is switched off.
+     * With the ESPHome Dashboard enabled the list stays empty until the dashboard answers, see Dashboard.isReady().
+     * The list is computed and remembered synchronously, so concurrent calls write it in the order they were made.
+     */
+    async updateConnectionState(): Promise<void> {
+        const list = connectionStateValue(
+            Object.entries(clientDetails),
+            this.config.ESPHomeDashboardEnabled,
+            this.dashboard.isReady(),
+        );
+        if (list === this.connectedDevicesList) {
+            return;
+        }
+        this.connectedDevicesList = list;
+        try {
+            await this.setStateAsync('info.connection', { val: list, ack: true });
+        } catch (error) {
+            this.errorHandler(`[updateConnectionState]`, error);
         }
     }
 }
