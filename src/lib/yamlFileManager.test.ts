@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { readFileSync } from 'node:fs';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { existsSync, readFileSync } from 'node:fs';
+import { mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import YamlFileManager from './yamlFileManager';
@@ -28,6 +28,91 @@ describe('YAML File Management', () => {
             expect(YamlFileManager.resolveDirectory(`/opt/iobroker/iobroker-data${path.sep}`, '0')).to.equal(
                 path.join('/opt/iobroker/iobroker-data', 'esphome.0'),
             );
+        });
+    });
+
+    describe('migrateLegacyDirectory()', () => {
+        let root: string;
+
+        beforeEach(async () => {
+            root = await mkdtemp(path.join(tmpdir(), 'esphome-migrate-'));
+        });
+
+        afterEach(async () => {
+            await rm(root, { recursive: true, force: true });
+        });
+
+        it('does nothing in a default installation, where the data directory ends with a slash', async () => {
+            const dataDir = `${path.join(root, 'iobroker-data')}${path.sep}`;
+            await mkdir(path.join(dataDir, 'esphome.0'), { recursive: true });
+            await writeFile(path.join(dataDir, 'esphome.0', 'a.yaml'), 'a');
+
+            expect(YamlFileManager.migrateLegacyDirectory(dataDir, 0).result).to.equal('none');
+            expect(await readFile(path.join(dataDir, 'esphome.0', 'a.yaml'), 'utf8')).to.equal('a');
+        });
+
+        it('does nothing when no legacy directory exists', () => {
+            expect(YamlFileManager.migrateLegacyDirectory(path.join(root, 'iob-data'), 0).result).to.equal('none');
+        });
+
+        it('moves the directory version 1.0.0 created next to a data directory without trailing slash', async () => {
+            // IOBROKER_DATA_DIR=<root>/iob-data: the dashboard of 1.0.0 used <root>/iob-dataesphome.0
+            const dataDir = path.join(root, 'iob-data');
+            const legacy = `${dataDir}esphome.0`;
+            await mkdir(path.join(legacy, '.esphome'), { recursive: true });
+            await writeFile(path.join(legacy, 'a.yaml'), 'a');
+            await writeFile(path.join(legacy, 'secrets.yaml'), 'secret');
+
+            const { result, to } = YamlFileManager.migrateLegacyDirectory(dataDir, 0);
+
+            expect(result).to.equal('moved');
+            expect(to).to.equal(path.join(dataDir, 'esphome.0'));
+            expect(await readFile(path.join(to, 'a.yaml'), 'utf8')).to.equal('a');
+            expect(await readFile(path.join(to, 'secrets.yaml'), 'utf8')).to.equal('secret');
+            expect(existsSync(legacy)).to.equal(false);
+            // runs on every start, nothing to do the second time
+            expect(YamlFileManager.migrateLegacyDirectory(dataDir, 0).result).to.equal('none');
+        });
+
+        it('copies into an existing directory without overwriting its files and keeps the legacy directory', async () => {
+            const dataDir = path.join(root, 'iob-data');
+            const legacy = `${dataDir}esphome.0`;
+            const target = path.join(dataDir, 'esphome.0');
+            await mkdir(legacy, { recursive: true });
+            await mkdir(target, { recursive: true });
+            await writeFile(path.join(legacy, 'a.yaml'), 'legacy a');
+            await writeFile(path.join(legacy, 'b.yaml'), 'legacy b');
+            // uploaded with the YAML file management, which already used the new directory
+            await writeFile(path.join(target, 'a.yaml'), 'uploaded a');
+
+            expect(YamlFileManager.migrateLegacyDirectory(dataDir, 0).result).to.equal('merged');
+
+            expect(await readFile(path.join(target, 'a.yaml'), 'utf8')).to.equal('uploaded a');
+            expect(await readFile(path.join(target, 'b.yaml'), 'utf8')).to.equal('legacy b');
+            expect(existsSync(legacy)).to.equal(false);
+            expect(await readFile(path.join(`${legacy}.migrated`, 'a.yaml'), 'utf8')).to.equal('legacy a');
+            expect(YamlFileManager.migrateLegacyDirectory(dataDir, 0).result).to.equal('none');
+        });
+
+        it('keeps relative symlinks pointing into the merged directory', async function () {
+            const dataDir = path.join(root, 'iob-data');
+            const legacy = `${dataDir}esphome.0`;
+            const target = path.join(dataDir, 'esphome.0');
+            await mkdir(path.join(legacy, 'common'), { recursive: true });
+            await mkdir(target, { recursive: true });
+            await writeFile(path.join(legacy, 'common', 'secrets.yaml'), 'secret');
+            try {
+                await symlink(path.join('common', 'secrets.yaml'), path.join(legacy, 'secrets.yaml'));
+            } catch {
+                // creating symlinks needs extra rights on Windows
+                this.skip();
+            }
+
+            expect(YamlFileManager.migrateLegacyDirectory(dataDir, 0).result).to.equal('merged');
+
+            // the legacy directory is renamed, the link still works
+            expect(await readlink(path.join(target, 'secrets.yaml'))).to.equal(path.join('common', 'secrets.yaml'));
+            expect(await readFile(path.join(target, 'secrets.yaml'), 'utf8')).to.equal('secret');
         });
     });
 

@@ -1518,11 +1518,13 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                 }
             }
 
-            this.dashboard.stop();
-
             void this.setState('info.connection', { val: '', ack: true });
 
-            callback();
+            // Waits only while the dashboard container is being started, see Dashboard.stop()
+            void this.dashboard
+                .stop()
+                .catch(error => this.errorHandler(`[onUnload]`, error))
+                .finally(callback);
         } catch (error) {
             this.errorHandler(`[onUnload]`, error);
             callback();

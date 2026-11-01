@@ -1,11 +1,14 @@
 name: Dashboard Integration
 
-# The ESPHome dashboard integration tests build a real Python virtual environment and
-# pip-install esphome + pillow from PyPI (about 4 minutes). They run for every pull request and
-# push to main/v2.
+# Integration tests of the ESPHome dashboard, one job per way the adapter runs it:
+# - native: builds a real Python virtual environment and pip-installs esphome + pillow from PyPI
+#   (about 4 minutes)
+# - docker: runs the dashboard in the official ESPHome image through the docker plugin of ioBroker
+#   ("Use Docker Integration", beta) against the Docker daemon of the runner; pulls the image (about 1 GB)
+# They run for every pull request and push to main/v2.
 # Push is limited to the target branches, otherwise a branch with an open PR runs twice.
 # This workflow is intentionally NOT part of the release pipeline - a slow or rate limited
-# PyPI/GitHub API must never block a release.
+# PyPI/GitHub API/container registry must never block a release.
 on:
     push:
         branches:
@@ -21,12 +24,20 @@ concurrency:
 
 jobs:
     dashboard-integration:
+        name: dashboard-integration (${{ matrix.mode }})
         runs-on: ubuntu-latest
         timeout-minutes: 45
 
+        strategy:
+            fail-fast: false
+            matrix:
+                mode: [native, docker]
+
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            ESPHOME_RUN_DASHBOARD_TESTS: 'true'
+            # Each job enables its suites, see test/integrationTests/index.js
+            ESPHOME_RUN_DASHBOARD_TESTS: ${{ matrix.mode == 'native' }}
+            ESPHOME_RUN_DOCKER_TESTS: ${{ matrix.mode == 'docker' }}
 
         steps:
             - uses: actions/checkout@v7
@@ -37,6 +48,7 @@ jobs:
                   cache: 'npm'
 
             - uses: actions/setup-python@v7
+              if: matrix.mode == 'native'
               with:
                   python-version: '3.13'
 
@@ -45,4 +57,10 @@ jobs:
             # The integration test starts the compiled adapter from build/
             - run: npm run build
 
+            # The native suites, plus the ones that always run
             - run: npm run test:integration
+              if: matrix.mode == 'native'
+
+            # Only the Docker suites, the others already run in the native job
+            - run: npm run test:integration -- --grep "Docker"
+              if: matrix.mode == 'docker'

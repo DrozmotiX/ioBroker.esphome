@@ -1,0 +1,48 @@
+# ESPHome Dashboard in Docker, managed by the docker plugin of ioBroker (@iobroker/plugin-docker).
+# Only used when "Use Docker Integration" is enabled in the ESPHome Dashboard settings of the instance.
+#
+# The container is started by the adapter (iobWaitForReady), and only when the ESPHome Dashboard is
+# enabled as well. Before that, the adapter sets the image tag to the selected ESPHome version and
+# mounts the YAML directory of the instance (iobroker-data/esphome.<instance>) to /config,
+# see startDockerContainer() in src/lib/dashboard.ts.
+services:
+    esphome:
+        image: ghcr.io/esphome/esphome:stable
+        labels:
+            - 'iobEnabled=${config.ESPHomeDashboardDocker:-false}'
+            - 'iobWaitForReady=true'
+            # Like the native dashboard process, the container runs only while the instance runs
+            - 'iobStopOnUnload=true'
+            - 'iobMonitoringEnabled=true'
+        # Host network, as recommended by ESPHome: the dashboard needs mDNS to show the online status of the devices
+        network_mode: host
+        # The entrypoint of the image runs ESPHome Device Builder for "dashboard" since ESPHome 2026.6.0,
+        # older images run "esphome dashboard"
+        command: ['dashboard', '--port=${config.ESPHomeDashboardPort:-6052}', '/config']
+        # The healthcheck of the image always asks port 6052, the dashboard listens on the configured one
+        healthcheck:
+            test:
+                [
+                    'CMD',
+                    'curl',
+                    '--fail',
+                    'http://localhost:${config.ESPHomeDashboardPort:-6052}/version',
+                    '-A',
+                    'HealthCheck',
+                ]
+            interval: 30s
+            timeout: 30s
+        volumes:
+            # Source replaced by the adapter with the YAML directory of the instance
+            - './esphome-config:/config'
+            # PlatformIO, ESP-IDF and the other toolchains (several GB): the entrypoint of the image keeps them
+            # in /cache when it exists, otherwise in /config/.esphome, i.e. in iobroker-data.
+            # Named volume, prefixed by the docker plugin: iob_esphome_<instance>_esphome_cache
+            - 'esphome_cache:/cache'
+        stop_grace_period: 5s
+        # Not restarted by Docker itself: it would also start the container while the instance is stopped.
+        # While the instance runs, the docker plugin restarts it (iobMonitoringEnabled).
+        restart: 'no'
+
+volumes:
+    esphome_cache:
