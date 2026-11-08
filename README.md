@@ -452,6 +452,7 @@ If you like my work, please consider a personal donation
 ### __WORK IN PROGRESS__
 
 - (@DutchmanNL) **BREAKING**: ESPHome 2026.1 removed API password authentication, devices updated to ESPHome 2026.1 or later must use an encryption key. The API password option is kept for devices running older ESPHome versions, see README (#410)
+- (@DutchmanNL) **ENHANCED**: The online state `info._online` of each device has the role `indicator.reachable` (was `state`), so other adapters and visualisations can see whether an ESPHome device is reachable. Existing installations get the new role at the next adapter start
 
 ### 1.0.1-alpha.0 (2026-10-16)
 
