@@ -2328,9 +2328,11 @@ class Esphome extends utils.Adapter {
                 }
 
                 const deviceName = device[2];
+                // The 'disconnected' handler removes the device from deviceStateRelation, so the command
+                // cannot be sent. Leave the write at ack:false: callers that wait for the ack (retries,
+                // failure handling) must see that the command did not reach the device.
                 if (!this.deviceStateRelation[deviceName]) {
-                    this.log.debug(`[onStateChange] Device ${deviceName} not connected, acknowledging state change`);
-                    await this.setStateAsync(id, { val: state.val, ack: true });
+                    this.log.warn(`[onStateChange] Device ${deviceName} is not connected, command ${id} not sent`);
                     return;
                 }
                 const deviceIP = this.deviceStateRelation[deviceName].ip;
