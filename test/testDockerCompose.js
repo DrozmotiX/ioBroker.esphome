@@ -10,7 +10,10 @@
 
 const { expect } = require('chai');
 const path = require('node:path');
-const DockerPlugin = require('@iobroker/plugin-docker');
+const dockerPlugin = require('@iobroker/plugin-docker');
+// the types come from the ESM build (export default), the CJS build sets module.exports.default as well
+const DockerPlugin = dockerPlugin.default;
+const { DockerManagerOfOwnContainers } = dockerPlugin;
 const ioPackage = require('../io-package.json');
 
 const adapterDir = path.join(__dirname, '..');
@@ -38,20 +41,27 @@ const configDir = '/opt/iobroker/iobroker-data/esphome.0';
  */
 async function renderCompose(native) {
     const log = { level: 'silly', silly() {}, debug() {}, info() {}, warn() {}, error() {} };
-    const plugin = new DockerPlugin({
-        pluginScope: 'adapter',
-        parentNamespace: 'system.adapter.esphome.0',
-        pluginNamespace: 'system.adapter.esphome.0.plugins.docker',
-        pluginLogNamespace: 'esphome.0 Plugin docker',
-        log,
-        iobrokerConfig: {},
-        parentPackage: { name: 'iobroker.esphome' },
-        adapterDir,
-    });
-    plugin.objectsDb = {
-        getObjectAsync: async (/** @type {string} */ id) =>
-            id === 'system.adapter.esphome.0' ? { _id: id, type: 'instance', common: {}, native } : null,
-    };
+    // only what the plugin reads while it renders the compose file
+    const plugin = new DockerPlugin(
+        /** @type {ConstructorParameters<typeof DockerPlugin>[0]} */ (
+            /** @type {unknown} */ ({
+                pluginScope: 'adapter',
+                parentNamespace: 'system.adapter.esphome.0',
+                pluginNamespace: 'system.adapter.esphome.0.plugins.docker',
+                pluginLogNamespace: 'esphome.0 Plugin docker',
+                log,
+                iobrokerConfig: {},
+                parentPackage: { name: 'iobroker.esphome' },
+                adapterDir,
+            })
+        ),
+    );
+    plugin.objectsDb = /** @type {typeof plugin.objectsDb} */ (
+        /** @type {unknown} */ ({
+            getObjectAsync: async (/** @type {string} */ id) =>
+                id === 'system.adapter.esphome.0' ? { _id: id, type: 'instance', common: {}, native } : null,
+        })
+    );
     // A copy, the plugin writes the resolved Docker API into the configuration it gets
     await plugin.init(JSON.parse(JSON.stringify(ioPackage.common.plugins.docker)));
     return /** @type {Container[]} */ (/** @type {unknown} */ (plugin.configurations));
@@ -73,7 +83,7 @@ function nativeWith(dockerEsphome, rest) {
 }
 
 describe('docker-compose.yaml (ESPHome Dashboard in Docker)', () => {
-    const managerPrototype = DockerPlugin.DockerManagerOfOwnContainers.prototype;
+    const managerPrototype = DockerManagerOfOwnContainers.prototype;
     const originalInit = managerPrototype.init;
     let managersStarted = 0;
 
