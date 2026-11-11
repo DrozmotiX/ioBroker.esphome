@@ -294,23 +294,47 @@ class Esphome extends utils.Adapter {
     /**
      * Absolute path of the YAML directory as the container of the ESPHome Dashboard in Docker mounts it.
      *
-     * It is the directory of the native dashboard and the YAML file management, so switching between
-     * native and Docker keeps all configurations. Normalized, because Docker reports a bind source
-     * cleaned up, and any difference to docker-compose.yaml makes the plugin recreate the container.
+     * dockerEsphome.configDir, chosen in the admin (diskSelector). Empty means the data directory of the
+     * instance, which the native dashboard uses too, so switching between native and Docker keeps all
+     * configurations. The YAML file management follows it while Docker is enabled.
      *
-     * @returns {string} - absolute path of the YAML directory
+     * @returns {string} - absolute, normalized path of the YAML directory
      */
     getDockerConfigDir() {
-        return path.resolve(this.yamlFileManager.getESPHomeDirectory());
+        return this.yamlFileManager.getDockerESPHomeDirectory();
+    }
+
+    /**
+     * Why a directory must not be mounted into the container of the ESPHome Dashboard: it runs as root and
+     * creates .esphome, .git and .device-builder in /config. The path can be chosen freely in the admin
+     * and the configuration can be changed in other ways too, so it is checked here.
+     *
+     * @param {string} dir - absolute, normalized path
+     * @returns {string} - the reason, or an empty string if the directory can be used
+     */
+    checkDockerConfigDir(dir) {
+        const comparable = (/** @type {string} */ p) => (process.platform === 'win32' ? p.toLowerCase() : p);
+        if (path.parse(dir).root === dir) {
+            return 'the root of the file system cannot be mounted';
+        }
+        const dataDir = path.resolve(utils.getAbsoluteDefaultDataDir());
+        if (
+            comparable(dataDir) === comparable(dir) ||
+            comparable(dataDir).startsWith(comparable(`${dir}${path.sep}`))
+        ) {
+            return `it contains the ioBroker data directory ${dataDir}`;
+        }
+        return '';
     }
 
     /**
      * Make sure the container of the ESPHome Dashboard in Docker finds its YAML directory.
      *
      * `@iobroker/plugin-docker` fills docker-compose.yaml with the configuration of the instance when the
-     * instance starts, before onReady(). The absolute path of the YAML directory is only known here, so it
-     * is written into dockerEsphome.configDir, which restarts the instance once. Until then the container
-     * is not created (iobWaitForReady), see startDockerDashboard().
+     * instance starts, before onReady(). The default YAML directory is only known here, and a chosen one may
+     * be relative or not normalized, so the absolute path is written into dockerEsphome.configDir, which
+     * restarts the instance once. Until then the container is not created (iobWaitForReady), see
+     * startDockerDashboard().
      *
      * @returns {Promise<boolean>} - true if the configuration was changed and the instance restarts
      */
@@ -319,7 +343,8 @@ class Esphome extends utils.Adapter {
             return false;
         }
         const configDir = this.getDockerConfigDir();
-        if (this.config.dockerEsphome.configDir === configDir) {
+        // an unusable directory is reported by startDockerDashboard(), a restart would not help
+        if (this.config.dockerEsphome.configDir === configDir || this.checkDockerConfigDir(configDir)) {
             return false;
         }
 
@@ -355,6 +380,13 @@ class Esphome extends utils.Adapter {
             // prepareDockerDashboard() could not store it, the container would mount a wrong directory
             this.log.error(
                 `ESPHome Dashboard in Docker is not started: the YAML directory ${configDir} is not stored in the configuration yet`,
+            );
+            return;
+        }
+        const unusable = this.checkDockerConfigDir(configDir);
+        if (unusable) {
+            this.log.error(
+                `ESPHome Dashboard in Docker is not started: the YAML directory ${configDir} cannot be used, ${unusable}. Please choose another one in the adapter configuration`,
             );
             return;
         }

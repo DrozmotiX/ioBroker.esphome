@@ -115,5 +115,5 @@
     "chkESPHomeDockerAutoUpdate": "Automatyczna aktualizacja obrazu Docker",
     "hlpESPHomeDockerAutoUpdate": "Jeśli włączone, przy uruchomieniu adaptera zostanie pobrany najnowszy obraz Docker.",
     "lblESPHomeDockerConfigDir": "Katalog YAML na tym hoście",
-    "hlpESPHomeDockerConfigDir": "Ustawiany przez adapter podczas uruchamiania. Montowany jako /config w kontenerze, to ten sam katalog co dla integracji natywnej i zarządzania plikami YAML"
+    "hlpESPHomeDockerConfigDir": "Montowany jako /config w kontenerze, korzysta z niego także zarządzanie plikami YAML. Puste: katalog danych instancji, ten sam co dla integracji natywnej. Nie można użyć katalogu danych ioBroker ani folderów nad nim"
 }

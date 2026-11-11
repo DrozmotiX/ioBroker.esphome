@@ -232,16 +232,23 @@ the InfluxDB, SQL and Frigate adapters run their services. The container is mana
 | ESPHome image version              | `stable` (default), `beta` or `dev` follow the releases of their channel. A version number such as `2026.6.5` stays until you change it |
 | Stop container when instance stops | Without it, the dashboard keeps running while the instance is stopped                                                                   |
 | Auto-update Docker image           | Pulls a newer image of the selected version when the adapter starts and recreates the container                                         |
-| YAML directory on this host        | Set by the adapter, see below                                                                                                           |
+| YAML directory on this host        | Folder mounted as `/config`, the button aside browses the disk of the host (admin 8.3.11 or later). Empty means the default, see below  |
 
 The dashboard listens on the port configured under "Advanced" (default `6052`), so the dashboard URL and the admin tab
 work as with the native integration.
 
 **Where the files are**
 
-- The YAML configurations stay in `iobroker-data/esphome.<instance>`, the directory of the native integration and of the
-  [YAML file management](#yaml-file-management). Switching between native and Docker keeps all of them.
+- By default the YAML configurations stay in `iobroker-data/esphome.<instance>`, the directory of the native integration
+  and of the [YAML file management](#yaml-file-management). Switching between native and Docker keeps all of them.
   The adapter stores the absolute path of this directory when Docker is switched on, which restarts the instance once.
+- Another folder, e.g. the configuration directory of an existing ESPHome installation, can be chosen as "YAML directory
+  on this host". The [YAML file management](#yaml-file-management) uses it while Docker is switched on; the native
+  integration always uses `iobroker-data/esphome.<instance>`, so copy the files when switching back. A relative path is
+  relative to `iobroker-data`. The ioBroker data directory itself and the folders above it (such as `/opt/iobroker`
+  or `/`) are refused, as the container runs as root and creates `.esphome`, `.git` and `.device-builder` there.
+  Choosing the folder in a dialog needs admin 8.3.11 or later and a js-controller with the feature
+  `CONTROLLER_READ_DISK_DIR`; without them the path can be typed, older admin versions do not show the field.
 - The PlatformIO toolchains live in the Docker volume `iob_esphome_<instance>_esphome_cache`. They are not part of the
   backup, as they are downloaded again when missing.
 - Files the dashboard creates belong to `root`, as the container runs as root. The YAML file management of the adapter can still replace them.
@@ -498,7 +505,7 @@ If you like my work, please consider a personal donation
 
 ### **WORK IN PROGRESS**
 
-- (@GermanBluefox) **NEW**: The ESPHome Dashboard can run in Docker instead of the Python environment of the native integration (optional, like the Docker options of the InfluxDB, SQL and Frigate adapters). The adapter manages the official image `ghcr.io/esphome/esphome` through `@iobroker/plugin-docker`, with the YAML directory of the native integration, so all configurations are kept when switching. Requires Docker on the ioBroker host and admin 7.7.2 or later
+- (@GermanBluefox) **NEW**: The ESPHome Dashboard can run in Docker instead of the Python environment of the native integration (optional, like the Docker options of the InfluxDB, SQL and Frigate adapters). The adapter manages the official image `ghcr.io/esphome/esphome` through `@iobroker/plugin-docker`, with the YAML directory of the native integration, so all configurations are kept when switching; another folder of the host can be chosen with the `diskSelector` of admin 8.3.11. Requires Docker on the ioBroker host and admin 7.7.2 or later
 
 ### 1.0.1 (2026-11-09)
 

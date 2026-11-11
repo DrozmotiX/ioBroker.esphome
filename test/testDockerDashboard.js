@@ -21,6 +21,9 @@ describe('ESPHome Dashboard in Docker', () => {
     let dataDir;
     /** @type {string} */
     let configDir;
+    /** a YAML directory chosen in the admin, outside of the data directory of the instance */
+    /** @type {string} */
+    let customDir;
     /** @type {ReturnType<typeof import('../main.js')>} */
     let adapter;
     /** @type {Array<{native: Record<string, unknown>}>} */
@@ -77,6 +80,7 @@ describe('ESPHome Dashboard in Docker', () => {
     before(() => {
         dataDir = `${fs.mkdtempSync(path.join(os.tmpdir(), 'esphome-docker-'))}${path.sep}`;
         configDir = path.resolve(`${dataDir}esphome.0`);
+        customDir = path.resolve(`${dataDir}yaml`);
 
         savedCore = require.cache[corePath];
         require.cache[corePath] = /** @type {NodeJS.Module} */ (
@@ -106,6 +110,7 @@ describe('ESPHome Dashboard in Docker', () => {
         errors = [];
         instanceIsReadyCalls = 0;
         fs.rmSync(configDir, { recursive: true, force: true });
+        fs.rmSync(customDir, { recursive: true, force: true });
         // only what the Docker part reads
         adapter.config = /** @type {ioBroker.AdapterConfig} */ (
             /** @type {unknown} */ ({
@@ -152,6 +157,34 @@ describe('ESPHome Dashboard in Docker', () => {
             expect(await adapter.prepareDockerDashboard()).to.equal(false);
             expect(writtenObjects).to.have.length(0);
         });
+
+        it('keeps a directory chosen in the admin', async () => {
+            adapter.config.dockerEsphome.configDir = customDir;
+
+            expect(await adapter.prepareDockerDashboard()).to.equal(false);
+            expect(writtenObjects).to.have.length(0);
+        });
+
+        it('stores a chosen directory normalized', async () => {
+            adapter.config.dockerEsphome.configDir = `${path.join(customDir, '..', 'yaml')}${path.sep}`;
+
+            expect(await adapter.prepareDockerDashboard()).to.equal(true);
+            expect(writtenObjects[0].native.dockerEsphome).to.have.property('configDir', customDir);
+        });
+
+        it('resolves a relative directory against the ioBroker data directory', async () => {
+            adapter.config.dockerEsphome.configDir = 'yaml';
+
+            expect(await adapter.prepareDockerDashboard()).to.equal(true);
+            expect(writtenObjects[0].native.dockerEsphome).to.have.property('configDir', customDir);
+        });
+
+        it('does not store a directory that cannot be used', async () => {
+            adapter.config.dockerEsphome.configDir = `${path.dirname(path.resolve(dataDir))}${path.sep}`;
+
+            expect(await adapter.prepareDockerDashboard()).to.equal(false);
+            expect(writtenObjects).to.have.length(0);
+        });
     });
 
     describe('startDockerDashboard()', () => {
@@ -165,13 +198,56 @@ describe('ESPHome Dashboard in Docker', () => {
             expect(errors).to.deep.equal([]);
         });
 
+        it('creates and mounts a directory chosen in the admin', async () => {
+            adapter.config.dockerEsphome.configDir = customDir;
+
+            await adapter.startDockerDashboard();
+
+            expect(fs.existsSync(customDir)).to.equal(true);
+            expect(fs.existsSync(configDir)).to.equal(false);
+            expect(instanceIsReadyCalls).to.equal(1);
+            expect(errors).to.deep.equal([]);
+        });
+
         it('does not start a container that would mount another directory', async () => {
-            adapter.config.dockerEsphome.configDir = '/somewhere/else';
+            // not stored normalized yet, prepareDockerDashboard() failed
+            adapter.config.dockerEsphome.configDir = 'yaml';
 
             await adapter.startDockerDashboard();
 
             expect(instanceIsReadyCalls).to.equal(0);
             expect(errors).to.have.length(1);
+        });
+
+        for (const [what, dir] of /** @type {Array<[string, () => string]>} */ ([
+            ['the ioBroker data directory', () => path.resolve(dataDir)],
+            ['a folder above the ioBroker data directory', () => path.dirname(path.resolve(dataDir))],
+            ['the root of the file system', () => path.parse(path.resolve(dataDir)).root],
+        ])) {
+            it(`refuses to mount ${what}`, async () => {
+                adapter.config.dockerEsphome.configDir = dir();
+
+                await adapter.startDockerDashboard();
+
+                expect(instanceIsReadyCalls).to.equal(0);
+                expect(errors).to.have.length(1);
+                expect(errors[0]).to.include('cannot be used');
+            });
+        }
+    });
+
+    describe('YAML file management', () => {
+        it('uses the directory of the container while Docker is enabled', () => {
+            adapter.config.dockerEsphome.configDir = customDir;
+
+            expect(path.resolve(adapter.yamlFileManager.getESPHomeDirectory())).to.equal(customDir);
+        });
+
+        it('uses the data directory of the instance without Docker', () => {
+            adapter.config.dockerEsphome.configDir = customDir;
+            adapter.config.dockerEsphome.enabled = false;
+
+            expect(path.resolve(adapter.yamlFileManager.getESPHomeDirectory())).to.equal(configDir);
         });
     });
 

@@ -701,11 +701,13 @@
 							"lg": 4,
 							"xl": 4
 						},
-						// Set by the adapter (prepareDockerDashboard), only shown
+						// Folder on the host of the instance, mounted as /config. Empty: the adapter fills in
+						// the data directory of the instance (prepareDockerDashboard). Needs admin >= 8.3.11,
+						// older versions show only the label and the default directory is used
 						"dockerEsphome.configDir": {
 							"newLine": true,
-							"type": "text",
-							"readOnly": true,
+							"type": "diskSelector",
+							"mode": "folder",
 							"label": "lblESPHomeDockerConfigDir",
 							"help": "hlpESPHomeDockerConfigDir",
 							"xs": 12,

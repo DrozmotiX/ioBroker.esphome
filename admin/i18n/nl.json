@@ -115,5 +115,5 @@
     "chkESPHomeDockerAutoUpdate": "Docker-image automatisch bijwerken",
     "hlpESPHomeDockerAutoUpdate": "Indien ingeschakeld, wordt de nieuwste Docker-image opgehaald wanneer de adapter start.",
     "lblESPHomeDockerConfigDir": "YAML-map op deze host",
-    "hlpESPHomeDockerConfigDir": "Wordt bij het starten door de adapter ingesteld. Als /config in de container gekoppeld, dezelfde map als voor de native integratie en het YAML-bestandsbeheer"
+    "hlpESPHomeDockerConfigDir": "Als /config in de container gekoppeld, ook het YAML-bestandsbeheer gebruikt deze. Leeg: de datamap van de instantie, dezelfde als voor de native integratie. De ioBroker-datamap en de mappen daarboven kunnen niet worden gebruikt"
 }

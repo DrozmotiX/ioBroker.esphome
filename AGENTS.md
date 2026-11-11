@@ -127,9 +127,14 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
 - `docker-compose.yaml` (shipped via `files`) is rendered by `@iobroker/plugin-docker` (`common.plugins.docker`)
   with the instance's `native` **when the instance starts, before `onReady`**. Settings live in `native.dockerEsphome`;
   `iobEnabled` defaults to `false`, keep it that way (an upgraded instance must not get a container).
-- The bind source is `native.dockerEsphome.configDir`, written by `prepareDockerDashboard()` (one restart) because
-  templates only know `${config.*}` and `${instance}`, not the data dir. `iobWaitForReady=true` keeps the container
-  from being created until `startDockerDashboard()` has created the directory and called `instanceIsReady()`.
+- The bind source is `native.dockerEsphome.configDir`, chosen in the admin with `diskSelector` (`mode: folder`,
+  admin >= 8.3.11; older admins render only the label). Empty or not normalized, `prepareDockerDashboard()` writes the
+  resolved path (one restart) because templates only know `${config.*}` and `${instance}`, not the data dir.
+  `iobWaitForReady=true` keeps the container from being created until `startDockerDashboard()` has created the
+  directory and called `instanceIsReady()`. `checkDockerConfigDir()` refuses the filesystem root and the ioBroker data
+  dir or anything above it - keep that check, the path comes from the configuration unchecked.
+- `yamlFileManager.getESPHomeDirectory()` returns the Docker directory while Docker is enabled, otherwise the data dir
+  of the instance (the native dashboard always uses the data dir).
 - Any field that does not round-trip through `docker inspect` makes the plugin recreate the container on every start:
   keep the path `path.resolve`d, and keep `--port=${...}` inside one string (a whole-string template returns a number).
 - The image's `dashboard` entrypoint runs the Device Builder since ESPHome 2026.6 (`--host`) and the classic dashboard

@@ -115,5 +115,5 @@
     "chkESPHomeDockerAutoUpdate": "Docker-Image automatisch aktualisieren",
     "hlpESPHomeDockerAutoUpdate": "Wenn aktiviert, wird beim Start des Adapters das neueste Docker-Image geladen.",
     "lblESPHomeDockerConfigDir": "YAML-Verzeichnis auf diesem Host",
-    "hlpESPHomeDockerConfigDir": "Wird vom Adapter beim Start gesetzt. Als /config in den Container eingebunden, dasselbe Verzeichnis wie bei der nativen Integration und der YAML-Dateiverwaltung"
+    "hlpESPHomeDockerConfigDir": "Als /config in den Container eingebunden, auch die YAML-Dateiverwaltung verwendet es. Leer: das Datenverzeichnis der Instanz, dasselbe wie bei der nativen Integration. Das ioBroker-Datenverzeichnis und die Ordner darüber können nicht verwendet werden"
 }

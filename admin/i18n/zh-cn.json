@@ -115,5 +115,5 @@
     "chkESPHomeDockerAutoUpdate": "自动更新 Docker 镜像",
     "hlpESPHomeDockerAutoUpdate": "如果启用，适配器启动时将拉取最新的 Docker 镜像。",
     "lblESPHomeDockerConfigDir": "此主机上的 YAML 目录",
-    "hlpESPHomeDockerConfigDir": "由适配器在启动时设置。以 /config 挂载到容器中，与本机集成和 YAML 文件管理使用的目录相同"
+    "hlpESPHomeDockerConfigDir": "以 /config 挂载到容器中，YAML 文件管理也使用它。留空：实例的数据目录，与本机集成相同。不能使用 ioBroker 数据目录及其上级文件夹"
 }
