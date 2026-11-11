@@ -604,10 +604,25 @@
 					"xl": 12
 				},
 
+				// ESPHome Dashboard in Docker (docker-compose.yaml, managed by @iobroker/plugin-docker).
+				// Takes precedence over the native integration, both use the same port.
+				"dockerEsphome.enabled": {
+					"newLine": true,
+					"type": "checkDocker",
+					"label": "chkEnableESPHomeDocker",
+					"help": "hlpEnableESPHomeDocker",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+
 				// ESPHome Dashboard configuration
 				"ESPHomeDashboardEnabled": {
 					"newLine": true,
 					"type": "checkbox",
+					"hidden": "!!data.dockerEsphome?.enabled",
 					"xs": 12,
 					"sm": 4,
 					"md": 4,
@@ -617,6 +632,7 @@
 				},
 				"ESPHomeDashboardVersion": {
 					"type": "autocompleteSendTo",
+					"hidden": "!!data.dockerEsphome?.enabled",
 					"xs": 12,
 					"sm": 6,
 					"md": 6,
@@ -628,6 +644,7 @@
 				},
 				"PillowVersion": {
 					"type": "autocompleteSendTo",
+					"hidden": "!!data.dockerEsphome?.enabled",
 					"xs": 12,
 					"sm": 6,
 					"md": 6,
@@ -636,6 +653,68 @@
 					"label": "lblPillowVersion",
 					"help": "hlpPillowVersion",
 					"command": "getPillowVersion"
+				},
+
+				"_dockerEsphome": {
+					"type": "panel",
+					"label": "lblESPHomeDockerPanel",
+					"hidden": "!data.dockerEsphome?.enabled",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12,
+					"items": {
+						"dockerEsphome.version": {
+							"type": "autocompleteSendTo",
+							"freeSolo": true,
+							"command": "getESPHomeDockerVersion",
+							"label": "lblESPHomeDockerVersion",
+							"help": "hlpESPHomeDockerVersion",
+							// an empty tag makes the image name invalid
+							"validator": "!data.dockerEsphome?.enabled || !!data.dockerEsphome?.version",
+							"validatorErrorText": "errESPHomeDockerVersion",
+							"validatorNoSaveOnError": true,
+							"xs": 12,
+							"sm": 6,
+							"md": 6,
+							"lg": 4,
+							"xl": 4
+						},
+						"dockerEsphome.stopIfInstanceStopped": {
+							"newLine": true,
+							"type": "checkbox",
+							"label": "chkESPHomeDockerStop",
+							"xs": 12,
+							"sm": 6,
+							"md": 6,
+							"lg": 4,
+							"xl": 4
+						},
+						"dockerEsphome.autoImageUpdate": {
+							"type": "checkbox",
+							"label": "chkESPHomeDockerAutoUpdate",
+							"help": "hlpESPHomeDockerAutoUpdate",
+							"xs": 12,
+							"sm": 6,
+							"md": 6,
+							"lg": 4,
+							"xl": 4
+						},
+						// Set by the adapter (prepareDockerDashboard), only shown
+						"dockerEsphome.configDir": {
+							"newLine": true,
+							"type": "text",
+							"readOnly": true,
+							"label": "lblESPHomeDockerConfigDir",
+							"help": "hlpESPHomeDockerConfigDir",
+							"xs": 12,
+							"sm": 12,
+							"md": 12,
+							"lg": 8,
+							"xl": 8
+						}
+					}
 				},
 				"ESPHomeDashboardIP": {
 					"type": "autocompleteSendTo",
@@ -704,7 +783,8 @@
 					"variant": "outlined",
 					"color": "primary",
 					"showProcess": true,
-					"hidden": "!_alive",
+					// autopy is only used by the native integration
+					"hidden": "!_alive || !!data.dockerEsphome?.enabled",
 					"command": "clearAutopyCache",
 					"jsonData": "{}",
 					"xs": 12,

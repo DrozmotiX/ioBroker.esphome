@@ -71,7 +71,7 @@
     "lblESPHomeDashboardVersion": "ESPHome Dashboard-versie",
     "lblESPHomeIP": "IP-adres waar ESPHome Dashboard wordt uitgevoerd om te integreren in ioBroker Admin",
     "lblESPHomePort": "Haven van ESPHome-dashboard",
-    "lblEnableESPHome": "U kunt ESPHome Dashboard afzonderlijk uitvoeren of de onderstaande optie activeren om het native in ioBroker uit te voeren",
+    "lblEnableESPHome": "U kunt ESPHome Dashboard afzonderlijk uitvoeren of een van de onderstaande opties activeren om het in ioBroker uit te voeren: in Docker of native in een Python-omgeving",
     "lblEncryptionKey": "Standaard coderingssleutel",
     "lblFileActionsHeader": "Bestandsacties",
     "lblHeaderConnect": "Een ESPHome-compatibel apparaat verbinden met ioBroker",
@@ -104,5 +104,16 @@
     "reConInterval": "Instelling tussen ioBroker-pogingen om dit apparaat opnieuw te verbinden",
     "templateKeyTip": "Deze waarde wordt geleverd door de adapter.",
     "ttGetStationId": "Voer deze actie uit voor het geselecteerde apparaat.",
-    "yamlUploadContentPlaceholder": "# Voorbeeldconfiguratie\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2"
+    "yamlUploadContentPlaceholder": "# Voorbeeldconfiguratie\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2",
+    "chkEnableESPHomeDocker": "ESPHome Dashboard in Docker uitvoeren",
+    "hlpEnableESPHomeDocker": "Voert de officiële ESPHome-image (ghcr.io/esphome/esphome) uit in het netwerk van de host. Docker moet op deze host geïnstalleerd zijn en de ioBroker-gebruiker moet het mogen gebruiken. Heeft voorrang op de native integratie en gebruikt de poort uit \"Geavanceerd\" (standaard 6052)",
+    "lblESPHomeDockerPanel": "ESPHome Dashboard in Docker",
+    "lblESPHomeDockerVersion": "Versie van de ESPHome-image",
+    "hlpESPHomeDockerVersion": "De kanalen stable, beta en dev volgen hun releases, een versienummer zoals 2026.6.5 blijft staan tot u het wijzigt",
+    "errESPHomeDockerVersion": "Selecteer een imageversie",
+    "chkESPHomeDockerStop": "Container stoppen wanneer de instantie stopt",
+    "chkESPHomeDockerAutoUpdate": "Docker-image automatisch bijwerken",
+    "hlpESPHomeDockerAutoUpdate": "Indien ingeschakeld, wordt de nieuwste Docker-image opgehaald wanneer de adapter start.",
+    "lblESPHomeDockerConfigDir": "YAML-map op deze host",
+    "hlpESPHomeDockerConfigDir": "Wordt bij het starten door de adapter ingesteld. Als /config in de container gekoppeld, dezelfde map als voor de native integratie en het YAML-bestandsbeheer"
 }

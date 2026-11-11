@@ -1,0 +1,41 @@
+# ESPHome Dashboard in Docker, managed by @iobroker/plugin-docker (see "plugins.docker" in io-package.json).
+# Switched on with the option "Run ESPHome Dashboard in Docker" of the instance settings, as an alternative
+# to the native integration that installs ESPHome into a Python environment.
+version: '3.9'
+
+services:
+    esphome:
+        image: 'ghcr.io/esphome/esphome:${config.dockerEsphome.version:-stable}'
+        labels:
+            # The default must be "false": it is what an instance without dockerEsphome in its native
+            # config falls back to (e.g. after an upgrade), and nobody may get a container without asking for it
+            - 'iobEnabled=${config.dockerEsphome.enabled:-false}'
+            - 'iobStopOnUnload=${config.dockerEsphome.stopIfInstanceStopped:-false}'
+            - 'iobAutoImageUpdate=${config.dockerEsphome.autoImageUpdate:-true}'
+            # The adapter first writes the absolute path of the YAML directory into dockerEsphome.configDir
+            # and creates the directory, then it calls instanceIsReady(). Without this, Docker would get an
+            # empty bind source on the first start, or create the directory as root.
+            - 'iobWaitForReady=true'
+        # The entrypoint of the image starts the Device Builder for `dashboard` (ESPHome 2026.6 and later),
+        # older images the classic dashboard. Both understand --port, but only the classic one --address,
+        # so the dashboard listens on all addresses - as the native integration does.
+        # `--port=` keeps the value a string: a template that is the whole string hands a number to Docker.
+        command: ['dashboard', '--port=${config.ESPHomeDashboardPort:-6052}', '/config']
+        # mDNS (online status of the devices, OTA uploads to <name>.local) only works in the network of the host
+        network_mode: host
+        volumes:
+            # The same directory the native dashboard and the YAML file management of the adapter use
+            # (iobroker-data/esphome.<instance>), so switching between native and Docker keeps all YAML files.
+            # Long syntax, because a short one is split at ":" and that breaks on Windows paths.
+            - type: bind
+              source: '${config.dockerEsphome.configDir}'
+              target: /config
+            # PlatformIO toolchains and caches. The entrypoint uses /cache when it exists, otherwise they
+            # land in the YAML directory. Large and downloaded again when missing, so not in the backup.
+            - 'esphome_cache:/cache'
+            # ESPHome takes the time zone of the devices from the system that compiles the firmware
+            - '/etc/localtime:/etc/localtime:ro'
+        restart: unless-stopped
+
+volumes:
+    esphome_cache:

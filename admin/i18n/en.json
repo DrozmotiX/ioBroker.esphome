@@ -71,7 +71,7 @@
     "lblESPHomeDashboardVersion": "ESPHome Dashboard version",
     "lblESPHomeIP": "IP-Address where ESPHome Dashboard is running to integrate in ioBroker Admin",
     "lblESPHomePort": "Port of ESPHome Dashboard",
-    "lblEnableESPHome": "You can either run ESPHome Dashboard separately, or activate the option below to run it native in ioBroker",
+    "lblEnableESPHome": "You can either run ESPHome Dashboard separately, or activate one of the options below to run it in ioBroker: in Docker or native in a Python environment",
     "lblEncryptionKey": "Default encryption Key",
     "lblFileActionsHeader": "File Actions",
     "lblHeaderConnect": "How to connect an ESPHome capable device to ioBroker",
@@ -104,5 +104,16 @@
     "reConInterval": "Setting between ioBroker tries to reconnect this device",
     "templateKeyTip": "This value is provided by the adapter.",
     "ttGetStationId": "Run this action for the selected device.",
-    "yamlUploadContentPlaceholder": "# Example configuration\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2"
+    "yamlUploadContentPlaceholder": "# Example configuration\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2",
+    "chkEnableESPHomeDocker": "Run ESPHome Dashboard in Docker",
+    "hlpEnableESPHomeDocker": "Runs the official ESPHome image (ghcr.io/esphome/esphome) in the network of the host. Docker must be installed on this host and the ioBroker user must be allowed to use it. Takes precedence over the native integration and uses the port from \"Advanced\" (default 6052)",
+    "lblESPHomeDockerPanel": "ESPHome Dashboard in Docker",
+    "lblESPHomeDockerVersion": "ESPHome image version",
+    "hlpESPHomeDockerVersion": "The channels stable, beta and dev follow their releases, a version number like 2026.6.5 stays until you change it",
+    "errESPHomeDockerVersion": "Select an image version",
+    "chkESPHomeDockerStop": "Stop container when instance stops",
+    "chkESPHomeDockerAutoUpdate": "Auto-update Docker image",
+    "hlpESPHomeDockerAutoUpdate": "If enabled, the latest Docker image will be pulled when the adapter starts.",
+    "lblESPHomeDockerConfigDir": "YAML directory on this host",
+    "hlpESPHomeDockerConfigDir": "Set by the adapter when it starts. Mounted as /config into the container, the same directory as for the native integration and the YAML file management"
 }

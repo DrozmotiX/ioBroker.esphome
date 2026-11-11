@@ -93,7 +93,7 @@ The adapter works independently and only requires devices with ESPHome API enabl
 1. **Ensure ESPHome API is enabled** in your device's YAML configuration (see Prerequisites section)
 2. **Open the adapter's device tab** in ioBroker Admin (adapter must be running)
 3. **Add devices manually:** Enter device IP address and authentication credentials
-4. **Automatic discovery:** Use the autodiscovery feature if enabled in adapter settings
+4. **Automatic discovery:** Use the auto-discovery feature if enabled in adapter settings
 
 The adapter will establish a connection and create all necessary ioBroker objects for device control.
 
@@ -129,7 +129,7 @@ The adapter will establish a connection and create all necessary ioBroker object
 
 **Option 2:**
 
-- Create a new device in the dashboard and copy your existing yaml into there.
+- Create a new device in the dashboard and copy your existing YAML into there.
 
 **Note:** You don't need devices in the dashboard if you only want to control them via ioBroker. The dashboard is only needed for creating/modifying device configurations.
 
@@ -190,13 +190,19 @@ This adapter can optionally integrate the ESPHome Dashboard into ioBroker's admi
 - Dashboard runs on port 6052 by default
 - Set Dashboard IP to `127.0.0.1:6052` for admin integration
 
-**Option 2: External Dashboard**
+**Option 2: Built-in Dashboard in Docker**
+
+- Enable "Run ESPHome Dashboard in Docker" in the ESPHome Dashboard tab of the adapter settings
+- The adapter creates, starts and (optionally) updates a container of the official image `ghcr.io/esphome/esphome`, no Python environment is needed
+- See [ESPHome Dashboard in Docker](#esphome-dashboard-in-docker) below
+
+**Option 3: External Dashboard**
 
 - Use existing ESPHome installation (Docker, standalone, etc.)
 - Enter the external dashboard's IP:port in adapter settings
 - Example: `192.168.1.100:6052` for Docker container
 
-**Option 3: No Dashboard Integration**
+**Option 4: No Dashboard Integration**
 
 - Skip dashboard configuration entirely
 - Use external ESPHome tools for device configuration
@@ -205,6 +211,46 @@ This adapter can optionally integrate the ESPHome Dashboard into ioBroker's admi
 ![Dashboard IP Configuration](admin/img/ESPhomeDashboardIP.png)
 
 > **💡 See FAQ above** for detailed explanations about Dashboard IP configuration and adapter vs. dashboard differences.
+
+### ESPHome Dashboard in Docker
+
+Instead of installing ESPHome into a Python environment, the adapter can run the dashboard in Docker, the same way
+the InfluxDB, SQL and Frigate adapters run their services. The container is managed by
+[`@iobroker/plugin-docker`](https://github.com/ioBroker/plugin-docker) from the `docker-compose.yaml` of the adapter.
+
+**Requirements**
+
+- Docker installed on the host the instance runs on, and the ioBroker user allowed to use it
+- A Linux host: the container uses the network of the host (`network_mode: host`), which mDNS needs for the online status of the devices and for OTA uploads to `<name>.local`
+- admin 7.7.2 or later (for the Docker check in the settings)
+
+**Settings** (tab "ESPHome Dashboard")
+
+| Setting                            | Meaning                                                                                                                                 |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Run ESPHome Dashboard in Docker    | Switches the container on. It takes precedence over the native integration, both cannot run at the same time as they use the same port  |
+| ESPHome image version              | `stable` (default), `beta` or `dev` follow the releases of their channel. A version number such as `2026.6.5` stays until you change it |
+| Stop container when instance stops | Without it, the dashboard keeps running while the instance is stopped                                                                   |
+| Auto-update Docker image           | Pulls a newer image of the selected version when the adapter starts and recreates the container                                         |
+| YAML directory on this host        | Set by the adapter, see below                                                                                                           |
+
+The dashboard listens on the port configured under "Advanced" (default `6052`), so the dashboard URL and the admin tab
+work as with the native integration.
+
+**Where the files are**
+
+- The YAML configurations stay in `iobroker-data/esphome.<instance>`, the directory of the native integration and of the
+  [YAML file management](#yaml-file-management). Switching between native and Docker keeps all of them.
+  The adapter stores the absolute path of this directory when Docker is switched on, which restarts the instance once.
+- The PlatformIO toolchains live in the Docker volume `iob_esphome_<instance>_esphome_cache`. They are not part of the
+  backup, as they are downloaded again when missing.
+- Files the dashboard creates belong to `root`, as the container runs as root. The YAML file management of the adapter can still replace them.
+
+Since ESPHome 2026.6.0, the image starts the new [ESPHome Device Builder](https://github.com/esphome/device-builder)
+as its dashboard, older images the classic dashboard. Flashing a device over USB of the ioBroker host is not supported
+in the container, use OTA or "Plug into this computer" in the browser (see [Using HTTPS](#using-https)).
+
+Switching Docker off stops the container but does not remove it, so switching it on again is fast.
 
 ### Using HTTPS
 
@@ -273,7 +319,7 @@ api:
 
 > **💡 See FAQ above** for step-by-step guidance on adding devices to the adapter.
 
-The device Tab will show all current known devices; you can either wait for Devices to be autodetect
+The device Tab will show all current known devices; you can either wait for Devices to be autodetected
 (currently disabled, see #175) or add them manually by providing their IP-Address and credentials
 
 ![DevicesTab](admin/img/deviceTabEmpty.png)
@@ -434,7 +480,7 @@ When an RGBW-capable light is detected (i.e. it exposes a `white` state), the ad
 Migrating from previous Sonoff Tasmota or ESPEasy setups is very easy. You just need to have ESPHome create a binary for you and then upload that in the web interface.  
 See for more details on our [Docu Page](https://DrozmotiX.github.io/languages/en/Adapter/ESPHome/06.migration.html)
 
-**_NOTE:_** Generated yaml files are stored at ```/opt/iobroker/iobroker-data/iobroker.esphome.>instance</>device<.yaml
+**_NOTE:_** Generated YAML files are stored at ```/opt/iobroker/iobroker-data/iobroker.esphome.>instance</>device<.yaml
 
 ## Support me
 
@@ -449,12 +495,17 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL)
 -->
+
+### **WORK IN PROGRESS**
+
+- (@GermanBluefox) **NEW**: The ESPHome Dashboard can run in Docker instead of the Python environment of the native integration (optional, like the Docker options of the InfluxDB, SQL and Frigate adapters). The adapter manages the official image `ghcr.io/esphome/esphome` through `@iobroker/plugin-docker`, with the YAML directory of the native integration, so all configurations are kept when switching. Requires Docker on the ioBroker host and admin 7.7.2 or later
+
 ### 1.0.1 (2026-11-09)
 
 - (@DutchmanNL) **BREAKING**: ESPHome 2026.1 removed API password authentication, devices updated to ESPHome 2026.1 or later must use an encryption key. The API password option is kept for devices running older ESPHome versions, see README (#410)
 - (@DutchmanNL) **ENHANCED**: The online state `info._online` of each device has the role `indicator.reachable` (was `state`), so other adapters and visualisations can see whether an ESPHome device is reachable. Existing installations get the new role at the next adapter start
-- (@Garfonso) **FIXED**: Brightness, RGB, white and colour temperature reached no light any more. The ColorMode values in supported_color_modes are the bitmasks from api.proto (RGB = 35), but they were compared against a 0..9 index, so every modern ESPHome light was treated as on/off only
-- (@SimonFischer04) **ENHANCED**: Dependency autopy switched to @simonfischer04/autopy (npm) instead of a GitHub build so dev dependencies do not get installed on user systems #495
+- (@Garfonso) **FIXED**: Brightness, RGB, white and colour temperature reached no light anymore. The ColorMode values in supported_color_modes are the bitmasks from api.proto (RGB = 35), but they were compared against a 0..9 index, so every modern ESPHome light was treated as on/off only
+- (@SimonFischer04) **ENHANCED**: Dependency `autopy` switched to @simonfischer04/autopy (npm) instead of a GitHub build so dev dependencies do not get installed on user systems #495
 
 ### 1.0.0 (2026-09-26) - Public Stable Release
 

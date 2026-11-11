@@ -145,9 +145,15 @@
       "config": "json"
     },
     "tier": 2,
+    "stopTimeout": 12000,
     "plugins": {
       "sentry": {
         "dsn": "https://52227cfa250b49e99b1f28408273402c@sentry.iobroker.net/122"
+      },
+      "docker": {
+        "iobDockerComposeFiles": [
+          "docker-compose.yaml"
+        ]
       }
     },
     "localLinks": {
@@ -163,7 +169,7 @@
     ],
     "globalDependencies": [
       {
-        "admin": ">=7.6.20"
+        "admin": ">=7.7.2"
       }
     ],
     "licenseInformation": {
@@ -197,6 +203,13 @@
     "ESPHomeDashboardPort": 6052,
     "ESPHomeDashboardIP": "",
     "ESPHomeDashboardUrl": "",
+    "dockerEsphome": {
+      "enabled": false,
+      "version": "stable",
+      "stopIfInstanceStopped": false,
+      "autoImageUpdate": true,
+      "configDir": ""
+    },
     "ignoredDevices": [
       {
         "IP-Address": "192.168.0.1",

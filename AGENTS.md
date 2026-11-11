@@ -122,6 +122,21 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
 - "Clear Autopy Cache" button triggers `clearAutopyCache()` → `fs.rmSync(~/.cache/autopy, recursive)`.
 - Config migration: `migrateConfig()` converts legacy `ESPHomeDashboardIP` + port → `ESPHomeDashboardUrl`.
 
+### Dashboard in Docker (alternative to autopy)
+
+- `docker-compose.yaml` (shipped via `files`) is rendered by `@iobroker/plugin-docker` (`common.plugins.docker`)
+  with the instance's `native` **when the instance starts, before `onReady`**. Settings live in `native.dockerEsphome`;
+  `iobEnabled` defaults to `false`, keep it that way (an upgraded instance must not get a container).
+- The bind source is `native.dockerEsphome.configDir`, written by `prepareDockerDashboard()` (one restart) because
+  templates only know `${config.*}` and `${instance}`, not the data dir. `iobWaitForReady=true` keeps the container
+  from being created until `startDockerDashboard()` has created the directory and called `instanceIsReady()`.
+- Any field that does not round-trip through `docker inspect` makes the plugin recreate the container on every start:
+  keep the path `path.resolve`d, and keep `--port=${...}` inside one string (a whole-string template returns a number).
+- The image's `dashboard` entrypoint runs the Device Builder since ESPHome 2026.6 (`--host`) and the classic dashboard
+  before (`--address`); only `--port` is common to both, so no bind address is passed. `network_mode: host` is needed for mDNS.
+- Docker wins over the native integration when both are enabled. Tests: `test/testDockerCompose.js` (renders the real
+  compose file through the plugin, Docker stubbed) and `test/testDockerDashboard.js` (adapter side).
+
 ## CI/CD Notes
 
 - Workflow: `.github/workflows/test-and-release.yml` using `ioBroker/testing-action-*` official actions.

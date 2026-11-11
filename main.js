@@ -33,6 +33,11 @@ const defaultPillowVersion = '12.2.0';
 // State holding whether the one-time migration away from "Always last available" already ran.
 const versionMigrationState = '_ESPHomeDashboard.versionPinMigrationDone';
 
+// Image and release channels of the ESPHome Dashboard in Docker (docker-compose.yaml). Every GitHub
+// release is also published as an image tag, so the release list doubles as the list of versions.
+const dockerImage = 'ghcr.io/esphome/esphome';
+const dockerImageChannels = ['stable', 'beta', 'dev'];
+
 // ColorCapability bits from ESPHome's api.proto. A light's supported_color_modes is a list of
 // ColorMode values, and every ColorMode is an OR of these bits - for example RGB = 35 is
 // ON_OFF | BRIGHTNESS | RGB. A capability is therefore tested with a bitwise AND.
@@ -79,6 +84,12 @@ class Esphome extends utils.Adapter {
 
             // Move installations still on "Always last available" to the pinned versions, once
             await this.migratePinnedVersions();
+
+            // The Docker container needs the absolute path of the YAML directory in its configuration
+            if (await this.prepareDockerDashboard()) {
+                // The configuration was changed, the instance restarts in a moment
+                return;
+            }
 
             //ToDo: store default data into clientDetails object instead of global variable
             // Store settings in global variables
@@ -280,6 +291,105 @@ class Esphome extends utils.Adapter {
         }
     }
 
+    /**
+     * Absolute path of the YAML directory as the container of the ESPHome Dashboard in Docker mounts it.
+     *
+     * It is the directory of the native dashboard and the YAML file management, so switching between
+     * native and Docker keeps all configurations. Normalized, because Docker reports a bind source
+     * cleaned up, and any difference to docker-compose.yaml makes the plugin recreate the container.
+     *
+     * @returns {string} - absolute path of the YAML directory
+     */
+    getDockerConfigDir() {
+        return path.resolve(this.yamlFileManager.getESPHomeDirectory());
+    }
+
+    /**
+     * Make sure the container of the ESPHome Dashboard in Docker finds its YAML directory.
+     *
+     * `@iobroker/plugin-docker` fills docker-compose.yaml with the configuration of the instance when the
+     * instance starts, before onReady(). The absolute path of the YAML directory is only known here, so it
+     * is written into dockerEsphome.configDir, which restarts the instance once. Until then the container
+     * is not created (iobWaitForReady), see startDockerDashboard().
+     *
+     * @returns {Promise<boolean>} - true if the configuration was changed and the instance restarts
+     */
+    async prepareDockerDashboard() {
+        if (!this.config.dockerEsphome?.enabled) {
+            return false;
+        }
+        const configDir = this.getDockerConfigDir();
+        if (this.config.dockerEsphome.configDir === configDir) {
+            return false;
+        }
+
+        try {
+            const adapterObj = await this.getForeignObjectAsync(`system.adapter.${this.namespace}`);
+            if (!adapterObj || !adapterObj.native) {
+                this.log.error(
+                    `ESPHome Dashboard in Docker: could not read the configuration object of ${this.namespace} to store the YAML directory, the container is not started`,
+                );
+                return false;
+            }
+            adapterObj.native.dockerEsphome = { ...adapterObj.native.dockerEsphome, configDir };
+            this.log.info(
+                `ESPHome Dashboard in Docker: YAML directory set to ${configDir}, the instance restarts to apply it`,
+            );
+            await this.setForeignObject(adapterObj._id, adapterObj);
+            return true;
+        } catch (error) {
+            this.errorHandler(`[prepareDockerDashboard]`, error);
+            return false;
+        }
+    }
+
+    /**
+     * Let `@iobroker/plugin-docker` create and start the container of the ESPHome Dashboard.
+     *
+     * The YAML directory is created here, with the user of ioBroker as owner: Docker would refuse a
+     * missing bind source. Not awaited by the caller, pulling the image can take minutes.
+     */
+    async startDockerDashboard() {
+        const configDir = this.getDockerConfigDir();
+        if (this.config.dockerEsphome.configDir !== configDir) {
+            // prepareDockerDashboard() could not store it, the container would mount a wrong directory
+            this.log.error(
+                `ESPHome Dashboard in Docker is not started: the YAML directory ${configDir} is not stored in the configuration yet`,
+            );
+            return;
+        }
+
+        const plugin = this.getPluginInstance('docker');
+        if (!plugin || typeof plugin.instanceIsReady !== 'function') {
+            this.log.error(
+                `ESPHome Dashboard in Docker is not started: the Docker plugin is not available. Please update js-controller`,
+            );
+            return;
+        }
+
+        try {
+            await fs.promises.mkdir(configDir, { recursive: true });
+
+            this.log.info(
+                `Starting ESPHome Dashboard in Docker (${dockerImage}:${this.config.dockerEsphome.version || 'stable'}), YAML directory ${configDir}`,
+            );
+            await plugin.instanceIsReady();
+
+            const daemon = await plugin.getDockerManager()?.getDockerDaemonInfo();
+            if (daemon?.daemonRunning) {
+                this.log.info(
+                    `ESPHome Dashboard runs in Docker on port ${this.config.ESPHomeDashboardPort}${this.config.ESPHomeDashboardUrl ? `: ${this.config.ESPHomeDashboardUrl}` : ''}`,
+                );
+            } else {
+                this.log.warn(
+                    `ESPHome Dashboard in Docker is not running, Docker is not available on this host. Install Docker and allow the ioBroker user to use it, or use the native integration`,
+                );
+            }
+        } catch (error) {
+            this.errorHandler(`[startDockerDashboard]`, error);
+        }
+    }
+
     // ToDo: move to separate module
     async espHomeDashboard() {
         try {
@@ -385,8 +495,17 @@ class Esphome extends utils.Adapter {
 
             this.log.debug(`Using Pillow version: ${usePillowVersion}`);
 
-            // Start Dashboard Process
-            if (this.config.ESPHomeDashboardEnabled) {
+            // Start Dashboard in Docker (both use the same port, so Docker wins over the native integration)
+            if (this.config.dockerEsphome?.enabled) {
+                if (this.config.ESPHomeDashboardEnabled) {
+                    this.log.info(
+                        `ESPHome Dashboard runs in Docker, the native integration is not started although it is enabled too`,
+                    );
+                }
+                // Not awaited: pulling the image can take minutes, the devices must not wait for it
+                void this.startDockerDashboard();
+            } else if (this.config.ESPHomeDashboardEnabled) {
+                // Start Dashboard Process
                 this.log.info(`Native Integration of ESPHome Dashboard enabled, making environment ready`);
 
                 this.warnUnpinnedVersions(useDashBoardVersion, usePillowVersion);
@@ -1888,6 +2007,23 @@ class Esphome extends utils.Adapter {
                         // The version new installations default to must always be selectable, also
                         // when the release list could not be retrieved from GitHub
                         this.ensureVersionInDropDown(dropDownEntry, defaultDashboardVersion);
+
+                        this.sendTo(obj.from, obj.command, dropDownEntry, obj.callback);
+                    }
+                    break;
+
+                // Front End message handler to load the image versions of the ESPHome Dashboard in Docker
+                case 'getESPHomeDockerVersion':
+                    {
+                        /** @type {Array<string | {label: string, value: string}>} */
+                        const dropDownEntry = [...dockerImageChannels];
+                        for (const version of dashboardVersions) {
+                            this.ensureVersionInDropDown(dropDownEntry, version);
+                        }
+                        // A version typed in by hand must not disappear from the selection
+                        if (this.config.dockerEsphome?.version) {
+                            this.ensureVersionInDropDown(dropDownEntry, this.config.dockerEsphome.version);
+                        }
 
                         this.sendTo(obj.from, obj.command, dropDownEntry, obj.callback);
                     }

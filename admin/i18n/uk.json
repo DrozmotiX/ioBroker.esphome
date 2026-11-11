@@ -71,7 +71,7 @@
     "lblESPHomeDashboardVersion": "Версія ESPHome Dashboard",
     "lblESPHomeIP": "IP-адреса, на якій працює ESPHome Dashboard для інтеграції в ioBroker Admin",
     "lblESPHomePort": "Порт ESPHome Dashboard",
-    "lblEnableESPHome": "Ви можете запускати ESPHome Dashboard окремо або активувати параметр нижче, щоб запускати його нативно в ioBroker",
+    "lblEnableESPHome": "Ви можете запускати ESPHome Dashboard окремо або увімкнути одну з опцій нижче, щоб запускати його в ioBroker: у Docker або нативно в середовищі Python",
     "lblEncryptionKey": "Стандартний ключ шифрування",
     "lblFileActionsHeader": "Дії з файлами",
     "lblHeaderConnect": "Як підключити пристрій з підтримкою ESPHome до ioBroker",
@@ -104,5 +104,16 @@
     "reConInterval": "Інтервал, через який ioBroker намагається повторно підключити цей пристрій",
     "templateKeyTip": "Це значення забезпечує адаптер.",
     "ttGetStationId": "Запустіть цю дію для вибраного пристрою.",
-    "yamlUploadContentPlaceholder": "# Приклад конфігурації\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2"
+    "yamlUploadContentPlaceholder": "# Приклад конфігурації\nesphome:\n  name: my-device\n  platform: ESP8266\n  board: nodemcuv2",
+    "chkEnableESPHomeDocker": "Запускати ESPHome Dashboard у Docker",
+    "hlpEnableESPHomeDocker": "Запускає офіційний образ ESPHome (ghcr.io/esphome/esphome) у мережі хоста. Docker має бути встановлений на цьому хості, а користувач ioBroker повинен мати право ним користуватися. Має пріоритет над нативною інтеграцією та використовує порт із «Просунутий» (за замовчуванням 6052)",
+    "lblESPHomeDockerPanel": "ESPHome Dashboard у Docker",
+    "lblESPHomeDockerVersion": "Версія образу ESPHome",
+    "hlpESPHomeDockerVersion": "Канали stable, beta і dev слідують своїм випускам, номер версії, наприклад 2026.6.5, залишається, доки ви його не зміните",
+    "errESPHomeDockerVersion": "Виберіть версію образу",
+    "chkESPHomeDockerStop": "Зупиняти контейнер під час зупинки екземпляра",
+    "chkESPHomeDockerAutoUpdate": "Автоматично оновлювати образ Docker",
+    "hlpESPHomeDockerAutoUpdate": "Якщо увімкнено, під час запуску адаптера буде завантажено найновіший образ Docker.",
+    "lblESPHomeDockerConfigDir": "Каталог YAML на цьому хості",
+    "hlpESPHomeDockerConfigDir": "Встановлюється адаптером під час запуску. Підключається в контейнер як /config, це той самий каталог, що й для нативної інтеграції та керування файлами YAML"
 }
