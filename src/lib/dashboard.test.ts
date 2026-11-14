@@ -1,10 +1,11 @@
-import DockerPlugin from '@iobroker/plugin-docker';
+import DockerPlugin, { DockerManagerOfOwnContainers } from '@iobroker/plugin-docker';
 import { expect } from 'chai';
 import { readFileSync } from 'node:fs';
 import { mkdtemp, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import Dashboard, {
+    containerHostEnvironment,
     DASHBOARD_STATUSES,
     DEFAULT_PYTHON_VERSION,
     type DashboardAdapter,
@@ -150,12 +151,25 @@ describe('ESPHome Dashboard in Docker', () => {
     let dir: string;
     let logs: Logs;
 
+    // The docker plugin creates this manager for the containers it manages, and since 1.3.0 also when the
+    // only service is disabled, to stop a container left running. Its init() looks for the Docker of the
+    // host, which takes seconds where the docker command answers slowly (Windows): never done in unit tests.
+    const managerPrototype = DockerManagerOfOwnContainers.prototype as unknown as { init: () => Promise<void> };
+    const managerInit = managerPrototype.init;
+    let managersStarted: number;
+
     beforeEach(async () => {
         dir = await mkdtemp(path.join(tmpdir(), 'esphome-docker-'));
         logs = { info: [], timers: [], callbacks: [], warn: [], error: [], connectionUpdates: 0, states: {} };
+        managersStarted = 0;
+        managerPrototype.init = (): Promise<void> => {
+            managersStarted++;
+            return Promise.resolve();
+        };
     });
 
     afterEach(async () => {
+        managerPrototype.init = managerInit;
         await rm(dir, { recursive: true, force: true });
     });
 
@@ -175,6 +189,8 @@ describe('ESPHome Dashboard in Docker', () => {
         const plugin = await createDockerPlugin({ ...native });
         expect(native.ESPHomeDashboardDocker).to.equal(false);
         expect(plugin.configurations).to.have.length(0);
+        // the plugin itself stops a container the instance left running with Docker Integration
+        expect(managersStarted).to.equal(1);
     });
 
     it('docker-compose.yaml declares the dashboard container, waiting for the adapter', async () => {
@@ -190,7 +206,15 @@ describe('ESPHome Dashboard in Docker', () => {
         expect(container.iobStopOnUnload).to.equal(true);
         expect(container.iobMonitoringEnabled).to.equal(true);
         expect(container.networkMode).to.equal('host');
-        expect(container.command).to.deep.equal(['dashboard', '--port=6060', '/config']);
+        // bash runs the script of docker-compose.yaml, which passes the rest on to the entrypoint of the image
+        expect(container.entrypoint).to.deep.equal(['/bin/bash']);
+        expect(container.command?.[0]).to.equal('-c');
+        expect(container.command?.slice(2)).to.deep.equal([
+            'iobroker-entrypoint',
+            'dashboard',
+            '--port=6060',
+            '/config',
+        ]);
         // the healthcheck of the image asks port 6052
         expect(container.healthcheck?.test).to.deep.equal([
             'CMD',
@@ -204,6 +228,7 @@ describe('ESPHome Dashboard in Docker', () => {
         expect(container.restart).to.deep.equal({ policy: 'no' });
         // not started by the plugin itself
         expect(plugin.readyCalls).to.equal(0);
+        expect(managersStarted).to.equal(0);
     });
 
     it('starts the container with the selected version and the YAML directory of the instance', async () => {
@@ -242,7 +267,30 @@ describe('ESPHome Dashboard in Docker', () => {
             ESPHOME_USERNAME: '',
             ESPHOME_PASSWORD: '',
             PASSWORD: '',
+            ...containerHostEnvironment(),
         });
+    });
+
+    it('tells the container the user and the time zone of the instance', async () => {
+        const config = { ...native, ESPHomeDashboardEnabled: true, ESPHomeDashboardDocker: true };
+        const plugin = await createDockerPlugin(config);
+
+        await createDashboard(config, plugin).startDockerContainer('2026.6.5');
+
+        const [container] = plugin.configurations;
+        // ESPHome compiles the time zone of the system it runs on into the devices
+        expect(container.environment?.TZ).to.equal(Intl.DateTimeFormat().resolvedOptions().timeZone);
+        if (process.getuid?.()) {
+            expect(container.environment?.IOBROKER_UID).to.equal(String(process.getuid()));
+            expect(container.environment?.IOBROKER_GID).to.equal(String(process.getgid?.()));
+        } else {
+            // Windows, or the tests run as root
+            expect(container.environment).to.not.have.property('IOBROKER_UID');
+        }
+        // The script of docker-compose.yaml switches to that user before it runs the entrypoint of the image
+        const script = container.command?.[1];
+        expect(script).to.include('setpriv --reuid="$IOBROKER_UID" --regid="$IOBROKER_GID"');
+        expect(script).to.include('exec /entrypoint.sh "$@"');
     });
 
     it('passes the login to the container', async () => {
@@ -263,6 +311,7 @@ describe('ESPHome Dashboard in Docker', () => {
             ESPHOME_PASSWORD: 'secret',
             USERNAME: 'admin',
             PASSWORD: 'secret',
+            ...containerHostEnvironment(),
         });
         expect(logs.info.some(msg => msg.includes('protected by a login, username: admin'))).to.equal(true);
         expect(logs.info.some(msg => msg.includes('secret'))).to.equal(false);
@@ -817,6 +866,33 @@ describe('dashboardCredentials', () => {
             USERNAME: 'admin',
             PASSWORD: ' secret ',
         });
+    });
+});
+
+describe('containerHostEnvironment', () => {
+    it('passes the user of the instance and its time zone', () => {
+        expect(containerHostEnvironment({ uid: 1001, gid: 1002, timeZone: 'Europe/Vienna' })).to.deep.equal({
+            IOBROKER_UID: '1001',
+            IOBROKER_GID: '1002',
+            TZ: 'Europe/Vienna',
+        });
+    });
+
+    it('keeps root where ioBroker runs as root or there are no user ids (Windows)', () => {
+        expect(containerHostEnvironment({ uid: 0, gid: 0, timeZone: 'UTC' })).to.deep.equal({ TZ: 'UTC' });
+        expect(containerHostEnvironment({ timeZone: 'America/Argentina/Buenos_Aires' })).to.deep.equal({
+            TZ: 'America/Argentina/Buenos_Aires',
+        });
+    });
+
+    it('sets no time zone when the one of the host is unknown', () => {
+        expect(containerHostEnvironment({ uid: 0, gid: 0, timeZone: 'Etc/Unknown' })).to.deep.equal({});
+        expect(containerHostEnvironment({ uid: 0, gid: 0 })).to.deep.equal({});
+        expect(containerHostEnvironment({ uid: 0, gid: 0, timeZone: ':/etc/localtime' })).to.deep.equal({});
+    });
+
+    it('reads user and time zone of this process by default', () => {
+        expect(containerHostEnvironment().TZ).to.equal(Intl.DateTimeFormat().resolvedOptions().timeZone);
     });
 });
 

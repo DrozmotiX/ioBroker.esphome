@@ -5,6 +5,7 @@
  * js-controller from common.plugins of io-package.json and starts the official ESPHome image. Checks that
  * - the container runs with the selected image, the YAML directory of the instance and the toolchain volume,
  *   and the dashboard answers on the configured port of the host
+ * - the dashboard runs as the user of the instance, with the time zone of the host
  * - the container stops together with the instance
  * - a container left behind is removed by a start without Docker Integration
  *
@@ -13,6 +14,8 @@
  */
 
 const { execFile } = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
 const { promisify } = require('node:util');
 const { expect } = require('chai');
 const { isDashboardReachable } = require('./dashboard_tests');
@@ -149,6 +152,24 @@ exports.runTests = function (suite) {
                 const cache = container.Mounts.find(mount => mount.Destination === '/cache');
                 expect(cache.Type).to.equal('volume');
                 expect(cache.Name).to.equal(CACHE_VOLUME);
+
+                // ESPHome compiles the time zone of the system it runs on into the devices: the one of this host
+                expect(container.Config.Env).to.include(`TZ=${Intl.DateTimeFormat().resolvedOptions().timeZone}`);
+
+                // The dashboard runs as the user of the instance, not as root: the YAML directory is shared with
+                // the dashboard process and the YAML file management. Root when the tests run as root themselves.
+                const uid = process.getuid?.() ?? 0;
+                const gid = uid ? process.getgid() : 0;
+                expect(await docker('exec', CONTAINER, 'stat', '-c', '%u:%g', '/proc/1')).to.equal(`${uid}:${gid}`);
+                // the volume was created by Docker for root
+                expect(await docker('exec', CONTAINER, 'stat', '-c', '%u:%g', '/cache')).to.equal(`${uid}:${gid}`);
+                if (uid) {
+                    const created = fs.readdirSync(config.Source);
+                    expect(created, 'files created by the dashboard').to.not.be.empty;
+                    for (const name of created) {
+                        expect(fs.lstatSync(path.join(config.Source, name)).uid, `owner of ${name}`).to.equal(uid);
+                    }
+                }
 
                 // remembered, so a start without Docker Integration removes it
                 const state = await harness.states.getStateAsync(CONTAINER_STATE);

@@ -2,9 +2,9 @@
 # Only used when "Use Docker Integration" is enabled in the ESPHome Dashboard settings of the instance.
 #
 # The container is started by the adapter (iobWaitForReady), and only when the ESPHome Dashboard is
-# enabled as well. Before that, the adapter sets the image tag to the selected ESPHome version and
-# mounts the YAML directory of the instance (iobroker-data/esphome.<instance>) to /config,
-# see startDockerContainer() in src/lib/dashboard.ts.
+# enabled as well. Before that, the adapter sets the image tag to the selected ESPHome version, mounts
+# the YAML directory of the instance (iobroker-data/esphome.<instance>) to /config and adds the environment
+# (login, user of the instance, time zone), see startDockerContainer() in src/lib/dashboard.ts.
 services:
     esphome:
         image: ghcr.io/esphome/esphome:stable
@@ -16,9 +16,43 @@ services:
             - 'iobMonitoringEnabled=true'
         # Host network, as recommended by ESPHome: the dashboard needs mDNS to show the online status of the devices
         network_mode: host
-        # The entrypoint of the image runs ESPHome Device Builder for "dashboard" since ESPHome 2026.6.0,
-        # older images run "esphome dashboard"
-        command: ['dashboard', '--port=${config.ESPHomeDashboardPort:-6052}', '/config']
+        # Run the dashboard as the user of the ioBroker instance instead of root (IOBROKER_UID / IOBROKER_GID, set
+        # by the adapter): /config is shared with the dashboard process and the YAML file management of the
+        # adapter, which could neither change files of root nor work in directories of root.
+        # Started as root nevertheless, to hand over what belongs to root first: the new volume /cache and files
+        # a container of an earlier version left in /config. "user:" alone would leave both unwritable.
+        # Root is kept without IOBROKER_UID (Windows, ioBroker running as root) and in a user namespace (rootless
+        # Docker, userns-remap: uid_map does not map 0 to 0), where root already is an unprivileged user of the host.
+        #
+        # Then the entrypoint of the image (/entrypoint.sh) takes over. It runs ESPHome Device Builder for
+        # "dashboard" since ESPHome 2026.6.0, older images run "esphome dashboard".
+        #
+        # The script is part of the command, with bash as the only element of the entrypoint: the docker CLI,
+        # which the docker plugin uses without access to the Docker API, cannot set more than one, the plugin
+        # would create the container again on every start.
+        # No "$" followed by "{" in the script: the docker plugin would take it for a template.
+        entrypoint: ['/bin/bash']
+        command:
+            - -c
+            - |
+                read -r _ host_uid _ < /proc/self/uid_map
+                if [ "$(id -u)" = 0 ] && [ "$host_uid" = 0 ] && [ -n "$IOBROKER_UID" ] && [ "$IOBROKER_UID" != 0 ]; then
+                    owner="$IOBROKER_UID:$IOBROKER_GID"
+                    # Everything in the volume is written by this user later on, so its own owner tells (set last)
+                    if [ "$(stat -c %u:%g /cache)" != "$owner" ]; then
+                        find /cache -mindepth 1 -exec chown -h "$owner" {} + && chown "$owner" /cache
+                    fi
+                    find /config \( ! -user "$IOBROKER_UID" -o ! -group "$IOBROKER_GID" \) -exec chown -h "$owner" {} +
+                    # /root cannot be used by this user
+                    export HOME=/tmp
+                    exec setpriv --reuid="$IOBROKER_UID" --regid="$IOBROKER_GID" --clear-groups /entrypoint.sh "$@"
+                fi
+                exec /entrypoint.sh "$@"
+            # $0 of the script, the arguments of /entrypoint.sh follow
+            - iobroker-entrypoint
+            - dashboard
+            - '--port=${config.ESPHomeDashboardPort:-6052}'
+            - /config
         # The healthcheck of the image always asks port 6052, the dashboard listens on the configured one
         healthcheck:
             test:
