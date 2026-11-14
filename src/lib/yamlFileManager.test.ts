@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { existsSync, readFileSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from 'node:fs/promises';
+import { chmod, lstat, mkdir, mkdtemp, readdir, readFile, readlink, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import YamlFileManager from './yamlFileManager';
@@ -194,6 +194,61 @@ describe('YAML File Management', () => {
 
             expect((await fileManager.uploadYamlFile('new.yaml', 'x')).success).to.be.true;
             expect(await readFile(path.join(dir, 'new.yaml'), 'utf8')).to.equal('x');
+        });
+
+        it('replaces a file it may not write, as a dashboard container running as root leaves them', async function () {
+            if (process.platform === 'win32') {
+                // a read-only file cannot be replaced there
+                this.skip();
+            }
+            const file = path.join(dir, 'secrets.yaml');
+            await writeFile(file, 'old');
+            // Stands for a file of another user: root would be needed to create one (and may write every file)
+            await chmod(file, 0o444);
+
+            const upload = await fileManager.uploadYamlFile('secrets.yaml', 'new');
+
+            expect(upload).to.deep.equal({ success: true, message: 'File secrets.yaml uploaded successfully' });
+            expect(await readFile(file, 'utf8')).to.equal('new');
+            // no temporary file is left behind
+            expect(await readdir(dir)).to.deep.equal(['secrets.yaml']);
+        });
+
+        it('reports why a file could not be written when it cannot be replaced either', async function () {
+            if (process.platform === 'win32' || process.getuid?.() === 0) {
+                // root may write everything
+                this.skip();
+            }
+            const file = path.join(dir, 'secrets.yaml');
+            await writeFile(file, 'old');
+            await chmod(file, 0o444);
+            await chmod(dir, 0o555);
+
+            try {
+                const upload = await fileManager.uploadYamlFile('secrets.yaml', 'new');
+
+                expect(upload.success).to.be.false;
+                expect(upload.error).to.include('secrets.yaml');
+                expect(await readFile(file, 'utf8')).to.equal('old');
+            } finally {
+                await chmod(dir, 0o755);
+            }
+        });
+
+        it('writes through a symbolic link instead of replacing it', async function () {
+            await mkdir(path.join(dir, 'common'));
+            await writeFile(path.join(dir, 'common', 'secrets.yaml'), 'old');
+            try {
+                await symlink(path.join('common', 'secrets.yaml'), path.join(dir, 'secrets.yaml'));
+            } catch {
+                // no permission to create symbolic links (Windows)
+                this.skip();
+            }
+
+            expect((await fileManager.uploadYamlFile('secrets.yaml', 'new')).success).to.be.true;
+
+            expect((await lstat(path.join(dir, 'secrets.yaml'))).isSymbolicLink()).to.be.true;
+            expect(await readFile(path.join(dir, 'common', 'secrets.yaml'), 'utf8')).to.equal('new');
         });
 
         it('refuses invalid file names without touching the file system', async () => {

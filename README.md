@@ -242,7 +242,11 @@ This adapter can optionally integrate the ESPHome Dashboard into ioBroker's admi
 - PlatformIO, ESP-IDF and the other toolchains needed to compile (several GB) are kept in the Docker volume
   `iob_esphome_<instance>_esphome_cache`, not in `iobroker-data`. It stays when Docker Integration is disabled, remove it with
   `docker volume rm iob_esphome_<instance>_esphome_cache` if you do not need it any more
-- Files created by the container belong to `root`, run `iob fix` if the YAML file management cannot change them
+- The dashboard in the container runs as the user of the ioBroker instance, so the YAML files and build directories it creates belong
+  to that user, like those of the dashboard without Docker. Files an earlier version left behind as `root` are handed over at the next
+  start of the container. Only when ioBroker itself runs as `root`, on Windows, or with rootless Docker, the container keeps running as its `root`
+- The container gets the time zone of the ioBroker host (`TZ`): ESPHome compiles the time zone of the system it runs on into a device
+  with a `time:` component but no `timezone:`, which would be UTC in a container
 
 **Option 2: External Dashboard**
 
@@ -505,6 +509,10 @@ If you like my work, please consider a personal donation
 
 ### **WORK IN PROGRESS**
 
+- (@SimonFischer04) **ENHANCED**: Docker Integration: the dashboard in the container runs as the user of the ioBroker instance instead of `root`. The YAML files and build directories it creates can then be changed by the YAML file management and used by the dashboard without Docker; files left behind as `root` are handed over at the next start of the container
+- (@SimonFischer04) **FIXED**: Docker Integration: devices with a `time:` component but no `timezone:` were compiled with UTC, the container now gets the time zone of the ioBroker host
+- (@SimonFischer04) **FIXED**: YAML file management: a file the adapter may not write, e.g. created by a dashboard container as `root`, is replaced on upload instead of failing with "permission denied"
+- (@SimonFischer04) **ENHANCED**: `@iobroker/plugin-docker` 1.3.1: a Docker daemon that accepts connections but does not answer no longer blocks the start of the instance
 - (@SimonFischer04) **ENHANCED**: The ESPHome Dashboard tab of admin waits for the dashboard: while it starts (installing ESPHome takes several minutes on the first start or after a version change), the tab shows a hint and the start log, and switches to the dashboard by itself as soon as it answers. It also tells when the dashboard is disabled, could not be started or the instance is not running. The status is in the states `_ESPHomeDashboard.status` and `_ESPHomeDashboard.startLog`. Needs admin 8.0.12 or newer, older versions show the dashboard with a hint to wait
 - (@SimonFischer04) **NEW**: The Python version of the ESPHome Dashboard environment can be selected in the advanced dashboard settings, a version (e.g. `3.13.2`) or a range (e.g. `3.12` for the newest 3.12.x). The default stays Python 3.13.2. Changing it creates the Python environment again on the next start
 - (@SimonFischer04) **FIXED**: Newer Python versions can be downloaded again: autopy 1.3.1 reads the `SHA256SUMS` checksum file of newer python-build-standalone releases

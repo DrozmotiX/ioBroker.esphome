@@ -176,6 +176,13 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
   and calls `instanceIsReady()`, only when the dashboard is enabled. That also resolves when the pull or start failed (the plugin
   only warns), so the container state is checked with `containerList()` afterwards; the ready check keeps polling the container.
   The image entrypoint runs ESPHome Device Builder for `dashboard` since 2026.6.0. Toolchains go to the named volume `/cache`.
+  `containerHostEnvironment()` adds `IOBROKER_UID` / `IOBROKER_GID` (user of the instance) and `TZ` (ESPHome compiles the time zone
+  of its system into devices; mounting `/etc/localtime` does not work, tzlocal reads `TZ`) to the environment. The script in
+  `command` of `docker-compose.yaml` starts as root, chowns the new `/cache` volume and leftover root files in `/config` to that
+  user and runs `/entrypoint.sh` with `setpriv` as that user: `/config` is shared with the dashboard process and the YAML file
+  management (plain `user:` leaves the volume unwritable). It stays root without `IOBROKER_UID` (Windows, ioBroker as root) and in a
+  user namespace (rootless Docker). Keep `entrypoint` at one element and no `${` in the script (CLI driver / templates of the plugin).
+  Every field has to survive the comparison of the plugin with `docker inspect`, otherwise the container is created again on each start.
   The container name (`ownContainerName()`, the name the plugin gives it) is kept in `_ESPHomeDashboard.dockerContainer` before
   `instanceIsReady()`; a start without Docker mode removes that container
   (`removeLeftoverContainer()`, own `DockerManager`, as the plugin manages nothing then). `stop()` waits up to 4 s for a pending

@@ -7,7 +7,7 @@
 import type * as AdapterCore from '@iobroker/adapter-core';
 import * as I18n from '@iobroker/adapter-core/i18n';
 import { constants, cpSync, existsSync, mkdirSync, renameSync } from 'node:fs';
-import { access, mkdir, readdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
+import { access, mkdir, readdir, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 
 /** One entry of the YAML file list shown in the adapter configuration */
@@ -97,6 +97,36 @@ function translateLabel(key: string): string {
  */
 function resolveESPHomeDirectory(dataDir: string, instance: number | string): string {
     return path.join(dataDir, `esphome.${instance}`);
+}
+
+/**
+ * Writes a file. A file this process may not write is replaced by a new one instead, which only needs write
+ * access to the directory: files a dashboard container created as root belong to root (the container of this
+ * adapter runs as the ioBroker user where it can, see docker-compose.yaml).
+ * Only then, as replacing would also replace a symbolic link (e.g. secrets.yaml -> common/secrets.yaml).
+ *
+ * @param filePath - Absolute path of the file
+ * @param content - New content
+ */
+async function writeOrReplaceFile(filePath: string, content: string): Promise<void> {
+    try {
+        await writeFile(filePath, content, 'utf8');
+    } catch (error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code !== 'EACCES' && code !== 'EPERM') {
+            throw error;
+        }
+        // The leading dot and the extension hide the temporary file from the dashboard and the file list
+        const tmpPath = path.join(path.dirname(filePath), `.${path.basename(filePath)}.${process.pid}.tmp`);
+        try {
+            await writeFile(tmpPath, content, 'utf8');
+            await rename(tmpPath, filePath);
+        } catch {
+            await unlink(tmpPath).catch(() => undefined);
+            // The directory cannot be written either: report why the file could not be written
+            throw error;
+        }
+    }
 }
 
 /**
@@ -351,7 +381,7 @@ class YamlFileManager {
             }
 
             const filePath = path.join(espHomeDir, filename);
-            await writeFile(filePath, content, 'utf8');
+            await writeOrReplaceFile(filePath, content);
 
             this.adapter.log.info(`YAML file uploaded successfully: ${filename}`);
             return {

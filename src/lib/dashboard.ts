@@ -120,6 +120,41 @@ export function dashboardCredentials(
     return { ESPHOME_USERNAME: username, ESPHOME_PASSWORD: password, USERNAME: username, PASSWORD: password };
 }
 
+/**
+ * Environment variables telling the dashboard container about the host it works for:
+ *
+ * - IOBROKER_UID / IOBROKER_GID: user of this instance. The script of docker-compose.yaml runs the dashboard
+ *   as this user, so the YAML directory shared with the dashboard process and the YAML file management does not
+ *   fill up with files of root. Not set without such a user (Windows) and when ioBroker runs as root.
+ * - TZ: ESPHome compiles the time zone of the system it runs on into a device with `time:` but no `timezone:`,
+ *   and that is UTC in the container. Its time zone detection (tzlocal) reads TZ; mounting /etc/localtime
+ *   changes nothing, as the name of the zone comes from the symbolic link of the image.
+ *
+ * @param host - user and time zone of this process
+ * @param host.uid - user id, undefined on Windows
+ * @param host.gid - group id, undefined on Windows
+ * @param host.timeZone - IANA name of the time zone
+ * @returns environment variables for the dashboard container
+ */
+export function containerHostEnvironment(
+    host: { uid?: number; gid?: number; timeZone?: string } = {
+        uid: process.getuid?.(),
+        gid: process.getgid?.(),
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
+): Record<string, string> {
+    const environment: Record<string, string> = {};
+    if (host.uid && host.gid !== undefined) {
+        environment.IOBROKER_UID = String(host.uid);
+        environment.IOBROKER_GID = String(host.gid);
+    }
+    // "Etc/Unknown": the time zone of the host could not be determined
+    if (host.timeZone && host.timeZone !== 'Etc/Unknown' && /^[\w+\-/]+$/.test(host.timeZone)) {
+        environment.TZ = host.timeZone;
+    }
+    return environment;
+}
+
 /** Python version of the dashboard environment while none is configured (the version used before it was selectable) */
 export const DEFAULT_PYTHON_VERSION = '3.13.2';
 
@@ -721,8 +756,12 @@ class Dashboard {
             // A version tag never changes, "stable" does: pull it again on every start, otherwise the image
             // of the first start would be used for good
             container.iobAutoImageUpdate = !version;
-            // Login of the dashboard, see dashboardCredentials()
-            container.environment = { ...container.environment, ...dashboardCredentials(this.adapter.config) };
+            // Login of the dashboard, see dashboardCredentials(), user and time zone of this instance
+            container.environment = {
+                ...container.environment,
+                ...dashboardCredentials(this.adapter.config),
+                ...containerHostEnvironment(),
+            };
             this.logLogin();
             for (const mount of container.mounts ?? []) {
                 if (mount.target === dockerConfigDir) {
