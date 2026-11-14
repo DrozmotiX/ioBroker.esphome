@@ -1,4 +1,4 @@
-import DockerPlugin from '@iobroker/plugin-docker';
+import DockerPlugin, { DockerManagerOfOwnContainers } from '@iobroker/plugin-docker';
 import { expect } from 'chai';
 import { readFileSync } from 'node:fs';
 import { mkdtemp, rm, stat } from 'node:fs/promises';
@@ -151,12 +151,25 @@ describe('ESPHome Dashboard in Docker', () => {
     let dir: string;
     let logs: Logs;
 
+    // The docker plugin creates this manager for the containers it manages, and since 1.3.0 also when the
+    // only service is disabled, to stop a container left running. Its init() looks for the Docker of the
+    // host, which takes seconds where the docker command answers slowly (Windows): never done in unit tests.
+    const managerPrototype = DockerManagerOfOwnContainers.prototype as unknown as { init: () => Promise<void> };
+    const managerInit = managerPrototype.init;
+    let managersStarted: number;
+
     beforeEach(async () => {
         dir = await mkdtemp(path.join(tmpdir(), 'esphome-docker-'));
         logs = { info: [], timers: [], callbacks: [], warn: [], error: [], connectionUpdates: 0, states: {} };
+        managersStarted = 0;
+        managerPrototype.init = (): Promise<void> => {
+            managersStarted++;
+            return Promise.resolve();
+        };
     });
 
     afterEach(async () => {
+        managerPrototype.init = managerInit;
         await rm(dir, { recursive: true, force: true });
     });
 
@@ -176,6 +189,8 @@ describe('ESPHome Dashboard in Docker', () => {
         const plugin = await createDockerPlugin({ ...native });
         expect(native.ESPHomeDashboardDocker).to.equal(false);
         expect(plugin.configurations).to.have.length(0);
+        // the plugin itself stops a container the instance left running with Docker Integration
+        expect(managersStarted).to.equal(1);
     });
 
     it('docker-compose.yaml declares the dashboard container, waiting for the adapter', async () => {
@@ -213,6 +228,7 @@ describe('ESPHome Dashboard in Docker', () => {
         expect(container.restart).to.deep.equal({ policy: 'no' });
         // not started by the plugin itself
         expect(plugin.readyCalls).to.equal(0);
+        expect(managersStarted).to.equal(0);
     });
 
     it('starts the container with the selected version and the YAML directory of the instance', async () => {
