@@ -29,6 +29,30 @@ const pillowVersions = []; // Memory cache for available Pillow versions
 // "Always last available". Keep in sync with the "native" defaults in io-package.json.
 const defaultDashboardVersion = '2026.6.5';
 const defaultPillowVersion = '12.2.0';
+// ESPHome 2026.7.0 removed the built-in dashboard (`esphome dashboard`). From that release on the
+// separate ESPHome Device Builder package provides the web UI, it runs the esphome CLI of the same venv.
+const deviceBuilderMinVersion = [2026, 7];
+const defaultDeviceBuilderVersion = '1.28.1';
+
+/**
+ * Whether the given ESPHome version needs the separate ESPHome Device Builder instead of the
+ * removed built-in dashboard. An empty version means "latest from PyPI", which needs it as well.
+ *
+ * @param {string} version - ESPHome version, e.g. 2026.6.5 or 2026.10.0b3
+ * @returns {boolean} true when the Device Builder has to be started
+ */
+function requiresDeviceBuilder(version) {
+    const match = /^(\d+)\.(\d+)/.exec(String(version || '').trim());
+    if (!match) {
+        return true;
+    }
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    return (
+        year > deviceBuilderMinVersion[0] ||
+        (year === deviceBuilderMinVersion[0] && month >= deviceBuilderMinVersion[1])
+    );
+}
 
 // State holding whether the one-time migration away from "Always last available" already ran.
 const versionMigrationState = '_ESPHomeDashboard.versionPinMigrationDone';
@@ -390,6 +414,7 @@ class Esphome extends utils.Adapter {
                 this.log.info(`Native Integration of ESPHome Dashboard enabled, making environment ready`);
 
                 this.warnUnpinnedVersions(useDashBoardVersion, usePillowVersion);
+                const useDeviceBuilder = requiresDeviceBuilder(useDashBoardVersion);
                 try {
                     const { getVenv } = await import('autopy');
                     let python;
@@ -414,6 +439,15 @@ class Esphome extends utils.Adapter {
                                 `Unable to determine a specific Pillow version. Falling back to latest available version from PyPI`,
                             );
                             requirements.push({ name: 'pillow', version: '' });
+                        }
+                        if (useDeviceBuilder) {
+                            this.log.info(
+                                `ESPHome ${useDashBoardVersion || '(latest)'} no longer ships the built-in dashboard, using ESPHome Device Builder ${defaultDeviceBuilderVersion} instead`,
+                            );
+                            requirements.push({
+                                name: 'esphome-device-builder',
+                                version: `==${defaultDeviceBuilderVersion}`,
+                            });
                         }
                         // Create a virtual environment with esphome installed.
                         python = await getVenv({
@@ -445,13 +479,15 @@ class Esphome extends utils.Adapter {
                         );
                     }
 
-                    this.log.info(`Starting ESPHome Dashboard`);
-                    dashboardProcess = python('esphome', [
-                        'dashboard',
-                        '--port',
-                        String(this.config.ESPHomeDashboardPort),
-                        `${dataDir}esphome.${this.instance}`,
-                    ]);
+                    const configDir = `${dataDir}esphome.${this.instance}`;
+                    const dashboardPort = String(this.config.ESPHomeDashboardPort);
+                    if (useDeviceBuilder) {
+                        this.log.info(`Starting ESPHome Device Builder`);
+                        dashboardProcess = python('esphome-device-builder', ['--port', dashboardPort, configDir]);
+                    } else {
+                        this.log.info(`Starting ESPHome Dashboard`);
+                        dashboardProcess = python('esphome', ['dashboard', '--port', dashboardPort, configDir]);
+                    }
 
                     this.log.debug(`espHomeDashboard_Process ${JSON.stringify(dashboardProcess)}`);
 
@@ -461,8 +497,11 @@ class Esphome extends utils.Adapter {
 
                     dashboardProcess.stderr?.on('data', data => {
                         // this.log.warn(`[dashboardProcess ERROR] ${data}`);
-                        if (data.includes('INFO')) {
-                            if (data.includes('Starting')) {
+                        if (data.includes('ERROR') || data.includes('Traceback')) {
+                            // Surface start-up failures, otherwise the dashboard only "stops" without a reason
+                            this.log.warn(`[ESPHome - Console] ${data}`);
+                        } else if (data.includes('INFO')) {
+                            if (data.includes('Starting') || data.includes('Device Builder ready')) {
                                 this.log.info(`[ESPHome - Console] ${data}`);
                             } else {
                                 this.log.debug(`[ESPHome - Console] ${data}`);

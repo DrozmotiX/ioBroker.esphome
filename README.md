@@ -451,6 +451,7 @@ If you like my work, please consider a personal donation
 -->
 ### __WORK IN PROGRESS__
 
+- (@MMeinhardt1) **NEW**: ESPHome 2026.7 and later removed the built-in dashboard (`esphome dashboard`). For these versions the adapter installs ESPHome Device Builder 1.28.1 into the same Python environment and starts it on the configured port with the same configuration folder; older ESPHome versions keep using the built-in dashboard. Start-up errors of the dashboard process are now logged instead of only reporting that it stopped
 - (@DutchmanNL) **FIXED**: A command to a device that is offline is no longer acknowledged. The state stays at `ack: false` and a warning is logged, so other adapters that wait for the acknowledgement see that the command did not reach the device (#541)
 
 ### 1.0.1 (2026-11-09)
