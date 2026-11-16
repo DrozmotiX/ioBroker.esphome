@@ -18,6 +18,7 @@ Single-file adapter (`src/main.ts`, ~2700 lines) extending `@iobroker/adapter-co
 | `src/lib/dashboardRequirements.ts` | Python requirements of the dashboard (ESPHome, Pillow, ESPHome Device Builder)     |
 | `src/lib/deviceManagement.ts`      | ioBroker device manager (`@iobroker/dm-utils`): list / add / edit / delete devices |
 | `src/lib/discoveryOptions.ts`      | Options of the MDNS discovery for the listening address (IPv4 or IPv6 interface)   |
+| `src/lib/bleForwarder.ts`          | Forwards the BLE advertisements of Bluetooth proxies to ioBroker.ble               |
 
 **Two optional subsystems run in-process alongside device connections:**
 
@@ -90,7 +91,7 @@ npm run test:integration                      # starts the adapter in a test ioB
 
 > `npm run lint` locally does NOT enforce `--max-warnings 0` but CI does — always run the eslint command above directly.
 
-Unit tests live next to the code they test as `src/**/*.test.ts` (e.g. `src/lib/dashboardApi.test.ts`) and run via `npm run test:unit`. The integration test suite lives in `test/integrationTests/` (index, dashboard_tests, docker_dashboard_tests, version_fetch_tests, version_migration_tests, e2e_device_tests, known_device_tests, settings_cleanup_tests) and is imported by `test/integration.js`.
+Unit tests live next to the code they test as `src/**/*.test.ts` (e.g. `src/lib/dashboardApi.test.ts`) and run via `npm run test:unit`. The integration test suite lives in `test/integrationTests/` (index, dashboard_tests, docker_dashboard_tests, version_fetch_tests, version_migration_tests, e2e_device_tests, known_device_tests, settings_cleanup_tests, ble_forwarding_tests) and is imported by `test/integration.js`.
 
 ### End-to-end test with a real ESPHome device
 
@@ -143,6 +144,32 @@ Use `I18n.getTranslatedObject('English text')` directly (like ioBroker.miner / i
 `translateWithArgs()` for texts with `%s`: adapter-core fills only the first `%s` and returns `{}` for a `%s` text
 without arguments. Results and errors `main.ts` passes to the device manager (`DeviceActionResult`) are English
 texts of `src/i18n` with their `%s` values in `args`; a unit test checks every such text has a translation.
+
+## Bluetooth proxies (BLE forwarding)
+
+`BleForwarder` (`src/lib/bleForwarder.ts`) delivers the advertisements devices with `bluetooth_proxy` receive to
+ioBroker.ble over its gateway interface "ble-gateway/1" (types in `src/lib/gateway-protocol.ts` of ioBroker.ble):
+`sendTo('ble.0', 'gateway:advertisements', { gatewayId, items: [{ address, addressType, rssi, data }] })`, no callback.
+Enabled by the setting `bleForwardInstance` (`"ble.0"`, empty = off, `bleTargetInstance()`).
+
+- The dependency points one way: this adapter knows ioBroker.ble, not the other way round. It passes the raw payload
+  (`data`, base64) on without parsing it; decoding, deduplication across proxies and "which devices are recorded" are
+  ioBroker.ble's business. Do not add Bluetooth knowledge here.
+- `attach()` after `new Client()`, `initialized()` in the `initialized` event (subscribes with
+  `connection.subscribeBluetoothAdvertisementService()`, every time: the subscription ends with the connection),
+  `disconnected()` / `detach()` / `stop()` on disconnect, device removal and unload.
+- Only devices with the raw advertisement bit (`1 << 5`) in `deviceInfo.bluetoothProxyFeatureFlags` are subscribed
+  (ESPHome >= 2023.6.0). The client option `initializeSubscribeBLEAdvertisements` is not used, it would subscribe at
+  every device.
+- The raw payload is read from `client.connection.frameHelper.on('message')`: the mapped events of the library
+  (`ble`, `message.BluetoothLERawAdvertisementsResponse`) have the payload parsed and removed.
+- Advertisements are collected for 250 ms per proxy, the same payload of the same BLE device is sent once per batch, at
+  most 500 per message. The gateway ID is the ESPHome name (`gatewayId()`). An empty batch announces a proxy and is
+  repeated every 30 s while it receives nothing: ioBroker.ble takes a gateway offline after 60 s of silence.
+- Tests: `src/lib/bleForwarder.test.ts` builds the messages with the protobuf classes of the library.
+  `test/integrationTests/ble_forwarding_tests.js` runs the adapter against `fakeBluetoothProxy.js` (plaintext native
+  API on `127.0.0.1:6053`, the host platform of the E2E device has no Bluetooth) and reads the messages sent to `ble.0`.
+- Not implemented yet: GATT connections through a proxy (stage 2 of the gateway interface).
 
 ## GITHUB_TOKEN Usage
 

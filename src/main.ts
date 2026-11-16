@@ -17,6 +17,7 @@ import {
 import * as utils from '@iobroker/adapter-core';
 import { isIPv4, isIPv6 } from 'node:net';
 import { format } from 'node:util';
+import { BleForwarder, bleTargetInstance } from './lib/bleForwarder';
 import { connectionStateValue, isDeviceOnline } from './lib/connectionState';
 import Dashboard from './lib/dashboard';
 import { discoveryOptions } from './lib/discoveryOptions';
@@ -103,6 +104,8 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
     declare private yamlFileManager: YamlFileManager;
     declare private dashboard: Dashboard;
     declare private deviceManagement: EsphomeDeviceManagement;
+    /** Forwards the advertisements of Bluetooth proxies to ioBroker.ble, see src/lib/bleForwarder.ts */
+    declare private bleForwarder: BleForwarder;
     /** Last value written to info.connection, see updateConnectionState() */
     declare private connectedDevicesList: string | undefined;
 
@@ -128,6 +131,9 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
 
         // Initialize ESPHome Dashboard handling
         this.dashboard = new Dashboard(this);
+
+        // Disabled until the settings are known, see onReady()
+        this.bleForwarder = new BleForwarder(this, null);
     }
 
     /**
@@ -137,6 +143,12 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
         // Integration with the ioBroker device manager, handles all "dm:" messages itself.
         // Created here as it accesses the objects database right away.
         this.deviceManagement = new EsphomeDeviceManagement(this);
+
+        // Forwarding of BLE advertisements to ioBroker.ble, has to exist before the first device connects
+        this.bleForwarder = new BleForwarder(this, bleTargetInstance(this.config.bleForwardInstance));
+        if (this.bleForwarder.enabled) {
+            this.log.info(`BLE advertisements of Bluetooth proxies are forwarded to ${this.bleForwarder.target}`);
+        }
 
         // info.connection lists the connected devices. Up to 1.0.0 it was a boolean: existing instances keep their
         // object from the old version, so bring its type in line with the list it holds now
@@ -401,6 +413,9 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
             // interval setting until clientDetails[host].client.disconnect() is called
             clientDetails[host].client = new Client(clientSettings);
 
+            // Listen for the BLE advertisements a Bluetooth proxy receives (if they are forwarded)
+            this.bleForwarder.attach(host, clientDetails[host].client);
+
             // Connection listener
             clientDetails[host].client.on('connected', async () => {
                 try {
@@ -423,6 +438,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
 
             clientDetails[host].client.on('disconnected', async () => {
                 try {
+                    this.bleForwarder.disconnected(host);
                     if (clientDetails[host].deviceName != null) {
                         await this.updateConnectionStatus(host, false, false, 'disconnected', false);
                         delete clientDetails[host].deviceInfo;
@@ -470,6 +486,9 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                 clientDetails[host].connectStatus = 'initialized';
 
                 await this.updateConnectionStatus(host, true, false, 'initialized', false);
+
+                // A Bluetooth proxy is asked for its advertisements with every new connection
+                this.bleForwarder.initialized(host, clientDetails[host].deviceInfo);
 
                 // Start timer to clean up unneeded objects
                 if (resetTimers[host]) {
@@ -1491,6 +1510,9 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
      */
     onUnload(callback: () => void): void {
         try {
+            // While the devices are still connected, so they can be told to stop sending advertisements
+            this.bleForwarder.stop();
+
             // this.log.debug(JSON.stringify(clientDetails));
 
             // Set all online states to false
@@ -1695,6 +1717,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
 
         // Clean memory data
         delete clientDetails[ip];
+        this.bleForwarder.detach(ip);
         await this.updateConnectionState();
 
         return { result: 'OK - Device successfully removed' };
