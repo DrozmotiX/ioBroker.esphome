@@ -245,6 +245,30 @@
 							"default": 1,
 							"label": "lblPingAttempts",
 							"help": "hlpPingAttempts"
+						},
+
+						// Header for devices with the bluetooth_proxy component
+						"bleForwardingHeader": {
+							"newLine": true,
+							"type": "header",
+							"text": "lblBleForwarding",
+							"size": 1
+						},
+
+						// Instance of ioBroker.ble that receives the BLE advertisements of the Bluetooth proxies
+						// (src/lib/bleForwarder.ts). Stored as "ble.0", empty = not forwarded.
+						"bleForwardInstance": {
+							"newLine": true,
+							"type": "instance",
+							"adapter": "ble",
+							"allowDeactivate": true,
+							"xs": 12,
+							"sm": 12,
+							"md": 6,
+							"lg": 4,
+							"xl": 4,
+							"label": "lblBleForwardInstance",
+							"help": "hlpBleForwardInstance"
 						}
 					}
 				}

@@ -45,5 +45,10 @@ declare module '@2colors/esphome-native-api' {
     interface Connection {
         /** Subscribes to state changes of all entities */
         subscribeStatesService(): void;
+        /**
+         * Reads and writes the frames of the API (lib/utils/frameHelper.js). Emits every message of the device
+         * as 'message', as received and before the library maps it to the objects of its own events.
+         */
+        frameHelper: EventEmitter;
     }
 }

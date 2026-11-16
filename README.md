@@ -494,6 +494,34 @@ When an RGBW-capable light is detected (i.e. it exposes a `white` state), the ad
 
 **Behaviour when disabled (default):** the `white` channel is never touched automatically; users control it independently.
 
+## Bluetooth proxies
+
+ESPHome devices with the [`bluetooth_proxy`](https://esphome.io/components/bluetooth_proxy/) component receive the
+advertisements of the Bluetooth Low Energy devices around them: thermometers, plant sensors, buttons and so on.
+This adapter can pass these advertisements on to the [BLE adapter](https://github.com/AlCalzone/ioBroker.ble)
+(ioBroker.ble), which decodes them (BTHome, Xiaomi, RuuviTag, ...) and creates the states. Several proxies
+distributed in the house then work like one receiver with a long range, without a Bluetooth stick at the ioBroker host.
+
+1. Add the component to the YAML of the device, it needs an ESP32:
+
+    ```yaml
+    esp32_ble_tracker:
+
+    bluetooth_proxy:
+    ```
+
+2. Install the BLE adapter in a version that accepts advertisements from other adapters. If the ioBroker host has no
+   Bluetooth hardware, disable "Use the Bluetooth adapter of this host" in its settings.
+3. In the main settings of this adapter, select the instance of the BLE adapter under **Forward BLE advertisements
+   to**. Nothing is forwarded while no instance is selected.
+
+Every proxy shows up in the BLE adapter as a gateway named after the device, e.g. `esphome.0:proxy-og`. Which BLE
+devices are recorded is decided there ("Accept new devices", monitored services), this adapter passes on everything the
+proxies receive without looking into it. Only passive reception is forwarded so far, no connections to BLE devices.
+
+The firmware of the proxy has to be ESPHome 2023.6.0 or newer. A proxy can only serve one API client with Bluetooth:
+do not connect Home Assistant to the same device at the same time.
+
 ## Tasmota / ESPEasy migration
 
 Migrating from previous Sonoff Tasmota or ESPEasy setups is very easy. You just need to have ESPHome create a binary for you and then upload that in the web interface.  
@@ -514,8 +542,10 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL)
 -->
+
 ### **WORK IN PROGRESS**
 
+- (@SimonFischer04) **NEW**: Bluetooth proxies: the BLE advertisements devices with the `bluetooth_proxy` component receive can be forwarded to the BLE adapter (ioBroker.ble), which decodes them (BTHome, Xiaomi, RuuviTag, ...). Select its instance under "Forward BLE advertisements to" in the main settings; nothing is forwarded by default
 - (@DutchmanNL) **FIXED**: A release no longer ends with a failed deploy when the Sentry server cannot be reached. npm and the GitHub release were published, only the Sentry release information failed (2.0.0-beta.1, beta.2). Sentry is now informed in its own step, with retries
 
 ### 2.0.0-beta.2 (2026-11-24)
