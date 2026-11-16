@@ -169,7 +169,10 @@ Enabled by the setting `bleForwardInstance` (`"ble.0"`, empty = off, `bleTargetI
 - Tests: `src/lib/bleForwarder.test.ts` builds the messages with the protobuf classes of the library.
   `test/integrationTests/ble_forwarding_tests.js` runs the adapter against `fakeBluetoothProxy.js` (plaintext native
   API on `127.0.0.1:6053`, the host platform of the E2E device has no Bluetooth) and reads the messages sent to `ble.0`.
-- Not implemented yet: GATT connections through a proxy (stage 2 of the gateway interface).
+- Not implemented yet: GATT connections through a proxy (stage 2 of the gateway interface). The binding
+  specification for it is `docs/spec-phase-2-gatt.md` in the ioBroker.ble repository (`SimonFischer04/ioBroker.ble`),
+  part C is the work in this adapter. Read its section C0 before touching the GATT methods of the client library:
+  they match answers by message type only and must not be used.
 
 ## GITHUB_TOKEN Usage
 
