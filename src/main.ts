@@ -1,0 +1,2204 @@
+/*
+ * Created with @iobroker/create-adapter v1.31.0
+ */
+
+// The adapter-core module gives you access to the core ioBroker functions
+// you need to create an adapter
+import {
+    Client,
+    type ClientConfig,
+    type ClimateCommandData,
+    Discovery,
+    type Entity,
+    type FanCommandData,
+    type LightCommandData,
+    type LockCommand,
+} from '@2colors/esphome-native-api';
+import * as utils from '@iobroker/adapter-core';
+import { isIPv4, isIPv6 } from 'node:net';
+import { format } from 'node:util';
+import { connectionStateValue, isDeviceOnline } from './lib/connectionState';
+import Dashboard from './lib/dashboard';
+import { discoveryOptions } from './lib/discoveryOptions';
+import EsphomeDeviceManagement, {
+    type DeviceActionResult,
+    type DiscoveredDevice,
+    type EsphomeDeviceSource,
+    isWifiSignalSensor,
+} from './lib/deviceManagement';
+import ClientDetails from './lib/helpers';
+import stateAttr from './lib/stateAttr'; // Load attribute library
+import YamlFileManager from './lib/yamlFileManager';
+
+/** State of an entity as received from the device, the fields depend on the entity type */
+type EntityState = Record<string, any>;
+
+/** Details of an entity, stored by entity key directly on the ClientDetails object of its device */
+interface EntityDetails {
+    config: Entity['config'];
+    name: string;
+    type: string;
+    unit: string;
+    /** Last state of the entity as received from the device */
+    states?: EntityState;
+    /** Light only: switch the white channel automatically, see handleStateArrays() */
+    rgbAutoWhite?: boolean;
+}
+
+/**
+ * Settings of earlier versions nothing reads any more, removed once by removeObsoleteSettings():
+ * the device tab of 1.0.0 (deviceIP, the device tables and the unsaved apiPassword input, whose default
+ * was still seeded), the default credentials, unused since 0.6, and the inputs of the YAML Files tab, whose
+ * values (including the pasted YAML) were saved with the configuration
+ */
+const OBSOLETE_SETTINGS = [
+    'deviceIP',
+    'existingDevicesTable',
+    'newDevicesTable',
+    'apiPassword',
+    'apiPass',
+    'encryptionKey',
+    'uploadFilename',
+    'uploadContent',
+    'selectedFilename',
+    'yamlFilesTable',
+];
+
+const disableSentry = false; // Ensure to set to true during development!
+const warnMessages: Record<string, string> = {}; // Store warn messages to avoid multiple sending to sentry
+const resetTimers: Record<string, ioBroker.Timeout | undefined | void> = {}; // Memory allocation for all running timers
+let autodiscovery: boolean;
+let createConfigStates: boolean;
+let discovery: Discovery | undefined;
+const clientDetails: Record<string, ClientDetails> = {}; // Memory cache of all devices and their connection status
+const newlyDiscoveredClient: Record<string, DiscoveredDevice> = {}; // Memory cache of all newly discovered devices and their connection status
+
+/**
+ * Details of an entity of a device, see EntityDetails
+ *
+ * @param host - IP address of the device
+ * @param key - Entity key, as number or as part of a state id
+ */
+function entityDetails(host: string, key: string | number): EntityDetails {
+    return (clientDetails[host] as unknown as Record<string, EntityDetails>)[key];
+}
+
+// ColorCapability bits from ESPHome's api.proto. A light's supported_color_modes is a list of
+// ColorMode values, and every ColorMode is an OR of these bits - for example RGB = 35 is
+// ON_OFF | BRIGHTNESS | RGB. A capability is therefore tested with a bitwise AND.
+const COLOR_CAPABILITY = {
+    ON_OFF: 1,
+    BRIGHTNESS: 2,
+    WHITE: 4,
+    COLOR_TEMPERATURE: 8,
+    COLD_WARM_WHITE: 16,
+    RGB: 32,
+};
+
+class Esphome extends utils.Adapter implements EsphomeDeviceSource {
+    /** Memory array of an initiated device by Device Identifier (name) and IP */
+    declare private deviceStateRelation: Record<string, { ip: string }>;
+    /** Common of every state created by stateSetCreate(), to skip unchanged object updates */
+    declare private createdStatesDetails: Record<string, Partial<ioBroker.StateCommon>>;
+    declare private yamlFileManager: YamlFileManager;
+    declare private dashboard: Dashboard;
+    declare private deviceManagement: EsphomeDeviceManagement;
+    /** Last value written to info.connection, see updateConnectionState() */
+    declare private connectedDevicesList: string | undefined;
+
+    /**
+     * @param [options] - Adapter configuration options
+     */
+    public constructor(options: Partial<utils.AdapterOptions> = {}) {
+        super({
+            ...options,
+            name: 'esphome',
+        });
+        this.on('ready', this.onReady.bind(this));
+        this.on('stateChange', this.onStateChange.bind(this));
+        // this.on('objectChange', this.onObjectChange.bind(this));
+        this.on('message', this.onMessage.bind(this));
+        this.on('unload', this.onUnload.bind(this));
+
+        this.deviceStateRelation = {}; // Memory array of an initiated device by Device Identifier (name) and IP
+        this.createdStatesDetails = {}; // Array to store information of created states
+
+        // Initialize YAML file manager
+        this.yamlFileManager = new YamlFileManager(this);
+
+        // Initialize ESPHome Dashboard handling
+        this.dashboard = new Dashboard(this);
+    }
+
+    /**
+     * Is called when databases are connected and adapter received configuration.
+     */
+    async onReady(): Promise<void> {
+        // Integration with the ioBroker device manager, handles all "dm:" messages itself.
+        // Created here as it accesses the objects database right away.
+        this.deviceManagement = new EsphomeDeviceManagement(this);
+
+        // info.connection lists the connected devices. Up to 1.0.0 it was a boolean: existing instances keep their
+        // object from the old version, so bring its type in line with the list it holds now
+        await this.extendObjectAsync('info.connection', {
+            common: { type: 'string', role: 'info.status', name: 'List of connected devices', def: '' },
+        });
+        await this.updateConnectionState();
+        try {
+            // Settings earlier versions stored and nothing reads any more, the adapter restarts if some were removed
+            if (await this.removeObsoleteSettings()) {
+                return;
+            }
+
+            // Migrate from older adapter versions that only had ESPHomeDashboardIP
+            await this.dashboard.migrateConfig();
+
+            // Move installations still on "Always last available" to the pinned versions, once
+            await this.dashboard.migratePinnedVersions();
+
+            //ToDo: store default data into clientDetails object instead of global variable
+            // Store settings in global variables
+            autodiscovery = this.config.autodiscovery;
+            // reconnectInterval / pingInterval / pingAttempts are read per device in connectDevices()
+            createConfigStates = this.config.configStates;
+
+            // Ensure all online states are set to false during adapter start
+            await this.resetOnlineStates();
+
+            // Try connecting to already known devices
+            await this.tryKnownDevices();
+
+            // Get current available versions and start ESPHome Dashboard process (if enabled)
+            await this.dashboard.start();
+
+            // Start MDNS discovery when enabled
+            if (autodiscovery) {
+                if (resetTimers.autodiscovery) {
+                    resetTimers.autodiscovery = this.clearTimeout(resetTimers.autodiscovery);
+                }
+                // this.log.info(`Adapter ready, automatic Device Discovery will be activated in 30 seconds.`);
+                // eslint-disable-next-line @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
+                resetTimers.autodiscovery = this.setTimeout(async () => {
+                    this.deviceDiscovery(); // Start bonjour service autodiscovery
+                }, 5000);
+            } else {
+                this.log.warn(
+                    `Auto Discovery disabled, new devices (or IP changes) will NOT be detected automatically!`,
+                );
+            }
+
+            // Create & Subscribe to button handling offline Device cleanup
+            void this.extendObject('info.deviceCleanup', {
+                type: 'state',
+                common: {
+                    role: 'button',
+                    name: 'Device or service connected',
+                    type: 'boolean',
+                    read: false,
+                    write: true,
+                    def: false,
+                },
+            });
+            this.subscribeStates('info.deviceCleanup');
+
+            // Create & Subscribe to button for resetting the Python environment of the dashboard, the
+            // state id is kept from the former "Clear Autopy Cache" button
+            void this.extendObject('info.clearAutopyCache', {
+                type: 'state',
+                common: {
+                    role: 'button',
+                    name: 'Reset ESPHome Dashboard Python environment',
+                    type: 'boolean',
+                    read: false,
+                    write: true,
+                    def: false,
+                },
+            });
+            this.subscribeStates('info.clearAutopyCache');
+        } catch (e) {
+            this.log.error(`[Adapter start] Fatal error occurred ${String(e)}`);
+        }
+    }
+
+    /**
+     * Remove settings of earlier versions that nothing reads any more from the instance configuration:
+     * the inputs and tables of the device tab (replaced by the device manager) and the default credentials,
+     * unused since 0.6, when discovery stopped connecting new devices by itself.
+     *
+     * @returns true if settings were removed, the instance object changed and js-controller restarts the adapter
+     */
+    async removeObsoleteSettings(): Promise<boolean> {
+        const obsolete = Object.keys(this.config).filter(key => OBSOLETE_SETTINGS.includes(key));
+        if (!obsolete.length) {
+            return false;
+        }
+        const instanceObject = await this.getForeignObjectAsync(`system.adapter.${this.namespace}`);
+        if (!instanceObject) {
+            return false;
+        }
+        for (const key of obsolete) {
+            delete (instanceObject.native as Record<string, unknown>)[key];
+        }
+        this.log.info(`Removing settings no longer used: ${obsolete.join(', ')}, the adapter restarts`);
+        await this.setForeignObjectAsync(instanceObject._id, instanceObject);
+        return true;
+    }
+
+    // Try to contact and read data of already known devices
+    async tryKnownDevices(): Promise<void> {
+        try {
+            // Get all current devices from adapter tree
+            const knownDevices = await this.getDevicesAsync();
+
+            // Cancel operation if no devices are found
+            if (!knownDevices) {
+                return;
+            }
+
+            // Get connection data of known devices and to connect
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
+            for (const i in knownDevices) {
+                const deviceDetails = knownDevices[i].native;
+
+                // Create a memory object and store mandatory connection data
+                clientDetails[deviceDetails.ip] = new ClientDetails();
+                clientDetails[deviceDetails.ip].storeExistingDetails(
+                    deviceDetails.ip,
+                    deviceDetails.encryptionKeyUsed ? deviceDetails.encryptionKeyUsed : false,
+                    `${deviceDetails.mac}`,
+                    `${deviceDetails.deviceName}`,
+                    // Device objects of earlier versions have no native.name, their name is in deviceFriendlyName
+                    deviceDetails.name || deviceDetails.deviceFriendlyName || undefined,
+                    !deviceDetails.encryptionKeyUsed
+                        ? deviceDetails.apiPassword
+                            ? deviceDetails.apiPassword
+                            : deviceDetails.passWord
+                        : null,
+                    deviceDetails.encryptionKeyUsed ? deviceDetails.encryptionKey : null,
+                );
+
+                // Start connection to this device
+                this.connectDevices(deviceDetails.ip);
+            }
+        } catch (error) {
+            this.errorHandler(`[tryKnownDevices]`, error);
+        }
+    }
+
+    // MDNS discovery handler for ESPHome devices
+    deviceDiscovery(): void {
+        try {
+            // Get a list of IP-Addresses from Adapter config to exclude by autodiscovery
+            const excludedIP: string[] = [];
+
+            // Prepare an array to easy processing containing all IP addresses to be excluded from device discovery
+            //ToDo: Check function doesn't look correct
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
+            for (const entry in this.config.ignoredDevices) {
+                if (
+                    this.config.ignoredDevices[entry] &&
+                    this.config.ignoredDevices[entry]['IP-Address'] &&
+                    !excludedIP.includes(this.config.ignoredDevices[entry]['IP-Address'])
+                ) {
+                    excludedIP.push(this.config.ignoredDevices[entry]['IP-Address']);
+                }
+            }
+
+            // Start device discovery
+            const options = discoveryOptions(this.config.discoveryListeningAddress);
+            if (!options) {
+                this.log.warn(
+                    `Listening address ${this.config.discoveryListeningAddress} of the auto discovery belongs to no network interface, listening on all IPv4 interfaces`,
+                );
+            }
+            discovery = new Discovery(options ?? { interface: '0.0.0.0' });
+            discovery.run();
+
+            discovery.on('info', message => {
+                // The IPv6 address only for devices announcing no IPv4 address
+                const address = message.address || message.address6;
+                this.log.debug(`ESPHome Device found on ${address} | ${JSON.stringify(message)}`);
+                if (
+                    address &&
+                    !excludedIP.includes(address) &&
+                    !newlyDiscoveredClient[address] &&
+                    !clientDetails[address]
+                ) {
+                    this.log.info(
+                        `New ESPHome Device discovered: ${message.friendly_name ? message.friendly_name : message.host} on ${address}`,
+                    );
+
+                    if (message.mac == null) {
+                        this.log.warn(`Discovered device with undefined mac. ignoring: ${JSON.stringify(message)}`);
+                        return;
+                    }
+
+                    // Store device data into memory to allow adoption by admin interface
+                    newlyDiscoveredClient[address] = {
+                        ip: address,
+                        mac: String(message.mac)
+                            .replace(/[^0-9a-fA-F]/g, '')
+                            .toUpperCase()
+                            .replace(/(.{2})(?=.)/g, '$1:'),
+                        deviceFriendlyName: message.friendly_name ? message.friendly_name : message.host,
+                    };
+                    void this.deviceManagement.refreshDeviceList();
+                }
+            });
+        } catch (error) {
+            this.errorHandler(`[deviceDiscovery]`, error);
+        }
+    }
+
+    /**
+     * Handle Socket connections
+     *
+     * @param host IP address of a device
+     */
+    connectDevices(host: string): void {
+        try {
+            this.log.info(`Try to connect to ${host}`);
+
+            // Cancel procedure if connection try or action to delete this device is already in progress or
+            if (clientDetails[host] && (clientDetails[host].connecting || clientDetails[host].deletionRequested)) {
+                return;
+            }
+            void this.updateConnectionStatus(host, false, true, 'connecting');
+
+            // Connection behavior, configurable via adapter settings.
+            // Intervals are stored in seconds in the config and converted to milliseconds here.
+            // Sanitize to sensible minimums to avoid hammering devices with a 0s interval.
+            const reconnectInterval = Math.max(1, Number(this.config.reconnectInterval) || 5) * 1000;
+            const pingInterval = Math.max(1, Number(this.config.pingInterval) || 5) * 1000;
+            const pingAttempts = Math.max(1, Number(this.config.pingAttempts) || 1);
+
+            // Generic client settings
+            const clientSettings: ClientConfig = {
+                host: host,
+                clientInfo: `${this.host}`,
+                clearSession: true,
+                initializeDeviceInfo: true,
+                initializeListEntities: true,
+                initializeSubscribeStates: false,
+                // initializeSubscribeLogs: false, //ToDo: Make configurable by adapter settings
+                reconnect: true,
+                reconnectInterval: reconnectInterval,
+                pingInterval: pingInterval,
+                pingAttempts: pingAttempts,
+                // port: espDevices[device].port //ToDo: Make configurable by adapter settings
+            };
+
+            // Add an encryption key or apiPassword to the settings object
+            if (!clientDetails[host].encryptionKeyUsed) {
+                clientSettings.password = clientDetails[host].apiPassword
+                    ? this.decrypt(clientDetails[host].apiPassword)
+                    : '';
+            } else {
+                clientSettings.encryptionKey = this.decrypt(clientDetails[host].encryptionKey!);
+            }
+
+            // Start connection to a client, if connection fails process wil try to reconnect every "reconnection"
+            // interval setting until clientDetails[host].client.disconnect() is called
+            clientDetails[host].client = new Client(clientSettings);
+
+            // Connection listener
+            clientDetails[host].client.on('connected', async () => {
+                try {
+                    await this.updateConnectionStatus(host, true, false, 'Connected', false);
+
+                    this.log.info(`ESPHome client ${host} connected`);
+                    // Clear possible present warning messages for devices from previous connection
+                    delete warnMessages[host];
+                    // Allow the next connection-loss event to log a "Connection destroyed" warning again
+                    clientDetails[host].connectionDestroyedLogged = false;
+
+                    // Answer a pending add / modify request of the device manager
+                    this.deviceManagement.onConnectResult(host, {
+                        result: 'OK - Device successfully connected, initializing configuration',
+                    });
+                } catch (e) {
+                    this.log.error(`connection error ${String(e)}`);
+                }
+            });
+
+            clientDetails[host].client.on('disconnected', async () => {
+                try {
+                    if (clientDetails[host].deviceName != null) {
+                        await this.updateConnectionStatus(host, false, false, 'disconnected', false);
+                        delete clientDetails[host].deviceInfo;
+                        // Cleanup all known states in memory related to this device
+                        for (const state in this.createdStatesDetails) {
+                            // Remove states from cache
+                            if (state.split('.')[0] === clientDetails[host].deviceName) {
+                                delete this.createdStatesDetails[state];
+                            }
+                        }
+                        // Remove cached entity descriptors so reconnect starts from a clean slate.
+                        for (const [key, value] of Object.entries(clientDetails[host])) {
+                            if (
+                                value &&
+                                typeof value === 'object' &&
+                                !Array.isArray(value) &&
+                                value.config &&
+                                value.type &&
+                                value.name
+                            ) {
+                                delete (clientDetails[host] as unknown as Record<string, EntityDetails>)[key];
+                            }
+                        }
+                        delete this.deviceStateRelation[clientDetails[host].deviceName];
+
+                        this.log.warn(
+                            `ESPHome client ${clientDetails[host].deviceFriendlyName} | ${clientDetails[host].deviceName} | on ${host} disconnected`,
+                        );
+                    } else {
+                        this.log.warn(`ESPHome client ${host} disconnected`);
+                    }
+                } catch (e) {
+                    this.log.debug(`ESPHome disconnect error : ${String(e)}`);
+                }
+            });
+
+            // eslint-disable-next-line @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
+            clientDetails[host].client.on('reconnect', async () => {
+                this.log.debug(`Trying to reconnect to ESPHome client ${host}`);
+            });
+
+            clientDetails[host].client.on('initialized', async () => {
+                this.log.info(`ESPHome  client ${clientDetails[host].deviceFriendlyName} on ip ${host} initialized`);
+                clientDetails[host].initialized = true;
+                clientDetails[host].connectStatus = 'initialized';
+
+                await this.updateConnectionStatus(host, true, false, 'initialized', false);
+
+                // Start timer to clean up unneeded objects
+                if (resetTimers[host]) {
+                    resetTimers[host] = this.clearTimeout(resetTimers[host]);
+                }
+                resetTimers[host] = this.setTimeout(async () => {
+                    await this.objectCleanup(host);
+                }, 10000);
+            });
+
+            // Log message listener
+            clientDetails[host].client.connection.on('message', message => {
+                this.log.debug(`[ESPHome Device Message] ${host} client log ${message}`);
+            });
+
+            clientDetails[host].client.connection.on('data', data => {
+                this.log.debug(`[ESPHome Device Data] ${host} client data ${data}`);
+            });
+
+            // Handle device information when connected or information updated
+            clientDetails[host].client.on('deviceInfo', async deviceInfo => {
+                try {
+                    this.log.info(`ESPHome Device info received for ${deviceInfo.name}`);
+                    this.log.debug(`DeviceData: ${JSON.stringify(deviceInfo)}`);
+
+                    // Store device information into memory
+                    const deviceName = this.replaceAll(deviceInfo.macAddress, `:`, ``);
+
+                    clientDetails[host].mac = deviceInfo.macAddress;
+                    clientDetails[host].deviceName = deviceName;
+                    clientDetails[host].deviceFriendlyName = deviceInfo.name;
+                    clientDetails[host].deviceInfo = deviceInfo;
+                    // Announced again with the entities, the firmware may have changed
+                    clientDetails[host].rssiEntityId = null;
+
+                    this.deviceStateRelation[deviceName] = { ip: host };
+
+                    this.log.debug(
+                        `DeviceInfo ${clientDetails[host].deviceFriendlyName}: ${JSON.stringify(clientDetails[host].deviceInfo)}`,
+                    );
+
+                    // Create Device main structure
+                    await this.extendObjectAsync(deviceName, {
+                        type: 'device',
+                        common: {
+                            name: deviceInfo.name,
+                            statusStates: {
+                                onlineId: `${this.namespace}.${deviceName}.info._online`,
+                            },
+                            desc: deviceInfo.friendlyName,
+                        },
+                        native: {
+                            ip: host,
+                            name: deviceInfo.name,
+                            mac: deviceInfo.macAddress,
+                            deviceName: deviceName,
+                            deviceFriendlyName: deviceInfo.name,
+                            apiPassword: clientDetails[host].apiPassword,
+                            encryptionKey: clientDetails[host].encryptionKey,
+                            encryptionKeyUsed: clientDetails[host].encryptionKeyUsed,
+                        },
+                    });
+
+                    // Create info channel explicitly with proper type
+                    await this.extendObjectAsync(`${deviceName}.info`, {
+                        type: 'channel',
+                        common: {
+                            name: 'Device Information',
+                        },
+                        native: {},
+                    });
+
+                    // Store channel in device memory
+                    if (
+                        !clientDetails[host].adapterObjects.channels.includes(
+                            `${this.namespace}.${clientDetails[host].deviceName}.info`,
+                        )
+                    ) {
+                        clientDetails[host].adapterObjects.channels.push(
+                            `${this.namespace}.${clientDetails[host].deviceName}.info`,
+                        );
+                    }
+
+                    await this.updateConnectionStatus(host, true, false, 'Initializing', false);
+
+                    // Read JSON and handle states
+                    await this.traverseJson(deviceInfo, `${deviceName}.info`);
+
+                    // Name and device information are known now, show them in the device manager
+                    await this.deviceManagement.refreshDeviceList();
+                } catch (error) {
+                    this.errorHandler(`[deviceInfo]`, error);
+                }
+            });
+
+            // Initialise data for states
+            clientDetails[host].client.on('newEntity', async entity => {
+                this.log.debug(`EntityData: ${JSON.stringify(entity.config)}`);
+                try {
+                    // Store relevant information into memory object
+                    (clientDetails[host] as unknown as Record<string, EntityDetails>)[entity.id] = {
+                        config: entity.config,
+                        name: entity.name,
+                        type: entity.type,
+                        unit:
+                            entity.config.unitOfMeasurement !== undefined ? entity.config.unitOfMeasurement || '' : '',
+                    };
+
+                    if (entityDetails(host, entity.id).config.deviceClass) {
+                        this.log.info(
+                            `${clientDetails[host].deviceFriendlyName} announced ${entityDetails(host, entity.id).config.deviceClass} "${entityDetails(host, entity.id).config.name}"`,
+                        );
+                    } else {
+                        this.log.info(
+                            `${clientDetails[host].deviceFriendlyName} announced ${entityDetails(host, entity.id).type} "${entityDetails(host, entity.id).config.name}"`,
+                        );
+                    }
+
+                    // Create Device main structure
+                    await this.extendObjectAsync(`${clientDetails[host].deviceName}.${entity.type}`, {
+                        type: 'channel',
+                        common: {
+                            name: entity.type,
+                        },
+                        native: {},
+                    });
+
+                    // Cache created channel in device memory
+                    if (
+                        !clientDetails[host].adapterObjects.channels.includes(
+                            `${this.namespace}.${clientDetails[host].deviceName}.${entity.type}`,
+                        )
+                    ) {
+                        clientDetails[host].adapterObjects.channels.push(
+                            `${this.namespace}.${clientDetails[host].deviceName}.${entity.type}`,
+                        );
+                    }
+
+                    // Create state specific channel by id
+                    await this.extendObjectAsync(`${clientDetails[host].deviceName}.${entity.type}.${entity.id}`, {
+                        type: 'channel',
+                        common: {
+                            name: entity.config.name,
+                        },
+                        native: {},
+                    });
+
+                    // Create a channel in device memory
+                    if (
+                        !clientDetails[host].adapterObjects.channels.includes(
+                            `${this.namespace}.${clientDetails[host].deviceName}.${entity.type}.${entity.id}`,
+                        )
+                    ) {
+                        clientDetails[host].adapterObjects.channels.push(
+                            `${this.namespace}.${clientDetails[host].deviceName}.${entity.type}.${entity.id}`,
+                        );
+                    }
+
+                    //Check if a config channel should be created
+                    if (!createConfigStates) {
+                        // Delete folder structure if already present
+                        try {
+                            const obj = await this.getObjectAsync(
+                                `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config`,
+                            );
+                            if (obj) {
+                                await this.delObjectAsync(
+                                    `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config`,
+                                    { recursive: true },
+                                );
+                            }
+                        } catch {
+                            // do nothing
+                        }
+                    } else {
+                        // Create config channel
+                        await this.extendObjectAsync(
+                            `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config`,
+                            {
+                                type: 'channel',
+                                common: {
+                                    name: 'Configuration data',
+                                },
+                                native: {},
+                            },
+                        );
+
+                        // Store channel in device memory
+                        if (
+                            !clientDetails[host].adapterObjects.channels.includes(
+                                `${this.namespace}.${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config`,
+                            )
+                        ) {
+                            clientDetails[host].adapterObjects.channels.push(
+                                `${this.namespace}.${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config`,
+                            );
+                        }
+
+                        // Handle Entity JSON structure and write related config channel data
+                        await this.traverseJson(
+                            entity.config,
+                            `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config`,
+                        );
+                    }
+
+                    await this.createNonStateDevices(host, entity);
+
+                    // Show the Wi-Fi signal as RSSI in the device manager
+                    if (clientDetails[host].rssiEntityId == null && isWifiSignalSensor(entity.type, entity.config)) {
+                        clientDetails[host].rssiEntityId = entity.id;
+                        await this.deviceManagement.refreshDeviceList();
+                    }
+
+                    // Request current state values. If the connection dropped while entities were
+                    // still being announced, `newEntity` fires again on the stale connection and
+                    // subscribeStatesService() throws "Not connected". Skip it silently here; the
+                    // reconnection cycle handles the fresh subscription.
+                    if (clientDetails[host].client!.connection.connected) {
+                        try {
+                            clientDetails[host].client!.connection.subscribeStatesService();
+                        } catch (e) {
+                            this.log.debug(
+                                `[subscribeStates] ${clientDetails[host].deviceFriendlyName}: ${e instanceof Error ? e.message : String(e)}`,
+                            );
+                        }
+                    }
+                    this.log.debug(
+                        `[DeviceInfoData] ${clientDetails[host].deviceFriendlyName} ${JSON.stringify(clientDetails[host].deviceInfo)}`,
+                    );
+
+                    // Listen to state changes and write values to states (create state if not yet exists)
+                    entity.on(`state`, async state => {
+                        clientDetails[host].connectStatus = 'connected';
+                        await this.updateConnectionStatus(host, true, false, 'connected', false);
+                        this.log.debug(`StateData: ${JSON.stringify(state)}`);
+                        try {
+                            this.log.debug(`[entityStateConfig] ${JSON.stringify(entityDetails(host, entity.id))}`);
+                            this.log.debug(`[entityStateData] ${JSON.stringify(state)}`);
+                            const deviceDetails = `DeviceType ${entityDetails(host, entity.id).type} | State-Keys ${JSON.stringify(state)} | [entityStateConfig] ${JSON.stringify(entityDetails(host, entity.id))}`;
+
+                            // Ensure proper initialization of the state
+                            switch (entityDetails(host, entity.id).type) {
+                                case 'BinarySensor':
+                                    await this.handleRegularState(`${host}`, entity, state, false);
+                                    break;
+
+                                case 'Climate':
+                                    await this.handleStateArrays(`${host}`, entity, state);
+                                    break;
+
+                                case 'Cover':
+                                    // esphome send position and tilt as 0-1 value
+                                    await this.stateSetCreate(
+                                        `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.position`,
+                                        `Position`,
+                                        state.position * 100,
+                                        `%`,
+                                        true,
+                                    );
+                                    await this.stateSetCreate(
+                                        `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.tilt`,
+                                        `Tilt`,
+                                        state.tilt * 100,
+                                        `%`,
+                                        true,
+                                    );
+                                    await this.stateSetCreate(
+                                        `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.stop`,
+                                        `Stop`,
+                                        false,
+                                        ``,
+                                        true,
+                                    );
+                                    break;
+
+                                case 'Fan':
+                                    await this.handleStateArrays(`${host}`, entity, state);
+                                    break;
+
+                                case 'Light':
+                                    await this.handleStateArrays(`${host}`, entity, state);
+                                    break;
+
+                                case 'Sensor':
+                                    await this.handleRegularState(`${host}`, entity, state, false);
+                                    break;
+
+                                case 'TextSensor':
+                                    await this.handleRegularState(`${host}`, entity, state, true);
+                                    break;
+
+                                case 'Switch':
+                                    await this.handleRegularState(`${host}`, entity, state, true);
+                                    break;
+
+                                case 'Number':
+                                    await this.handleRegularState(`${host}`, entity, state, true);
+                                    break;
+
+                                case 'Text': {
+                                    await this.handleRegularState(`${host}`, entity, state, true);
+                                    break;
+                                }
+
+                                case 'Select': {
+                                    await this.handleRegularState(`${host}`, entity, state, true);
+                                    break;
+                                }
+
+                                case 'Lock': {
+                                    const deviceName = clientDetails[host].deviceName;
+                                    // Lock state: 0=NONE, 1=LOCKED, 2=UNLOCKED, 3=JAMMED, 4=LOCKING, 5=UNLOCKING
+                                    await this.stateSetCreate(
+                                        `${deviceName}.${entity.type}.${entity.id}.state`,
+                                        `LockState`,
+                                        state.state,
+                                        ``,
+                                        false,
+                                    );
+                                    // Lock command: 0=UNLOCK, 1=LOCK, 2=OPEN
+                                    await this.stateSetCreate(
+                                        `${deviceName}.${entity.type}.${entity.id}.command`,
+                                        `LockCommand`,
+                                        null, // No default to prevent accidental triggers
+                                        ``,
+                                        true,
+                                    );
+                                    break;
+                                }
+
+                                default:
+                                    if (!warnMessages[entityDetails(host, entity.id).type]) {
+                                        this.log.warn(
+                                            `DeviceType ${entityDetails(host, entity.id).type} not yet supported`,
+                                        );
+                                        this.log.warn(`Please submit git issue with all information from next line`);
+                                        this.log.warn(
+                                            `DeviceType ${entityDetails(host, entity.id).type} | State-Keys ${JSON.stringify(state)} | [entityStateConfig] ${JSON.stringify(entityDetails(host, entity.id))}`,
+                                        );
+                                        warnMessages[entityDetails(host, entity.id).type] = deviceDetails;
+                                    }
+                            }
+                        } catch (error) {
+                            this.errorHandler(`[connectHandler NewEntity]`, error);
+                        }
+                    });
+
+                    // eslint-disable-next-line @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
+                    entity.on(`destroyed`, async state => {
+                        try {
+                            // `destroyed` fires once per entity when the connection goes down.
+                            // Log only the first one per connection-loss event and let the
+                            // 'disconnected' handler summarize the device that went away.
+                            if (clientDetails[host].connectionDestroyedLogged) {
+                                return;
+                            }
+                            clientDetails[host].connectionDestroyedLogged = true;
+
+                            const entityIdentity = entity?.name || entity?.id || host || 'unknown';
+                            if (state !== undefined) {
+                                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-base-to-string -- logged as before
+                                this.log.warn(`Connection destroyed for ${state} (${entityIdentity})`);
+                            } else {
+                                this.log.warn(`Connection destroyed for ${entityIdentity}`);
+                            }
+                        } catch (e) {
+                            this.log.error(`State handle error ${String(e)}`);
+                        }
+                    });
+
+                    // eslint-disable-next-line @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
+                    entity.on(`error`, async name => {
+                        this.log.error(`Entity error: ${String(name)}`);
+                    });
+                } catch (e) {
+                    const stack = e instanceof Error ? e.stack : undefined;
+                    this.log.error(`Connection issue for ${entity.name} ${String(e)} | ${stack}`);
+                }
+            });
+
+            // Connection data handler
+            clientDetails[host].client.on('error', async error => {
+                try {
+                    // English text, translated by the device manager when it shows it (src/i18n), %s is the host
+                    let optimisedError = error.message;
+                    let errorArgs: string[] = [];
+                    // Optimise error messages
+                    if (
+                        (error.message &&
+                            (error.message.includes('EHOSTUNREACH') || error.message.includes('EHOSTDOWN'))) ||
+                        (error.code && error.code.includes('ETIMEDOUT'))
+                    ) {
+                        optimisedError = 'Device %s is unreachable';
+                        errorArgs = [host];
+                        if (!clientDetails[host].connectionError) {
+                            this.log.error(format(optimisedError, ...errorArgs));
+                            await this.updateConnectionStatus(host, false, false, 'unreachable', true);
+                        }
+                    } else if (error.message.includes('Invalid password')) {
+                        optimisedError = 'Device %s rejected the API password';
+                        errorArgs = [host];
+                        if (!clientDetails.connectionError) {
+                            this.log.error(format(optimisedError, ...errorArgs));
+                            await this.updateConnectionStatus(host, false, false, 'API password incorrect', true);
+                        }
+                    } else if (error.message.includes('Encryption expected')) {
+                        optimisedError =
+                            'Device %s requires an encryption key, please enter the encryption key of the device';
+                        errorArgs = [host];
+                        if (!clientDetails[host].connectionError) {
+                            this.log.error(format(optimisedError, ...errorArgs));
+                            await this.updateConnectionStatus(host, false, false, 'Encryption Key Missing', true);
+                        }
+                    } else if (error.message.includes('ECONNRESET')) {
+                        optimisedError =
+                            'Connection to device %s lost, the adapter reconnects automatically when the device is available';
+                        errorArgs = [host];
+                        if (!clientDetails[host].connectionError) {
+                            this.log.warn(format(optimisedError, ...errorArgs));
+                            await this.updateConnectionStatus(host, false, false, 'connection lost', true);
+                        }
+                    } else if (error.message.includes('timeout')) {
+                        optimisedError =
+                            'Timeout connecting to device %s, the adapter reconnects automatically when the device is available';
+                        errorArgs = [host];
+                        if (!clientDetails[host].connectionError) {
+                            this.log.warn(format(optimisedError, ...errorArgs));
+                            await this.updateConnectionStatus(host, false, false, 'unreachable', true);
+                        }
+                    } else if (error.message.includes('ECONNREFUSED')) {
+                        optimisedError = 'Device %s is not ready to connect yet, the adapter tries again';
+                        errorArgs = [host];
+                        await this.updateConnectionStatus(host, false, true, 'initializing', true);
+                        this.log.warn(format(optimisedError, ...errorArgs));
+                    } else if (error.message.includes('ENETUNREACH')) {
+                        optimisedError = 'Network not ready to connect to device %s';
+                        errorArgs = [host];
+                        if (!clientDetails[host].connectionError) {
+                            await this.updateConnectionStatus(host, false, true, 'No Network', true);
+                            this.log.warn(format(optimisedError, ...errorArgs));
+                        }
+                    } else if (error.message.includes('write after end')) {
+                        // Ignore error
+                    } else {
+                        this.log.error(`ESPHome client ${host} ${error}`);
+                    }
+
+                    // Answer a pending add / modify request of the device manager
+                    this.deviceManagement.onConnectResult(host, { error: `${optimisedError}`, args: errorArgs });
+                } catch (error) {
+                    this.errorHandler(`[connectedDevice onError]`, error);
+                }
+            });
+
+            //ToDo: Review should not be needed as reconnect process already takes care of it
+            // connect to socket
+            try {
+                this.log.debug(`trying to connect to ${host}`);
+                clientDetails[host].client.connect();
+            } catch (e) {
+                this.log.error(`Client ${host} connect error ${String(e)}`);
+                this.updateConnectionStatus(host, false, false, 'error', true).catch(error =>
+                    this.errorHandler(`[connectDevices connect]`, error),
+                );
+            }
+        } catch (e) {
+            const stack = e instanceof Error ? e.stack : undefined;
+            this.log.error(`ESP device error for ${host} | ${String(e)} | ${stack}`);
+        }
+    }
+
+    /**
+     * Handle regular state values
+     *
+     * @param host IP-Address of client
+     * @param entity Entity-Object of value
+     * @param state State-Object
+     * @param writable Indicate if state should be writable
+     */
+    async handleRegularState(host: string, entity: Entity, state: EntityState, writable: boolean): Promise<void> {
+        try {
+            // Round value to digits as known by configuration
+            let stateVal = state.state;
+
+            if (entityDetails(host, entity.id).config.accuracyDecimals != null) {
+                const rounding = `round(${entityDetails(host, entity.id).config.accuracyDecimals})`;
+                this.log.debug(
+                    `Value "${stateVal}" for name "${entity.name}" before function modify with method "round(${entityDetails(host, entity.id).config.accuracyDecimals})"`,
+                );
+                stateVal = this.modify(rounding, stateVal);
+                this.log.debug(
+                    `Value "${stateVal}" for name "${entity.name}" after function modify with method "${rounding}"`,
+                );
+            }
+
+            //ToDo review this code section
+            const stateCommon: Partial<ioBroker.StateCommon> = {};
+
+            if (entity.config.optionsList != null) {
+                stateCommon.states = entity.config.optionsList;
+            }
+            await this.stateSetCreate(
+                `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.state`,
+                `State of ${entity.config.name}`,
+                stateVal,
+                entityDetails(host, entity.id).unit,
+                writable,
+                stateCommon,
+            );
+        } catch (error) {
+            this.errorHandler(`[espHomeDashboard]`, error);
+        }
+    }
+
+    /**
+     * Handle state values
+     *
+     * @param host IP-Address of client
+     * @param entity Entity-Object of value
+     * @param state State-Object
+     */
+    async handleStateArrays(host: string, entity: Entity, state: EntityState): Promise<void> {
+        try {
+            entityDetails(host, entity.id).states = state;
+
+            for (const stateName in entityDetails(host, entity.id).states) {
+                let unit = '';
+                let writable = true;
+                let writeValue = state[stateName];
+
+                // Define if state should be writable
+                switch (stateName) {
+                    case 'currentTemperature':
+                        unit = `°C`;
+                        writable = false;
+                        entityDetails(host, entity.id).states!.currentTemperature = this.modify(
+                            'round(2)',
+                            state[stateName],
+                        );
+                        break;
+
+                    case 'oscillating': // Sensor type = Fan
+                        // Check if entity supports oscillation
+                        if (!entityDetails(host, entity.id).config.supportsOscillation) {
+                            writable = false;
+                        }
+                        break;
+
+                    case 'speed': // Sensor type = Fan, deprecated - read only
+                        writable = false;
+                        break;
+
+                    case 'speedLevel': {
+                        // Sensor type = Fan
+                        // Check if entity supports speed levels, ESPHome renamed supportedSpeedLevels to supportedSpeedCount
+                        const supportedSpeedLevels =
+                            entityDetails(host, entity.id).config.supportedSpeedCount ??
+                            entityDetails(host, entity.id).config.supportedSpeedLevels;
+                        if (
+                            supportedSpeedLevels === null ||
+                            supportedSpeedLevels === undefined ||
+                            supportedSpeedLevels === 0
+                        ) {
+                            writable = false;
+                        }
+                        break;
+                    }
+
+                    case 'direction': // Sensor type = Fan
+                        // Check if entity supports direction
+                        if (!entityDetails(host, entity.id).config.supportsDirection) {
+                            writable = false;
+                        }
+                        break;
+                }
+
+                // Add unit to temperature states
+                if (
+                    stateName === `targetTemperature` ||
+                    stateName === `targetTemperatureLow` ||
+                    stateName === `targetTemperatureHigh`
+                ) {
+                    unit = `°C`;
+                }
+
+                // Add unit to states
+                if (
+                    stateName === `brightness` ||
+                    stateName === `blue` ||
+                    stateName === `green` ||
+                    stateName === `red` ||
+                    stateName === `white` ||
+                    stateName === `colorTemperature` ||
+                    stateName === `colorBrightness` ||
+                    stateName === `coldWhite` ||
+                    stateName === `warmWhite`
+                ) {
+                    writeValue = Math.round(state[stateName] * 100 * 2.55);
+
+                    // Create transitionLength state only ones
+                    if (entityDetails(host, entity.id).states!.transitionLength == null) {
+                        // Check if state already exists
+                        let transitionLength;
+                        try {
+                            // Try  to get current state
+                            transitionLength = await this.getStateAsync(
+                                `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`,
+                            );
+
+                            // Check if state contains value
+                            if (transitionLength) {
+                                entityDetails(host, entity.id).states!.transitionLength = transitionLength.val;
+                                // Run create state routine to ensure state is cached in memory
+                                await this.stateSetCreate(
+                                    `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`,
+                                    `${stateName} of ${entity.config.name}`,
+                                    transitionLength.val,
+                                    `ms`,
+                                    writable,
+                                );
+                            } else {
+                                // Else create it
+                                await this.stateSetCreate(
+                                    `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`,
+                                    `${stateName} of ${entity.config.name}`,
+                                    0,
+                                    `ms`,
+                                    writable,
+                                );
+                                entityDetails(host, entity.id).states!.transitionLength = 0;
+                            }
+                        } catch {
+                            // Else create it
+                            await this.stateSetCreate(
+                                `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.transitionLength`,
+                                `${stateName} of ${entity.config.name}`,
+                                0,
+                                `ms`,
+                                writable,
+                            );
+                            entityDetails(host, entity.id).states!.transitionLength = 0;
+                        }
+                    }
+
+                    // Create rgbAutoWhite state only once for lights with a dedicated white channel
+                    if (stateName === 'white' && entityDetails(host, entity.id).rgbAutoWhite === undefined) {
+                        let rgbAutoWhiteVal = false;
+                        try {
+                            const existing = await this.getStateAsync(
+                                `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config.rgbAutoWhite`,
+                            );
+                            if (existing != null) {
+                                rgbAutoWhiteVal = !!existing.val;
+                            }
+                        } catch (e) {
+                            this.log.debug(`[handleStateArrays] Could not read rgbAutoWhite state: ${String(e)}`);
+                        }
+                        entityDetails(host, entity.id).rgbAutoWhite = rgbAutoWhiteVal;
+                        // Ensure config channel exists before creating the state inside it
+                        await this.extendObjectAsync(
+                            `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config`,
+                            {
+                                type: 'channel',
+                                common: { name: 'Configuration data' },
+                                native: {},
+                            },
+                        );
+                        await this.stateSetCreate(
+                            `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.config.rgbAutoWhite`,
+                            'rgbAutoWhite',
+                            rgbAutoWhiteVal,
+                            '',
+                            true,
+                        );
+                    }
+                }
+
+                if (stateName !== 'key') {
+                    await this.stateSetCreate(
+                        `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.${stateName}`,
+                        `${stateName} of ${entity.config.name}`,
+                        writeValue,
+                        unit,
+                        writable,
+                    );
+                }
+            }
+
+            // Convert RGB to HEX and write to state
+            if (
+                entityDetails(host, entity.id).states!.red != null &&
+                entityDetails(host, entity.id).states!.blue != null &&
+                entityDetails(host, entity.id).states!.green != null
+            ) {
+                const hexValue = this.rgbToHex(
+                    Math.round(entityDetails(host, entity.id).states!.red * 100 * 2.55),
+                    Math.round(entityDetails(host, entity.id).states!.green * 100 * 2.55),
+                    Math.round(entityDetails(host, entity.id).states!.blue * 100 * 2.55),
+                );
+                await this.stateSetCreate(
+                    `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.colorHEX`,
+                    `ColorHEX of ${entity.config.name}`,
+                    hexValue,
+                    '',
+                    true,
+                );
+            }
+        } catch (error) {
+            this.errorHandler(`[espHomeDashboard]`, error);
+        }
+    }
+
+    /**
+     * Traverses the json-object and provides all information for creating/updating states
+     *
+     * @param jObject Json-object to be added as states
+     * @param parent Defines the parent object in the state tree; default=root
+     * @param replaceName Steers if name from child should be used as name for structure element (channel); default=false
+     * @param replaceID Steers if ID from child should be used as ID for structure element (channel); default=false;
+     * @param state_expire expire time for the current setState in seconds; default is no expire
+     */
+    async traverseJson(
+        jObject: any,
+        parent: string | null = null,
+        replaceName = false,
+        replaceID = false,
+        state_expire = 0,
+    ): Promise<void> {
+        let id = null;
+        let value = null;
+        let name = null;
+
+        try {
+            for (const i in jObject) {
+                name = i;
+                if (!!jObject[i] && typeof jObject[i] === 'object' && jObject[i] === '[object Object]') {
+                    if (parent == null) {
+                        id = i;
+                        if (replaceName) {
+                            if (jObject[i].name) {
+                                name = jObject[i].name;
+                            }
+                        }
+                        if (replaceID) {
+                            if (jObject[i].id) {
+                                id = jObject[i].id;
+                            }
+                        }
+                    } else {
+                        id = `${parent}.${i}`;
+                        if (replaceName) {
+                            if (jObject[i].name) {
+                                name = jObject[i].name;
+                            }
+                        }
+                        if (replaceID) {
+                            if (jObject[i].id) {
+                                id = `${parent}.${jObject[i].id}`;
+                            }
+                        }
+                    }
+                    // Avoid channel creation for empty arrays/objects
+                    if (Object.keys(jObject[i]).length !== 0) {
+                        // console.log(`park`);
+                        await this.setObjectAsync(id, {
+                            type: 'channel',
+                            common: {
+                                name: name,
+                            },
+                            native: {},
+                        });
+                        await this.traverseJson(jObject[i], id, replaceName, replaceID, state_expire);
+                    } else {
+                        this.log.debug(`State ${id} received with empty array, ignore channel creation`);
+                    }
+                } else {
+                    value = jObject[i];
+                    if (parent == null) {
+                        id = i;
+                    } else {
+                        id = `${parent}.${i}`;
+                    }
+                    if (typeof jObject[i] == 'object') {
+                        value = JSON.stringify(value);
+                    }
+                    //avoid state creation if empty
+                    if (value !== '[]') {
+                        this.log.debug(`create id ${id} with value ${value} and name ${name}`);
+                        await this.stateSetCreate(id, name, value);
+                    }
+                }
+            }
+        } catch (error) {
+            this.errorHandler(`[traverseJson]`, error);
+        }
+    }
+
+    /**
+     * Function to handle state creation
+     * proper object definitions
+     * rounding of values
+     *
+     * @param objName ID of the object
+     * @param name Name of state (also used for stattAttrlib!)
+     * @param [value] Value of the state
+     * @param [unit] Unit to be set
+     * @param [writable] state writable ?
+     * @param initialStateCommon Additional attributes for state.common
+     */
+    async stateSetCreate(
+        objName: string,
+        name: string,
+        value?: boolean | string | number | null,
+        unit?: string,
+        writable?: boolean,
+        initialStateCommon: Partial<ioBroker.StateCommon> = {},
+    ): Promise<void> {
+        this.log.debug(`Create_state called for : ${objName} with value : ${value}`);
+        try {
+            // Try to get details from state lib, if not use defaults. Throw warning if states are not known in an attribute list
+            const common = initialStateCommon;
+            // const entityID = objName.split('.');
+            // common.modify = {};
+            if (!stateAttr[name]) {
+                const warnMessage = `State attribute definition missing for '${name}'`;
+                if (warnMessages[name] !== warnMessage) {
+                    warnMessages[name] = warnMessage;
+                    // Send information to Sentry
+                    // this.sendSentry(warnMessage);
+                }
+            }
+            common.name = stateAttr[name] !== undefined ? stateAttr[name].name || name : name;
+
+            // default to type string if value is null to avoid errors like:
+            //   Object 004B1296140C.info.area is invalid: obj.common.type has an invalid value (undefined) but has to be one of number, string, boolean, array, object, mixed, json This will throw an error up from js-controller version 7.0.0!
+            common.type = (value == null ? 'string' : typeof value) as ioBroker.CommonType;
+
+            common.role = stateAttr[name] !== undefined ? stateAttr[name].role || 'state' : 'state';
+            if (stateAttr[name]?.states) {
+                common.states = stateAttr[name].states;
+            }
+            common.read = true;
+            common.unit = unit !== undefined ? unit || '' : '';
+            // common.write = stateAttr[name] !== undefined ? stateAttr[name].write || false : false;
+            common.write = writable !== undefined ? writable || false : false;
+            // common.modify = stateAttr[name] !== undefined ? stateAttr[name].modify || '' : '';
+            // this.log.debug(`MODIFY to ${name}: ${JSON.stringify(common.modify)}`);
+
+            if (
+                !this.createdStatesDetails[objName] ||
+                (this.createdStatesDetails[objName] &&
+                    (common.name !== this.createdStatesDetails[objName].name ||
+                        common.name !== this.createdStatesDetails[objName].name ||
+                        common.type !== this.createdStatesDetails[objName].type ||
+                        common.role !== this.createdStatesDetails[objName].role ||
+                        common.read !== this.createdStatesDetails[objName].read ||
+                        common.unit !== this.createdStatesDetails[objName].unit ||
+                        common.write !== this.createdStatesDetails[objName].write ||
+                        JSON.stringify(common.states) !== JSON.stringify(this.createdStatesDetails[objName].states)))
+            ) {
+                // console.log(`An attribute has changed : ${state}`);
+                await this.extendObjectAsync(objName, {
+                    type: 'state',
+                    common,
+                    native: {},
+                });
+            } else {
+                // console.log(`Nothing changed do not update object`);
+            }
+
+            // Store current object definition to memory
+            this.createdStatesDetails[objName] = common;
+
+            // // Set value to state
+            if (value != null) {
+                await this.setStateAsync(objName, {
+                    val: value,
+                    ack: true,
+                });
+            }
+            // Subscribe on state changes if writable
+            common.write && this.subscribeStates(objName);
+        } catch (error) {
+            this.errorHandler(`[stateSetCreate]`, error);
+        }
+    }
+
+    /**
+     * Handles error messages for log and Sentry
+     *
+     * @param codepart Function were exception occurred
+     * @param error Caught value, anything can be thrown in JavaScript
+     */
+    errorHandler(codepart: string, error: unknown): void {
+        let errorMsg = error;
+        if (error instanceof Error && error.stack != null) {
+            errorMsg = error.stack;
+        }
+        try {
+            if (!disableSentry) {
+                this.log.info(`[Error caught and send to Sentry, thank you collaborating!] error: ${String(errorMsg)}`);
+                if (this.supportsFeature && this.supportsFeature('PLUGINS')) {
+                    const sentryInstance = this.getPluginInstance('sentry');
+                    if (sentryInstance && typeof sentryInstance.getSentryObject === 'function') {
+                        const sentryObject = sentryInstance.getSentryObject();
+                        if (sentryObject) {
+                            sentryObject.captureException(errorMsg);
+                        }
+                    }
+                }
+            } else {
+                this.log.error(`Sentry disabled, error caught : ${String(errorMsg)}`);
+            }
+        } catch (error) {
+            this.log.error(`Error in function sendSentry: ${String(error)}`);
+        }
+    }
+
+    /**
+     * Helper replace function
+     *
+     * @param string String to replace invalid chars
+     */
+    escapeRegExp(string: string): string {
+        return string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+    }
+
+    /**
+     * Helper replace function
+     *
+     * @param str String to replace invalid chars
+     * @param find String to find for replace function
+     * @param replace String to replace
+     */
+    replaceAll(str: string, find: string, replace: string): string {
+        return str.replace(new RegExp(this.escapeRegExp(find), 'g'), replace);
+    }
+
+    /**
+     * Extract the argument of a modify method, so "multiply(2.5)" yields "2.5"
+     *
+     * @param method defines the method to be executed (e.g. round())
+     * @returns text between the brackets, empty when the method has no argument
+     */
+    modifyArgument(method: string): string {
+        const inBracket = method.match(/(?<=\()(.*?)(?=\))/);
+        return inBracket ? inBracket[0] : '';
+    }
+
+    /**
+     * Analysis modify an element in stateAttr.js and execute command
+     *
+     * @param method defines the method to be executed (e.g. round())
+     * @param value value to be executed
+     */
+    modify(method: string, value: string | number | boolean): string | number | boolean {
+        this.log.debug(`Function modify with method "${method}" and value "${value}"`);
+        let result = null;
+        try {
+            if (method.match(/^custom:/gi) != null) {
+                //check if starts with "custom:"
+                value = eval(method.replace(/^custom:/gi, '')); //get value without "custom:"
+            } else if (method.match(/^multiply\(/gi) != null) {
+                //check if starts with "multiply("
+                const inBracket = parseFloat(this.modifyArgument(method)); //get value in brackets
+                value = Number(value) * inBracket;
+            } else if (method.match(/^divide\(/gi) != null) {
+                //check if starts with "divide("
+                const inBracket = parseFloat(this.modifyArgument(method)); //get value in brackets
+                value = Number(value) / inBracket;
+            } else if (method.match(/^round\(/gi) != null) {
+                //check if starts with "round("
+                const inBracket = parseInt(this.modifyArgument(method)); //get value in brackets
+                value = Math.round(Number(value) * Math.pow(10, inBracket)) / Math.pow(10, inBracket);
+            } else if (method.match(/^add\(/gi) != null) {
+                //check if starts with "add("
+                const inBracket = parseFloat(this.modifyArgument(method)); //get value in brackets
+                value = parseFloat(String(value)) + inBracket;
+            } else if (method.match(/^substract\(/gi) != null) {
+                //check if starts with "substract("
+                const inBracket = parseFloat(this.modifyArgument(method)); //get value in brackets
+                value = parseFloat(String(value)) - inBracket;
+            } else {
+                const methodUC = method.toUpperCase();
+                switch (methodUC) {
+                    case 'UPPERCASE':
+                        if (typeof value == 'string') {
+                            result = value.toUpperCase();
+                        }
+                        break;
+                    case 'LOWERCASE':
+                        if (typeof value == 'string') {
+                            result = value.toLowerCase();
+                        }
+                        break;
+                    case 'UCFIRST':
+                        if (typeof value == 'string') {
+                            result = value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
+                        }
+                        break;
+                    default:
+                        result = value;
+                }
+            }
+            if (!result) {
+                return value;
+            }
+            return result;
+        } catch (error) {
+            this.errorHandler(`[modify]`, error);
+            return value;
+        }
+    }
+
+    /**
+     * Is called when adapter shuts down - callback has to be called under any circumstances!
+     *
+     * @param callback - Callback function to call when unload is complete
+     */
+    onUnload(callback: () => void): void {
+        try {
+            // this.log.debug(JSON.stringify(clientDetails));
+
+            // Set all online states to false
+            for (const device in clientDetails) {
+                // Ensure all known online states are set to false
+                if (clientDetails[device].mac != null) {
+                    const deviceName = this.replaceAll(clientDetails[device].mac, `:`, ``);
+                    void this.setState(`${deviceName}.info._online`, {
+                        val: false,
+                        ack: true,
+                    });
+                }
+
+                if (discovery) {
+                    discovery.destroy();
+                }
+
+                try {
+                    clientDetails[device].client!.disconnect();
+                } catch (e) {
+                    this.log.debug(`[onUnload] ${JSON.stringify(e)}`);
+                }
+            }
+
+            // Ensure all possible running timers are cleared
+            for (const timer in resetTimers) {
+                if (resetTimers[timer]) {
+                    resetTimers[timer] = this.clearTimeout(resetTimers[timer]);
+                }
+            }
+
+            void this.setState('info.connection', { val: '', ack: true });
+
+            // Waits only while the dashboard container is being started, see Dashboard.stop()
+            void this.dashboard
+                .stop()
+                .catch(error => this.errorHandler(`[onUnload]`, error))
+                .finally(callback);
+        } catch (error) {
+            this.errorHandler(`[onUnload]`, error);
+            callback();
+        }
+    }
+
+    /**
+     * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
+     * Using this method requires "common.message" property to be set to true in io-package.json
+     *
+     * @param obj - The message object
+     */
+    async onMessage(obj: ioBroker.Message): Promise<void> {
+        if (obj.command?.startsWith('dm:')) {
+            // Handled by the device manager integration (src/lib/deviceManagement.ts)
+            return;
+        }
+        this.log.debug(`Data from configuration received : ${JSON.stringify(obj)}`);
+        try {
+            if (this.yamlFileManager.isAdminCommand(obj.command)) {
+                // "YAML Files" tab of the instance configuration
+                const response = await this.yamlFileManager.handleAdminMessage(obj.command, obj.message);
+                if (obj.callback) {
+                    this.sendTo(obj.from, obj.command, response, obj.callback);
+                }
+                return;
+            }
+            switch (obj.command) {
+                // Front End message handler to load ESPHome Dashboard dropDown with all available versions
+                case 'getESPHomeDashboardVersion':
+                    this.sendTo(obj.from, obj.command, this.dashboard.getDashboardVersionDropDown(), obj.callback);
+                    break;
+
+                // Dashboard tab of admin (admin/jsonTab.json5): URL of the dashboard shown in its iframe
+                case 'getDashboardTab':
+                    this.sendTo(obj.from, obj.command, this.dashboard.getTabData(), obj.callback);
+                    break;
+
+                // Front End message handler to load Pillow version dropdown with available versions
+                case 'getPillowVersion':
+                    this.sendTo(obj.from, obj.command, this.dashboard.getPillowVersionDropDown(), obj.callback);
+                    break;
+
+                // Front End message handler to load ESPHome Device Builder version dropdown with available versions
+                case 'getDeviceBuilderVersion':
+                    this.sendTo(obj.from, obj.command, this.dashboard.getDeviceBuilderVersionDropDown(), obj.callback);
+                    break;
+
+                // Front End message handler to host IP-Address(es)
+                case 'getHostIp':
+                    {
+                        // Suggestions only, the field also accepts any host name or address
+                        const hostObject = await this.getForeignObjectAsync(`system.host.${this.host}`);
+                        const addresses = (hostObject?.common.address ?? []).filter(
+                            address => typeof address === 'string',
+                        );
+                        const options = [...addresses.filter(isIPv4), ...addresses.filter(isIPv6)].map(address => ({
+                            label: address,
+                            value: address,
+                        }));
+                        this.sendTo(obj.from, obj.command, options, obj.callback);
+                    }
+                    break;
+
+                // Handle resetting the Python environment of the dashboard
+                case 'clearAutopyCache':
+                    {
+                        await this.dashboard.resetPythonEnvironment();
+                        this.sendTo(
+                            obj.from,
+                            obj.command,
+                            { success: true, message: 'Python environment removed' },
+                            obj.callback,
+                        );
+                    }
+                    break;
+            }
+        } catch (error) {
+            this.errorHandler(`[onMessage]`, error);
+        }
+    }
+
+    /** Adopted devices by IP, see EsphomeDeviceSource */
+    knownDevices(): Record<string, ClientDetails> {
+        return clientDetails;
+    }
+
+    /** Devices found by the MDNS discovery that are not adopted yet, by IP, see EsphomeDeviceSource */
+    discoveredDevices(): Record<string, DiscoveredDevice> {
+        return newlyDiscoveredClient;
+    }
+
+    /**
+     * Add a new device or reconnect a known one with new credentials.
+     * The result of the connection attempt is reported to the device manager (onConnectResult()).
+     *
+     * @param ip - IP address or host name of the device
+     * @param apiPassword - API password, empty if not used
+     * @param encryptionKey - Encryption key, empty if not used
+     */
+    async addOrUpdateDevice(
+        ip: string,
+        apiPassword: string | undefined,
+        encryptionKey: string | undefined,
+    ): Promise<void> {
+        const password = apiPassword || '';
+        const encryptionKeyUsed = !!encryptionKey;
+
+        // eslint-disable-next-line @typescript-eslint/require-await -- async kept: a throw stays a rejected promise as before
+        const initiateNDevice = async (): Promise<void> => {
+            clientDetails[ip] = new ClientDetails();
+            clientDetails[ip].storeConnectDetails(
+                ip,
+                encryptionKeyUsed,
+                this.encrypt(password),
+                encryptionKeyUsed ? this.encrypt(encryptionKey) : null,
+            );
+            delete newlyDiscoveredClient[ip];
+            this.connectDevices(ip);
+        };
+
+        // Store client details in memory and try to connect
+        if (!clientDetails[ip]) {
+            // Device is unknown, created memory space
+            await initiateNDevice();
+        } else {
+            // Device is known, update encryptionKey or apiPass
+            // Ensure all existing connections are closed, will trigger disconnect event to clean-up memory attributes
+            try {
+                clientDetails[ip].client!.disconnect();
+            } catch {
+                // There was no connection in memory
+            }
+            // Clean memory data and init device again with a little delay
+
+            if (resetTimers[ip]) {
+                resetTimers[ip] = this.clearTimeout(resetTimers[ip]);
+            }
+            resetTimers[ip] = this.setTimeout(async () => {
+                delete clientDetails[ip];
+                await this.updateConnectionState();
+                await initiateNDevice();
+            }, 2000);
+        }
+    }
+
+    /**
+     * Disconnect a device and delete all its objects
+     *
+     * @param ip - IP address of the device
+     */
+    async removeDevice(ip: string): Promise<DeviceActionResult> {
+        if (!clientDetails[ip]) {
+            return { error: 'Unknown device %s', args: [ip] };
+        }
+        // Ensure all existing connections are closed, will trigger disconnect event to clean-up memory attributes
+        clientDetails[ip].client?.disconnect();
+        // Try to delete Device Object including all underlying states
+        try {
+            await this.delObjectAsync(clientDetails[ip].deviceName!, { recursive: true });
+        } catch {
+            // Deleting device channel failed
+        }
+
+        // Clean memory data
+        delete clientDetails[ip];
+        await this.updateConnectionState();
+
+        return { result: 'OK - Device successfully removed' };
+    }
+
+    hexToRgb(hex: string): { red: number; green: number; blue: number } | null {
+        const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+        hex = hex.replace(shorthandRegex, function (m, r, g, b) {
+            return r + r + g + g + b + b;
+        });
+
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result
+            ? {
+                  red: parseInt(result[1], 16),
+                  green: parseInt(result[2], 16),
+                  blue: parseInt(result[3], 16),
+              }
+            : null;
+    }
+
+    rgbToHex(r: number, g: number, b: number): string {
+        function componentToHex(color: number): string {
+            const hex = color.toString(16);
+            return hex.length === 1 ? `0${hex}` : hex;
+        }
+        return `#${componentToHex(r)}${componentToHex(g)}${componentToHex(b)}`;
+    }
+
+    /**
+     * Is called if a subscribed state changes
+     *
+     * @param id - The state ID that changed
+     * @param state - The new state value
+     */
+    async onStateChange(id: string, state: ioBroker.State | null | undefined): Promise<void> {
+        try {
+            if (state && state.ack === false) {
+                const device = id.split('.');
+
+                try {
+                    // Verify if trigger is related to device-cleanup
+                    if (id.split('.')[3] === 'deviceCleanup') {
+                        await this.offlineDeviceCleanup();
+                        return;
+                    }
+
+                    // Verify if trigger is related to resetting the Python environment of the dashboard
+                    if (id.split('.')[3] === 'clearAutopyCache') {
+                        await this.dashboard.resetPythonEnvironment();
+                        void this.setState(id, { val: false, ack: true });
+                        return;
+                    }
+                } catch {
+                    // Skip action
+                }
+
+                const deviceName = device[2];
+                if (!this.deviceStateRelation[deviceName]) {
+                    this.log.debug(`[onStateChange] Device ${deviceName} not connected, acknowledging state change`);
+                    await this.setStateAsync(id, { val: state.val, ack: true });
+                    return;
+                }
+                const deviceIP = this.deviceStateRelation[deviceName].ip;
+                // The commands get the entity key as the string taken from the state id, as before the
+                // TypeScript migration, although the library types it as number
+                const entityKey = device[4] as unknown as number;
+
+                // Handle Switch State
+                if (entityDetails(deviceIP, device[4]).type === `Switch`) {
+                    clientDetails[deviceIP].client!.connection.switchCommandService({
+                        key: entityKey,
+                        state: state.val as boolean,
+                    });
+
+                    // Handle Fan State
+                } else if (entityDetails(deviceIP, device[4]).type === `Fan`) {
+                    // Validate that the state key exists before updating
+                    const validFanStates = ['state', 'speed', 'speedLevel', 'direction', 'oscillating'];
+                    if (validFanStates.includes(device[5])) {
+                        // Update the state in memory
+                        entityDetails(deviceIP, device[4]).states![device[5]] = state.val;
+                        // Call fan command service with all current states
+                        clientDetails[deviceIP].client!.connection.fanCommandService(
+                            entityDetails(deviceIP, device[4]).states as FanCommandData,
+                        );
+                    } else {
+                        this.log.warn(`Invalid fan state key "${device[5]}" for device ${device[2]}`);
+                    }
+
+                    // Handle Climate State
+                } else if (entityDetails(deviceIP, device[4]).type === `Climate`) {
+                    entityDetails(deviceIP, device[4]).states![device[5]] = state.val;
+                    clientDetails[deviceIP].client!.connection.climateCommandService(
+                        entityDetails(deviceIP, device[4]).states as ClimateCommandData,
+                    );
+
+                    // Handle Number State
+                } else if (entityDetails(deviceIP, device[4]).type === `Number`) {
+                    clientDetails[deviceIP].client!.connection.numberCommandService({
+                        key: entityKey,
+                        state: state.val as number,
+                    });
+
+                    // Handle Text State
+                } else if (entityDetails(deviceIP, device[4]).type === `Text`) {
+                    clientDetails[deviceIP].client!.connection.textCommandService({
+                        key: entityKey,
+                        state: state.val as string,
+                    });
+
+                    // Handle Button State
+                } else if (entityDetails(deviceIP, device[4]).type === `Button`) {
+                    clientDetails[deviceIP].client!.connection.buttonCommandService({
+                        key: entityKey,
+                    });
+
+                    // Handle Select State
+                } else if (entityDetails(deviceIP, device[4]).type === `Select`) {
+                    clientDetails[deviceIP].client!.connection.selectCommandService({
+                        key: entityKey,
+                        state: state.val as string,
+                    });
+
+                    // Handle Lock Command
+                } else if (entityDetails(deviceIP, device[4]).type === `Lock` && device[5] === `command`) {
+                    clientDetails[deviceIP].client!.connection.lockCommandService({
+                        key: entityKey,
+                        command: state.val as LockCommand,
+                    });
+
+                    // Handle Cover Position
+                } else if (device[5] === `position`) {
+                    // entityDetails(deviceIP, device[4]).states[device[5]] = state.val;
+                    // State is 0-100 %, ESPHome expects 0-1
+                    clientDetails[deviceIP].client!.connection.coverCommandService({
+                        key: entityKey,
+                        position: Number(state.val) / 100,
+                    });
+
+                    // Handle Cover Tilt
+                } else if (device[5] === `tilt`) {
+                    // entityDetails(deviceIP, device[4]).states[device[5]] = state.val;
+                    // State is 0-100 %, ESPHome expects 0-1
+                    clientDetails[deviceIP].client!.connection.coverCommandService({
+                        key: entityKey,
+                        tilt: Number(state.val) / 100,
+                    });
+
+                    // Handle Cover Stop
+                } else if (device[5] === `stop`) {
+                    // entityDetails(deviceIP, device[4]).states[device[5]] = state.val;
+                    clientDetails[deviceIP].client!.connection.coverCommandService({
+                        key: entityKey,
+                        stop: true,
+                    });
+                } else if (entityDetails(deviceIP, device[4]).type === `Light`) {
+                    let writeValue = state.val;
+                    // Add unit to temperature states
+                    if (
+                        device[5] === `brightness` ||
+                        device[5] === `blue` ||
+                        device[5] === `green` ||
+                        device[5] === `red` ||
+                        device[5] === `white` ||
+                        device[5] === `colorTemperature` ||
+                        device[5] === `colorBrightness` ||
+                        device[5] === `coldWhite` ||
+                        device[5] === `warmWhite`
+                    ) {
+                        // Convert value to 255 range
+                        writeValue = Number(writeValue) / 100 / 2.55;
+
+                        // Store value to memory
+                        entityDetails(deviceIP, device[4]).states![device[5]] = writeValue;
+                    } else if (device[5] === `colorMode`) {
+                        entityDetails(deviceIP, device[4]).states!.colorMode = writeValue;
+                    } else if (device[5] === `colorHEX`) {
+                        // Convert hex to rgb
+                        const rgbConversion = this.hexToRgb(writeValue as string);
+                        if (!rgbConversion) {
+                            return;
+                        }
+                        entityDetails(deviceIP, device[4]).states!.red = rgbConversion.red / 100 / 2.55;
+                        entityDetails(deviceIP, device[4]).states!.blue = rgbConversion.blue / 100 / 2.55;
+                        entityDetails(deviceIP, device[4]).states!.green = rgbConversion.green / 100 / 2.55;
+                    } else if (device[5] === `transitionLength`) {
+                        entityDetails(deviceIP, device[4]).states![device[5]] = writeValue;
+                    } else if (device[5] === 'effect') {
+                        entityDetails(deviceIP, device[4]).states!.effect = writeValue;
+                    } else if (device[5] === 'state') {
+                        entityDetails(deviceIP, device[4]).states!.state = writeValue;
+                    } else if (device[5] === 'config' && device[6] === 'rgbAutoWhite') {
+                        // Store device-specific preference; no light command needed
+                        entityDetails(deviceIP, device[4]).rgbAutoWhite = writeValue as boolean;
+                        // Acknowledge the preference update so the state does not stay with ack=false
+                        void this.setState(id, !!writeValue, true);
+                        return;
+                    }
+
+                    const data: LightCommandData = {
+                        key: entityDetails(deviceIP, device[4]).states!.key,
+                        state: entityDetails(deviceIP, device[4]).states!.state,
+                        transitionLength: entityDetails(deviceIP, device[4]).states!.transitionLength,
+                    };
+
+                    const lightConfig = entityDetails(deviceIP, device[4]).config;
+                    const colorModesList = lightConfig.supportedColorModesList || [];
+                    // The values in supportedColorModesList are the ColorMode enum from
+                    // api.proto, which is a bitmask of ColorCapability and not a running
+                    // index: ON_OFF=1, BRIGHTNESS=3, WHITE=7, COLOR_TEMPERATURE=11,
+                    // COLD_WARM_WHITE=19, RGB=35, RGB_WHITE=39, RGB_COLOR_TEMPERATURE=47,
+                    // RGB_COLD_WARM_WHITE=51. Test the capability bits, not membership.
+                    const supportsRgb =
+                        lightConfig.legacySupportsRgb === true ||
+                        colorModesList.some((m: number) => (m & COLOR_CAPABILITY.RGB) !== 0);
+                    const supportsBrightness =
+                        lightConfig.legacySupportsBrightness === true ||
+                        colorModesList.some((m: number) => (m & COLOR_CAPABILITY.BRIGHTNESS) !== 0);
+                    const supportsWhite =
+                        lightConfig.legacySupportsWhiteValue === true ||
+                        colorModesList.some((m: number) => (m & COLOR_CAPABILITY.WHITE) !== 0);
+                    const supportsColorTemp =
+                        lightConfig.legacySupportsColorTemperature === true ||
+                        colorModesList.some((m: number) => (m & COLOR_CAPABILITY.COLOR_TEMPERATURE) !== 0);
+                    const supportsColdWarmWhite = colorModesList.some(
+                        (m: number) => (m & COLOR_CAPABILITY.COLD_WARM_WHITE) !== 0,
+                    );
+
+                    // Auto white channel: when colorHEX is set to white (#ffffff) on RGBW lights,
+                    // automatically switch to white channel; otherwise switch to RGB mode
+                    if (entityDetails(deviceIP, device[4]).rgbAutoWhite && supportsWhite && device[5] === 'colorHEX') {
+                        if (String(writeValue).replace(/^#/, '').toLowerCase() === 'ffffff') {
+                            // White color detected: redirect to dedicated white channel
+                            entityDetails(deviceIP, device[4]).states!.red = 0;
+                            entityDetails(deviceIP, device[4]).states!.green = 0;
+                            entityDetails(deviceIP, device[4]).states!.blue = 0;
+                            entityDetails(deviceIP, device[4]).states!.white = 1;
+                        } else {
+                            // Non-white color: disable white channel
+                            entityDetails(deviceIP, device[4]).states!.white = 0;
+                        }
+                    }
+
+                    if (supportsBrightness) {
+                        data.brightness = entityDetails(deviceIP, device[4]).states!.brightness;
+                    }
+                    if (supportsRgb) {
+                        data.red = entityDetails(deviceIP, device[4]).states!.red;
+                        data.green = entityDetails(deviceIP, device[4]).states!.green;
+                        data.blue = entityDetails(deviceIP, device[4]).states!.blue;
+                    }
+                    if (supportsWhite) {
+                        data.white = entityDetails(deviceIP, device[4]).states!.white;
+                    }
+                    if (supportsColorTemp) {
+                        data.colorTemperature = entityDetails(deviceIP, device[4]).states!.colorTemperature;
+                    }
+                    // Include new color fields for non-legacy devices using supportedColorModesList
+                    if (colorModesList.length > 0) {
+                        if (entityDetails(deviceIP, device[4]).states!.colorMode !== undefined) {
+                            data.colorMode = entityDetails(deviceIP, device[4]).states!.colorMode;
+                        }
+                        if (supportsRgb && entityDetails(deviceIP, device[4]).states!.colorBrightness !== undefined) {
+                            data.colorBrightness = entityDetails(deviceIP, device[4]).states!.colorBrightness;
+                        }
+                        if (supportsColdWarmWhite) {
+                            if (entityDetails(deviceIP, device[4]).states!.coldWhite !== undefined) {
+                                data.coldWhite = entityDetails(deviceIP, device[4]).states!.coldWhite;
+                            }
+                            if (entityDetails(deviceIP, device[4]).states!.warmWhite !== undefined) {
+                                data.warmWhite = entityDetails(deviceIP, device[4]).states!.warmWhite;
+                            }
+                        }
+                    }
+                    const effect = entityDetails(deviceIP, device[4]).states!.effect;
+                    if (effect !== '' && effect !== null && effect !== undefined) {
+                        data.effect = effect;
+                    }
+
+                    this.log.debug(`Send Light values ${JSON.stringify(data)}`);
+                    clientDetails[deviceIP].client!.connection.lightCommandService(data);
+                }
+            }
+        } catch (e) {
+            this.log.error(`[onStateChange] ${String(e)}`);
+        }
+    }
+
+    /**
+     * Some types (like Button) don't have a state. So standard method of creating iobroker objects when receiving state event via api doesn't work here
+     *
+     * @param host - The ESPHome device hostname or IP
+     * @param entity - The entity object from ESPHome API
+     */
+    async createNonStateDevices(host: string, entity: Entity): Promise<void> {
+        switch (entityDetails(host, entity.id).type) {
+            case 'Button': {
+                await this.stateSetCreate(
+                    `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.SET`,
+                    `Button`,
+                    false,
+                    '',
+                    true,
+                );
+                break;
+            }
+        }
+    }
+
+    async resetOnlineStates(): Promise<void> {
+        try {
+            // Set parameters for object view to only include objects within adapter namespace
+            const params = {
+                startkey: `${this.namespace}.`,
+                endkey: `${this.namespace}.\u9999`,
+            };
+
+            // Get all current devices in an adapter tree
+            const _devices = await this.getObjectViewAsync('system', 'device', params);
+            // List all found devices & set online state to false
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
+            for (const currDevice in _devices.rows) {
+                // Extend online state to device (to ensure migration of version < 0.3.1
+                await this.extendObjectAsync(_devices.rows[currDevice].id, {
+                    common: {
+                        statusStates: {
+                            onlineId: `${_devices.rows[currDevice].id}.info._online`,
+                        },
+                    },
+                });
+
+                // Set online state to false, will be set to true at successfully connected
+                await this.stateSetCreate(`${_devices.rows[currDevice].id}.info._online`, `Online state`, false);
+            }
+        } catch (error) {
+            this.errorHandler(`[resetOnlineStates]`, error);
+        }
+    }
+
+    async objectCleanup(ip: string): Promise<void> {
+        try {
+            this.log.debug(
+                `[objectCleanup] Starting channel and state cleanup for ${clientDetails[ip].deviceFriendlyName} | ${ip}`,
+            );
+
+            // Cancel cleanup operation in case device is not connected anymore or already deleted
+            if (clientDetails[ip] && (clientDetails[ip].connectionError || !clientDetails[ip].connected)) {
+                return;
+            }
+
+            // Set parameters for object view to only include objects within adapter namespace
+            const params = {
+                startkey: `${this.namespace}.${clientDetails[ip].deviceName}.`,
+                endkey: `${this.namespace}.\u9999`,
+            };
+
+            // Get all current channels
+            const _channels = await this.getObjectViewAsync('system', 'channel', params);
+            // List all found channels & compare with memory, delete unneeded channels
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
+            for (const currDevice in _channels.rows) {
+                if (
+                    !clientDetails[ip].adapterObjects.channels.includes(_channels.rows[currDevice].id) &&
+                    _channels.rows[currDevice].id.split('.')[2] === clientDetails[ip].deviceName
+                ) {
+                    this.log.debug(`[objectCleanup] Unknown Channel found, delete ${_channels.rows[currDevice].id}`);
+                    await this.delObjectAsync(_channels.rows[currDevice].id, {
+                        recursive: true,
+                    });
+                }
+            }
+
+            // Get all current states in adapter tree
+            const _states = await this.getObjectViewAsync('system', 'state', params);
+            // List all found states & compare with memory, delete unneeded states
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
+            for (const currDevice in _states.rows) {
+                if (
+                    !this.createdStatesDetails[_states.rows[currDevice].id.replace(`esphome.0.`, ``)] &&
+                    _states.rows[currDevice].id.split('.')[2] === clientDetails[ip].deviceName
+                ) {
+                    this.log.debug(`[objectCleanup] Unknown State found, delete ${_states.rows[currDevice].id}`);
+                    // await this.delObjectAsync(_states.rows[currDevice].id);
+                }
+            }
+        } catch (error) {
+            this.errorHandler(`[objectCleanup]`, error);
+        }
+    }
+
+    async offlineDeviceCleanup(): Promise<void> {
+        this.log.info(`Offline Device cleanup started`);
+
+        try {
+            // Get an overview of all current devices known by adapter
+            const knownDevices = await this.getDevicesAsync();
+            // console.log(`KnownDevices: ${knownDevices}`);
+            // Loop to all devices, check if online state = TRUE otherwise delete device
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array -- for...in kept: it also tolerates a missing (undefined) value
+            for (const device in knownDevices) {
+                // Get online value
+                const online = await this.getStateAsync(`${knownDevices[device]._id}.info._online`);
+                if (!online || !online.val) {
+                    this.log.info(
+                        `Offline device ${knownDevices[device]._id.split('.')[2]} expected on ip ${knownDevices[device].native.ip} removed`,
+                    );
+                    await this.delObjectAsync(knownDevices[device]._id, {
+                        recursive: true,
+                    });
+                }
+            }
+            if (!knownDevices) {
+                return;
+            } // exit function if no known device are detected
+            if (knownDevices.length > 0) {
+                this.log.info(`Try to contact ${knownDevices.length} known devices`);
+            }
+        } catch (error) {
+            this.errorHandler(`[offlineDeviceCleanup]`, error);
+        }
+    }
+
+    /**
+     * Generic function to properly update memory connection details of a device in all scenarios
+     *
+     * @param host IP-Address of device
+     * @param connected Indicator if a device is connected
+     * @param connecting Indicator if a device is initializing
+     * @param [connectionStatus] Connection status shown in Adapter instance / Device Manager
+     * @param [connectionError] Indicator if a connection error (like incorrect password or timeout) is present
+     * @returns void
+     */
+    async updateConnectionStatus(
+        host: string,
+        connected: boolean,
+        connecting: boolean,
+        connectionStatus?: string,
+        connectionError?: boolean,
+    ): Promise<void> {
+        try {
+            // Cancel operation if host is unknown
+            if (!clientDetails[host]) {
+                return;
+            }
+            clientDetails[host].connected = connected;
+            clientDetails[host].connecting = connecting;
+            clientDetails[host].connectionError =
+                connectionError != null ? connectionError : clientDetails[host].connectionError;
+            clientDetails[host].connectStatus =
+                connectionStatus != null ? connectionStatus : clientDetails[host].connectStatus;
+
+            // Only handle online state if a device was initialized
+            if (clientDetails[host].connectStatus === 'Initialisation needed') {
+                return;
+            }
+
+            // Update device connection indicator
+            await this.stateSetCreate(
+                `${clientDetails[host].deviceName}.info._online`,
+                `Online state`,
+                isDeviceOnline(clientDetails[host]),
+            );
+            await this.updateConnectionState();
+            // Write connection status to info channel
+            await this.stateSetCreate(
+                `${clientDetails[host].deviceName}.info._connectionStatus`,
+                `Connection status`,
+                connectionStatus,
+            );
+        } catch (error) {
+            this.errorHandler(`[updateConnectionStatus]`, error);
+        }
+    }
+
+    /**
+     * Lists the connected devices in info.connection, comma-separated like other multi-device adapters (e.g. sonoff)
+     * do: the admin shows the instance green while the list is not empty, and shows the list itself. Green needs just
+     * one connected device - requiring all would turn it yellow whenever a single device is switched off.
+     * With the ESPHome Dashboard enabled the list stays empty until the dashboard answers, see Dashboard.isReady().
+     * The list is computed and remembered synchronously, so concurrent calls write it in the order they were made.
+     */
+    async updateConnectionState(): Promise<void> {
+        const list = connectionStateValue(
+            Object.entries(clientDetails),
+            this.config.ESPHomeDashboardEnabled,
+            this.dashboard.isReady(),
+        );
+        if (list === this.connectedDevicesList) {
+            return;
+        }
+        this.connectedDevicesList = list;
+        try {
+            await this.setStateAsync('info.connection', { val: list, ack: true });
+        } catch (error) {
+            this.errorHandler(`[updateConnectionState]`, error);
+        }
+    }
+}
+
+if (require.main !== module) {
+    // Export the constructor in compact mode
+    module.exports = (options: Partial<utils.AdapterOptions> | undefined) => new Esphome(options);
+} else {
+    // otherwise start the instance directly
+    new Esphome();
+}

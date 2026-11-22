@@ -30,3 +30,14 @@ updates:
                 - 'version-update:semver-major'
       cooldown:
           default-days: 7
+
+    # ESPHome version of the end-to-end test device, see .github/workflows/e2e.yml
+    - package-ecosystem: 'pip'
+      directory: '/test/e2e'
+      schedule:
+          interval: 'cron'
+          timezone: 'Europe/Berlin'
+          cronjob: '21 1 2 * *'
+      open-pull-requests-limit: 5
+      cooldown:
+          default-days: 7

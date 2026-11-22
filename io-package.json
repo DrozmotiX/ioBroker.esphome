@@ -132,7 +132,10 @@
     "platform": "Javascript/Node.js",
     "icon": "esphome.png",
     "enabled": true,
-    "messagebox": true,
+    "supportedMessages": {
+      "custom": true,
+      "deviceManager": true
+    },
     "extIcon": "https://raw.githubusercontent.com/DrozmotiX/ioBroker.esphome/main/admin/esphome.png",
     "readme": "https://github.com/DrozmotiX/ioBroker.esphome/blob/main/README.md",
     "loglevel": "info",
@@ -142,19 +145,28 @@
     "connectionType": "local",
     "dataSource": "push",
     "adminUI": {
-      "config": "json"
+      "config": "json",
+      "tab": "json"
     },
     "tier": 2,
+    "nogit": true,
+    "stopTimeout": 10000,
+    "declareUsedResources": true,
     "plugins": {
       "sentry": {
         "dsn": "https://52227cfa250b49e99b1f28408273402c@sentry.iobroker.net/122"
+      },
+      "docker": {
+        "iobDockerComposeFiles": [
+          "docker-compose.yaml"
+        ]
       }
     },
     "localLinks": {
       "_default": "%ESPHomeDashboardUrl%"
     },
     "adminTab": {
-      "link": "%ESPHomeDashboardUrl%"
+      "link": "jsonTab.json5"
     },
     "dependencies": [
       {
@@ -163,7 +175,7 @@
     ],
     "globalDependencies": [
       {
-        "admin": ">=7.6.20"
+        "admin": ">=7.8.20"
       }
     ],
     "licenseInformation": {
@@ -171,32 +183,24 @@
       "license": "MIT"
     }
   },
-  "encryptedNative": [
-    "apiPass",
-    "encryptionKey",
-    "apiPassword"
-  ],
-  "protectedNative": [
-    "apiPass",
-    "encryptionKey",
-    "apiPassword"
-  ],
   "native": {
     "ESPHomeDashboardVersion": "2026.6.5",
-    "PillowVersion": "12.2.0",
+    "PillowVersion": "Auto Detect",
+    "DeviceBuilderVersion": "Auto Detect",
+    "PythonVersion": "3.13.2",
     "reconnectInterval": 30,
     "pingInterval": 5,
     "pingAttempts": 1,
-    "apiPass": "",
-    "apiPassword": "",
-    "encryptionKey": "",
     "autodiscovery": true,
     "discoveryListeningAddress": "0.0.0.0",
     "configStates": false,
     "ESPHomeDashboardEnabled": false,
+    "ESPHomeDashboardDocker": false,
     "ESPHomeDashboardPort": 6052,
     "ESPHomeDashboardIP": "",
     "ESPHomeDashboardUrl": "",
+    "ESPHomeDashboardUsername": "",
+    "ESPHomeDashboardPassword": "",
     "ignoredDevices": [
       {
         "IP-Address": "192.168.0.1",
@@ -205,6 +209,12 @@
       }
     ]
   },
+  "encryptedNative": [
+    "ESPHomeDashboardPassword"
+  ],
+  "protectedNative": [
+    "ESPHomeDashboardPassword"
+  ],
   "objects": [],
   "instanceObjects": [
     {
@@ -219,12 +229,12 @@
       "_id": "info.connection",
       "type": "state",
       "common": {
-        "role": "indicator.connected",
-        "name": "Device or service connected",
-        "type": "boolean",
+        "role": "info.status",
+        "name": "List of connected devices",
+        "type": "string",
         "read": true,
         "write": false,
-        "def": false
+        "def": ""
       },
       "native": {}
     }

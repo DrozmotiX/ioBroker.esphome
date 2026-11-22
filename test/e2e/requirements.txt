@@ -1,0 +1,3 @@
+# ESPHome version the end-to-end test device (esphome-device.yaml) is built with.
+# Kept current by Dependabot, its PRs run the E2E workflow against the new version.
+esphome==2026.9.1

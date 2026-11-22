@@ -1,11 +1,14 @@
 name: Test and Release
 
-# Run this job on all pushes and pull requests
-# as well as tags with a semantic version
+# Run this job on pull requests, pushes to the target branches and tags with a semantic version.
+# Push is limited to main/v2 like in the create-adapter template (the repo checker E3037 needs "*"
+# or the default branch), otherwise a branch with an open PR runs twice: once for the push and
+# once for the pull request, and the concurrency group cannot merge them (different refs).
 on:
     push:
         branches:
-            - '*'
+            - main
+            - v2
         tags:
             # normal versions
             - 'v[0-9]+.[0-9]+.[0-9]+'
@@ -14,11 +17,12 @@ on:
     pull_request: {}
 
 # Cancel previous PR/branch runs when a new commit is pushed.
-# Release runs (tag pushes) are never cancelled - cancelling them aborts the deploy job and
-# leaves the release half finished, which the ioBroker repo checker reports as W3032.
+# The repo checker (W3009) expects exactly this form. A release run is still safe: a tag is its
+# own ref, so only pushing the same tag again could cancel it. The other workflows prefix their
+# group with their name (e.g. "e2e-"), so this group does not need the workflow name.
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    group: ${{ github.ref }}
+    cancel-in-progress: true
 
 jobs:
     # Performs quick checks before the expensive test runs
@@ -33,6 +37,8 @@ jobs:
                   node-version: '24.x'
                   # Uncomment the following line if your adapter cannot be installed using 'npm ci'
                   # install-command: 'npm install'
+                  # Runs "npm run check" (tsc --noEmit over src/ and the test files) so type errors cannot slip in unnoticed
+                  type-checking: true
                   lint: true
 
     # Runs adapter tests on all supported node versions and OSes
@@ -41,15 +47,17 @@ jobs:
         if: contains(github.event.head_commit.message, '[skip ci]') == false
 
         runs-on: ${{ matrix.os }}
-        timeout-minutes: 30
+        # Windows legs take 15-27 minutes, well above the 4-7 minutes of the other OSes
+        timeout-minutes: 45
         strategy:
             # Do not cancel the remaining matrix legs when one of them fails,
             # otherwise a single flaky OS/node combination hides all other results
             fail-fast: false
             matrix:
                 node-version: [22.x, 24.x, 26.x]
-                # windows-latest removed: its legs sat in the runner queue and blocked the 1.0.0 release
-                os: [ubuntu-latest, macos-latest]
+                # Windows is required by the repo checker (E3027) unless package.json "os" excludes it.
+                # The adapter works on Windows, so it stays tested there rather than excluded.
+                os: [ubuntu-latest, windows-latest, macos-latest]
 
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -61,6 +69,8 @@ jobs:
                   os: ${{ matrix.os }}
                   # Uncomment the following line if your adapter cannot be installed using 'npm ci'
                   # install-command: 'npm install'
+                  # Compiles src/ to build/ before the tests run
+                  build: true
 
     # NOTE: Automatic npm releases are configured via npm Trusted Publishing (OIDC)
     # using ioBroker/testing-action-deploy@v1 and the id-token permission below.
@@ -89,6 +99,8 @@ jobs:
                   node-version: '24.x'
                   # Uncomment the following line if your adapter cannot be installed using 'npm ci'
                   # install-command: 'npm install'
+                  # Compiles src/ to build/ before publishing
+                  build: true
                   # npm-token: ${{ secrets.NPM_TOKEN }}  # Commented out for migration to Trusted Publishing
                   github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -106,5 +118,6 @@ jobs:
                   sentry-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
                   sentry-project: 'iobroker-esphome'
                   sentry-version-prefix: 'iobroker.esphome'
+                  sentry-sourcemap-paths: 'build/'
                   # If your sentry project is linked to a GitHub repository, you can enable the following option
                   # sentry-github-integration: true
