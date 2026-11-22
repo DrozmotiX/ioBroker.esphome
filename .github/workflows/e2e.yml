@@ -68,7 +68,7 @@ jobs:
                   esphome version
 
             # PlatformIO downloads the host platform and libraries (noise-c, libsodium) on the first build
-            - uses: actions/cache@v5
+            - uses: actions/cache@v6
               with:
                   path: ~/.platformio
                   key: platformio-${{ runner.os }}-${{ env.ESPHOME_VERSION }}
