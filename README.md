@@ -514,10 +514,9 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL)
 -->
-### __WORK IN PROGRESS__
+### 2.0.0-beta.0 (2026-11-22)
 
 - (@DutchmanNL) **FIXED**: A command to a device that is offline is no longer acknowledged. The state stays at `ack: false` and a warning is logged, so other adapters that wait for the acknowledgement see that the command did not reach the device (#541)
-
 - (@SimonFischer04) **ENHANCED**: Docker Integration: the dashboard in the container runs as the user of the ioBroker instance instead of `root`. The YAML files and build directories it creates can then be changed by the YAML file management and used by the dashboard without Docker; files left behind as `root` are handed over at the next start of the container
 - (@SimonFischer04) **FIXED**: Docker Integration: devices with a `time:` component but no `timezone:` were compiled with UTC, the container now gets the time zone of the ioBroker host
 - (@SimonFischer04) **FIXED**: YAML file management: a file the adapter may not write, e.g. created by a dashboard container as `root`, is replaced on upload instead of failing with "permission denied"
@@ -588,6 +587,15 @@ If you like my work, please consider a personal donation
 - (@DutchmanNL) **ENHANCED**: Pre-releases are published under the npm "beta" tag instead of "latest"
 - (@DutchmanNL) **ENHANCED**: Removed the obsolete admin/words.js and added prettier formatting scripts
 - (@dependabot) **ENHANCED**: Updated @iobroker/testing to 5.3.0 and the GitHub actions used in CI
+
+### 1.0.0-beta.0 - Stable version release candidate
+
+- (@copilot) **NEW**: Promoted ioBroker.esphome to stable **v1.0.0**
+- (@copilot) **NEW**: Brings ESPHome devices into ioBroker with live state updates and direct control
+- (@copilot) **NEW**: Supports a wide range of device types including lights, switches, sensors, fans, covers, locks, and text entities
+- (@copilot) **ENHANCED**: Includes optional ESPHome Dashboard integration plus built-in helpers for discovery and YAML-based device management
+- (@arteck) **FIXED**: Improved disconnect handling and diagnostics so reconnects recover more cleanly when device connections are destroyed
+- (@copilot) **ENHANCED**: Establishes a stable baseline for future ESPHome adapter development in ioBroker
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
