@@ -109,7 +109,7 @@ The adapter will establish a connection and create all necessary ioBroker object
 **To make a dashboard-configured device work with the adapter:**
 
 1. Flash the device with the configuration from the dashboard (ensure ESPHome API is enabled in YAML)
-2. Manually add the device in the adapter settings (device tab). Enter IP/hostname and encryption key (recommended) or password (legacy)
+2. Manually add the device in the adapter settings (device tab). Enter IP/hostname and encryption key (recommended) or password (legacy, only ESPHome versions before 2026.1)
 3. The adapter will then connect to the device via ESPHome's native API
 
 **Note:** Future tighter integration between dashboard and adapter may be implemented (see issue #228), but currently they operate independently.
@@ -296,6 +296,13 @@ Using the integrated dashboard when the iobroker is using https currently requir
 > see [ESPHome Documentation](https://esphome.io/components/api.html?highlight=api)
 > Please only configure Encryption Key (preferable) or API-Password (legacy)
 
+> [!WARNING]
+> **Breaking change in ESPHome 2026.1:** API password authentication has been removed by ESPHome,
+> encryption is the only supported authentication method from ESPHome 2026.1 onwards,
+> see [ESPHome 2026.1 changelog](https://esphome.io/changelog/2026.1.0/#api-password-authentication-removed).
+> Devices still using `api: password:` must be updated to use an encryption key (both in the device YAML and in the adapter device settings)
+> before (or when) upgrading them to ESPHome 2026.1 or later. API-Password configuration in this adapter only works for devices running ESPHome versions before 2026.1.
+
 #### Example Encryption Key configuration entry
 
 ```
@@ -304,7 +311,7 @@ api:
     key: "DyDfEgDzmA9GlK6ZuLkj3qgFcjXiZUzUf4chnIcjQto="
 ```
 
-#### Example API configuration entry
+#### Example API configuration entry (legacy, only ESPHome versions before 2026.1)
 
 ```
 api:
@@ -421,7 +428,8 @@ Example config, for more examples see [The DrozmotiX Docu Page](https://Drozmoti
 
     # Enable ESPHome API
     api:
-        password: 'MyPassword'
+      encryption:
+        key: "DyDfEgDzmA9GlK6ZuLkj3qgFcjXiZUzUf4chnIcjQto="
     # Activate i2c bus
     i2c:
       sda: 21
@@ -506,8 +514,9 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL)
 -->
+### __WORK IN PROGRESS__
 
-### **WORK IN PROGRESS**
+- (@DutchmanNL) **FIXED**: A command to a device that is offline is no longer acknowledged. The state stays at `ack: false` and a warning is logged, so other adapters that wait for the acknowledgement see that the command did not reach the device (#541)
 
 - (@SimonFischer04) **ENHANCED**: Docker Integration: the dashboard in the container runs as the user of the ioBroker instance instead of `root`. The YAML files and build directories it creates can then be changed by the YAML file management and used by the dashboard without Docker; files left behind as `root` are handed over at the next start of the container
 - (@SimonFischer04) **FIXED**: Docker Integration: devices with a `time:` component but no `timezone:` were compiled with UTC, the container now gets the time zone of the ioBroker host
@@ -551,6 +560,7 @@ If you like my work, please consider a personal donation
 - (@SimonFischer04) **FIXED**: Cover position and tilt are 0-100 % in ioBroker but were sent to ESPHome unscaled (it expects 0-1), so any value above 1 % fully opened the cover
 - (@SimonFischer04) **NEW**: End-to-end test workflow that builds a real ESPHome device with the host platform and tests the adapter against it
 - (@Garfonso) **FIXED**: Brightness, RGB, white and colour temperature reached no light any more. The ColorMode values in supported_color_modes are the bitmasks from api.proto (RGB = 35), but they were compared against a 0..9 index, so every modern ESPHome light was treated as on/off only
+- (@SimonFischer04) **ENHANCED**: Dependency autopy switched to @simonfischer04/autopy (npm) instead of a GitHub build so dev dependencies do not get installed on user systems #495
 
 ### 1.0.0 (2026-09-26) - Public Stable Release
 
@@ -578,22 +588,6 @@ If you like my work, please consider a personal donation
 - (@DutchmanNL) **ENHANCED**: Pre-releases are published under the npm "beta" tag instead of "latest"
 - (@DutchmanNL) **ENHANCED**: Removed the obsolete admin/words.js and added prettier formatting scripts
 - (@dependabot) **ENHANCED**: Updated @iobroker/testing to 5.3.0 and the GitHub actions used in CI
-
-### 1.0.0-beta.0 - Stable version release candidate
-
-- (@copilot) **NEW**: Promoted ioBroker.esphome to stable **v1.0.0**
-- (@copilot) **NEW**: Brings ESPHome devices into ioBroker with live state updates and direct control
-- (@copilot) **NEW**: Supports a wide range of device types including lights, switches, sensors, fans, covers, locks, and text entities
-- (@copilot) **ENHANCED**: Includes optional ESPHome Dashboard integration plus built-in helpers for discovery and YAML-based device management
-- (@arteck) **FIXED**: Improved disconnect handling and diagnostics so reconnects recover more cleanly when device connections are destroyed
-- (@copilot) **ENHANCED**: Establishes a stable baseline for future ESPHome adapter development in ioBroker
-
-### 0.7.0 (2026-05-17)
-
-- (@SimonFischer04) **FIXED** copilot hallucinations
-- (@SimonFischer04) **NEW** 'Always last available' for pillow version
-- (@copilot) **FIXED**: Invalid jsonConfig warning on adapter installation
-- (DutchmanNL) **FIXED**: ESLint errors by code refactoring
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
