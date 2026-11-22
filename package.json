@@ -45,7 +45,7 @@
     "@iobroker/dev-server": "^0.8.0",
     "@iobroker/eslint-config": "^2.3.4",
     "@iobroker/testing": "^6.3.0",
-    "@tsconfig/node22": "^22.0.6",
+    "@tsconfig/node22": "^22.0.7",
     "@types/iobroker": "npm:@iobroker/types@^7.2.5",
     "@types/node": "^22.20.5",
     "nyc": "^18.0.0",
