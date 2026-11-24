@@ -18,7 +18,7 @@ The most common error messages and connection problems and what helps.
 ## [Why does my device not connect or keep dropping?](03.verbindung.md)
 
 - [Why are all devices offline or reporting "incorrect password" after a restart or update?](03.verbindung.md#devices-offline-reporting-incorrect-password)
-- [Why does the device disconnect every few seconds after ESPHome 2025.10?](03.verbindung.md#device-disconnect-every-few-seconds)
+- [Why does my device disconnect every few seconds?](03.verbindung.md#device-disconnect-every-few-seconds)
 - [Why is there a device "Initialisation needed" in the object tree?](03.verbindung.md#device-initialisation-needed-object-tree)
 
 ## [Why does the adapter admin UI misbehave?](04.admin-oberflaeche.md)
