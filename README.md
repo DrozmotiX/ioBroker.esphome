@@ -514,6 +514,10 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL)
 -->
+### **WORK IN PROGRESS**
+
+- (@DutchmanNL) **FIXED**: A release no longer ends with a failed deploy when the Sentry server cannot be reached. npm and the GitHub release were published, only the Sentry release information failed (2.0.0-beta.1, beta.2). Sentry is now informed in its own step, with retries
+
 ### 2.0.0-beta.2 (2026-11-24)
 
 - (@DutchmanNL) **FIXED**: `info.connection` is a boolean again, as up to 1.0.1: `true` while the adapter runs, `false` when it stops. 2.0.0-beta.0 and beta.1 wrote the list of connected devices into it, programs that read it as the online state of the adapter showed the adapter as disconnected. The list of connected devices moved to the new state `info.connectedDevices`, whether a device is connected stays in `<device>.info._online`

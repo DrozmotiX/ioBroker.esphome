@@ -243,8 +243,12 @@ pushes. Pushing the tag is what triggers the `deploy` job, and **that** runs `np
 GitHub release. A green `release-script` run therefore does not mean anything was published.
 
 - **Do not hand-edit the `deploy` job.** `ioBroker/testing-action-deploy` already handles the npm
-  dist-tag, trusted publishing (OIDC provenance) and the GitHub release. Only `node-version`,
-  `build*` and `sentry*` are meant to be set here. In particular its `tag` input is **not** the npm
+  dist-tag, trusted publishing (OIDC provenance) and the GitHub release. Only `node-version` and
+  `build*` are meant to be set here. The one exception is the Sentry release: `sentry` stays `false`
+  in the action, and the job's own "Create Sentry release" step runs it with 3 tries per call and
+  `continue-on-error`. sentry.iobroker.net refuses connections at times, and inside the action that
+  turned every release red after npm and GitHub had already gone through (2.0.0-beta.1, beta.2).
+  In particular the action's `tag` input is **not** the npm
   dist-tag - it overrides the _version to publish_, and the action only appends `--tag next` when
   that version contains a `-`. Setting `tag: next` therefore breaks pre-release publishing with
   `npm error You must specify a tag using --tag`.
