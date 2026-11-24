@@ -50,5 +50,7 @@ declare module '@2colors/esphome-native-api' {
          * as 'message', as received and before the library maps it to the objects of its own events.
          */
         frameHelper: EventEmitter;
+        /** Sends a message of the native API to the device, built with the classes of lib/utils/messages */
+        sendMessage(message: unknown): void;
     }
 }

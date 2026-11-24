@@ -24,6 +24,7 @@ import {
     isDeviceOnline,
 } from './lib/connectionState';
 import { BleForwarder, bleTargetInstance } from './lib/bleForwarder';
+import { BleGattBridge } from './lib/bleGattBridge';
 import Dashboard from './lib/dashboard';
 import { discoveryOptions } from './lib/discoveryOptions';
 import EsphomeDeviceManagement, {
@@ -111,6 +112,8 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
     declare private deviceManagement: EsphomeDeviceManagement;
     /** Forwards the advertisements of Bluetooth proxies to ioBroker.ble, see src/lib/bleForwarder.ts */
     declare private bleForwarder: BleForwarder;
+    /** Connections to BLE devices through Bluetooth proxies for ioBroker.ble, see src/lib/bleGattBridge.ts */
+    declare private bleGattBridge: BleGattBridge;
     /** Last value written to info.connectedDevices, see updateConnectionState() */
     declare private connectedDevicesList: string | undefined;
 
@@ -139,6 +142,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
 
         // Disabled until the settings are known, see onReady()
         this.bleForwarder = new BleForwarder(this, null);
+        this.bleGattBridge = new BleGattBridge(this, this.bleForwarder);
     }
 
     /**
@@ -151,6 +155,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
 
         // Forwarding of BLE advertisements to ioBroker.ble, has to exist before the first device connects
         this.bleForwarder = new BleForwarder(this, bleTargetInstance(this.config.bleForwardInstance));
+        this.bleGattBridge = new BleGattBridge(this, this.bleForwarder);
         if (this.bleForwarder.enabled) {
             this.log.info(`BLE advertisements of Bluetooth proxies are forwarded to ${this.bleForwarder.target}`);
         }
@@ -439,6 +444,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
             clientDetails[host].client.on('disconnected', async () => {
                 try {
                     this.bleForwarder.disconnected(host);
+                    this.bleGattBridge.disconnected(host);
                     if (clientDetails[host].deviceName != null) {
                         await this.updateConnectionStatus(host, false, false, 'disconnected', false);
                         delete clientDetails[host].deviceInfo;
@@ -489,6 +495,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
 
                 // A Bluetooth proxy is asked for its advertisements with every new connection
                 this.bleForwarder.initialized(host, clientDetails[host].deviceInfo);
+                this.bleGattBridge.initialized(host, clientDetails[host].deviceInfo);
 
                 // Start timer to clean up unneeded objects
                 if (resetTimers[host]) {
@@ -1511,6 +1518,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
     onUnload(callback: () => void): void {
         try {
             // While the devices are still connected, so they can be told to stop sending advertisements
+            this.bleGattBridge.stop();
             this.bleForwarder.stop();
 
             // this.log.debug(JSON.stringify(clientDetails));
@@ -1565,6 +1573,11 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
      * @param obj - The message object
      */
     async onMessage(obj: ioBroker.Message): Promise<void> {
+        if (obj.command?.startsWith('gatt:')) {
+            // Commands of ioBroker.ble for connections to BLE devices (src/lib/bleGattBridge.ts)
+            await this.bleGattBridge.handleMessage(obj);
+            return;
+        }
         if (obj.command?.startsWith('dm:')) {
             // Handled by the device manager integration (src/lib/deviceManagement.ts)
             return;
@@ -1755,6 +1768,10 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
      * @param state - The new state value
      */
     async onStateChange(id: string, state: ioBroker.State | null | undefined): Promise<void> {
+        // The state alive of ioBroker.ble, see src/lib/bleGattBridge.ts
+        if (this.bleGattBridge.handleStateChange(id, state)) {
+            return;
+        }
         try {
             if (state && state.ack === false) {
                 const device = id.split('.');
