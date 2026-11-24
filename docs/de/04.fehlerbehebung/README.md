@@ -25,6 +25,5 @@ Die häufigsten Fehlermeldungen und Verbindungsprobleme und was dagegen hilft.
 
 - [Was bedeutet die Warnung "esphome has an invalid jsonConfig"?](04.admin-oberflaeche.md#warning-esphome-has-invalid-jsonconfig)
 - [Warum sind Speichern-Buttons aktiv oder das Layout auf dem Handy unbrauchbar?](04.admin-oberflaeche.md#save-buttons-active-layout-unusable)
-- [Warum meldet BackItUp "tsconfig.json ist kein gültiges JSON"?](04.admin-oberflaeche.md#backitup-report-tsconfig-json-not)
 
 [Zurück zur Übersicht](../README.md)
