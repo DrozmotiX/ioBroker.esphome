@@ -4,10 +4,10 @@ Die häufigsten Fehlermeldungen und Verbindungsprobleme und was dagegen hilft.
 
 ## [Warum startet das Dashboard nicht?](01.dashboard-startet-nicht.md)
 
-- [Warum startet das Dashboard nicht (Pillow-/ESPHome-Versionskonflikt)?](01.dashboard-startet-nicht.md#dashboard-not-start-pillow-esphome)
+- [Warum startet das Dashboard nicht, und was steht im Log?](01.dashboard-startet-nicht.md#dashboard-not-start-pillow-esphome)
 - [Was tun bei "Please install the pillow python package"?](01.dashboard-startet-nicht.md#about-please-install-pillow-python)
-- [Warum steht nur "ESPHome Dashboard stopped" im Log und startet nach einer neuen ESPHome-Version nicht mehr?](01.dashboard-startet-nicht.md#log-only-say-esphome-dashboard)
-- [Wie leere ich den autopy-Cache, wenn die Python-Umgebung defekt ist?](01.dashboard-startet-nicht.md#clear-autopy-cache-if-python)
+- [Warum stoppt das Dashboard nach einer neuen ESPHome-Version?](01.dashboard-startet-nicht.md#log-only-say-esphome-dashboard)
+- [Wie setze ich die Python-Umgebung zurück, wenn sie defekt ist?](01.dashboard-startet-nicht.md#clear-autopy-cache-if-python)
 - [Was tun bei Permission denied oder fehlendem YAML-Ordner?](01.dashboard-startet-nicht.md#about-permission-denied-missing-yaml)
 
 ## [Was tun, wenn das Dashboard läuft, aber sich falsch verhält?](02.dashboard-bedienung.md)
