@@ -514,8 +514,7 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL)
 -->
-
-### **WORK IN PROGRESS**
+### 2.0.0-beta.2 (2026-11-24)
 
 - (@DutchmanNL) **FIXED**: `info.connection` is a boolean again, as up to 1.0.1: `true` while the adapter runs, `false` when it stops. 2.0.0-beta.0 and beta.1 wrote the list of connected devices into it, programs that read it as the online state of the adapter showed the adapter as disconnected. The list of connected devices moved to the new state `info.connectedDevices`, whether a device is connected stays in `<device>.info._online`
 
@@ -585,17 +584,6 @@ If you like my work, please consider a personal donation
 - (@DutchmanNL) **FIXED**: Falling back to the latest ESPHome or Pillow release no longer aborts the dashboard setup, the requirement was passed to pip without a version specifier
 - (@DutchmanNL) **FIXED**: Added the missing "pingInterval" and "pingAttempts" defaults to io-package.json, they were only defined in the admin configuration
 - (@DutchmanNL) **ENHANCED**: "npm run check" is free of type errors, so type regressions are visible again
-
-### 1.0.0-beta.1 (2026-07-28)
-
-- (@DutchmanNL) **FIXED**: Restored a green CI matrix, the dashboard integration tests no longer hang the test runner
-- (@DutchmanNL) **FIXED**: Corrected the changelog entry in io-package.json so it matches the published version
-- (@DutchmanNL) **FIXED**: Admin configuration is fully translated again, 29 texts were only available in English
-- (@DutchmanNL) **FIXED**: YAML upload field renders as a proper multi-line text area again
-- (@DutchmanNL) **ENHANCED**: Timers are now managed by the adapter, so they are always cleaned up on unload
-- (@DutchmanNL) **ENHANCED**: Pre-releases are published under the npm "beta" tag instead of "latest"
-- (@DutchmanNL) **ENHANCED**: Removed the obsolete admin/words.js and added prettier formatting scripts
-- (@dependabot) **ENHANCED**: Updated @iobroker/testing to 5.3.0 and the GitHub actions used in CI
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
