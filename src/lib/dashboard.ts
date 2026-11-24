@@ -78,7 +78,7 @@ export interface DashboardAdapter extends ioBroker.Adapter {
     ): Promise<void>;
     /** Log an error and send it to Sentry, see Esphome.errorHandler() */
     errorHandler(codepart: string, error: unknown): void;
-    /** Write info.connection again, it depends on isReady(), see Esphome.updateConnectionState() */
+    /** Write info.connectedDevices again, it depends on isReady(), see Esphome.updateConnectionState() */
     updateConnectionState(): Promise<void>;
 }
 
@@ -683,7 +683,7 @@ class Dashboard {
                         }
                     });
 
-                    // info.connection (green instance) only lists devices once the dashboard answers
+                    // info.connectedDevices only lists devices once the dashboard answers
                     this.scheduleReadyCheck(port);
                 } catch (error) {
                     this.errorHandler(`[espHomeDashboard-Process]`, error);
@@ -817,7 +817,7 @@ class Dashboard {
                 );
             }
             // Host network: the dashboard of the container answers on the configured port of this host.
-            // info.connection (green instance) only lists devices once it does, like with the process. Also
+            // info.connectedDevices only lists devices once it does, like with the process. Also
             // checked when the container does not run yet, the docker plugin starts it again.
             this.containerStarted = true;
             this.dockerContainer = { manager, name };
@@ -1140,7 +1140,7 @@ class Dashboard {
     }
 
     /**
-     * Whether the started dashboard answers requests. info.connection (green instance) waits for it while the
+     * Whether the started dashboard answers requests. info.connectedDevices waits for it while the
      * dashboard is enabled.
      *
      * @returns true once the dashboard answered, false again when it stopped
@@ -1150,9 +1150,9 @@ class Dashboard {
     }
 
     /**
-     * Check repeatedly whether the started dashboard answers and update info.connection once it does.
+     * Check repeatedly whether the started dashboard answers and update info.connectedDevices once it does.
      * For the process this ends when it answers, stops or the adapter unloads. The container is checked
-     * until the adapter unloads, info.connection is updated again when it stops answering.
+     * until the adapter unloads, info.connectedDevices is updated again when it stops answering.
      *
      * @param port - port the dashboard listens on
      */
@@ -1239,7 +1239,7 @@ class Dashboard {
 
     /**
      * The dashboard process exited or could not be started: no more checks and, unless the adapter
-     * unloads, info.connection is updated so the instance no longer shows green
+     * unloads, info.connectedDevices is updated so it no longer lists devices
      */
     private onDashboardStopped(): void {
         this.dashboardProcess = undefined;

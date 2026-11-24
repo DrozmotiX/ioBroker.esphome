@@ -165,10 +165,13 @@ The adapter itself calls `https://api.github.com/repos/esphome/esphome/releases`
 - Pillow is not installed separately by default ("Auto Detect"): ESPHome pins the version it needs since 2024.12,
   any other version makes pip fail. Pillow / Device Builder versions for the dropDowns are fetched from PyPI and
   cached in `_ESPHomeDashboard.pillowVersionCache` / `deviceBuilderVersionCache`.
-- `info.connection` lists the connected devices (green instance while not empty, `updateConnectionState()` in
-  `src/main.ts`). With the dashboard enabled it stays empty until `Dashboard.scheduleReadyCheck()` gets an HTTP
-  2xx/3xx from `http://localhost:<port>/` (`Dashboard.isReady()`), and again when the dashboard process exits or
-  cannot be started.
+- `info.connection` is a boolean (`indicator.connected`, as up to 1.0.1): `true` while the adapter runs, `false`
+  on unload (`initConnectionStates()` / `onUnload()` in `src/main.ts`). Programs reading it as the online state of
+  the adapter only accept `true`, never put a device list there. Whether a device is connected is
+  `<device>.info._online`.
+- `info.connectedDevices` lists the connected devices (`updateConnectionState()` in `src/main.ts`). With the
+  dashboard enabled it stays empty until `Dashboard.scheduleReadyCheck()` gets an HTTP 2xx/3xx from
+  `http://localhost:<port>/` (`Dashboard.isReady()`), and again when the dashboard process exits or cannot be started.
 - With `config.ESPHomeDashboardDocker` ("Use Docker Integration", beta: `expertMode: true` in `jsonConfig.json5`) it runs as the official `ghcr.io/esphome/esphome` container
   instead: `docker-compose.yaml` (shipped in `files` of package.json) is managed by `@iobroker/plugin-docker`
   (`common.plugins.docker` in `io-package.json`). The service has `iobWaitForReady`, so the plugin starts nothing by itself;

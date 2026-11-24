@@ -250,7 +250,7 @@ describe('ESPHome Dashboard in Docker', () => {
         expect(plugin.readyCalls).to.equal(1);
         expect(logs.error).to.deep.equal([]);
         expect(logs.info.some(msg => msg.includes(`container ${container.name} is running`))).to.equal(true);
-        // info.connection waits until the dashboard of the container answers, like with the process
+        // info.connectedDevices waits until the dashboard of the container answers, like with the process
         expect(logs.timers).to.have.length(1);
         expect(dashboard.isReady()).to.equal(false);
         // removed by the next start without Docker Integration
@@ -375,7 +375,7 @@ describe('ESPHome Dashboard in Docker', () => {
 
         expect(logs.error).to.have.length(1);
         expect(logs.error[0]).to.include('is not running (exited)');
-        // the docker plugin starts it again, info.connection follows once the dashboard answers
+        // the docker plugin starts it again, info.connectedDevices follows once the dashboard answers
         expect(logs.timers).to.have.length(1);
         expect(logs.states['_ESPHomeDashboard.dockerContainer']).to.equal(plugin.configurations[0].name);
     });
@@ -420,7 +420,7 @@ describe('ESPHome Dashboard in Docker', () => {
         expect(logs.error).to.deep.equal([]);
     });
 
-    it('updates info.connection whenever the dashboard of the container starts or stops answering', async () => {
+    it('updates info.connectedDevices whenever the dashboard of the container starts or stops answering', async () => {
         const config = { ...native, ESPHomeDashboardEnabled: true, ESPHomeDashboardDocker: true };
         const plugin = await createDockerPlugin(config);
         const dashboard = createDashboard(config, plugin);

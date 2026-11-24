@@ -514,6 +514,11 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL)
 -->
+
+### **WORK IN PROGRESS**
+
+- (@DutchmanNL) **FIXED**: `info.connection` is a boolean again, as up to 1.0.1: `true` while the adapter runs, `false` when it stops. 2.0.0-beta.0 and beta.1 wrote the list of connected devices into it, programs that read it as the online state of the adapter showed the adapter as disconnected. The list of connected devices moved to the new state `info.connectedDevices`, whether a device is connected stays in `<device>.info._online`
+
 ### 2.0.0-beta.1 (2026-11-24)
 
 - (@DutchmanNL) **FIXED**: The npm package 2.0.0-beta.0 was built from an older state of the source. In it the online state `info._online` had the role `state` again instead of `indicator.reachable` (1.0.1), and a command to an offline device was still acknowledged (#541). `npm pack` and `npm publish` now always build `build/` from the source first

@@ -39,6 +39,7 @@ const ENCRYPTION_KEY = '4lNKgD7rXHge2t304JyBOw4qVOF4rY8dphuqyHuDnu4=';
 const DEVICE_PREFIX = `${NAMESPACE}.${DEVICE_ID}`;
 const ONLINE_STATE = `${DEVICE_PREFIX}.info._online`;
 const CONNECTION_STATE = `${NAMESPACE}.info.connection`;
+const CONNECTED_DEVICES_STATE = `${NAMESPACE}.info.connectedDevices`;
 
 /**
  * Sleeps for the given time
@@ -330,11 +331,11 @@ exports.runTests = function (suite) {
                 );
             });
 
-            it('lists the device by name in info.connection', async () => {
-                // A non-empty list is what turns the instance green in the admin
+            it('lists the device by name in info.connectedDevices, info.connection stays true', async () => {
+                await waitForAckedState(harness, CONNECTION_STATE, val => val === true, 'to be true');
                 await waitForAckedState(
                     harness,
-                    CONNECTION_STATE,
+                    CONNECTED_DEVICES_STATE,
                     val => val === DEVICE_NAME,
                     `to be "${DEVICE_NAME}"`,
                 );
@@ -491,7 +492,9 @@ exports.runTests = function (suite) {
 
                 await device.stop();
                 await waitForAckedState(harness, ONLINE_STATE, val => val === false, 'to be false', 30000);
-                await waitForAckedState(harness, CONNECTION_STATE, val => val === '', 'to be empty', 10000);
+                await waitForAckedState(harness, CONNECTED_DEVICES_STATE, val => val === '', 'to be empty', 10000);
+                // The adapter itself still runs without a connected device
+                await waitForAckedState(harness, CONNECTION_STATE, val => val === true, 'to stay true', 10000);
 
                 const entity = await findEntity(harness, 'Switch', 'E2E Switch');
                 const restartedAt = Date.now();
@@ -499,7 +502,7 @@ exports.runTests = function (suite) {
                 await waitForAckedState(harness, ONLINE_STATE, val => val === true, 'to be true again', 60000);
                 await waitForAckedState(
                     harness,
-                    CONNECTION_STATE,
+                    CONNECTED_DEVICES_STATE,
                     val => val === DEVICE_NAME,
                     `to be "${DEVICE_NAME}" again`,
                     10000,
