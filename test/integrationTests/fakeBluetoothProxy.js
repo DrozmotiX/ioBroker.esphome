@@ -11,9 +11,70 @@
 const net = require('node:net');
 const { pb } = require('@2colors/esphome-native-api/lib/utils/messages');
 const { varuint_to_bytes, recv_varuint } = require('@2colors/esphome-native-api/lib/utils');
+const { BinaryWriter } = require('google-protobuf');
 
 /** bluetoothProxyFeatureFlags of a current proxy: passive scan, active connections, ..., raw advertisements */
 const PROXY_FEATURE_FLAGS = 0b1111111;
+
+/** The services of every BLE device behind the proxy: 0x1f10 with 0x1f1f (read, write, notify), like a pvvx thermometer */
+const SERVICES = [
+    {
+        uuid: '00001f10-0000-1000-8000-00805f9b34fb',
+        handle: 30,
+        characteristics: [
+            {
+                uuid: '00001f1f-0000-1000-8000-00805f9b34fb',
+                handle: 32,
+                properties: 0x1a,
+                descriptors: [{ uuid: '00002902-0000-1000-8000-00805f9b34fb', handle: 33 }],
+            },
+        ],
+    },
+];
+
+/**
+ * Writes a UUID as ESPHome does: two uint64 (high and low half), one field each, not packed. setUuidList() of the
+ * protobuf classes writes them packed, which the client library with google-protobuf 4 cannot read.
+ *
+ * @param {object} writer - BinaryWriter of google-protobuf
+ * @param {number} field - Field number
+ * @param {string} uuid - 128 bit UUID with dashes
+ */
+function writeUuid(writer, field, uuid) {
+    const hex = uuid.replace(/-/g, '');
+    writer.writeUint64String(field, BigInt(`0x${hex.slice(0, 16)}`).toString());
+    writer.writeUint64String(field, BigInt(`0x${hex.slice(16)}`).toString());
+}
+
+/**
+ * @param {number} address - Address of the BLE device as number
+ * @param {object[]} services - Services in the form of GattServiceInfo
+ * @returns {Uint8Array} An encoded BluetoothGATTGetServicesResponse
+ */
+function encodeServicesResponse(address, services) {
+    const response = new BinaryWriter();
+    response.writeUint64(1, address);
+    for (const service of services) {
+        const s = new BinaryWriter();
+        writeUuid(s, 1, service.uuid);
+        s.writeUint32(2, service.handle);
+        for (const characteristic of service.characteristics) {
+            const c = new BinaryWriter();
+            writeUuid(c, 1, characteristic.uuid);
+            c.writeUint32(2, characteristic.handle);
+            c.writeUint32(3, characteristic.properties);
+            for (const descriptor of characteristic.descriptors) {
+                const d = new BinaryWriter();
+                writeUuid(d, 1, descriptor.uuid);
+                d.writeUint32(2, descriptor.handle);
+                c.writeBytes(4, d.getResultBuffer());
+            }
+            s.writeBytes(3, c.getResultBuffer());
+        }
+        response.writeBytes(2, s.getResultBuffer());
+    }
+    return response.getResultBuffer();
+}
 
 class FakeBluetoothProxy {
     /**
@@ -37,6 +98,183 @@ class FakeBluetoothProxy {
         this.subscriptions = [];
         /** Number of UnsubscribeBluetoothLEAdvertisementsRequest received */
         this.unsubscriptions = 0;
+        /** Free connection slots and their maximum, as BluetoothConnectionsFreeResponse reports them */
+        this.freeSlots = 3;
+        this.slotLimit = 3;
+        /** Addresses (48 bit numbers) of the BLE devices the proxy is connected to */
+        this.bleConnections = new Set();
+        /** Value of every handle of the BLE devices, as hex */
+        this.values = new Map();
+        /** Every GATT request in order, e.g. "connect 180725...", "read 32", "disconnect 180725..." */
+        this.gattLog = [];
+        /** Descriptor writes as { address, handle, hex } */
+        this.descriptorWrites = [];
+        /** Error code the next connect fails with, 0 = it works */
+        this.nextConnectError = 0;
+    }
+
+    /**
+     * Sets the value of a handle of the BLE devices
+     *
+     * @param {number} handle - Handle of the characteristic
+     * @param {string} hex - The value
+     */
+    setValue(handle, hex) {
+        this.values.set(handle, hex);
+    }
+
+    /**
+     * Lets the next connection attempt fail with this error code
+     *
+     * @param {number} error - Error code, e.g. 133
+     */
+    failNextConnect(error) {
+        this.nextConnectError = error;
+    }
+
+    /**
+     * A BLE device sends a notification
+     *
+     * @param {number} address - Address of the BLE device
+     * @param {number} handle - Handle of the characteristic
+     * @param {string} hex - The value
+     */
+    notify(address, handle, hex) {
+        const message = new pb.BluetoothGATTNotifyDataResponse();
+        message.setAddress(address);
+        message.setHandle(handle);
+        message.setData(Buffer.from(hex, 'hex'));
+        this.broadcast(message);
+    }
+
+    /**
+     * The BLE device ends the connection, e.g. because it is out of range
+     *
+     * @param {number} address - Address of the BLE device
+     */
+    dropBleConnection(address) {
+        this.bleConnections.delete(address);
+        this.freeSlots++;
+        this.broadcast(this.connectionResponse(address, false, 0, 19));
+        this.broadcast(this.connectionsFree());
+    }
+
+    /**
+     * @param {object} message - Protobuf message for every API connection
+     */
+    broadcast(message) {
+        for (const connection of this.connections) {
+            this.send(connection.socket, message);
+        }
+    }
+
+    /**
+     * @param {number} address - Address of the BLE device
+     * @param {boolean} connected - Whether it is connected now
+     * @param {number} mtu - Negotiated MTU
+     * @param {number} error - Error code
+     */
+    connectionResponse(address, connected, mtu, error) {
+        const message = new pb.BluetoothDeviceConnectionResponse();
+        message.setAddress(address);
+        message.setConnected(connected);
+        message.setMtu(mtu);
+        message.setError(error);
+        return message;
+    }
+
+    /** The current free connection slots */
+    connectionsFree() {
+        const message = new pb.BluetoothConnectionsFreeResponse();
+        message.setFree(this.freeSlots);
+        message.setLimit(this.slotLimit);
+        return message;
+    }
+
+    /**
+     * Answers the GATT requests of the adapter
+     *
+     * @param {net.Socket} socket - The connection the request arrived on
+     * @param {number} type - Message type ID of api.proto
+     * @param {Buffer} payload - Encoded message
+     * @returns {boolean} Whether the message was a GATT request
+     */
+    onGattMessage(socket, type, payload) {
+        const is = name => type === Number(pb[name].id);
+        if (is('SubscribeBluetoothConnectionsFreeRequest')) {
+            this.send(socket, this.connectionsFree());
+        } else if (is('BluetoothDeviceRequest')) {
+            const request = pb.BluetoothDeviceRequest.deserializeBinary(payload).toObject();
+            const address = Number(request.address);
+            const requestType = request.requestType;
+            if (requestType === pb.BluetoothDeviceRequestType.BLUETOOTH_DEVICE_REQUEST_TYPE_DISCONNECT) {
+                this.gattLog.push(`disconnect ${address}`);
+                if (this.bleConnections.delete(address)) {
+                    this.freeSlots++;
+                    this.send(socket, this.connectionsFree());
+                }
+                this.send(socket, this.connectionResponse(address, false, 0, 0));
+            } else {
+                this.gattLog.push(`connect ${address}`);
+                if (this.nextConnectError) {
+                    const error = this.nextConnectError;
+                    this.nextConnectError = 0;
+                    this.send(socket, this.connectionResponse(address, false, 0, error));
+                } else {
+                    this.bleConnections.add(address);
+                    this.freeSlots--;
+                    this.send(socket, this.connectionResponse(address, true, 247, 0));
+                    this.send(socket, this.connectionsFree());
+                }
+            }
+        } else if (is('BluetoothGATTGetServicesRequest')) {
+            const { address } = pb.BluetoothGATTGetServicesRequest.deserializeBinary(payload).toObject();
+            this.gattLog.push('getServices');
+            this.sendRaw(
+                socket,
+                Number(pb.BluetoothGATTGetServicesResponse.id),
+                encodeServicesResponse(address, SERVICES),
+            );
+            const done = new pb.BluetoothGATTGetServicesDoneResponse();
+            done.setAddress(address);
+            this.send(socket, done);
+        } else if (is('BluetoothGATTReadRequest')) {
+            const { address, handle } = pb.BluetoothGATTReadRequest.deserializeBinary(payload).toObject();
+            this.gattLog.push(`read ${handle}`);
+            const response = new pb.BluetoothGATTReadResponse();
+            response.setAddress(address);
+            response.setHandle(handle);
+            response.setData(Buffer.from(this.values.get(handle) ?? '', 'hex'));
+            this.send(socket, response);
+        } else if (is('BluetoothGATTWriteRequest')) {
+            const request = pb.BluetoothGATTWriteRequest.deserializeBinary(payload);
+            const { address, handle, response: withResponse } = request.toObject();
+            const hex = Buffer.from(request.getData_asU8()).toString('hex');
+            this.gattLog.push(`write ${handle} ${hex} ${withResponse}`);
+            this.values.set(handle, hex);
+            if (withResponse) {
+                const response = new pb.BluetoothGATTWriteResponse();
+                response.setAddress(address);
+                response.setHandle(handle);
+                this.send(socket, response);
+            }
+        } else if (is('BluetoothGATTNotifyRequest')) {
+            const { address, handle, enable } = pb.BluetoothGATTNotifyRequest.deserializeBinary(payload).toObject();
+            this.gattLog.push(`notify ${handle} ${enable}`);
+            const response = new pb.BluetoothGATTNotifyResponse();
+            response.setAddress(address);
+            response.setHandle(handle);
+            this.send(socket, response);
+        } else if (is('BluetoothGATTWriteDescriptorRequest')) {
+            const request = pb.BluetoothGATTWriteDescriptorRequest.deserializeBinary(payload);
+            const { address, handle } = request.toObject();
+            const hex = Buffer.from(request.getData_asU8()).toString('hex');
+            this.gattLog.push(`writeDescriptor ${handle} ${hex}`);
+            this.descriptorWrites.push({ address, handle, hex });
+        } else {
+            return false;
+        }
+        return true;
     }
 
     /** Starts listening for API connections */
@@ -185,6 +423,8 @@ class FakeBluetoothProxy {
         } else if (type === Number(pb.UnsubscribeBluetoothLEAdvertisementsRequest.id)) {
             this.unsubscriptions++;
             connection.subscribed = false;
+        } else {
+            this.onGattMessage(socket, type, payload);
         }
         // Everything else (state subscription, time, ...) needs no answer
     }
@@ -194,16 +434,17 @@ class FakeBluetoothProxy {
      * @param {object} message - Protobuf message
      */
     send(socket, message) {
-        const encoded = message.serializeBinary();
-        socket.write(
-            Buffer.from([
-                0,
-                ...varuint_to_bytes(encoded.length),
-                ...varuint_to_bytes(Number(message.constructor.id)),
-                ...encoded,
-            ]),
-        );
+        this.sendRaw(socket, Number(message.constructor.id), message.serializeBinary());
+    }
+
+    /**
+     * @param {net.Socket} socket - Connection to write to
+     * @param {number} type - Message type ID of api.proto
+     * @param {Uint8Array} encoded - The encoded message
+     */
+    sendRaw(socket, type, encoded) {
+        socket.write(Buffer.from([0, ...varuint_to_bytes(encoded.length), ...varuint_to_bytes(type), ...encoded]));
     }
 }
 
-module.exports = { FakeBluetoothProxy, PROXY_FEATURE_FLAGS };
+module.exports = { FakeBluetoothProxy, PROXY_FEATURE_FLAGS, SERVICES };

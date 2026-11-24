@@ -65,11 +65,16 @@ class BleInbox {
      * @param {object} harness - Integration test harness
      */
     constructor(harness) {
-        /** Messages in the order they arrived: { command, message, from, callback } */
+        /** "gateway:advertisements" messages in the order they arrived: { command, message, from, callback } */
         this.messages = [];
         this.harness = harness;
         this.onStateChange = (id, message) => {
-            if (id === `messagebox.system.adapter.${BLE_INSTANCE}` && message) {
+            // Bluetooth proxies that can connect are also announced with "gateway:announce" (ble_gatt_tests.js)
+            if (
+                id === `messagebox.system.adapter.${BLE_INSTANCE}` &&
+                message &&
+                message.command === 'gateway:advertisements'
+            ) {
                 this.messages.push(message);
             }
         };

@@ -19,6 +19,7 @@ Single-file adapter (`src/main.ts`, ~2700 lines) extending `@iobroker/adapter-co
 | `src/lib/deviceManagement.ts`      | ioBroker device manager (`@iobroker/dm-utils`): list / add / edit / delete devices |
 | `src/lib/discoveryOptions.ts`      | Options of the MDNS discovery for the listening address (IPv4 or IPv6 interface)   |
 | `src/lib/bleForwarder.ts`          | Forwards the BLE advertisements of Bluetooth proxies to ioBroker.ble               |
+| `src/lib/bleGattBridge.ts`         | Connections to BLE devices through Bluetooth proxies for ioBroker.ble (`gatt:*`)   |
 
 **Two optional subsystems run in-process alongside device connections:**
 
@@ -91,7 +92,7 @@ npm run test:integration                      # starts the adapter in a test ioB
 
 > `npm run lint` locally does NOT enforce `--max-warnings 0` but CI does — always run the eslint command above directly.
 
-Unit tests live next to the code they test as `src/**/*.test.ts` (e.g. `src/lib/dashboardApi.test.ts`) and run via `npm run test:unit`. The integration test suite lives in `test/integrationTests/` (index, dashboard_tests, docker_dashboard_tests, version_fetch_tests, version_migration_tests, e2e_device_tests, known_device_tests, settings_cleanup_tests, ble_forwarding_tests) and is imported by `test/integration.js`.
+Unit tests live next to the code they test as `src/**/*.test.ts` (e.g. `src/lib/dashboardApi.test.ts`) and run via `npm run test:unit`. The integration test suite lives in `test/integrationTests/` (index, dashboard_tests, docker_dashboard_tests, version_fetch_tests, version_migration_tests, e2e_device_tests, known_device_tests, settings_cleanup_tests, ble_forwarding_tests, ble_gatt_tests) and is imported by `test/integration.js`.
 
 ### End-to-end test with a real ESPHome device
 
@@ -169,10 +170,36 @@ Enabled by the setting `bleForwardInstance` (`"ble.0"`, empty = off, `bleTargetI
 - Tests: `src/lib/bleForwarder.test.ts` builds the messages with the protobuf classes of the library.
   `test/integrationTests/ble_forwarding_tests.js` runs the adapter against `fakeBluetoothProxy.js` (plaintext native
   API on `127.0.0.1:6053`, the host platform of the E2E device has no Bluetooth) and reads the messages sent to `ble.0`.
-- Not implemented yet: GATT connections through a proxy (stage 2 of the gateway interface). The binding
-  specification for it is `docs/spec-phase-2-gatt.md` in the ioBroker.ble repository (`SimonFischer04/ioBroker.ble`),
-  part C is the work in this adapter. Read its section C0 before touching the GATT methods of the client library:
-  they match answers by message type only and must not be used.
+
+### GATT connections (`BleGattBridge`, stage 2 of the gateway interface)
+
+`BleGattBridge` (`src/lib/bleGattBridge.ts`) lets ioBroker.ble connect to BLE devices through proxies whose feature
+flags have bit 1 (active connections). The binding specification is `docs/spec-phase-2-gatt.md` in the ioBroker.ble
+repository (`SimonFischer04/ioBroker.ble`), part C is this adapter.
+
+- It uses the proxies `BleForwarder` subscribed (`listGateways()`, `findGateway()`), same target instance. It
+  announces them with `gateway:announce` (with callback, payload `{ protocol, gateways }`, each gateway with
+  `gatewayId`, `connect`, `freeSlots`, `slotLimit`) every 30 s and whenever the free slots change
+  (`SubscribeBluetoothConnectionsFreeRequest`).
+  The answer carries the `epoch` (start time) of ioBroker.ble: a new epoch, `gatt:connect` with a new epoch or
+  `system.adapter.<target>.alive` = false close all connections ioBroker.ble opened.
+- It answers `gatt:connect|disconnect|getServices|read|write|subscribe` (only from the target instance, else
+  `INVALID_PAYLOAD`) with `{ error: null, result }` or `{ error: { code, message } }`, and sends
+  `gateway:connectionState` (connection ended without being asked) and `gateway:notification` without callback.
+- **The GATT methods of the client library must not be used**: they match answers by message type only, not by
+  address and handle, so two BLE devices at one proxy would get each other's answers. The bridge sends with
+  `client.connection.sendMessage(new pb.…)` (classes from `@2colors/esphome-native-api/lib/utils/messages`, typed in
+  `src/lib/esphome-native-api-messages.d.ts`) and matches `message.<Type>` events by address (and handle).
+- Answers after the mapping of the library: `uuid` is a UUID with dashes **or an empty string** when the device set
+  `shortUuid` instead (canonical UUID = `shortUuid` as 8 hex digits + `-0000-1000-8000-00805f9b34fb`), `data` is
+  base64, `address` a number (`macFromAddress()` for the MAC).
+- **Not verified on hardware**: with V3 connections the client writes the CCCD (`00002902-…`) itself after
+  `BluetoothGATTNotifyRequest` (`[1, 0]` for notify, `[2, 0]` for indicate), as `bleak-esphome` does. Check with a
+  real ESP32 before relying on it.
+- Tests: `src/lib/bleGattBridge.test.ts` (fake connection, answers built with the `pb` classes).
+  `test/integrationTests/ble_gatt_tests.js` plays ble.0 against `fakeBluetoothProxy.js`, which answers the GATT
+  requests (one pvvx-like service 0x1f10 / characteristic 0x1f1f, 3 slots). Its services response is encoded by hand:
+  google-protobuf 4 cannot read the packed UUID list `setUuidList()` would write.
 
 ## GITHUB_TOKEN Usage
 

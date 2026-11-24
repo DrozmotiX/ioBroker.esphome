@@ -1,4 +1,5 @@
 const ble_forwarding_tests = require('./ble_forwarding_tests');
+const ble_gatt_tests = require('./ble_gatt_tests');
 const dashboard_tests = require('./dashboard_tests');
 const docker_dashboard_tests = require('./docker_dashboard_tests');
 const e2e_device_tests = require('./e2e_device_tests');
@@ -59,4 +60,7 @@ exports.runTests = function (suite) {
 
     // Runs always: the Bluetooth proxy is a fake device speaking the native API, ioBroker.ble is not needed
     ble_forwarding_tests.runTests(suite);
+
+    // Runs always: the same fake Bluetooth proxy, connections to BLE devices in the name of ioBroker.ble
+    ble_gatt_tests.runTests(suite);
 };

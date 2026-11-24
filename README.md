@@ -517,7 +517,18 @@ distributed in the house then work like one receiver with a long range, without 
 
 Every proxy shows up in the BLE adapter as a gateway named after the device, e.g. `esphome.0:proxy-og`. Which BLE
 devices are recorded is decided there ("Accept new devices", monitored services), this adapter passes on everything the
-proxies receive without looking into it. Only passive reception is forwarded so far, no connections to BLE devices.
+proxies receive without looking into it.
+
+Some BLE devices need a connection, e.g. to read values that are not advertised or to set the clock of a thermometer.
+The BLE adapter can connect to them through a proxy when the proxy allows connections:
+
+```yaml
+bluetooth_proxy:
+    active: true
+```
+
+An ESP32 has usually 3 connection slots. The proxy reports its free slots to the BLE adapter, which picks a proxy that
+receives the device and has a slot free. Connections are closed when the BLE adapter stops or restarts.
 
 The firmware of the proxy has to be ESPHome 2023.6.0 or newer. A proxy can only serve one API client with Bluetooth:
 do not connect Home Assistant to the same device at the same time.
@@ -546,6 +557,7 @@ If you like my work, please consider a personal donation
 ### **WORK IN PROGRESS**
 
 - (@SimonFischer04) **NEW**: Bluetooth proxies: the BLE advertisements devices with the `bluetooth_proxy` component receive can be forwarded to the BLE adapter (ioBroker.ble), which decodes them (BTHome, Xiaomi, RuuviTag, ...). Select its instance under "Forward BLE advertisements to" in the main settings; nothing is forwarded by default
+- (@SimonFischer04) **NEW**: Bluetooth proxies with `bluetooth_proxy: active: true` let the BLE adapter connect to BLE devices (read, write, notifications), e.g. to set the clock of a thermometer. Needs a BLE adapter that supports connections through gateways
 - (@DutchmanNL) **FIXED**: A release no longer ends with a failed deploy when the Sentry server cannot be reached. npm and the GitHub release were published, only the Sentry release information failed (2.0.0-beta.1, beta.2). Sentry is now informed in its own step, with retries
 
 ### 2.0.0-beta.2 (2026-11-24)
