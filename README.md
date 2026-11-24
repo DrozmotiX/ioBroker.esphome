@@ -514,6 +514,10 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL)
 -->
+### **WORK IN PROGRESS**
+
+- (@DutchmanNL) **FIXED**: The npm package 2.0.0-beta.0 was built from an older state of the source. In it the online state `info._online` had the role `state` again instead of `indicator.reachable` (1.0.1), and a command to an offline device was still acknowledged (#541). `npm pack` and `npm publish` now always build `build/` from the source first
+
 ### 2.0.0-beta.0 (2026-11-22)
 
 - (@DutchmanNL) **FIXED**: A command to a device that is offline is no longer acknowledged. The state stays at `ack: false` and a warning is logged, so other adapters that wait for the acknowledgement see that the command did not reach the device (#541)
