@@ -343,6 +343,26 @@ export class BleForwarder {
         this.gateways.delete(host);
     }
 
+    /** The devices that currently forward advertisements, with what the GATT bridge needs */
+    public listGateways(): { gatewayId: string; host: string; client: Client }[] {
+        const result: { gatewayId: string; host: string; client: Client }[] = [];
+        for (const gateway of this.gateways.values()) {
+            if (gateway.subscribed && gateway.id) {
+                result.push({ gatewayId: gateway.id, host: gateway.host, client: gateway.client });
+            }
+        }
+        return result;
+    }
+
+    /**
+     * The device with this gateway ID, undefined if it is not connected
+     *
+     * @param gatewayId - ID of the gateway, see gatewayId()
+     */
+    public findGateway(gatewayId: string): { gatewayId: string; host: string; client: Client } | undefined {
+        return this.listGateways().find(gateway => gateway.gatewayId === gatewayId);
+    }
+
     /** Stops forwarding. To be called before the clients are disconnected. */
     public stop(): void {
         if (this.heartbeatTimer !== undefined) {

@@ -525,6 +525,31 @@ describe('lib/bleForwarder', () => {
             expect(() => adapter.runTimeouts()).not.to.throw();
         });
 
+        it('lists the proxies that forward advertisements', () => {
+            const other = new FakeClient();
+            const passive = new FakeClient();
+            forwarder.attach(HOST, client.asClient());
+            forwarder.attach('192.0.2.21', other.asClient());
+            forwarder.attach('192.0.2.22', passive.asClient());
+            forwarder.initialized(HOST, deviceInfo('proxy-og', PROXY_FLAGS));
+            forwarder.initialized('192.0.2.21', deviceInfo('proxy-keller', PROXY_FLAGS));
+            // A device without bluetooth_proxy is not subscribed, so it is no gateway
+            forwarder.initialized('192.0.2.22', deviceInfo('kitchen-light', 0));
+
+            expect(forwarder.listGateways()).to.deep.equal([
+                { gatewayId: 'proxy-og', host: HOST, client: client.asClient() },
+                { gatewayId: 'proxy-keller', host: '192.0.2.21', client: other.asClient() },
+            ]);
+            expect(forwarder.findGateway('proxy-keller')?.host).to.equal('192.0.2.21');
+            expect(forwarder.findGateway('kitchen-light')).to.equal(undefined);
+            expect(forwarder.findGateway('unknown')).to.equal(undefined);
+
+            // Not while the connection to the proxy is lost
+            forwarder.disconnected('192.0.2.21');
+            expect(forwarder.findGateway('proxy-keller')).to.equal(undefined);
+            expect(forwarder.listGateways().map(gateway => gateway.gatewayId)).to.deep.equal(['proxy-og']);
+        });
+
         it('tells the proxies to stop and sends nothing more when the adapter stops', () => {
             connectProxy();
             client.receive(rawAdvertisementsMessage([{ address: 0xa4c138123456, rssi: -67, hex: BTHOME_HEX }]));
