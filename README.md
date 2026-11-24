@@ -514,7 +514,7 @@ If you like my work, please consider a personal donation
     ### __WORK IN PROGRESS__
     * (DutchmanNL)
 -->
-### **WORK IN PROGRESS**
+### 2.0.0-beta.1 (2026-11-24)
 
 - (@DutchmanNL) **FIXED**: The npm package 2.0.0-beta.0 was built from an older state of the source. In it the online state `info._online` had the role `state` again instead of `indicator.reachable` (1.0.1), and a command to an offline device was still acknowledged (#541). `npm pack` and `npm publish` now always build `build/` from the source first
 
@@ -591,15 +591,6 @@ If you like my work, please consider a personal donation
 - (@DutchmanNL) **ENHANCED**: Pre-releases are published under the npm "beta" tag instead of "latest"
 - (@DutchmanNL) **ENHANCED**: Removed the obsolete admin/words.js and added prettier formatting scripts
 - (@dependabot) **ENHANCED**: Updated @iobroker/testing to 5.3.0 and the GitHub actions used in CI
-
-### 1.0.0-beta.0 - Stable version release candidate
-
-- (@copilot) **NEW**: Promoted ioBroker.esphome to stable **v1.0.0**
-- (@copilot) **NEW**: Brings ESPHome devices into ioBroker with live state updates and direct control
-- (@copilot) **NEW**: Supports a wide range of device types including lights, switches, sensors, fans, covers, locks, and text entities
-- (@copilot) **ENHANCED**: Includes optional ESPHome Dashboard integration plus built-in helpers for discovery and YAML-based device management
-- (@arteck) **FIXED**: Improved disconnect handling and diagnostics so reconnects recover more cleanly when device connections are destroyed
-- (@copilot) **ENHANCED**: Establishes a stable baseline for future ESPHome adapter development in ioBroker
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
