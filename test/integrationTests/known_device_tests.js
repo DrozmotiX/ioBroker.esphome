@@ -66,18 +66,20 @@ exports.runTests = function (suite) {
                     PillowVersion: 'Auto Detect',
                 },
             });
+            // An instance of 2.0.0-beta.0/1 kept the list of connected devices in info.connection
             await harness.objects.setObjectAsync(`${NAMESPACE}.info.connection`, {
                 type: 'state',
                 common: {
-                    role: 'indicator.connected',
-                    name: 'Device or service connected',
-                    type: 'boolean',
+                    role: 'info.status',
+                    name: 'List of connected devices',
+                    type: 'string',
                     read: true,
                     write: false,
-                    def: false,
+                    def: '',
                 },
                 native: {},
             });
+            await harness.states.setStateAsync(`${NAMESPACE}.info.connection`, { val: 'old-device', ack: true });
             await harness.startAdapterAndWait();
         });
 
@@ -87,24 +89,44 @@ exports.runTests = function (suite) {
             }
         });
 
-        it('lists no device in info.connection while no device is connected', async function () {
+        it('info.connection is a boolean again, true while the adapter runs', async function () {
             this.timeout(60000);
 
-            // Up to 1.0.0 info.connection was a boolean, the adapter turns it into the list of connected devices
             let connection;
             const deadline = Date.now() + 30000;
             while (Date.now() < deadline) {
                 connection = await harness.states.getStateAsync(`${NAMESPACE}.info.connection`);
-                if (connection && connection.val === '') {
+                if (connection && connection.val === true) {
                     break;
                 }
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
             expect(connection, 'info.connection').to.be.ok;
-            expect(connection.val).to.equal('');
+            expect(connection.val).to.equal(true);
             expect(connection.ack).to.be.true;
 
             const obj = await harness.objects.getObjectAsync(`${NAMESPACE}.info.connection`);
+            expect(obj.common.type).to.equal('boolean');
+            expect(obj.common.role).to.equal('indicator.connected');
+        });
+
+        it('lists no device in info.connectedDevices while no device is connected', async function () {
+            this.timeout(60000);
+
+            let connectedDevices;
+            const deadline = Date.now() + 30000;
+            while (Date.now() < deadline) {
+                connectedDevices = await harness.states.getStateAsync(`${NAMESPACE}.info.connectedDevices`);
+                if (connectedDevices && connectedDevices.val === '') {
+                    break;
+                }
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            expect(connectedDevices, 'info.connectedDevices').to.be.ok;
+            expect(connectedDevices.val).to.equal('');
+            expect(connectedDevices.ack).to.be.true;
+
+            const obj = await harness.objects.getObjectAsync(`${NAMESPACE}.info.connectedDevices`);
             expect(obj.common.type).to.equal('string');
             expect(obj.common.role).to.equal('info.status');
         });

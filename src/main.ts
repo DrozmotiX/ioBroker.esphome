@@ -17,7 +17,12 @@ import {
 import * as utils from '@iobroker/adapter-core';
 import { isIPv4, isIPv6 } from 'node:net';
 import { format } from 'node:util';
-import { connectionStateValue, isDeviceOnline } from './lib/connectionState';
+import {
+    adapterConnectionCommon,
+    connectedDevicesCommon,
+    connectionStateValue,
+    isDeviceOnline,
+} from './lib/connectionState';
 import Dashboard from './lib/dashboard';
 import { discoveryOptions } from './lib/discoveryOptions';
 import EsphomeDeviceManagement, {
@@ -103,7 +108,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
     declare private yamlFileManager: YamlFileManager;
     declare private dashboard: Dashboard;
     declare private deviceManagement: EsphomeDeviceManagement;
-    /** Last value written to info.connection, see updateConnectionState() */
+    /** Last value written to info.connectedDevices, see updateConnectionState() */
     declare private connectedDevicesList: string | undefined;
 
     /**
@@ -138,12 +143,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
         // Created here as it accesses the objects database right away.
         this.deviceManagement = new EsphomeDeviceManagement(this);
 
-        // info.connection lists the connected devices. Up to 1.0.0 it was a boolean: existing instances keep their
-        // object from the old version, so bring its type in line with the list it holds now
-        await this.extendObjectAsync('info.connection', {
-            common: { type: 'string', role: 'info.status', name: 'List of connected devices', def: '' },
-        });
-        await this.updateConnectionState();
+        await this.initConnectionStates();
         try {
             // Settings earlier versions stored and nothing reads any more, the adapter restarts if some were removed
             if (await this.removeObsoleteSettings()) {
@@ -1522,7 +1522,8 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                 }
             }
 
-            void this.setState('info.connection', { val: '', ack: true });
+            void this.setState('info.connection', { val: false, ack: true });
+            void this.setState('info.connectedDevices', { val: '', ack: true });
 
             // Waits only while the dashboard container is being started, see Dashboard.stop()
             void this.dashboard
@@ -2173,11 +2174,27 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
     }
 
     /**
-     * Lists the connected devices in info.connection, comma-separated like other multi-device adapters (e.g. sonoff)
-     * do: the admin shows the instance green while the list is not empty, and shows the list itself. Green needs just
-     * one connected device - requiring all would turn it yellow whenever a single device is switched off.
-     * With the ESPHome Dashboard enabled the list stays empty until the dashboard answers, see Dashboard.isReady().
-     * The list is computed and remembered synchronously, so concurrent calls write it in the order they were made.
+     * info.connection says whether the adapter itself runs: true from here until onUnload(). It is a boolean as up to
+     * 1.0.1, programs that read it as the online state of the adapter only accept true. 2.0.0-beta.0 and beta.1 kept
+     * the list of connected devices in it, existing instances get their boolean object back here. The list is in
+     * info.connectedDevices, whether a single device is connected in <device>.info._online.
+     */
+    async initConnectionStates(): Promise<void> {
+        await this.extendObjectAsync('info.connection', { type: 'state', common: adapterConnectionCommon, native: {} });
+        await this.setStateAsync('info.connection', { val: true, ack: true });
+        await this.extendObjectAsync('info.connectedDevices', {
+            type: 'state',
+            common: connectedDevicesCommon,
+            native: {},
+        });
+        await this.updateConnectionState();
+    }
+
+    /**
+     * Lists the connected devices in info.connectedDevices, comma-separated like other multi-device adapters (e.g.
+     * sonoff) do. With the ESPHome Dashboard enabled the list stays empty until the dashboard answers, see
+     * Dashboard.isReady(). The list is computed and remembered synchronously, so concurrent calls write it in the order
+     * they were made.
      */
     async updateConnectionState(): Promise<void> {
         const list = connectionStateValue(
@@ -2190,7 +2207,7 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
         }
         this.connectedDevicesList = list;
         try {
-            await this.setStateAsync('info.connection', { val: list, ack: true });
+            await this.setStateAsync('info.connectedDevices', { val: list, ack: true });
         } catch (error) {
             this.errorHandler(`[updateConnectionState]`, error);
         }
