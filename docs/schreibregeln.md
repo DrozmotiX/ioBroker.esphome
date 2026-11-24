@@ -6,7 +6,7 @@ Diese Regeln gelten für alle Seiten unter `docs/de` und später `docs/en`. Sie 
 
 1. **Der Titel ist die Frage der Nutzer.** Jede Abschnittsüberschrift (`##`) ist eine Frage, so wie Nutzer sie im Forum oder in Issues stellen. Die Fragen stehen schon im Gerüst. Ändere den Wortlaut nur, wenn er missverständlich ist, und schreibe den Grund in die Commit-Nachricht.
 2. **Jede Aussage hat eine Quelle.** Belegt wird mit einer Code-Stelle, einem Issue oder einem Forenbeitrag (Format in Abschnitt 4). Eine Aussage ohne Quelle wird nicht geschrieben, sondern als offene Frage notiert.
-3. **Versionen stehen ausdrücklich da.** Was erst ab einer bestimmten Version gilt, bekommt einen sichtbaren Hinweis (Abschnitt 5).
+3. **Nur der aktuelle Stand.** Die Doku beschreibt, wie der Adapter jetzt funktioniert, nicht wie er früher war (Abschnitt 5).
 4. **Deutsch ist maßgeblich.** Deutsch wird zuerst geschrieben und abgenommen. Englisch folgt inhaltsgleich, bewusst geschrieben und nicht maschinell übersetzt.
 5. **Nur Markdown, das auf GitHub und auf der Doku-Seite (VuePress 2) gleich aussieht** (Abschnitt 6).
 
@@ -31,7 +31,7 @@ Jeder Abschnitt im Gerüst trägt zwei unsichtbare Kommentare: `abschnitt:` mit 
 - **Ordner und Dateien** sind nummeriert, z. B. `01.erste-schritte/01.installation.md`. Jeder Ordner hat eine `README.md` als Inhaltsseite.
 - **Eine Seite** hat genau eine Überschrift `#` (Seitentitel). Jeder Abschnitt beginnt mit einer Überschrift `##` (die Nutzerfrage). Unterpunkte nutzen `###`, tiefer geht es nicht.
 - **Jeder Abschnitt hat einen festen Anker** direkt vor der Überschrift, z. B. `<a id="add-device-manually"></a>`. Der Anker ist englisch, ändert sich nie und ist in `de` und `en` gleich. Links auf Abschnitte nutzen immer diesen Anker, nie die automatisch erzeugte Überschriften-ID.
-- **Reihenfolge im Abschnitt** (siehe [Abschnittsvorlage](vorlage-abschnitt.md)): zuerst die kurze Antwort, dann die Schritte, dann Hinweise und Versionen, zuletzt „Siehe auch".
+- **Reihenfolge im Abschnitt** (siehe [Abschnittsvorlage](vorlage-abschnitt.md)): zuerst die Antwort in ein bis zwei Sätzen, ohne Vorspann wie „Kurz:“, dann die Schritte, zuletzt „Siehe auch“.
 - **Abschnitte bleiben eigenständig.** Wer über die Suche auf einem Abschnitt landet, muss ihn ohne die Abschnitte davor verstehen. Wiederholungen ersetzt man durch einen Link.
 
 ## 4. Quellen angeben
@@ -39,26 +39,25 @@ Jeder Abschnitt im Gerüst trägt zwei unsichtbare Kommentare: `abschnitt:` mit 
 Die Quelle steht als unsichtbarer Kommentar direkt unter dem Absatz, der Liste oder der Tabelle, die sie belegt:
 
 ```markdown
-Wird ein Gerät nicht automatisch gefunden, fügst du es über seine IP-Adresse hinzu.
-<!-- quelle: code=main.js:513@v1.0.1; issue=#123; forum=603844 -->
+Wird ein Gerät nicht automatisch gefunden, fügst du es im Reiter „Geräte“ über seine Adresse hinzu.
+<!-- quelle: code=src/lib/deviceManagement.ts:378@v2.0.0-beta.2; issue=#203; forum=603844 -->
 ```
 
 | Art | Schreibweise | Bedeutung |
 |---|---|---|
-| Code | `code=main.js:1234@v1.0.1` | Datei und Zeile im Grundstand |
+| Code | `code=src/main.ts:1234@v2.0.0-beta.2` | Datei und Zeile im Grundstand |
 | Issue / PR | `issue=#640`, `pr=#1238` | Issue oder Pull Request in `DrozmotiX/ioBroker.esphome` |
 | Forum | `forum=603844` | Beitrag `https://forum.iobroker.net/post/603844` |
 | Entscheidung | `interview=13b` | Antwort im Entwickler-Interview |
 
-Mehrere Quellen werden mit `;` getrennt. Für Verhalten ab einer späteren Version ist das Issue oder der Pull Request die Quelle.
+Mehrere Quellen werden mit `;` getrennt.
 
 ## 5. Versionen
 
-- Die Doku beschreibt **v1.0.1** als Grundstand.
-- Verhalten, das erst später gilt, steht als eigener Absatz mit fettem Anfang: `**Ab vX.Y.Z:** …`, mit Link auf das Issue.
-- Für alte Fehler steht `**Bis vX.Y.Z:** …` und daneben, ab wann es behoben ist.
-- Geplante Funktionen ohne Version werden nicht beschrieben. Höchstens ein Satz „ist geplant" mit Link zum Issue.
-- Keine Formulierungen wie „neu", „demnächst", „in der aktuellen Version". Immer die Versionsnummer.
+- Grundstand ist **v2.0.0-beta.2**. Die Doku beschreibt nur diesen Stand.
+- Keine Sätze darüber, wie es früher war: kein „bis vX“, kein „seit vX“, keine Migrationshinweise, keine alten Namen von Schaltflächen.
+- Mindestversionen, die man zum Betrieb braucht (Node.js, Admin, js-controller), stehen als Voraussetzung da.
+- Geplante Funktionen und bekannte Fehler ohne Behebung werden nicht beschrieben. Nötige Umwege stehen als normaler Schritt im Text.
 
 ## 6. Erlaubtes Markdown
 
@@ -73,7 +72,7 @@ Mehrere Quellen werden mit `;` getrennt. Für Verhalten ab einer späteren Versi
 | Relative Links auf `.md`-Dateien | `{{ … }}` außerhalb von Code | VuePress wertet es als Vorlage aus |
 | Bilder mit relativem Pfad, `<a id="…"></a>`, `<!-- … -->` | anderes HTML (`<details>`, `<br>`, `<div>`) | uneinheitlich |
 
-**Hinweisblöcke** sind GitHub-Alerts. Es gibt genau fünf Arten:
+**Hinweisblöcke** sind GitHub-Alerts. Sie erscheinen als eingerückter Kasten und unterbrechen den Lesefluss. Deshalb höchstens einer je Abschnitt, und nur, wenn ohne ihn Daten verloren gehen oder die Einrichtung sicher scheitert. Alles andere ist ein normaler Satz. Es gibt genau fünf Arten:
 
 | Art | Wofür |
 |---|---|
@@ -95,6 +94,7 @@ Weitere Punkte:
 
 - Die Leser werden mit **du** angesprochen, wie im ioBroker-Forum üblich.
 - Kurze Sätze, ein Gedanke pro Satz. Fachbegriffe beim ersten Auftreten kurz erklären.
+- **Knapp bleiben.** Ein Abschnitt passt möglichst auf einen Bildschirm. Hintergrund nur, wenn er beim Handeln hilft. Was ein anderer Abschnitt erklärt, wird verlinkt statt wiederholt.
 - **Begriffe aus der Oberfläche** stehen genau so da, wie der Admin sie auf Deutsch anzeigt, in Anführungszeichen.
 - **State-IDs, Objektnamen und Werte** stehen als `Code`: `esphome.0.<Gerät>.<State>`.
 - Platzhalter in spitzen Klammern: `<Gerät>`, `<Segment>`.

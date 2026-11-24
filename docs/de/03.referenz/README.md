@@ -5,7 +5,7 @@ Alle Einstellungen, erzeugten States, Befehle und Log-Meldungen zum Nachschlagen
 ## [Welche Einstellungen hat der Adapter und was bewirken sie?](01.einstellungen.md)
 
 - [Welche Reconnect-Einstellungen gibt es und was passiert, wenn ein Gerät offline geht?](01.einstellungen.md#reconnect-settings-exist-happens-device)
-- [Was bewirkt die Option "Konfiguration als Datenpunkte anzeigen" und was sind die Ordner info und config?](01.einstellungen.md#show-configuration-states-info-config)
+- [Was bewirkt die Option "Konfigurationszustände anzeigen" und was sind die Ordner info und config?](01.einstellungen.md#show-configuration-states-info-config)
 
 ## [Wie sind die Datenpunkte aufgebaut und wie schreibe ich sie?](02.datenpunkte.md)
 
