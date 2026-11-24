@@ -110,14 +110,34 @@ jobs:
                   # makes that check fail, so a pre-release is published without a dist-tag and npm
                   # rejects it. Pre-releases already land under "next" without any configuration.
 
-                  # When using Sentry for error reporting, Sentry can be informed about new releases
-                  # To enable create a API-Token in Sentry (User settings, API keys)
-                  # Enter this token as a GitHub secret (with name SENTRY_AUTH_TOKEN) in the repository options
-                  # Then uncomment and customize the following block:
-                  sentry: true
-                  sentry-token: ${{ secrets.SENTRY_AUTH_TOKEN }}
-                  sentry-project: 'iobroker-esphome'
-                  sentry-version-prefix: 'iobroker.esphome'
-                  sentry-sourcemap-paths: 'build/'
-                  # If your sentry project is linked to a GitHub repository, you can enable the following option
-                  # sentry-github-integration: true
+                  # Sentry is informed about the release by the next step, not by this action
+                  sentry: false
+
+            # Sentry release with the source maps of build/ (built by the step above). Only meta information
+            # for the error reports, published under the same name the action used. sentry.iobroker.net
+            # refuses connections at times: 2.0.0-beta.1 and beta.2 timed out at "finalize" after npm and
+            # the GitHub release had gone through, and the whole run was red. Each call is tried 3 times, and
+            # a failure here leaves a warning but never fails a release that is already published.
+            - name: Create Sentry release
+              continue-on-error: true
+              timeout-minutes: 15
+              env:
+                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+                  SENTRY_URL: https://sentry.iobroker.net
+                  SENTRY_ORG: iobroker
+                  SENTRY_PROJECT: iobroker-esphome
+              run: |
+                  # Same sentry-cli version as ioBroker/testing-action-deploy@v1, newer ones dropped "releases files"
+                  npm i -g @sentry/cli@2.58.4
+                  SENTRY_VERSION="iobroker.esphome@${GITHUB_REF_NAME#v}"
+                  retry() {
+                      for attempt in 1 2 3; do
+                          "$@" && return 0
+                          echo "::warning::Sentry, attempt $attempt of 3 failed: $*"
+                          if [ "$attempt" -lt 3 ]; then sleep 60; fi
+                      done
+                      return 1
+                  }
+                  retry sentry-cli releases new "$SENTRY_VERSION"
+                  retry sentry-cli releases files "$SENTRY_VERSION" upload-sourcemaps build/
+                  retry sentry-cli releases finalize "$SENTRY_VERSION"
