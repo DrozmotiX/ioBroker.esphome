@@ -9,6 +9,7 @@
     "Connecting to device...": "Подключение к устройству...",
     "Connection status": "Состояние подключения",
     "Connection to device %s lost, the adapter reconnects automatically when the device is available": "Соединение с устройством %s потеряно, адаптер автоматически переподключится, когда устройство станет доступно",
+    "Device %s sent a message (type %s) the adapter cannot read yet, the connection is closed. Its ESPHome version is probably newer than the adapter supports": "Устройство %s отправило сообщение (тип %s), которое адаптер пока не умеет читать, соединение закрывается. Вероятно, версия ESPHome на устройстве новее, чем поддерживает адаптер",
     "Delete device": "Удалить устройство",
     "Delete this device? All its states will be removed.": "Удалить это устройство? Все его состояния будут удалены.",
     "Device %s is not ready to connect yet, the adapter tries again": "Устройство %s ещё не готово к подключению, адаптер повторит попытку",

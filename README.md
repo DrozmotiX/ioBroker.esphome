@@ -516,6 +516,9 @@ If you like my work, please consider a personal donation
 -->
 ### **WORK IN PROGRESS**
 
+- (@DutchmanNL) **FIXED**: Devices with a date, time, date/time, valve, event or update entity no longer disconnect right after announcing it and reconnect in a loop (#566). The ESPHome API library had no message id for these entities and closed the connection; the adapter now completes its id table at start. These entity types are not supported yet, the log names each skipped entity once
+- (@DutchmanNL) **FIXED**: No more "Cannot read properties of undefined (reading 'type')" errors when a device disconnects while it announces its entities
+- (@DutchmanNL) **ENHANCED**: A message of a device the ESPHome API library cannot read is logged as one clear warning with the message type instead of two raw errors
 - (@DutchmanNL) **FIXED**: A release no longer ends with a failed deploy when the Sentry server cannot be reached. npm and the GitHub release were published, only the Sentry release information failed (2.0.0-beta.1, beta.2). Sentry is now informed in its own step, with retries
 
 ### 2.0.0-beta.2 (2026-11-24)

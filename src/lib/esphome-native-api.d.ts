@@ -45,5 +45,7 @@ declare module '@2colors/esphome-native-api' {
     interface Connection {
         /** Subscribes to state changes of all entities */
         subscribeStatesService(): void;
+        /** Every decoded message of the device, with its message name (e.g. "ListEntitiesTimeResponse") */
+        on(event: 'message', listener: (messageType: string, message: Record<string, any>) => void): this;
     }
 }

@@ -9,6 +9,7 @@
     "Connecting to device...": "正在连接设备...",
     "Connection status": "连接状态",
     "Connection to device %s lost, the adapter reconnects automatically when the device is available": "与设备 %s 的连接已断开，设备可用时适配器会自动重新连接",
+    "Device %s sent a message (type %s) the adapter cannot read yet, the connection is closed. Its ESPHome version is probably newer than the adapter supports": "设备 %s 发送了适配器尚无法读取的消息（类型 %s），连接已关闭。其 ESPHome 版本可能比适配器支持的更新",
     "Delete device": "删除设备",
     "Delete this device? All its states will be removed.": "删除此设备？其所有状态都将被删除。",
     "Device %s is not ready to connect yet, the adapter tries again": "设备 %s 尚未准备好连接，适配器将重试",

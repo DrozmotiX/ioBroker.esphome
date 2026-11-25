@@ -32,6 +32,7 @@ import EsphomeDeviceManagement, {
     isWifiSignalSensor,
 } from './lib/deviceManagement';
 import ClientDetails from './lib/helpers';
+import { registerNativeApiMessages, unsupportedEntityType } from './lib/nativeApiMessages';
 import stateAttr from './lib/stateAttr'; // Load attribute library
 import YamlFileManager from './lib/yamlFileManager';
 
@@ -71,6 +72,7 @@ const OBSOLETE_SETTINGS = [
 
 const disableSentry = false; // Ensure to set to true during development!
 const warnMessages: Record<string, string> = {}; // Store warn messages to avoid multiple sending to sentry
+const unsupportedEntitiesLogged = new Set<string>(); // Entities of unsupported types already logged, per host
 const resetTimers: Record<string, ioBroker.Timeout | undefined | void> = {}; // Memory allocation for all running timers
 let autodiscovery: boolean;
 let createConfigStates: boolean;
@@ -142,6 +144,15 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
         // Integration with the ioBroker device manager, handles all "dm:" messages itself.
         // Created here as it accesses the objects database right away.
         this.deviceManagement = new EsphomeDeviceManagement(this);
+
+        // Teach the native API library the messages of newer ESPHome versions it has no id for, otherwise a
+        // device with for example a datetime entity is disconnected right after announcing it
+        try {
+            const added = registerNativeApiMessages();
+            this.log.debug(`Registered ESPHome API messages missing in the library: ${added.join(', ')}`);
+        } catch (e) {
+            this.log.warn(`Could not complete the ESPHome API messages of the library: ${String(e)}`);
+        }
 
         await this.initConnectionStates();
         try {
@@ -400,6 +411,22 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
             // Start connection to a client, if connection fails process wil try to reconnect every "reconnection"
             // interval setting until clientDetails[host].client.disconnect() is called
             clientDetails[host].client = new Client(clientSettings);
+
+            // The library skips entity types it has no class for without a word, say once which entities are skipped
+            clientDetails[host].client.connection.on('message', (messageType, message) => {
+                try {
+                    const entityType = unsupportedEntityType(messageType);
+                    const logKey = `${host}.${entityType}.${message.key}`;
+                    if (entityType !== undefined && !unsupportedEntitiesLogged.has(logKey)) {
+                        unsupportedEntitiesLogged.add(logKey);
+                        this.log.info(
+                            `${clientDetails[host].deviceFriendlyName ?? host} announced ${entityType} "${message.name}", the adapter does not support this entity type yet and skips it`,
+                        );
+                    }
+                } catch (e) {
+                    this.log.debug(`[unsupported entity check] ${String(e)}`);
+                }
+            });
 
             // Connection listener
             clientDetails[host].client.on('connected', async () => {
@@ -913,6 +940,14 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                         }
                     } else if (error.message.includes('write after end')) {
                         // Ignore error
+                    } else if (error.message.includes('Failed find or parsed message type for Id')) {
+                        optimisedError =
+                            'Device %s sent a message (type %s) the adapter cannot read yet, the connection is closed. Its ESPHome version is probably newer than the adapter supports';
+                        errorArgs = [host, /Id: (\d+)/.exec(error.message)?.[1] ?? '?'];
+                        this.log.warn(format(optimisedError, ...errorArgs));
+                    } else if (error.message.includes(`Cannot set properties of undefined (setting 'length')`)) {
+                        // Follow-up of the unreadable message above, nothing new for the user
+                        this.log.debug(`ESPHome client ${host} ${error}`);
                     } else {
                         this.log.error(`ESPHome client ${host} ${error}`);
                     }
@@ -1994,7 +2029,8 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
      * @param entity - The entity object from ESPHome API
      */
     async createNonStateDevices(host: string, entity: Entity): Promise<void> {
-        switch (entityDetails(host, entity.id).type) {
+        // entity.type, not entityDetails(): a disconnect while the entity is announced removes its details
+        switch (entity.type) {
             case 'Button': {
                 await this.stateSetCreate(
                     `${clientDetails[host].deviceName}.${entity.type}.${entity.id}.SET`,
