@@ -9,6 +9,7 @@
     "Connecting to device...": "Verbinden met apparaat...",
     "Connection status": "Verbindingsstatus",
     "Connection to device %s lost, the adapter reconnects automatically when the device is available": "Verbinding met apparaat %s verloren, de adapter maakt automatisch opnieuw verbinding zodra het apparaat beschikbaar is",
+    "Device %s sent a message (type %s) the adapter cannot read yet, the connection is closed. Its ESPHome version is probably newer than the adapter supports": "Apparaat %s stuurde een bericht (type %s) dat de adapter nog niet kan lezen, de verbinding wordt gesloten. De ESPHome-versie is waarschijnlijk nieuwer dan de adapter ondersteunt",
     "Delete device": "Apparaat verwijderen",
     "Delete this device? All its states will be removed.": "Dit apparaat verwijderen? Alle bijbehorende states worden verwijderd.",
     "Device %s is not ready to connect yet, the adapter tries again": "Apparaat %s is nog niet klaar om te verbinden, de adapter probeert het opnieuw",
