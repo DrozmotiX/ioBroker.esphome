@@ -34,6 +34,16 @@ export const TIMEOUTS_MS = {
     notify: 8000,
 } as const;
 
+/** Most entries in one "gatt:writeSequence" */
+export const MAX_WRITE_SEQUENCE_LENGTH = 64;
+/** Largest value of one write in "gatt:writeSequence", in bytes */
+const MAX_WRITE_SEQUENCE_ENTRY = 512;
+/**
+ * Pause between two writes without response in "gatt:writeSequence". 0 = none. To be set after a test with
+ * real hardware, see docs/spec-phase-4-pvvx-ota.md (H3) in ioBroker.ble.
+ */
+export const WRITE_SEQUENCE_GAP_MS = 0;
+
 /** How long ioBroker.ble may take to answer "gateway:announce" */
 const ANNOUNCE_ANSWER_TIMEOUT_MS = 10000;
 
@@ -170,6 +180,10 @@ interface GattCommand {
     withResponse: boolean;
     addressType: number;
     epoch: number;
+    /** The values of gatt:writeSequence */
+    sequence: Buffer[];
+    /** gatt:writeSequence: read the handle after the last write */
+    readAfter: boolean;
 }
 
 /**
@@ -378,6 +392,8 @@ export class BleGattBridge {
                     connect: proxy !== undefined,
                     ...(proxy?.freeSlots !== undefined ? { freeSlots: proxy.freeSlots } : {}),
                     ...(proxy?.slotLimit !== undefined ? { slotLimit: proxy.slotLimit } : {}),
+                    // Optional commands, only for proxies that can connect
+                    ...(proxy !== undefined ? { features: ['writeSequence'] } : {}),
                 };
             }),
         };
@@ -647,7 +663,7 @@ export class BleGattBridge {
         if (payload == null || typeof payload !== 'object') {
             throw invalid('The message must be an object');
         }
-        const { gatewayId, address, handle, data, withResponse, addressType, epoch } = payload as Record<
+        const { gatewayId, address, handle, data, withResponse, addressType, epoch, readAfter } = payload as Record<
             string,
             unknown
         >;
@@ -666,8 +682,10 @@ export class BleGattBridge {
             withResponse: true,
             addressType: 0,
             epoch: 0,
+            sequence: [],
+            readAfter: false,
         };
-        if (['gatt:read', 'gatt:write', 'gatt:subscribe'].includes(obj.command)) {
+        if (['gatt:read', 'gatt:write', 'gatt:subscribe', 'gatt:writeSequence'].includes(obj.command)) {
             if (typeof handle !== 'number' || !Number.isInteger(handle) || handle < 0) {
                 throw invalid('"handle" must be a whole number from 0');
             }
@@ -682,6 +700,33 @@ export class BleGattBridge {
             }
             command.data = Buffer.from(data, 'base64');
             command.withResponse = withResponse;
+        }
+        if (obj.command === 'gatt:writeSequence') {
+            if (
+                !Array.isArray(data) ||
+                data.length === 0 ||
+                data.length > MAX_WRITE_SEQUENCE_LENGTH ||
+                data.some(
+                    entry =>
+                        typeof entry !== 'string' ||
+                        entry === '' ||
+                        !BASE64_REGEX.test(entry) ||
+                        Buffer.from(entry, 'base64').length > MAX_WRITE_SEQUENCE_ENTRY,
+                )
+            ) {
+                throw invalid(
+                    `"data" must be a list of 1 to ${MAX_WRITE_SEQUENCE_LENGTH} base64 encoded values of 1 to ${MAX_WRITE_SEQUENCE_ENTRY} bytes`,
+                );
+            }
+            if (typeof withResponse !== 'boolean') {
+                throw invalid('"withResponse" must be true or false');
+            }
+            if (typeof readAfter !== 'boolean') {
+                throw invalid('"readAfter" must be true or false');
+            }
+            command.sequence = (data as string[]).map(entry => Buffer.from(entry, 'base64'));
+            command.withResponse = withResponse;
+            command.readAfter = readAfter;
         }
         if (obj.command === 'gatt:connect') {
             if (addressType !== 'public' && addressType !== 'random') {
@@ -731,6 +776,8 @@ export class BleGattBridge {
                 return this.write(proxy, command, connection);
             case 'gatt:subscribe':
                 return this.subscribe(proxy, command, connection);
+            case 'gatt:writeSequence':
+                return this.writeSequence(proxy, command, connection);
             default:
                 throw new GatewayError('INVALID_PAYLOAD', `Unknown command ${obj.command}`);
         }
@@ -923,6 +970,50 @@ export class BleGattBridge {
             connection,
         );
         return {};
+    }
+
+    /**
+     * Writes the values one after the other and reads the handle afterwards if asked to
+     *
+     * @param proxy - The proxy
+     * @param command - The command
+     * @param connection - The connection
+     */
+    private async writeSequence(
+        proxy: ProxyState,
+        command: GattCommand,
+        connection: BleConnection,
+    ): Promise<{ written: number; data?: string }> {
+        const total = command.sequence.length;
+        const ended = (written: number): GatewayError =>
+            new GatewayError(
+                'NOT_CONNECTED',
+                `The connection to ${command.mac} ended after ${written} of ${total} writes`,
+            );
+        for (const [written, data] of command.sequence.entries()) {
+            if (proxy.connections.get(command.address) !== connection) {
+                throw ended(written);
+            }
+            try {
+                await this.write(proxy, { ...command, data }, connection);
+            } catch (error) {
+                if (error instanceof GatewayError) {
+                    throw new GatewayError(error.code, `${error.message} after ${written} of ${total} writes`);
+                }
+                throw error;
+            }
+            if (!command.withResponse && WRITE_SEQUENCE_GAP_MS > 0) {
+                await new Promise<void>(resolve => this.adapter.setTimeout(resolve, WRITE_SEQUENCE_GAP_MS));
+            }
+        }
+        if (proxy.connections.get(command.address) !== connection) {
+            throw ended(total);
+        }
+        if (!command.readAfter) {
+            return { written: total };
+        }
+        const { data } = await this.read(proxy, command, connection);
+        return { written: total, data };
     }
 
     /**

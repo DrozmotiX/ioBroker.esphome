@@ -261,7 +261,7 @@ describe('lib/bleGattBridge => BleGattBridge', () => {
         expect(announce.message).to.deep.equal({
             protocol: 'ble-gateway/1',
             gateways: [
-                { gatewayId: 'proxy-og', connect: true, freeSlots: 3, slotLimit: 3 },
+                { gatewayId: 'proxy-og', connect: true, freeSlots: 3, slotLimit: 3, features: ['writeSequence'] },
                 { gatewayId: 'proxy-passive', connect: false },
             ],
         });
@@ -451,6 +451,109 @@ describe('lib/bleGattBridge => BleGattBridge', () => {
             { address: DEVICE_ADDRESS, handle: 32, response: true, data: 'VQE=' },
             { address: DEVICE_ADDRESS, handle: 32, response: false, data: 'Iw==' },
         ]);
+    });
+
+    describe('gatt:writeSequence', () => {
+        const sequence = (data: string[], withResponse: boolean, readAfter: boolean): Promise<any> =>
+            command('gatt:writeSequence', {
+                gatewayId: 'proxy-og',
+                address: DEVICE,
+                handle: 42,
+                data,
+                withResponse,
+                readAfter,
+            });
+        const writeResponse = (): void =>
+            client.receive('BluetoothGATTWriteResponse', m => {
+                m.setAddress(DEVICE_ADDRESS);
+                m.setHandle(42);
+            });
+
+        it('writes the values in order without response and reads afterwards', async () => {
+            await connect();
+            const answer = sequence(['AQ==', 'Ag==', 'Aw=='], false, true);
+            await tick();
+            expect(client.sentOf('BluetoothGATTWriteRequest')).to.deep.equal([
+                { address: DEVICE_ADDRESS, handle: 42, response: false, data: 'AQ==' },
+                { address: DEVICE_ADDRESS, handle: 42, response: false, data: 'Ag==' },
+                { address: DEVICE_ADDRESS, handle: 42, response: false, data: 'Aw==' },
+            ]);
+            expect(client.sentOf('BluetoothGATTReadRequest')).to.deep.equal([{ address: DEVICE_ADDRESS, handle: 42 }]);
+            client.receive('BluetoothGATTReadResponse', m => {
+                m.setAddress(DEVICE_ADDRESS);
+                m.setHandle(42);
+                m.setData(Buffer.from([0]));
+            });
+            expect(await answer).to.deep.equal({ error: null, result: { written: 3, data: 'AA==' } });
+        });
+
+        it('does not read without readAfter', async () => {
+            await connect();
+            expect(await sequence(['AQ=='], false, false)).to.deep.equal({ error: null, result: { written: 1 } });
+            expect(client.sentOf('BluetoothGATTReadRequest')).to.deep.equal([]);
+        });
+
+        it('waits for the confirmation of each write with response', async () => {
+            await connect();
+            const answer = sequence(['AQ==', 'Ag=='], true, false);
+            await tick();
+            expect(client.sentOf('BluetoothGATTWriteRequest').map(m => m.data)).to.deep.equal(['AQ==']);
+            writeResponse();
+            await tick();
+            expect(client.sentOf('BluetoothGATTWriteRequest').map(m => m.data)).to.deep.equal(['AQ==', 'Ag==']);
+            writeResponse();
+            expect(await answer).to.deep.equal({ error: null, result: { written: 2 } });
+        });
+
+        it('stops at the first failed write', async () => {
+            await connect();
+            const answer = sequence(['AQ==', 'Ag==', 'Aw=='], true, false);
+            await tick();
+            writeResponse();
+            await tick();
+            client.receive('BluetoothGATTErrorResponse', m => {
+                m.setAddress(DEVICE_ADDRESS);
+                m.setHandle(42);
+                m.setError(133);
+            });
+            const result = await answer;
+            expect(result.error.code).to.equal('GATT_ERROR');
+            expect(result.error.message).to.match(/after 1 of 3 writes$/);
+            expect(client.sentOf('BluetoothGATTWriteRequest')).to.have.lengthOf(2);
+        });
+
+        it('fails with NOT_CONNECTED when the connection ends in between', async () => {
+            await connect();
+            const answer = sequence(['AQ==', 'Ag=='], true, false);
+            await tick();
+            client.connectionResponse(DEVICE_ADDRESS, false, 0, 19);
+            const result = await answer;
+            expect(result.error.code).to.equal('NOT_CONNECTED');
+            expect(client.sentOf('BluetoothGATTWriteRequest')).to.have.lengthOf(1);
+        });
+
+        it('rejects invalid sequences', async () => {
+            await connect();
+            for (const [data, readAfter] of [
+                [[], false],
+                [new Array(65).fill('AQ=='), false],
+                ['AQ==', false],
+                [['A!=='], false],
+                [[''], false],
+                [['AQ=='], undefined],
+            ] as const) {
+                const result = await command('gatt:writeSequence', {
+                    gatewayId: 'proxy-og',
+                    address: DEVICE,
+                    handle: 42,
+                    data,
+                    withResponse: false,
+                    readAfter,
+                });
+                expect(result.error?.code, JSON.stringify(data)).to.equal('INVALID_PAYLOAD');
+            }
+            expect(client.sentOf('BluetoothGATTWriteRequest')).to.deep.equal([]);
+        });
     });
 
     it('collects the services of several answers', async () => {
