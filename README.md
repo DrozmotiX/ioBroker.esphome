@@ -529,6 +529,8 @@ bluetooth_proxy:
 
 An ESP32 has usually 3 connection slots. The proxy reports its free slots to the BLE adapter, which picks a proxy that
 receives the device and has a slot free. Connections are closed when the BLE adapter stops or restarts.
+Through these connections the BLE adapter can also set the clock of pvvx thermometers and install firmware updates on
+them.
 
 The firmware of the proxy has to be ESPHome 2023.6.0 or newer. A proxy can only serve one API client with Bluetooth:
 do not connect Home Assistant to the same device at the same time.
@@ -558,6 +560,7 @@ If you like my work, please consider a personal donation
 
 - (@SimonFischer04) **NEW**: Bluetooth proxies: the BLE advertisements devices with the `bluetooth_proxy` component receive can be forwarded to the BLE adapter (ioBroker.ble), which decodes them (BTHome, Xiaomi, RuuviTag, ...). Select its instance under "Forward BLE advertisements to" in the main settings; nothing is forwarded by default
 - (@SimonFischer04) **NEW**: Bluetooth proxies with `bluetooth_proxy: active: true` let the BLE adapter connect to BLE devices (read, write, notifications), e.g. to set the clock of a thermometer. Needs a BLE adapter that supports connections through gateways
+- (@SimonFischer04) **NEW**: Bluetooth proxies support the command `gatt:writeSequence` of the BLE adapter, which it uses for firmware updates of pvvx thermometers
 - (@DutchmanNL) **FIXED**: A release no longer ends with a failed deploy when the Sentry server cannot be reached. npm and the GitHub release were published, only the Sentry release information failed (2.0.0-beta.1, beta.2). Sentry is now informed in its own step, with retries
 
 ### 2.0.0-beta.2 (2026-11-24)

@@ -193,6 +193,11 @@ repository (`SimonFischer04/ioBroker.ble`), part C is this adapter.
 - Answers after the mapping of the library: `uuid` is a UUID with dashes **or an empty string** when the device set
   `shortUuid` instead (canonical UUID = `shortUuid` as 8 hex digits + `-0000-1000-8000-00805f9b34fb`), `data` is
   base64, `address` a number (`macFromAddress()` for the MAC).
+- `gatt:writeSequence` (phase 4, `docs/spec-phase-4-pvvx-ota.md` in ioBroker.ble): up to
+  `MAX_WRITE_SEQUENCE_LENGTH` (64) writes to one handle in order, then optionally one read. Announced as
+  `features: ['writeSequence']` for proxies that can connect. Writes with response wait for each confirmation, writes
+  without response go out directly; `WRITE_SEQUENCE_GAP_MS` (0) adds a pause between them if real hardware needs it.
+  The first failed write ends the sequence, the message says after how many writes.
 - **Not verified on hardware**: with V3 connections the client writes the CCCD (`00002902-…`) itself after
   `BluetoothGATTNotifyRequest` (`[1, 0]` for notify, `[2, 0]` for indicate), as `bleak-esphome` does. Check with a
   real ESP32 before relying on it.

@@ -262,7 +262,15 @@ exports.runTests = function (suite) {
             expect(announce.callback, 'the answer is awaited').to.be.ok;
             expect(announce.message).to.deep.equal({
                 protocol: 'ble-gateway/1',
-                gateways: [{ gatewayId: PROXY_NAME, connect: true, freeSlots: 3, slotLimit: 3 }],
+                gateways: [
+                    {
+                        gatewayId: PROXY_NAME,
+                        connect: true,
+                        freeSlots: 3,
+                        slotLimit: 3,
+                        features: ['writeSequence'],
+                    },
+                ],
             });
         });
 
@@ -328,6 +336,43 @@ exports.runTests = function (suite) {
                 error: null,
                 result: { data: base64('23e8f3a066') },
             });
+        });
+
+        it('writes a sequence and reads the handle afterwards', async function () {
+            this.timeout(30000);
+            const before = proxy.gattLog.length;
+
+            const answer = await ble.request('gatt:writeSequence', {
+                address: DEVICE_MAC,
+                handle: 32,
+                data: [base64('01'), base64('02'), base64('03')],
+                withResponse: false,
+                readAfter: true,
+            });
+
+            expect(answer).to.deep.equal({ error: null, result: { written: 3, data: base64('03') } });
+            expect(proxy.gattLog.slice(before)).to.deep.equal([
+                'write 32 01 false',
+                'write 32 02 false',
+                'write 32 03 false',
+                'read 32',
+            ]);
+        });
+
+        it('writes a sequence with response', async function () {
+            this.timeout(30000);
+            const before = proxy.gattLog.length;
+
+            const answer = await ble.request('gatt:writeSequence', {
+                address: DEVICE_MAC,
+                handle: 32,
+                data: [base64('0a'), base64('0b')],
+                withResponse: true,
+                readAfter: false,
+            });
+
+            expect(answer).to.deep.equal({ error: null, result: { written: 2 } });
+            expect(proxy.gattLog.slice(before)).to.deep.equal(['write 32 0a true', 'write 32 0b true']);
         });
 
         it('subscribes to notifications and forwards them', async function () {
