@@ -9,6 +9,7 @@
     "Connecting to device...": "Łączenie z urządzeniem...",
     "Connection status": "Stan połączenia",
     "Connection to device %s lost, the adapter reconnects automatically when the device is available": "Utracono połączenie z urządzeniem %s, adapter połączy się ponownie automatycznie, gdy urządzenie będzie dostępne",
+    "Device %s sent a message (type %s) the adapter cannot read yet, the connection is closed. Its ESPHome version is probably newer than the adapter supports": "Urządzenie %s wysłało wiadomość (typ %s), której adapter jeszcze nie potrafi odczytać, połączenie zostaje zamknięte. Jego wersja ESPHome jest prawdopodobnie nowsza niż obsługiwana przez adapter",
     "Delete device": "Usuń urządzenie",
     "Delete this device? All its states will be removed.": "Usunąć to urządzenie? Wszystkie jego stany zostaną usunięte.",
     "Device %s is not ready to connect yet, the adapter tries again": "Urządzenie %s nie jest jeszcze gotowe do połączenia, adapter spróbuje ponownie",

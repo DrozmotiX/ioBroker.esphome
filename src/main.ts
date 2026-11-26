@@ -913,6 +913,14 @@ class Esphome extends utils.Adapter implements EsphomeDeviceSource {
                         }
                     } else if (error.message.includes('write after end')) {
                         // Ignore error
+                    } else if (error.message.includes('Failed find or parsed message type for Id')) {
+                        optimisedError =
+                            'Device %s sent a message (type %s) the adapter cannot read yet, the connection is closed. Its ESPHome version is probably newer than the adapter supports';
+                        errorArgs = [host, /Id: (\d+)/.exec(error.message)?.[1] ?? '?'];
+                        this.log.warn(format(optimisedError, ...errorArgs));
+                    } else if (error.message.includes(`Cannot set properties of undefined (setting 'length')`)) {
+                        // Follow-up of the unreadable message above, nothing new for the user
+                        this.log.debug(`ESPHome client ${host} ${error}`);
                     } else {
                         this.log.error(`ESPHome client ${host} ${error}`);
                     }
