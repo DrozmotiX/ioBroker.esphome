@@ -38,6 +38,6 @@ updates:
           interval: 'cron'
           timezone: 'Europe/Berlin'
           cronjob: '21 1 2 * *'
-      open-pull-requests-limit: 5
+      open-pull-requests-limit: 15
       cooldown:
           default-days: 7

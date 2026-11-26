@@ -94,9 +94,9 @@ button:
     - platform: template
       name: 'E2E Button'
       on_press:
-          - globals.set:
-                id: button_presses
-                value: !lambda 'return id(button_presses) + 1;'
+          # Lambda action, not globals.set with a "!lambda" value: the repository checker parses every
+          # YAML file of the repository with js-yaml, which fails on the custom tag (E5035)
+          - lambda: 'id(button_presses) += 1;'
           - component.update: e2e_button_presses
 
 output:

@@ -121,6 +121,22 @@ export function dashboardCredentials(
 }
 
 /**
+ * Text without the notices of pip asking to upgrade pip itself ("[notice] A new release of pip is available",
+ * "[notice] To update, run: ..."). The Python environment is managed by the adapter, the user cannot follow them.
+ * The setup commands of autopy run with the environment of the adapter process, which is not changed for them
+ * (process.env does not work in compact mode), so pip prints them into the output of a failed installation.
+ *
+ * @param text - output of pip or an error containing it
+ * @returns the text without the lines of these notices
+ */
+export function withoutPipNotices(text: string): string {
+    return text
+        .split('\n')
+        .filter(line => !/^\s*\[notice\]/.test(line))
+        .join('\n');
+}
+
+/**
  * Environment variables telling the dashboard container about the host it works for:
  *
  * - IOBROKER_UID / IOBROKER_GID: user of this instance. The script of docker-compose.yaml runs the dashboard
@@ -544,9 +560,6 @@ class Dashboard {
                 const useDeviceBuilder = usesDeviceBuilder(useDashBoardVersion);
 
                 try {
-                    // This environment is adapter-managed; suppress pip's manual upgrade notices.
-                    // Autopy's setup commands and later Python processes inherit this setting.
-                    process.env.PIP_DISABLE_PIP_VERSION_CHECK = '1';
                     const { getVenv } = await import('autopy');
                     let python;
                     try {
@@ -586,7 +599,10 @@ class Dashboard {
                         });
                     } catch (error) {
                         const stack = error instanceof Error ? error.stack : undefined;
-                        this.log.error(`Fatal error starting ESPHomeDashboard | ${String(error)} | ${stack}`);
+                        // The output of pip is part of the error, without its hint to upgrade pip itself
+                        this.log.error(
+                            `Fatal error starting ESPHomeDashboard | ${withoutPipNotices(String(error))} | ${withoutPipNotices(String(stack))}`,
+                        );
                         await this.setStatus('failed');
                         return;
                     }
@@ -627,10 +643,16 @@ class Dashboard {
                     );
                     // buffer: false, the output is only logged below and would otherwise be kept in memory
                     // for as long as the dashboard runs. NO_COLOR keeps color codes out of the log.
+                    // PIP_DISABLE_PIP_VERSION_CHECK: the environment is managed by the adapter, pip run by
+                    // ESPHome (e.g. PlatformIO) does not ask the user to upgrade pip.
                     this.logLogin();
                     this.dashboardProcess = python(command, args, {
                         buffer: false,
-                        env: { NO_COLOR: '1', ...dashboardCredentials(this.adapter.config) },
+                        env: {
+                            NO_COLOR: '1',
+                            PIP_DISABLE_PIP_VERSION_CHECK: '1',
+                            ...dashboardCredentials(this.adapter.config),
+                        },
                     });
 
                     this.log.debug(`espHomeDashboard_Process ${JSON.stringify(this.dashboardProcess)}`);

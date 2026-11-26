@@ -1,6 +1,6 @@
 import DockerPlugin, { DockerManagerOfOwnContainers } from '@iobroker/plugin-docker';
 import { expect } from 'chai';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { mkdtemp, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
@@ -12,6 +12,7 @@ import Dashboard, {
     dashboardCredentials,
     ownContainerName,
     pythonVersion,
+    withoutPipNotices,
 } from './dashboard';
 import stateAttr from './stateAttr';
 import { native } from '../../io-package.json';
@@ -911,6 +912,46 @@ describe('pythonVersion', () => {
     it('falls back to the default for empty or invalid values', () => {
         for (const version of ['', '   ', 'latest', '3.12; rm -rf /', '>=3.11']) {
             expect(pythonVersion({ PythonVersion: version })).to.equal(DEFAULT_PYTHON_VERSION);
+        }
+    });
+});
+
+describe('withoutPipNotices', () => {
+    it('removes the hints of pip to upgrade itself and keeps everything else', () => {
+        const output = [
+            'Command failed with exit code 1: python3 -m pip install esphome==2026.9.1',
+            'ERROR: No matching distribution found for esphome==2026.9.1',
+            '',
+            '[notice] A new release of pip is available: 24.3.1 -> 25.3',
+            '[notice] To update, run: python3 -m pip install --upgrade pip',
+        ].join('\n');
+        expect(withoutPipNotices(output)).to.equal(
+            [
+                'Command failed with exit code 1: python3 -m pip install esphome==2026.9.1',
+                'ERROR: No matching distribution found for esphome==2026.9.1',
+                '',
+            ].join('\n'),
+        );
+    });
+
+    it('does not change a text without them', () => {
+        expect(withoutPipNotices('Error: spawn python3 ENOENT')).to.equal('Error: spawn python3 ENOENT');
+    });
+});
+
+describe('repository checker', () => {
+    it('finds no process.env in the sources of the adapter (E5049, compact mode)', () => {
+        const srcDir = path.join(adapterDir, 'src');
+        const sources = readdirSync(srcDir, { recursive: true, encoding: 'utf8' }).filter(
+            file => /\.ts$/.test(file) && !/\.(test|d)\.ts$/.test(file),
+        );
+        expect(sources).to.not.be.empty;
+        for (const file of sources) {
+            // Without comments, like the repository checker
+            const code = readFileSync(path.join(srcDir, file), 'utf8')
+                .replace(/\/\*[\s\S]*?\*\//g, '')
+                .replace(/(^|[^:])\/\/.*$/gm, '$1');
+            expect(code, file).to.not.match(/\bprocess\.env\b/);
         }
     });
 });

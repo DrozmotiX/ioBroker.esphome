@@ -116,28 +116,35 @@ jobs:
             # Sentry release with the source maps of build/ (built by the step above). Only meta information
             # for the error reports, published under the same name the action used. sentry.iobroker.net
             # refuses connections at times: 2.0.0-beta.1 and beta.2 timed out at "finalize" after npm and
-            # the GitHub release had gone through, and the whole run was red. Each call is tried 3 times, and
-            # a failure here leaves a warning but never fails a release that is already published.
+            # the GitHub release had gone through, and the whole run was red. Each call is tried 3 times with
+            # its own time limit, and a failure here leaves a warning but never fails a release that is
+            # already published. That is handled by the script, not with "continue-on-error" (repo checker
+            # W3046), so any other error of the job still fails it.
             - name: Create Sentry release
-              continue-on-error: true
-              timeout-minutes: 15
+              # Above the longest run of the script: 3 calls x (3 x 3 min + 2 x 1 min)
+              timeout-minutes: 40
               env:
                   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
                   SENTRY_URL: https://sentry.iobroker.net
                   SENTRY_ORG: iobroker
                   SENTRY_PROJECT: iobroker-esphome
               run: |
-                  # Same sentry-cli version as ioBroker/testing-action-deploy@v1, newer ones dropped "releases files"
-                  npm i -g @sentry/cli@2.58.4
                   SENTRY_VERSION="iobroker.esphome@${GITHUB_REF_NAME#v}"
                   retry() {
                       for attempt in 1 2 3; do
-                          "$@" && return 0
+                          timeout 180 "$@" && return 0
                           echo "::warning::Sentry, attempt $attempt of 3 failed: $*"
                           if [ "$attempt" -lt 3 ]; then sleep 60; fi
                       done
                       return 1
                   }
-                  retry sentry-cli releases new "$SENTRY_VERSION"
-                  retry sentry-cli releases files "$SENTRY_VERSION" upload-sourcemaps build/
-                  retry sentry-cli releases finalize "$SENTRY_VERSION"
+                  sentry_release() {
+                      # Same sentry-cli version as ioBroker/testing-action-deploy@v1, newer ones dropped "releases files"
+                      npm i -g @sentry/cli@2.58.4 || return 1
+                      retry sentry-cli releases new "$SENTRY_VERSION" || return 1
+                      retry sentry-cli releases files "$SENTRY_VERSION" upload-sourcemaps build/ || return 1
+                      retry sentry-cli releases finalize "$SENTRY_VERSION" || return 1
+                  }
+                  if ! sentry_release; then
+                      echo "::warning::Sentry release $SENTRY_VERSION could not be created, npm and the GitHub release are published"
+                  fi

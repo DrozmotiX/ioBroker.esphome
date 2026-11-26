@@ -177,7 +177,7 @@ All our adapter documentation can be found at [The DrozmotiX Docu Page](https://
 
 ## Prerequisites
 
-    * NodeJS >= 22.12
+    * NodeJS >= 22.19
     * API is activated in YAML
     * For admin tabs (optional)
         * ESPHome Dashboard IP is provided in instance settings
@@ -517,6 +517,8 @@ If you like my work, please consider a personal donation
 ### **WORK IN PROGRESS**
 
 - (@DutchmanNL) **ENHANCED**: A message of a device the ESPHome API library cannot read (for example a date, time, valve, event or update entity, #566) is logged as one warning with the message type instead of two raw errors
+- (@DutchmanNL) **BREAKING**: Requires Node.js 22.19 or newer, the minimum of the Docker plugin (`@iobroker/plugin-docker`) the adapter depends on
+- (@DutchmanNL) **FIXED**: Issues reported by the repository checker (#560): the ESPHome Dashboard no longer changes the environment of the adapter process (`process.env`, not allowed in compact mode), the YAML of the end-to-end test device can be read by other YAML parsers, the Sentry step of a release handles its failure itself instead of using `continue-on-error`
 - (@DutchmanNL) **FIXED**: A release no longer ends with a failed deploy when the Sentry server cannot be reached. npm and the GitHub release were published, only the Sentry release information failed (2.0.0-beta.1, beta.2). Sentry is now informed in its own step, with retries
 
 ### 2.0.0-beta.2 (2026-11-24)
